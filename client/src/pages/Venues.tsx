@@ -9,7 +9,7 @@ const venues = [
     capacity: { ceremony: null, reception: 256 },
     desc: "Designed by a prominent Kansas City architect, Rivers Barn is modern farmhouse — a blank slate that lets a bride and groom or corporate group give it whatever feel they desire. The barn features two large patios, two fireplaces, air-conditioning, an indoor/outdoor bar, and separate luxury bathrooms. The space accommodates up to 256 guests.",
     details: ["Up to 256 guests", "Two large patios", "Two fireplaces", "Air-conditioning", "Indoor/outdoor bar", "Separate luxury bathrooms"],
-    img: "/manus-storage/6M9A3239_d4c999f4.jpg",
+    img: "/manus-storage/IMG_0646_6bb80f84.jpg",
   },
   {
     slug: "clubhouse",

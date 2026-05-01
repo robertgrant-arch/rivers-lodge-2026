@@ -106,6 +106,6 @@
 
 ## Phase 13 Cleanup
 
-- [ ] Re-audit Annex & Bridal Suite and Ohana House images — use neutral non-mislabelled imagery since no dedicated photos exist in the collection
-- [ ] Read and verify Corporate.tsx, Estate.tsx, Membership.tsx, Hunt.tsx, Fish.tsx image assignments against the photo catalog
-- [ ] Final browser QA pass on all updated pages after remapping
+- [x] Re-audit Annex & Bridal Suite and Ohana House images — use neutral non-mislabelled imagery since no dedicated photos exist in the collection
+- [x] Read and verify Corporate.tsx, Estate.tsx, Membership.tsx, Hunt.tsx, Fish.tsx image assignments against the photo catalog
+- [x] Final browser QA pass on all updated pages after remapping

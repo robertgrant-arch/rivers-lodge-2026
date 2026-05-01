@@ -11,7 +11,7 @@ const lodgingProperties = [
     desc: "Our 6,000 square foot lodge has 4 bedrooms decorated by a prominent Kansas City designer and incorporates many aspects of history and outdoor pursuits from the area. The lodge has a full kitchen, large balcony, heated floors, heating/AC, and a large recreation room.",
     features: ["4 bedrooms", "6,000 sq ft", "Full kitchen", "Large balcony", "Heated floors", "Recreation room", "Kansas City designer interiors"],
     img: "/manus-storage/974A9398edit_294e71ff.jpg",
-    img2: "/manus-storage/974A8419edit_f37de96e.jpg",
+    img2: "/manus-storage/6M9A3239_d4c999f4.jpg",
   },
   {
     slug: "riverhouse-suites",
@@ -32,8 +32,8 @@ const lodgingProperties = [
     bedrooms: 4,
     desc: "The Annex & Bridal Suite was completely remodeled in 2021. It has a modern farmhouse feel with a light and airy design. Just steps away from Rivers Barn, it is the perfect spot to spend the day getting ready for your big day. The Annex & Bridal Suite has 4 bedrooms and 3 bathrooms.",
     features: ["4 bedrooms", "3 bathrooms", "Steps from Rivers Barn", "Remodeled 2021", "Modern farmhouse feel", "Light and airy design"],
-    img: "/manus-storage/6M9A3239_d4c999f4.jpg",
-    img2: "/manus-storage/IMG_0646_6bb80f84.jpg",
+    img: "/manus-storage/Rivers_May2023-27_33df99ba.jpg",
+    img2: "/manus-storage/Rivers_SEPT2022_-116_e668dc61.jpg",
   },
   {
     slug: "ohana-house",
