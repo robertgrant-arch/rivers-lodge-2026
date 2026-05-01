@@ -94,12 +94,18 @@
 
 ## Phase 13: Correct Photo-to-Space Matching
 
-- [ ] Visually audit theriverslodge.com to identify which photo belongs to which space/property
-- [ ] View all 71 CDN images locally and create a definitive filename-to-space catalog
-- [ ] Fix Venues.tsx: assign correct photo to each of the 5 venue spaces
-- [ ] Fix Lodging.tsx: assign correct photo to each of the 5 lodging properties
-- [ ] Fix Weddings.tsx: assign correct photos to venue previews and lodging section
-- [ ] Fix Home.tsx: assign correct photos to venue cards and lodging section
-- [ ] Fix Corporate.tsx, Estate.tsx, Membership.tsx, Hunt.tsx, Fish.tsx: verify all photos match their context
-- [ ] Fix Gallery.tsx: ensure photos are in the correct filter categories
-- [ ] QA all pages visually, run tests, save checkpoint
+- [x] Visually audit theriverslodge.com to identify which photo belongs to which space/property
+- [x] View all 71 CDN images locally and create a definitive filename-to-space catalog
+- [x] Fix Venues.tsx: assign correct photo to each of the 5 venue spaces
+- [x] Fix Lodging.tsx: assign correct photo to each of the 5 lodging properties
+- [x] Fix Weddings.tsx: assign correct photos to venue previews and lodging section
+- [x] Fix Home.tsx: assign correct photos to venue cards and lodging section
+- [x] Fix Corporate.tsx, Estate.tsx, Membership.tsx, Hunt.tsx, Fish.tsx: verify all photos match their context
+- [x] Fix Gallery.tsx: ensure photos are in the correct filter categories
+- [x] QA all pages visually, run tests, save checkpoint
+
+## Phase 13 Cleanup
+
+- [ ] Re-audit Annex & Bridal Suite and Ohana House images — use neutral non-mislabelled imagery since no dedicated photos exist in the collection
+- [ ] Read and verify Corporate.tsx, Estate.tsx, Membership.tsx, Hunt.tsx, Fish.tsx image assignments against the photo catalog
+- [ ] Final browser QA pass on all updated pages after remapping

@@ -2,9 +2,9 @@ import { Link } from "wouter";
 import PublicLayout from "@/components/PublicLayout";
 
 const HERO = "/manus-storage/DJI_0017_538feef1.jpg";
-const BASS = "/manus-storage/Rivers_May2023-28_f44fb1bd.jpg";
-const RIVER = "/manus-storage/Rivers_SEPT2022_-241_9b9f5433.jpg";
-const POND = "/manus-storage/Rivers_May2023-27_33df99ba.jpg";
+const BASS = "/manus-storage/Rivers_SEPT2022_-253-1_f15787e1.jpg";
+const RIVER = "/manus-storage/Rivers_SEPT2022_-134_157d1be5.jpg";
+const POND = "/manus-storage/Rivers_May2023-8_d07307f4.jpg";
 
 const fisheries = [
   {
