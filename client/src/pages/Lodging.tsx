@@ -10,8 +10,8 @@ const lodgingProperties = [
     bedrooms: 4,
     desc: "Our 5,200 square foot lodge has 4 bedrooms decorated by a prominent Kansas City designer. A full kitchen, large balcony, heated floors, and a recreation room make it the place where the rehearsal dinner becomes a late-night card game. The Lodge bar — with a canoe on the ceiling — is where stories get told and retold for years.",
     features: ["4 bedrooms", "Full kitchen", "Lodge bar (canoe ceiling)", "Heated floors", "Large balcony", "Recreation room", "Kansas City designer interiors"],
-    img: "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=1200&q=80&auto=format&fit=crop",
-    img2: "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=600&q=80&auto=format&fit=crop",
+    img: "/manus-storage/20200515-3M4A7035_5457c1af.jpg",
+    img2: "/manus-storage/20200515-3M4A7063_c65f78b9.jpg",
   },
   {
     slug: "riverhouse-suites",
@@ -21,8 +21,8 @@ const lodgingProperties = [
     bedrooms: 4,
     desc: "Completed in 2022 with luxury finishes. Each suite is uniquely decorated with a private bath and individual climate control. The Riverhouse Suites offer a boutique hotel experience within the privacy of the estate.",
     features: ["4 private suites", "Private bath per suite", "Individual climate control", "Luxury finishes", "Completed 2022", "Boutique hotel feel"],
-    img: "https://images.unsplash.com/photo-1631049552057-403cdb8f0658?w=1200&q=80&auto=format&fit=crop",
-    img2: "https://images.unsplash.com/photo-1618773928121-c32242e63f39?w=600&q=80&auto=format&fit=crop",
+    img: "/manus-storage/6M9A3214-2_bcea97ca.jpg",
+    img2: "/manus-storage/6M9A3225_b9b3368e.jpg",
   },
   {
     slug: "annex-bridal-suite",
@@ -32,8 +32,8 @@ const lodgingProperties = [
     bedrooms: 4,
     desc: "Modern farmhouse aesthetic, light and airy. Four bedrooms and three bathrooms — steps from Rivers Barn. Designed as the perfect bridal party headquarters, with space to get ready, relax, and celebrate before the ceremony.",
     features: ["4 bedrooms", "3 bathrooms", "Steps from Rivers Barn", "Modern farmhouse aesthetic", "Light-filled interiors", "Bridal party ready"],
-    img: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=1200&q=80&auto=format&fit=crop",
-    img2: "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=600&q=80&auto=format&fit=crop",
+    img: "/manus-storage/20200515-3M4A7081_73fef076.jpg",
+    img2: "/manus-storage/20200515-3M4A7085_b71229e5.jpg",
   },
   {
     slug: "ohana-house",
@@ -43,8 +43,8 @@ const lodgingProperties = [
     bedrooms: 4,
     desc: "Set on its own 20-acre lake, 15 minutes from the main lodge. Fire pit, nature trails, canoes, and hammocks. Ohana House offers a more secluded experience — ideal for the honeymoon couple, close family, or a private retreat within the retreat.",
     features: ["4 bedrooms", "Private 20-acre lake", "Fire pit", "Nature trails", "Canoes & hammocks", "15 min from main lodge"],
-    img: "https://images.unsplash.com/photo-1449158743715-0a90ebb6d2d8?w=1200&q=80&auto=format&fit=crop",
-    img2: "https://images.unsplash.com/photo-1499793983690-e29da59ef1c2?w=600&q=80&auto=format&fit=crop",
+    img: "/manus-storage/Rivers_May2023-28_f44fb1bd.jpg",
+    img2: "/manus-storage/Rivers_May2023-27_33df99ba.jpg",
   },
   {
     slug: "the-farmhouse",
@@ -54,8 +54,8 @@ const lodgingProperties = [
     bedrooms: null,
     desc: "A classic Kansas farmhouse on the estate grounds. Comfortable, private, and full of character — ideal for overflow lodging, family groups, or guests who prefer a quieter corner of the property.",
     features: ["Private setting", "Classic farmhouse character", "Estate grounds", "Ideal for overflow", "Quiet and secluded", "Full amenities"],
-    img: "https://images.unsplash.com/photo-1505843513577-22bb7d21e455?w=1200&q=80&auto=format&fit=crop",
-    img2: "https://images.unsplash.com/photo-1416331108676-a22ccb276e35?w=600&q=80&auto=format&fit=crop",
+    img: "/manus-storage/974A8398edit_8944d227.jpg",
+    img2: "/manus-storage/974A8419edit_f37de96e.jpg",
   },
 ];
 

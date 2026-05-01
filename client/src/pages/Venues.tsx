@@ -9,7 +9,7 @@ const venues = [
     capacity: { ceremony: null, reception: 256 },
     desc: "Designed by a prominent Kansas City architect, the barn blends raw materials with modern infrastructure — floor-to-ceiling windows, 22-foot facade doors, a lookout balcony, two fireplaces, and an indoor/outdoor bar. It seats up to 256 guests and opens fully to the surrounding landscape.",
     details: ["22-foot facade doors", "Floor-to-ceiling windows", "Lookout balcony", "Two fireplaces", "Indoor/outdoor bar", "Two patios with string lights"],
-    img: "https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?w=1200&q=80&auto=format&fit=crop",
+    img: "/manus-storage/Rivers_SEPT2022_-109_c2b5fea5.jpg",
   },
   {
     slug: "clubhouse",
@@ -18,7 +18,7 @@ const venues = [
     capacity: { ceremony: 80, reception: 80 },
     desc: "Rehearsal dinners, cocktail hours, and intimate ceremonies. The Clubhouse sits by a pond with its own gazebo, outdoor entertaining area, and bar. With its flexible layout, it is as suited to a corporate breakout session as it is to a casual evening under the stars.",
     details: ["Pond-side setting", "Private gazebo", "Full bar", "Flexible layout", "Outdoor entertaining deck", "Ideal for rehearsal dinners"],
-    img: "https://images.unsplash.com/photo-1478146059778-26028b07395a?w=1200&q=80&auto=format&fit=crop",
+    img: "/manus-storage/3C0A0304_cb66bc23.jpg",
   },
   {
     slug: "river-lawn",
@@ -27,7 +27,7 @@ const venues = [
     capacity: { ceremony: 200, reception: 180 },
     desc: "A level grass expanse with direct sightlines to the Marais des Cygnes. Ceremonies here feel like they belong to the land itself. The natural backdrop for an outdoor ceremony — open sky, the river, and nothing competing with the moment.",
     details: ["Direct river sightlines", "Level grass expanse", "Up to 200 ceremony guests", "Golden-hour photography", "Adjacent to the Timber Trail", "Open-air setting"],
-    img: "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?w=1200&q=80&auto=format&fit=crop",
+    img: "/manus-storage/DJI_0017_538feef1.jpg",
   },
   {
     slug: "timber-edge",
@@ -36,7 +36,7 @@ const venues = [
     capacity: { ceremony: 120, reception: null },
     desc: "Where the open field meets the tree line. A naturally framed space with dappled light and a sense of enclosure that larger venues cannot manufacture. Walk-in access through mature timber along the river.",
     details: ["Natural tree canopy", "Dappled light", "Intimate atmosphere", "Old-growth timber backdrop", "Adjacent to Timber Trail", "Up to 120 ceremony guests"],
-    img: "https://images.unsplash.com/photo-1448375240586-882707db888b?w=1200&q=80&auto=format&fit=crop",
+    img: "/manus-storage/Rivers_SEPT2022_-134_157d1be5.jpg",
   },
   {
     slug: "pavilion",
@@ -45,7 +45,7 @@ const venues = [
     capacity: { ceremony: null, reception: 200 },
     desc: "A covered structure designed to bridge indoors and out. Configured for seated dining, dancing, or standing receptions. The pavilion opens fully to the surrounding landscape and connects seamlessly with Rivers Barn for large-scale events.",
     details: ["Covered structure", "Opens to landscape", "Up to 200 reception guests", "Flexible configuration", "Adjacent to Rivers Barn", "String-lit canopy"],
-    img: "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=1200&q=80&auto=format&fit=crop",
+    img: "/manus-storage/2020JennyShipleySSTheRiverFilm-1_60fc729b.jpg",
   },
 ];
 

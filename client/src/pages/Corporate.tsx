@@ -1,9 +1,9 @@
 import { Link } from "wouter";
 import PublicLayout from "@/components/PublicLayout";
 
-const HERO = "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=1920&q=80&auto=format&fit=crop";
-const MEETING = "https://images.unsplash.com/photo-1497366216548-37526070297c?w=900&q=80&auto=format&fit=crop";
-const OUTDOOR = "https://images.unsplash.com/photo-1448375240586-882707db888b?w=900&q=80&auto=format&fit=crop";
+const HERO = "/manus-storage/Rivers_SEPT2022_-253-1_f15787e1.jpg";
+const MEETING = "/manus-storage/3C0A0304_cb66bc23.jpg";
+const OUTDOOR = "/manus-storage/Rivers_SEPT2022_-134_157d1be5.jpg";
 
 const packages = [
   {

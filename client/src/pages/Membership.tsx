@@ -4,10 +4,10 @@ import PublicLayout from "@/components/PublicLayout";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 
-const HERO = "https://images.unsplash.com/photo-1448375240586-882707db888b?w=1920&q=80&auto=format&fit=crop";
-const HUNT = "https://images.unsplash.com/photo-1516426122078-c23e76319801?w=900&q=80&auto=format&fit=crop";
-const FISH = "https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=900&q=80&auto=format&fit=crop";
-const CLAY = "https://images.unsplash.com/photo-1509316785289-025f5b846b35?w=900&q=80&auto=format&fit=crop";
+const HERO = "/manus-storage/Rivers_SEPT2022_-128_9bced2c9.jpg";
+const HUNT = "/manus-storage/Rivers_SEPT2022_-112_c0e7fb5f.jpg";
+const FISH = "/manus-storage/DJI_0017_538feef1.jpg";
+const CLAY = "/manus-storage/Rivers_SEPT2022_-127_5104d554.jpg";
 
 const privileges = [
   { title: "10,000+ Acres", desc: "Private access to over 10,000 acres of managed Kansas hunting ground — no public access, no crowds, no compromise." },

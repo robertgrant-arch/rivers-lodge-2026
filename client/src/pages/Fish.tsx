@@ -1,10 +1,10 @@
 import { Link } from "wouter";
 import PublicLayout from "@/components/PublicLayout";
 
-const HERO = "https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=1920&q=80&auto=format&fit=crop";
-const BASS = "https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=900&q=80&auto=format&fit=crop";
-const RIVER = "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=900&q=80&auto=format&fit=crop";
-const POND = "https://images.unsplash.com/photo-1501854140801-50d01698950b?w=900&q=80&auto=format&fit=crop";
+const HERO = "/manus-storage/DJI_0017_538feef1.jpg";
+const BASS = "/manus-storage/Rivers_May2023-28_f44fb1bd.jpg";
+const RIVER = "/manus-storage/Rivers_SEPT2022_-241_9b9f5433.jpg";
+const POND = "/manus-storage/Rivers_May2023-27_33df99ba.jpg";
 
 const fisheries = [
   {

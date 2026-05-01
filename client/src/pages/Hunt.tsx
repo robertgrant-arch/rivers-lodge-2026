@@ -1,10 +1,10 @@
 import { Link } from "wouter";
 import PublicLayout from "@/components/PublicLayout";
 
-const HERO = "https://images.unsplash.com/photo-1516426122078-c23e76319801?w=1920&q=80&auto=format&fit=crop";
-const DEER = "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=900&q=80&auto=format&fit=crop";
-const WATERFOWL = "https://images.unsplash.com/photo-1509316785289-025f5b846b35?w=900&q=80&auto=format&fit=crop";
-const TURKEY = "https://images.unsplash.com/photo-1448375240586-882707db888b?w=900&q=80&auto=format&fit=crop";
+const HERO = "/manus-storage/Rivers_SEPT2022_-112_c0e7fb5f.jpg";
+const DEER = "/manus-storage/Rivers_SEPT2022_-105_85069d29.jpg";
+const WATERFOWL = "/manus-storage/Rivers_SEPT2022_-107_4293f258.jpg";
+const TURKEY = "/manus-storage/Rivers_SEPT2022_-116_e668dc61.jpg";
 
 const species = [
   {

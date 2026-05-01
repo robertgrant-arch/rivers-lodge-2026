@@ -1,226 +1,298 @@
 import { Link } from "wouter";
 import PublicLayout from "@/components/PublicLayout";
 
-const HERO_IMG = "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&q=80&auto=format&fit=crop";
-const WEDDINGS_IMG = "https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=900&q=80&auto=format&fit=crop";
-const MEMBERSHIP_IMG = "https://images.unsplash.com/photo-1448375240586-882707db888b?w=900&q=80&auto=format&fit=crop";
-const BARN_IMG = "https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?w=800&q=80&auto=format&fit=crop";
-const RIVER_IMG = "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?w=800&q=80&auto=format&fit=crop";
-const LODGE_IMG = "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=800&q=80&auto=format&fit=crop";
-
-const stats = [
-  { value: "300+", label: "Acres" },
-  { value: "1", label: "River" },
-  { value: "5", label: "Buildings" },
-  { value: "16+", label: "Bedrooms" },
-  { value: "256", label: "Barn Capacity" },
-  { value: "60", label: "Min from KC" },
-];
+// Real estate photography from theriverslodge.com
+const HERO = "/manus-storage/Rivers_SEPT2022_-253-1_f15787e1.jpg"; // Golden-hour aerial of entire estate
+const AERIAL_RIVER = "/manus-storage/DJI_0017_538feef1.jpg"; // Aerial of river/Riverhouse
+const LODGE_AERIAL = "/manus-storage/Rivers_SEPT2022_-238-1_2bb5d5aa.jpg"; // The Lodge from above
+const FIRE_PIT = "/manus-storage/Rivers_SEPT2022_-134_157d1be5.jpg"; // Fire pit by river
+const CLUBHOUSE_BAR = "/manus-storage/3C0A0304_cb66bc23.jpg"; // Clubhouse bar interior
+const WEDDING_1 = "/manus-storage/UebeleinWed335_e6a9084a.jpg";
+const WEDDING_2 = "/manus-storage/UebeleinWed405_59f02b8c.jpg";
+const WEDDING_3 = "/manus-storage/UebeleinWed557_b0b3b0ff.jpg";
+const GROUNDS_1 = "/manus-storage/Rivers_SEPT2022_-105_85069d29.jpg";
+const GROUNDS_2 = "/manus-storage/Rivers_SEPT2022_-109_c2b5fea5.jpg";
+const GROUNDS_3 = "/manus-storage/Rivers_May2023-8_d07307f4.jpg";
+const INTERIOR_1 = "/manus-storage/20200515-3M4A7035_5457c1af.jpg";
+const INTERIOR_2 = "/manus-storage/20200515-3M4A7063_c65f78b9.jpg";
 
 export default function Home() {
   return (
     <PublicLayout>
-      {/* ── Hero ─────────────────────────────────────────────────────────── */}
-      <section className="relative h-screen min-h-[600px] flex items-end pb-20 md:pb-28 overflow-hidden">
+      {/* ── Cinematic Hero ─────────────────────────────────────────────── */}
+      <section className="relative h-screen min-h-[600px] flex items-end pb-24 overflow-hidden">
         <div className="absolute inset-0">
           <img
-            src={HERO_IMG}
-            alt="The Rivers Lodge estate at dawn"
+            src={HERO}
+            alt="Rivers Lodge & Hunt Club — aerial view at golden hour"
             className="w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/40 to-black/75" />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/30 to-black/80" />
         </div>
-
         <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-10 w-full">
-          <p className="text-[10px] tracking-[0.28em] uppercase font-sans text-white/60 mb-4">
+          <p className="text-[10px] tracking-[0.32em] uppercase font-sans text-white/60 mb-5">
             La Cygne, Kansas
           </p>
-          <h1 className="font-serif text-5xl md:text-7xl lg:text-8xl text-white leading-[0.95] mb-6" style={{ textShadow: "0 2px 40px rgba(0,0,0,0.4)" }}>
-            Rivers Lodge<br />
+          <h1
+            className="font-serif text-6xl md:text-8xl lg:text-9xl text-white leading-[0.9] mb-6"
+            style={{ textShadow: "0 2px 40px rgba(0,0,0,0.4)" }}
+          >
+            Rivers Lodge
+            <br />
             <span className="italic font-light">& Hunt Club</span>
           </h1>
-          <p className="text-base md:text-lg font-sans font-light text-white/80 max-w-md mb-10 leading-relaxed">
+          <p className="text-base md:text-lg font-sans text-white/80 max-w-xl mb-10 leading-relaxed">
             A private estate on the Marais des Cygnes. A destination wedding venue one hour from Kansas City — and a private membership club for those who hunt, fish, and live on the land.
           </p>
-          <div className="flex flex-col sm:flex-row gap-3">
+          <div className="flex flex-col sm:flex-row gap-4">
             <Link
               href="/weddings"
-              className="inline-flex items-center justify-center px-8 py-3.5 bg-white text-[oklch(0.15_0.008_66)] text-xs tracking-[0.16em] uppercase font-sans font-medium hover:bg-white/90 transition-colors"
+              className="inline-flex items-center justify-center px-8 py-4 bg-white text-[oklch(0.15_0.008_66)] text-xs tracking-[0.18em] uppercase font-sans font-medium hover:bg-white/90 transition-colors"
             >
-              Weddings & Events
+              Weddings &amp; Events
             </Link>
             <Link
               href="/membership"
-              className="inline-flex items-center justify-center px-8 py-3.5 border border-white text-white text-xs tracking-[0.16em] uppercase font-sans font-medium hover:bg-white/10 transition-colors"
+              className="inline-flex items-center justify-center px-8 py-4 border border-white text-white text-xs tracking-[0.18em] uppercase font-sans font-medium hover:bg-white/10 transition-colors"
             >
-              Membership & Outdoors
+              Membership &amp; Outdoors
             </Link>
           </div>
         </div>
-
-        {/* Scroll indicator */}
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-white/40">
-          <span className="text-[9px] tracking-[0.22em] uppercase font-sans">Scroll</span>
-          <div className="w-px h-8 bg-white/30 animate-pulse" />
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 z-10">
+          <p className="text-[9px] tracking-[0.28em] uppercase font-sans text-white/40">Scroll</p>
+          <div className="w-px h-10 bg-white/30" />
         </div>
       </section>
 
-      {/* ── Stats Strip ──────────────────────────────────────────────────── */}
-      <section className="bg-[oklch(0.13_0.008_66)] py-8 md:py-10">
+      {/* ── Estate Stats Bar ───────────────────────────────────────────── */}
+      <section className="bg-[oklch(0.13_0.008_66)] py-8">
         <div className="max-w-7xl mx-auto px-6 lg:px-10">
-          <div className="grid grid-cols-3 md:grid-cols-6 gap-6 md:gap-4">
-            {stats.map((s) => (
-              <div key={s.label} className="text-center">
-                <div className="font-serif text-2xl md:text-3xl text-[oklch(0.90_0.008_80)] leading-none mb-1">{s.value}</div>
-                <div className="text-[9px] tracking-[0.20em] uppercase font-sans text-[oklch(0.55_0.015_74)]">{s.label}</div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+            {[
+              { stat: "300+", label: "Acres" },
+              { stat: "1", label: "River" },
+              { stat: "5", label: "Buildings" },
+              { stat: "16+", label: "Bedrooms" },
+            ].map((item) => (
+              <div key={item.label}>
+                <p className="font-serif text-4xl text-white mb-1">{item.stat}</p>
+                <p className="text-[9px] tracking-[0.22em] uppercase font-sans text-white/40">{item.label}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ── Dual Track Fork ──────────────────────────────────────────────── */}
-      <section className="py-0">
-        <div className="grid grid-cols-1 md:grid-cols-2 min-h-[70vh]">
-          {/* Weddings Track */}
-          <Link href="/weddings" className="group relative overflow-hidden flex items-end cursor-pointer">
-            <div className="absolute inset-0">
-              <img
-                src={WEDDINGS_IMG}
-                alt="Weddings at Rivers Lodge"
-                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/10 group-hover:from-black/70 transition-all duration-500" />
-            </div>
-            <div className="relative z-10 p-10 md:p-14 w-full">
-              <p className="text-[9px] tracking-[0.26em] uppercase font-sans text-white/50 mb-3">Track One</p>
-              <h2 className="font-serif text-4xl md:text-5xl text-white leading-tight mb-3">
-                Weddings<br /><span className="italic font-light">& Events</span>
-              </h2>
-              <p className="text-sm font-sans text-white/70 max-w-xs leading-relaxed mb-6">
-                A distinctive Kansas venue one hour from Kansas City. The barn, the river, the land — entirely yours for the weekend. Limited dates. Unlimited attention.
-              </p>
-              <span className="inline-flex items-center gap-2 text-xs tracking-[0.16em] uppercase font-sans text-white border-b border-white/40 pb-0.5 group-hover:border-white transition-colors">
-                Explore Weddings & Events
-              </span>
-            </div>
-          </Link>
-
-          {/* Membership Track */}
-          <Link href="/membership" className="group relative overflow-hidden flex items-end cursor-pointer">
-            <div className="absolute inset-0">
-              <img
-                src={MEMBERSHIP_IMG}
-                alt="Membership & Outdoors at Rivers Lodge"
-                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-black/15 group-hover:from-black/75 transition-all duration-500" />
-            </div>
-            <div className="relative z-10 p-10 md:p-14 w-full">
-              <p className="text-[9px] tracking-[0.26em] uppercase font-sans text-white/50 mb-3">Track Two</p>
-              <h2 className="font-serif text-4xl md:text-5xl text-white leading-tight mb-3">
-                Membership<br /><span className="italic font-light">& Outdoors</span>
-              </h2>
-              <p className="text-sm font-sans text-white/70 max-w-xs leading-relaxed mb-6">
-                10,000+ acres of managed Kansas hunting ground. Guided hunts. Private fisheries. A multi-generational membership built on conservation and tradition.
-              </p>
-              <span className="inline-flex items-center gap-2 text-xs tracking-[0.16em] uppercase font-sans text-white border-b border-white/40 pb-0.5 group-hover:border-white transition-colors">
-                Explore Membership
-              </span>
-            </div>
-          </Link>
+      {/* ── Dual Track Entry ───────────────────────────────────────────── */}
+      <section className="grid grid-cols-1 lg:grid-cols-2 min-h-[70vh]">
+        {/* Weddings & Events */}
+        <div className="relative overflow-hidden group">
+          <img
+            src={WEDDING_1}
+            alt="Weddings & Events at Rivers Lodge"
+            className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/20 to-black/70" />
+          <div className="relative z-10 h-full min-h-[400px] flex flex-col justify-end p-10 lg:p-14">
+            <p className="text-[9px] tracking-[0.26em] uppercase font-sans text-white/50 mb-3">Track One</p>
+            <h2 className="font-serif text-4xl md:text-5xl text-white mb-4 leading-tight">
+              Weddings<br /><span className="italic font-light">&amp; Events</span>
+            </h2>
+            <p className="text-sm font-sans text-white/75 mb-7 max-w-sm leading-relaxed">
+              A destination wedding venue unlike anything else in Kansas. Five distinct spaces, on-site lodging for your entire party, and a weekend experience that begins the moment guests arrive.
+            </p>
+            <Link
+              href="/weddings"
+              className="inline-flex items-center gap-3 text-xs tracking-[0.18em] uppercase font-sans text-white border-b border-white/40 pb-0.5 hover:border-white transition-colors w-fit"
+            >
+              Explore Weddings &amp; Events
+            </Link>
+          </div>
+        </div>
+        {/* Membership & Outdoors */}
+        <div className="relative overflow-hidden group">
+          <img
+            src={FIRE_PIT}
+            alt="Membership & Outdoors at Rivers Lodge Hunt Club"
+            className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/20 to-black/70" />
+          <div className="relative z-10 h-full min-h-[400px] flex flex-col justify-end p-10 lg:p-14">
+            <p className="text-[9px] tracking-[0.26em] uppercase font-sans text-white/50 mb-3">Track Two</p>
+            <h2 className="font-serif text-4xl md:text-5xl text-white mb-4 leading-tight">
+              Membership<br /><span className="italic font-light">&amp; Outdoors</span>
+            </h2>
+            <p className="text-sm font-sans text-white/75 mb-7 max-w-sm leading-relaxed">
+              A private hunt club on the Marais des Cygnes. 10,000+ acres of managed Kansas hunting ground, private fisheries, and a membership built for those who take the land seriously.
+            </p>
+            <Link
+              href="/membership"
+              className="inline-flex items-center gap-3 text-xs tracking-[0.18em] uppercase font-sans text-white border-b border-white/40 pb-0.5 hover:border-white transition-colors w-fit"
+            >
+              Explore Membership &amp; Outdoors
+            </Link>
+          </div>
         </div>
       </section>
 
-      {/* ── Estate Intro ─────────────────────────────────────────────────── */}
+      {/* ── The Estate ─────────────────────────────────────────────────── */}
       <section className="py-24 md:py-32 bg-background">
         <div className="max-w-7xl mx-auto px-6 lg:px-10">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-center">
             <div>
-              <p className="text-[10px] tracking-[0.24em] uppercase font-sans text-muted-foreground mb-4">The Marais des Cygnes</p>
-              <h2 className="font-serif text-4xl md:text-5xl text-foreground leading-tight mb-6">
-                Three hundred acres.<br />
-                <span className="italic">One river. Singular moments.</span>
+              <p className="text-[9px] tracking-[0.26em] uppercase font-sans text-muted-foreground mb-4">The Estate</p>
+              <h2 className="font-serif text-4xl md:text-5xl text-foreground mb-6 leading-tight">
+                300 acres on the<br /><span className="italic font-light">Marais des Cygnes</span>
               </h2>
-              <p className="text-base font-sans text-muted-foreground leading-relaxed mb-5">
-                Rivers Lodge is a working private estate — not a resort, not a venue catalog. The land has been tended with purpose: the water holds fish, the fields hold game, and the spaces hold the kind of gatherings that people talk about for the rest of their lives.
+              <p className="text-base font-sans text-muted-foreground leading-relaxed mb-6">
+                Rivers Lodge & Hunt Club sits on 300 acres of Kansas landscape along the Marais des Cygnes River in La Cygne, Kansas — one hour south of Kansas City. The estate comprises five distinct buildings, 16+ bedrooms, and grounds that move between open meadow, old-growth timber, and river bottom.
               </p>
               <p className="text-base font-sans text-muted-foreground leading-relaxed mb-8">
-                The estate sits roughly an hour south of Kansas City, close enough to reach on a Friday evening and far enough that it feels like a genuine departure.
+                It is a place built for two distinct purposes: hosting the most important days of people's lives, and providing a private outdoor retreat for those who hunt, fish, and want to be on the land.
               </p>
               <Link
                 href="/estate"
-                className="inline-flex items-center gap-2 text-xs tracking-[0.16em] uppercase font-sans font-medium text-foreground border-b border-foreground/30 pb-0.5 hover:border-foreground transition-colors"
+                className="inline-flex items-center gap-2 text-xs tracking-[0.16em] uppercase font-sans text-foreground border-b border-foreground/30 pb-0.5 hover:border-foreground transition-colors"
               >
                 Explore the Estate
               </Link>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-3">
               <div className="overflow-hidden aspect-[3/4]">
-                <img src={BARN_IMG} alt="Rivers Barn" className="w-full h-full object-cover hover:scale-105 transition-transform duration-700" />
+                <img src={AERIAL_RIVER} alt="Aerial view of the Marais des Cygnes river" className="w-full h-full object-cover hover:scale-105 transition-transform duration-700" />
               </div>
               <div className="overflow-hidden aspect-[3/4] mt-8">
-                <img src={RIVER_IMG} alt="The Marais des Cygnes" className="w-full h-full object-cover hover:scale-105 transition-transform duration-700" />
+                <img src={GROUNDS_1} alt="Estate grounds" className="w-full h-full object-cover hover:scale-105 transition-transform duration-700" />
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ── Spaces Preview ───────────────────────────────────────────────── */}
-      <section className="py-20 md:py-28 bg-secondary/40">
+      {/* ── Venues & Spaces ────────────────────────────────────────────── */}
+      <section className="py-24 md:py-32 bg-secondary/30">
         <div className="max-w-7xl mx-auto px-6 lg:px-10">
-          <div className="flex items-end justify-between mb-12">
-            <div>
-              <p className="text-[10px] tracking-[0.24em] uppercase font-sans text-muted-foreground mb-3">The Property</p>
-              <h2 className="font-serif text-3xl md:text-4xl text-foreground">Spaces that shape the experience</h2>
-            </div>
-            <Link href="/lodging" className="hidden md:inline-flex text-xs tracking-[0.14em] uppercase font-sans text-muted-foreground hover:text-foreground transition-colors border-b border-current pb-0.5">
-              All Spaces
-            </Link>
+          <div className="mb-14">
+            <p className="text-[9px] tracking-[0.26em] uppercase font-sans text-muted-foreground mb-3">Venues &amp; Spaces</p>
+            <h2 className="font-serif text-4xl md:text-5xl text-foreground">Five distinct spaces</h2>
           </div>
-
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[
-              { name: "Rivers Barn", desc: "Designed by a KC architect. 256 guests. Floor-to-ceiling windows, two fireplaces, indoor/outdoor bar.", img: BARN_IMG, href: "/venues/rivers-barn" },
-              { name: "The Lodge", desc: "5,200 sq ft. 4 bedrooms. Full kitchen, heated floors, the bar with a canoe on the ceiling.", img: LODGE_IMG, href: "/lodging/the-lodge" },
-              { name: "The River", desc: "The Marais des Cygnes moves slowly through 300 acres of timber, fields, and private land.", img: RIVER_IMG, href: "/estate" },
-            ].map((space) => (
-              <Link key={space.name} href={space.href} className="group block">
+              { name: "Rivers Barn", desc: "The centerpiece event venue. Soaring ceilings, exposed timber, and flexible floor plans for up to 220+ guests.", img: GROUNDS_2, href: "/venues" },
+              { name: "Clubhouse", desc: "A full bar, lounge seating, and indoor-outdoor flow. The social heart of the estate.", img: CLUBHOUSE_BAR, href: "/venues" },
+              { name: "River Lawn", desc: "Open-air ceremony and reception space on the banks of the Marais des Cygnes.", img: AERIAL_RIVER, href: "/venues" },
+            ].map((v) => (
+              <Link key={v.name} href={v.href} className="group block">
                 <div className="overflow-hidden aspect-[4/3] mb-4">
-                  <img
-                    src={space.img}
-                    alt={space.name}
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                  />
+                  <img src={v.img} alt={v.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
                 </div>
-                <h3 className="font-serif text-xl text-foreground mb-2">{space.name}</h3>
-                <p className="text-sm font-sans text-muted-foreground leading-relaxed">{space.desc}</p>
+                <h3 className="font-serif text-xl text-foreground mb-2">{v.name}</h3>
+                <p className="text-sm font-sans text-muted-foreground leading-relaxed">{v.desc}</p>
               </Link>
             ))}
           </div>
+          <div className="mt-10 text-center">
+            <Link href="/venues" className="inline-flex items-center justify-center px-8 py-3.5 border border-foreground/20 text-foreground text-xs tracking-[0.16em] uppercase font-sans hover:bg-foreground hover:text-background transition-colors">
+              View All Spaces
+            </Link>
+          </div>
         </div>
       </section>
 
-      {/* ── CTA Strip ────────────────────────────────────────────────────── */}
-      <section className="relative py-24 md:py-32 overflow-hidden">
+      {/* ── Lodging ────────────────────────────────────────────────────── */}
+      <section className="py-24 md:py-32 bg-background">
+        <div className="max-w-7xl mx-auto px-6 lg:px-10">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-center">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="overflow-hidden aspect-[3/4]">
+                <img src={INTERIOR_1} alt="Lodge interior" className="w-full h-full object-cover hover:scale-105 transition-transform duration-700" />
+              </div>
+              <div className="overflow-hidden aspect-[3/4] mt-8">
+                <img src={INTERIOR_2} alt="Riverhouse Suites" className="w-full h-full object-cover hover:scale-105 transition-transform duration-700" />
+              </div>
+            </div>
+            <div>
+              <p className="text-[9px] tracking-[0.26em] uppercase font-sans text-muted-foreground mb-4">On-Site Lodging</p>
+              <h2 className="font-serif text-4xl md:text-5xl text-foreground mb-6 leading-tight">
+                Stay the<br /><span className="italic font-light">whole weekend</span>
+              </h2>
+              <p className="text-base font-sans text-muted-foreground leading-relaxed mb-6">
+                With 16+ bedrooms across five distinct properties — The Lodge, Riverhouse Suites, The Annex & Bridal Suite, Ohana House, and The Farmhouse — your entire wedding party or hunting group can stay on the estate.
+              </p>
+              <p className="text-base font-sans text-muted-foreground leading-relaxed mb-8">
+                No hotels. No logistics. Just your people, on the land, for the whole weekend.
+              </p>
+              <Link
+                href="/lodging"
+                className="inline-flex items-center gap-2 text-xs tracking-[0.16em] uppercase font-sans text-foreground border-b border-foreground/30 pb-0.5 hover:border-foreground transition-colors"
+              >
+                View All Lodging
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Wedding Gallery Strip ───────────────────────────────────────── */}
+      <section className="py-20 bg-[oklch(0.13_0.008_66)] overflow-hidden">
+        <div className="max-w-7xl mx-auto px-6 lg:px-10 mb-10">
+          <p className="text-[9px] tracking-[0.26em] uppercase font-sans text-white/40 mb-3">Weddings at Rivers</p>
+          <h2 className="font-serif text-3xl md:text-4xl text-white italic font-light">
+            Every detail, considered.
+          </h2>
+        </div>
+        <div className="flex gap-3 overflow-x-auto px-6 lg:px-10 pb-2 scrollbar-hide">
+          {[WEDDING_1, WEDDING_2, WEDDING_3, GROUNDS_3, GROUNDS_1].map((img, i) => (
+            <div key={i} className="flex-none w-64 md:w-80 overflow-hidden aspect-[3/4]">
+              <img src={img} alt={`Rivers Lodge wedding ${i + 1}`} className="w-full h-full object-cover hover:scale-105 transition-transform duration-700" />
+            </div>
+          ))}
+        </div>
+        <div className="max-w-7xl mx-auto px-6 lg:px-10 mt-10">
+          <Link href="/weddings" className="inline-flex items-center justify-center px-8 py-3.5 border border-white/30 text-white text-xs tracking-[0.16em] uppercase font-sans hover:bg-white/10 transition-colors">
+            Explore Weddings
+          </Link>
+        </div>
+      </section>
+
+      {/* ── Membership CTA ─────────────────────────────────────────────── */}
+      <section className="relative py-28 overflow-hidden">
         <div className="absolute inset-0">
-          <img src={LODGE_IMG} alt="Rivers Lodge" className="w-full h-full object-cover" />
+          <img src={FIRE_PIT} alt="Rivers Lodge Hunt Club fire pit" className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-black/65" />
         </div>
-        <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-10 text-center">
-          <p className="text-[10px] tracking-[0.28em] uppercase font-sans text-white/50 mb-4">The best way to understand Rivers Lodge</p>
-          <h2 className="font-serif text-4xl md:text-5xl text-white mb-6 italic font-light">
-            Come walk the land.
+        <div className="relative z-10 max-w-3xl mx-auto px-6 text-center">
+          <p className="text-[9px] tracking-[0.28em] uppercase font-sans text-white/50 mb-5">Membership &amp; Outdoors</p>
+          <h2 className="font-serif text-4xl md:text-6xl text-white mb-6 leading-tight">
+            Private ground.<br /><span className="italic font-light">Private water.</span>
           </h2>
-          <p className="text-base font-sans text-white/70 max-w-lg mx-auto mb-10 leading-relaxed">
-            We offer private tours of the estate, the venues, and the grounds — no pressure, no presentation. Just the land.
+          <p className="text-base font-sans text-white/70 mb-10 leading-relaxed max-w-xl mx-auto">
+            Membership at Rivers Lodge Hunt Club provides access to 10,000+ acres of managed Kansas hunting ground, private fisheries on the Marais des Cygnes, and a community of people who take the land seriously.
+          </p>
+          <Link
+            href="/membership"
+            className="inline-flex items-center justify-center px-10 py-4 bg-white text-[oklch(0.15_0.008_66)] text-xs tracking-[0.18em] uppercase font-sans font-medium hover:bg-white/90 transition-colors"
+          >
+            Learn About Membership
+          </Link>
+        </div>
+      </section>
+
+      {/* ── Book a Tour ────────────────────────────────────────────────── */}
+      <section className="py-20 bg-background text-center">
+        <div className="max-w-lg mx-auto px-6">
+          <h2 className="font-serif text-3xl md:text-4xl text-foreground mb-5 italic font-light">
+            Come see it for yourself.
+          </h2>
+          <p className="text-sm font-sans text-muted-foreground mb-8 leading-relaxed">
+            Schedule a private tour of the estate. We'll walk the grounds, show you the spaces, and answer every question.
           </p>
           <Link
             href="/contact"
-            className="inline-flex items-center justify-center px-10 py-4 bg-white text-[oklch(0.15_0.008_66)] text-xs tracking-[0.18em] uppercase font-sans font-medium hover:bg-white/90 transition-colors"
+            className="inline-flex items-center justify-center px-10 py-4 bg-foreground text-background text-xs tracking-[0.18em] uppercase font-sans font-medium hover:opacity-90 transition-opacity"
           >
-            Book a Private Tour
+            Book a Tour
           </Link>
         </div>
       </section>

@@ -1,11 +1,11 @@
 import { Link } from "wouter";
 import PublicLayout from "@/components/PublicLayout";
 
-const HERO = "https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=1920&q=80&auto=format&fit=crop";
-const BARN = "https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?w=900&q=80&auto=format&fit=crop";
-const CEREMONY = "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=900&q=80&auto=format&fit=crop";
-const RECEPTION = "https://images.unsplash.com/photo-1478146059778-26028b07395a?w=900&q=80&auto=format&fit=crop";
-const LODGE_ROOM = "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=700&q=80&auto=format&fit=crop";
+const HERO = "/manus-storage/UebeleinWed335_e6a9084a.jpg";
+const BARN = "/manus-storage/Rivers_SEPT2022_-109_c2b5fea5.jpg";
+const CEREMONY = "/manus-storage/UebeleinWed405_59f02b8c.jpg";
+const RECEPTION = "/manus-storage/UebeleinWed557_b0b3b0ff.jpg";
+const LODGE_ROOM = "/manus-storage/20200515-3M4A7035_5457c1af.jpg";
 
 const timeline = [
   { day: "Friday Evening", title: "Welcome & Rehearsal", desc: "Guests arrive and settle into The Lodge, Riverhouse Suites, or The Annex. Rehearsal dinner at The Clubhouse with drinks on the pond deck." },

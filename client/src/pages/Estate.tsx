@@ -1,11 +1,11 @@
 import { Link } from "wouter";
 import PublicLayout from "@/components/PublicLayout";
 
-const HERO = "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?w=1920&q=80&auto=format&fit=crop";
-const AERIAL = "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1200&q=80&auto=format&fit=crop";
-const RIVER = "https://images.unsplash.com/photo-1448375240586-882707db888b?w=900&q=80&auto=format&fit=crop";
-const FIELD = "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=900&q=80&auto=format&fit=crop";
-const TIMBER = "https://images.unsplash.com/photo-1448375240586-882707db888b?w=900&q=80&auto=format&fit=crop";
+const HERO = "/manus-storage/Rivers_SEPT2022_-253-1_f15787e1.jpg";
+const AERIAL = "/manus-storage/DJI_0017_538feef1.jpg";
+const RIVER = "/manus-storage/Rivers_SEPT2022_-241_9b9f5433.jpg";
+const FIELD = "/manus-storage/Rivers_May2023-8_d07307f4.jpg";
+const TIMBER = "/manus-storage/Rivers_SEPT2022_-105_85069d29.jpg";
 
 const stats = [
   { value: "300+", label: "Acres", sub: "of managed Kansas landscape" },
