@@ -2,8 +2,8 @@ import { Link } from "wouter";
 import PublicLayout from "@/components/PublicLayout";
 
 // Real estate photography — correctly matched to spaces
-const HERO = "/manus-storage/Rivers_SEPT2022_-134_157d1be5.jpg";   // Aerial of full estate grounds
-const AERIAL_RIVER = "/manus-storage/DJI_0017_538feef1.jpg";       // Drone aerial of river and property
+const HERO = "/manus-storage/DJI_0017_538feef1.jpg";              // Wide aerial drone shot — full property, river, lodge, lawn
+const AERIAL_RIVER = "/manus-storage/Rivers_SEPT2022_-134_157d1be5.jpg"; // Fire pit by the river — estate grounds
 const LODGE_AERIAL = "/manus-storage/974A9398edit_294e71ff.jpg";   // Exterior of The Lodge building
 const FIRE_PIT = "/manus-storage/Rivers_SEPT2022_-253-1_f15787e1.jpg"; // Estate grounds wide shot
 const CLUBHOUSE_BAR = "/manus-storage/3C0A0304_cb66bc23.jpg";      // Clubhouse interior

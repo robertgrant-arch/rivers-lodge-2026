@@ -109,3 +109,14 @@
 - [x] Re-audit Annex & Bridal Suite and Ohana House images — use neutral non-mislabelled imagery since no dedicated photos exist in the collection
 - [x] Read and verify Corporate.tsx, Estate.tsx, Membership.tsx, Hunt.tsx, Fish.tsx image assignments against the photo catalog
 - [x] Final browser QA pass on all updated pages after remapping
+
+## Phase 14: Weddings Page Image Fixes
+
+- [x] Fix Rivers Barn card on /weddings: replace Ohana House image with actual Rivers Barn exterior (IMG_0646)
+- [x] Fix River Lawn card on /weddings: replace wedding ceremony photo with actual river/grounds landscape photo
+- [x] Fix homepage hero: use wide aerial/zoomed-out estate shot (DJI_0017 drone) instead of fire pit close-up
+
+## Phase 14 Cleanup
+
+- [x] Fix RIVER_LAWN on /weddings: now uses Rivers_SEPT2022_-253-1 (aerial sunset showing barn, ceremony area, grounds, pond)
+- [x] Browser QA pass on /weddings after image fixes

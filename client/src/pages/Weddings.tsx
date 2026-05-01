@@ -2,9 +2,10 @@ import { Link } from "wouter";
 import PublicLayout from "@/components/PublicLayout";
 
 const HERO = "/manus-storage/UebeleinWed453_7f9cd26b.jpg";        // couple kissing on ceremony deck
-const BARN = "/manus-storage/6M9A3239_d4c999f4.jpg";              // Rivers Barn interior event setup
+const BARN = "/manus-storage/IMG_0646_6bb80f84.jpg";              // Rivers Barn exterior at dusk — the actual barn building
 const CEREMONY = "/manus-storage/UebeleinWed335_e6a9084a.jpg";    // outdoor ceremony on deck with water
 const RECEPTION = "/manus-storage/UebeleinWed629_ebea0f99.jpg";   // reception tables inside barn
+const RIVER_LAWN = "/manus-storage/Rivers_SEPT2022_-253-1_f15787e1.jpg"; // aerial sunset showing barn, ceremony area, grounds, pond — perfect for River Lawn card
 const LODGE_ROOM = "/manus-storage/974A8419edit_f37de96e.jpg";    // Lodge living room antler chandelier
 
 const timeline = [
@@ -18,7 +19,7 @@ const timeline = [
 const venues = [
   { name: "Rivers Barn", capacity: "Up to 256 guests", type: "Indoor / Outdoor", desc: "Designed by a prominent Kansas City architect. Modern farmhouse with two large patios, two fireplaces, air-conditioning, an indoor/outdoor bar, and separate luxury bathrooms.", href: "/venues#rivers-barn", img: BARN },
   { name: "Clubhouse", capacity: "Intimate events", type: "Indoor / Outdoor", desc: "Often used as a rehearsal dinner space, cocktail hour space, or intimate wedding ceremony location. A warm, character-filled gathering point.", href: "/venues#clubhouse", img: CEREMONY },
-  { name: "River Lawn", capacity: "Up to 200 guests", type: "Outdoor Ceremony", desc: "A level grass expanse overlooking the Marais des Cygnes. Open sky, the river, and nothing competing with the moment.", href: "/venues#river-lawn", img: RECEPTION },
+  { name: "River Lawn", capacity: "Up to 200 guests", type: "Outdoor Ceremony", desc: "A level grass expanse overlooking the Marais des Cygnes. Open sky, the river, and nothing competing with the moment.", href: "/venues#river-lawn", img: RIVER_LAWN },
 ];
 
 const lodging = [
