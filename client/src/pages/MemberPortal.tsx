@@ -5,7 +5,7 @@ import { getLoginUrl } from "@/const";
 import { toast } from "sonner";
 import PublicLayout from "@/components/PublicLayout";
 
-type Tab = "dashboard" | "calendar" | "updates" | "messages";
+type Tab = "dashboard" | "calendar" | "request" | "updates" | "messages";
 
 // ─── Calendar helpers ─────────────────────────────────────────────────────────
 const MONTH_NAMES = ["January","February","March","April","May","June","July","August","September","October","November","December"];
@@ -147,9 +147,25 @@ export default function MemberPortal() {
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
   });
 
+  const submitRequest = trpc.booking.requests.submit.useMutation({
+    onSuccess: () => {
+      toast.success("Stay request submitted. Our concierge team will follow up within 24 hours.");
+      setRequestForm({ businessLine: "member_stay", requestedStart: "", requestedEnd: "", guestCount: "", specialRequests: "" });
+    },
+    onError: (err) => toast.error(err.message),
+  });
+  const [requestForm, setRequestForm] = useState({
+    businessLine: "member_stay" as "member_stay" | "hunt" | "fish" | "hunt_and_fish",
+    requestedStart: "",
+    requestedEnd: "",
+    guestCount: "",
+    specialRequests: "",
+  });
+
   const tabs: { key: Tab; label: string }[] = [
     { key: "dashboard", label: "Dashboard" },
     { key: "calendar", label: "Calendar" },
+    { key: "request", label: "Request a Stay" },
     { key: "updates", label: "Seasonal Updates" },
     { key: "messages", label: "Concierge" },
   ];
@@ -372,6 +388,100 @@ export default function MemberPortal() {
                   <div className="text-center py-10 text-muted-foreground font-sans text-sm">No messages yet.</div>
                 )}
               </div>
+            </div>
+          )}
+          {tab === "request" && (
+            <div className="max-w-2xl mx-auto">
+              <h2 className="font-serif text-3xl text-foreground mb-3">Request a Stay</h2>
+              <p className="text-sm font-sans text-muted-foreground mb-8 leading-relaxed">
+                Submit your preferred dates and activity type. Our concierge team will confirm availability and reach out within 24 hours.
+              </p>
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (!user) return;
+                  submitRequest.mutate({
+                    businessLine: requestForm.businessLine,
+                    contactName: user.name ?? "Member",
+                    contactEmail: user.email ?? "",
+                    requestedStart: requestForm.requestedStart,
+                    requestedEnd: requestForm.requestedEnd,
+                    guestCount: requestForm.guestCount ? parseInt(requestForm.guestCount) : undefined,
+                    specialRequests: requestForm.specialRequests || undefined,
+                    eventType: requestForm.businessLine,
+                  });
+                }}
+                className="flex flex-col gap-5"
+              >
+                <div>
+                  <label className="block text-[10px] tracking-[0.18em] uppercase font-sans text-muted-foreground mb-2">Activity Type *</label>
+                  <select
+                    required
+                    value={requestForm.businessLine}
+                    onChange={(e) => setRequestForm({ ...requestForm, businessLine: e.target.value as typeof requestForm.businessLine })}
+                    className="w-full border border-border bg-background px-4 py-3 text-sm font-sans text-foreground focus:outline-none focus:border-foreground transition-colors"
+                  >
+                    <option value="member_stay">Lodging Stay</option>
+                    <option value="hunt">Hunting</option>
+                    <option value="fish">Fishing</option>
+                    <option value="hunt_and_fish">Hunt &amp; Fish Package</option>
+                  </select>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[10px] tracking-[0.18em] uppercase font-sans text-muted-foreground mb-2">Arrival Date *</label>
+                    <input
+                      type="date"
+                      required
+                      value={requestForm.requestedStart}
+                      onChange={(e) => setRequestForm({ ...requestForm, requestedStart: e.target.value })}
+                      className="w-full border border-border bg-background px-4 py-3 text-sm font-sans text-foreground focus:outline-none focus:border-foreground transition-colors"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] tracking-[0.18em] uppercase font-sans text-muted-foreground mb-2">Departure Date *</label>
+                    <input
+                      type="date"
+                      required
+                      value={requestForm.requestedEnd}
+                      onChange={(e) => setRequestForm({ ...requestForm, requestedEnd: e.target.value })}
+                      className="w-full border border-border bg-background px-4 py-3 text-sm font-sans text-foreground focus:outline-none focus:border-foreground transition-colors"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-[10px] tracking-[0.18em] uppercase font-sans text-muted-foreground mb-2">Number of Guests</label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="30"
+                    value={requestForm.guestCount}
+                    onChange={(e) => setRequestForm({ ...requestForm, guestCount: e.target.value })}
+                    className="w-full border border-border bg-background px-4 py-3 text-sm font-sans text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground transition-colors"
+                    placeholder="e.g. 4"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] tracking-[0.18em] uppercase font-sans text-muted-foreground mb-2">Special Requests or Notes</label>
+                  <textarea
+                    value={requestForm.specialRequests}
+                    onChange={(e) => setRequestForm({ ...requestForm, specialRequests: e.target.value })}
+                    rows={4}
+                    className="w-full border border-border bg-background px-4 py-3 text-sm font-sans text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground transition-colors resize-none"
+                    placeholder="Preferred lodging unit, dietary needs, guide preferences..."
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={submitRequest.isPending}
+                  className="w-full py-4 bg-foreground text-background text-xs tracking-[0.18em] uppercase font-sans font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
+                >
+                  {submitRequest.isPending ? "Submitting..." : "Submit Request"}
+                </button>
+                <p className="text-[10px] font-sans text-muted-foreground text-center">
+                  Our concierge team will confirm availability and contact you within 24 hours.
+                </p>
+              </form>
             </div>
           )}
         </div>

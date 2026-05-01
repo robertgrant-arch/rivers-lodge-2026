@@ -57,24 +57,28 @@ export default function Weddings() {
   return (
     <PublicLayout>
       {/* Hero */}
-      <section className="relative h-[85vh] min-h-[500px] flex items-end pb-20 overflow-hidden">
+      <section className="relative h-[90vh] min-h-[520px] flex items-end pb-20 overflow-hidden">
         <div className="absolute inset-0">
           <img src={HERO} alt="Weddings at Rivers Lodge" className="w-full h-full object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/35 to-black/70" />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/5 via-black/20 to-black/80" />
         </div>
-        <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-10 w-full">
-          <p className="text-[10px] tracking-[0.28em] uppercase font-sans text-white/60 mb-4">Weddings at Rivers Lodge</p>
-          <h1 className="font-serif text-5xl md:text-7xl text-white leading-[0.95] mb-5" style={{ textShadow: "0 2px 30px rgba(0,0,0,0.35)" }}>
-            Your wedding,<br /><span className="italic font-light">without compromise.</span>
+        <div className="relative z-10 max-w-[1440px] mx-auto px-5 lg:px-10 w-full">
+          <div className="h-px w-10 mb-6" style={{ backgroundColor: "oklch(0.70 0.060 50)" }} />
+          <p className="eyebrow text-[oklch(0.94_0.008_78)/55] mb-4">Weddings at Rivers Lodge</p>
+          <h1
+            className="font-serif font-light italic text-white leading-tight mb-6"
+            style={{ fontSize: "clamp(2.5rem,6vw,5.5rem)" }}
+          >
+            Your wedding,<br />without compromise.
           </h1>
-          <p className="text-base font-sans text-white/80 max-w-lg mb-8 leading-relaxed">
+          <p className="text-[oklch(0.94_0.008_78)/75] font-sans text-base max-w-lg mb-10 leading-relaxed">
             An estate that holds the day as beautifully as you imagined it. A private weekend, not just a wedding day.
           </p>
-          <div className="flex flex-col sm:flex-row gap-3">
-            <Link href="/contact?type=wedding" className="inline-flex items-center justify-center px-8 py-3.5 bg-white text-[oklch(0.15_0.008_66)] text-xs tracking-[0.16em] uppercase font-sans font-medium hover:bg-white/90 transition-colors">
+          <div className="flex flex-col sm:flex-row gap-4">
+            <Link href="/contact?type=wedding" className="btn-primary">
               Begin Your Inquiry
             </Link>
-            <Link href="/gallery" className="inline-flex items-center justify-center px-8 py-3.5 border border-white text-white text-xs tracking-[0.16em] uppercase font-sans font-medium hover:bg-white/10 transition-colors">
+            <Link href="/gallery" className="btn-ghost">
               View Gallery
             </Link>
           </div>
@@ -82,7 +86,7 @@ export default function Weddings() {
       </section>
 
       {/* Intro */}
-      <section className="py-24 md:py-32 bg-background">
+      <section className="section bg-background">
         <div className="max-w-7xl mx-auto px-6 lg:px-10">
           <div className="max-w-2xl">
             <p className="text-[10px] tracking-[0.24em] uppercase font-sans text-muted-foreground mb-4">The Experience</p>
@@ -103,7 +107,7 @@ export default function Weddings() {
       </section>
 
       {/* Weekend Timeline */}
-      <section className="py-20 md:py-28 bg-secondary/40">
+      <section className="section bg-[oklch(0.115_0.007_64)]">
         <div className="max-w-7xl mx-auto px-6 lg:px-10">
           <div className="mb-12">
             <p className="text-[10px] tracking-[0.24em] uppercase font-sans text-muted-foreground mb-3">Your Weekend</p>
@@ -131,7 +135,7 @@ export default function Weddings() {
       </section>
 
       {/* Venue Spaces */}
-      <section className="py-24 md:py-32 bg-background">
+      <section className="section bg-background">
         <div className="max-w-7xl mx-auto px-6 lg:px-10">
           <div className="flex items-end justify-between mb-12">
             <div>
@@ -162,7 +166,7 @@ export default function Weddings() {
       </section>
 
       {/* On-site Lodging */}
-      <section className="py-20 md:py-28 bg-[oklch(0.13_0.008_66)]">
+      <section className="section bg-[oklch(0.115_0.007_64)]">
         <div className="max-w-7xl mx-auto px-6 lg:px-10">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
             <div>
@@ -193,7 +197,7 @@ export default function Weddings() {
       </section>
 
       {/* Inquiry CTA */}
-      <section className="py-24 md:py-32 bg-background">
+      <section className="section bg-background">
         <div className="max-w-7xl mx-auto px-6 lg:px-10 text-center">
           <p className="text-[10px] tracking-[0.24em] uppercase font-sans text-muted-foreground mb-4">Ready to Begin?</p>
           <h2 className="font-serif text-4xl md:text-5xl text-foreground mb-6 italic font-light">

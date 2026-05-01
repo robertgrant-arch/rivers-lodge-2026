@@ -36,12 +36,12 @@ export default function Hunt() {
   return (
     <PublicLayout>
       {/* Hero */}
-      <section className="relative h-[75vh] min-h-[480px] flex items-end pb-20 overflow-hidden">
+      <section className="relative h-[85vh] min-h-[520px] flex items-end pb-20 overflow-hidden">
         <div className="absolute inset-0">
           <img src={HERO} alt="Hunting at Rivers Lodge" className="w-full h-full object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/40 to-black/75" />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/5 via-black/20 to-black/80" />
         </div>
-        <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-10 w-full">
+        <div className="relative z-10 max-w-[1440px] mx-auto px-5 lg:px-10 w-full">
           <p className="text-[10px] tracking-[0.28em] uppercase font-sans text-white/60 mb-4">Hunt</p>
           <h1 className="font-serif text-5xl md:text-7xl text-white leading-[0.95] mb-5" style={{ textShadow: "0 2px 30px rgba(0,0,0,0.35)" }}>
             10,000+ acres.<br /><span className="italic font-light">Private ground.</span>
@@ -57,8 +57,8 @@ export default function Hunt() {
 
       {/* Species */}
       {species.map((s, i) => (
-        <section key={s.name} className={`py-20 md:py-28 ${i % 2 === 0 ? "bg-background" : "bg-secondary/40"}`}>
-          <div className="max-w-7xl mx-auto px-6 lg:px-10">
+        <section key={s.name} className={`section ${i % 2 === 0 ? "bg-background" : "bg-[oklch(0.115_0.007_64)]"}`}>
+          <div className="max-w-[1440px] mx-auto px-5 lg:px-10">
             <div className={`grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center ${i % 2 !== 0 ? "lg:grid-flow-dense" : ""}`}>
               <div className={`overflow-hidden aspect-[4/3] ${i % 2 !== 0 ? "lg:col-start-2" : ""}`}>
                 <img src={s.img} alt={s.name} className="w-full h-full object-cover hover:scale-105 transition-transform duration-700" />
@@ -83,7 +83,7 @@ export default function Hunt() {
 
       {/* Sporting Clays */}
       <section id="clays" className="py-20 md:py-28 bg-[oklch(0.13_0.008_66)]">
-        <div className="max-w-7xl mx-auto px-6 lg:px-10">
+        <div className="max-w-[1440px] mx-auto px-5 lg:px-10">
           <div className="max-w-2xl">
             <p className="text-[10px] tracking-[0.24em] uppercase font-sans text-white/40 mb-4">Year-Round</p>
             <h2 className="font-serif text-3xl md:text-4xl text-white mb-6">Sporting Clays</h2>
@@ -100,7 +100,7 @@ export default function Hunt() {
       {/* Hunt Reports from CMS */}
       {huntReports.data && huntReports.data.length > 0 && (
         <section className="py-20 md:py-28 bg-secondary/40">
-          <div className="max-w-7xl mx-auto px-6 lg:px-10">
+          <div className="max-w-[1440px] mx-auto px-5 lg:px-10">
             <div className="mb-10">
               <p className="text-[10px] tracking-[0.24em] uppercase font-sans text-muted-foreground mb-3">From the Field</p>
               <h2 className="font-serif text-3xl md:text-4xl text-foreground">Recent Hunt Reports</h2>

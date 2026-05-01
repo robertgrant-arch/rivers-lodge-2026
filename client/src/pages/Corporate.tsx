@@ -38,27 +38,31 @@ export default function Corporate() {
   return (
     <PublicLayout>
       {/* Hero */}
-      <section className="relative h-[75vh] min-h-[480px] flex items-end pb-20 overflow-hidden">
+      <section className="relative h-[85vh] min-h-[520px] flex items-end pb-20 overflow-hidden">
         <div className="absolute inset-0">
           <img src={HERO} alt="Corporate events at Rivers Lodge" className="w-full h-full object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/40 to-black/72" />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/5 via-black/20 to-black/80" />
         </div>
-        <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-10 w-full">
-          <p className="text-[10px] tracking-[0.28em] uppercase font-sans text-white/60 mb-4">Corporate Outings & Events</p>
-          <h1 className="font-serif text-5xl md:text-7xl text-white leading-[0.95] mb-5" style={{ textShadow: "0 2px 30px rgba(0,0,0,0.35)" }}>
-            Elevate your<br /><span className="italic font-light">next event.</span>
+        <div className="relative z-10 max-w-[1440px] mx-auto px-5 lg:px-10 w-full">
+          <div className="h-px w-10 mb-6" style={{ backgroundColor: "oklch(0.70 0.060 50)" }} />
+          <p className="eyebrow text-[oklch(0.94_0.008_78)/55] mb-4">Corporate Outings &amp; Events</p>
+          <h1
+            className="font-serif font-light italic text-white leading-tight mb-6"
+            style={{ fontSize: "clamp(2.5rem,6vw,5.5rem)" }}
+          >
+            Elevate your<br />next event.
           </h1>
-          <p className="text-base font-sans text-white/80 max-w-lg mb-8 leading-relaxed">
+          <p className="text-[oklch(0.94_0.008_78)/75] font-sans text-base max-w-lg mb-10 leading-relaxed">
             From executive retreats to company outings, Rivers Lodge provides a setting that no hotel ballroom can replicate.
           </p>
-          <Link href="/contact?type=corporate" className="inline-flex items-center justify-center px-8 py-3.5 bg-white text-[oklch(0.15_0.008_66)] text-xs tracking-[0.16em] uppercase font-sans font-medium hover:bg-white/90 transition-colors">
+          <Link href="/contact?type=corporate" className="btn-primary">
             Request a Proposal
           </Link>
         </div>
       </section>
 
       {/* Intro */}
-      <section className="py-24 md:py-32 bg-background">
+      <section className="section bg-background">
         <div className="max-w-7xl mx-auto px-6 lg:px-10">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
             <div>
@@ -89,7 +93,7 @@ export default function Corporate() {
       </section>
 
       {/* Packages */}
-      <section className="py-20 md:py-28 bg-secondary/40">
+      <section className="section bg-[oklch(0.115_0.007_64)]">
         <div className="max-w-7xl mx-auto px-6 lg:px-10">
           <div className="mb-12">
             <p className="text-[10px] tracking-[0.24em] uppercase font-sans text-muted-foreground mb-3">Event Packages</p>
@@ -118,7 +122,7 @@ export default function Corporate() {
       </section>
 
       {/* CTA */}
-      <section className="py-20 bg-[oklch(0.13_0.008_66)] text-center">
+      <section className="section bg-[oklch(0.115_0.007_64)] text-center">
         <div className="max-w-xl mx-auto px-6">
           <h2 className="font-serif text-3xl md:text-4xl text-white mb-5 italic font-light">
             Let's plan your event.

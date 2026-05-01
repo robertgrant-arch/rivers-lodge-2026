@@ -40,24 +40,28 @@ export default function Estate() {
   return (
     <PublicLayout>
       {/* Hero */}
-      <section className="relative h-[80vh] min-h-[500px] flex items-end pb-20 overflow-hidden">
+      <section className="relative h-[85vh] min-h-[520px] flex items-end pb-20 overflow-hidden">
         <div className="absolute inset-0">
           <img src={HERO} alt="The Rivers Lodge estate" className="w-full h-full object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/35 to-black/72" />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/5 via-black/20 to-black/80" />
         </div>
-        <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-10 w-full">
-          <p className="text-[10px] tracking-[0.28em] uppercase font-sans text-white/60 mb-4">The Estate</p>
-          <h1 className="font-serif text-5xl md:text-7xl text-white leading-[0.95] mb-5" style={{ textShadow: "0 2px 30px rgba(0,0,0,0.35)" }}>
-            Three hundred acres.<br /><span className="italic font-light">One river.</span>
+        <div className="relative z-10 max-w-[1440px] mx-auto px-5 lg:px-10 w-full">
+          <div className="gold-rule" />
+          <p className="eyebrow text-[oklch(0.94_0.008_78)/55] mb-4">The Estate</p>
+          <h1
+            className="font-serif font-light italic text-white leading-tight mb-6"
+            style={{ fontSize: "clamp(2.5rem,6vw,5.5rem)" }}
+          >
+            Three hundred acres.<br />One river.
           </h1>
-          <p className="text-base font-sans text-white/80 max-w-lg leading-relaxed">
+          <p className="text-[oklch(0.94_0.008_78)/75] font-sans text-base max-w-lg leading-relaxed">
             A private estate on the Marais des Cygnes — an hour south of Kansas City, a world apart from everything else.
           </p>
         </div>
       </section>
 
       {/* Stats */}
-      <section className="bg-[oklch(0.13_0.008_66)] py-12 md:py-16">
+      <section className="bg-[oklch(0.115_0.007_64)] py-12 md:py-16">
         <div className="max-w-7xl mx-auto px-6 lg:px-10">
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-8">
             {stats.map((s) => (

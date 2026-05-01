@@ -1,84 +1,149 @@
 import { Link } from "wouter";
 
+const weddingsLinks = [
+  { label: "Weddings", href: "/weddings" },
+  { label: "Corporate Outings", href: "/corporate" },
+  { label: "Lodging & Spaces", href: "/lodging" },
+  { label: "Venue Spaces", href: "/venues" },
+  { label: "Gallery", href: "/gallery" },
+];
+
+const membershipLinks = [
+  { label: "Hunt", href: "/hunt" },
+  { label: "Fish", href: "/fish" },
+  { label: "Membership", href: "/membership" },
+  { label: "The Estate", href: "/estate" },
+  { label: "Apply", href: "/membership#apply" },
+];
+
+const contactLinks = [
+  { label: "Contact Us", href: "/contact" },
+  { label: "Member Login", href: "/portal" },
+  { label: "Privacy Policy", href: "/contact" },
+];
+
 export default function PublicFooter() {
   return (
-    <footer className="bg-[oklch(0.11_0.007_64)] text-[oklch(0.75_0.010_78)]">
-      <div className="max-w-7xl mx-auto px-6 lg:px-10 py-16 md:py-20">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-12 md:gap-8">
-          {/* Brand */}
-          <div className="md:col-span-1">
-            <div className="mb-4">
-              <div className="font-serif text-2xl text-[oklch(0.95_0.006_80)] leading-tight">Rivers Lodge</div>
-              <div className="text-[10px] tracking-[0.22em] uppercase font-sans font-light opacity-60 mt-0.5">& Hunt Club</div>
+    <footer className="bg-[oklch(0.075_0.005_64)] text-[oklch(0.55_0.012_70)]">
+      {/* Gold rule at top */}
+      <div className="h-px bg-[oklch(0.72_0.095_78)/20]" />
+
+      <div className="max-w-[1440px] mx-auto px-5 lg:px-10 pt-16 pb-10 md:pt-20 md:pb-12">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-10 md:gap-8 pb-14 md:pb-16 border-b border-[oklch(1_0_0/0.06)]">
+
+          {/* ── Brand ──────────────────────────────────────────────────── */}
+          <div className="col-span-2 md:col-span-1">
+            <div className="mb-5">
+              <div className="font-serif text-[1.375rem] text-[oklch(0.94_0.008_78)] leading-tight tracking-wide">
+                Rivers Lodge
+              </div>
+              <div className="text-[9px] tracking-[0.24em] uppercase font-sans font-light opacity-50 mt-1">
+                &amp; Hunt Club
+              </div>
             </div>
-            <p className="text-xs font-sans leading-relaxed opacity-70 max-w-xs">
-              A private estate on the Marais des Cygnes. 300 acres of Kansas landscape for weddings, events, and exclusive outdoor membership.
+            <p className="text-[12px] font-sans leading-relaxed opacity-70 max-w-[220px] mb-5">
+              A private estate on the Marais des Cygnes. Destination weddings, exclusive membership, and the finest private hunting and fishing in the Midwest.
             </p>
-            <p className="text-xs font-sans mt-4 opacity-50">
+            <address className="not-italic text-[11px] font-sans leading-relaxed opacity-50 mb-5">
               18103 E 2300 Ln<br />
               La Cygne, KS 66040
-            </p>
+            </address>
+            {/* Social */}
+            <div className="flex items-center gap-4">
+              <a
+                href="https://www.instagram.com/theriverslodge"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Instagram"
+                className="text-[oklch(0.55_0.012_70)] hover:text-[oklch(0.72_0.095_78)] transition-colors"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+                  <circle cx="12" cy="12" r="4"/>
+                  <circle cx="17.5" cy="6.5" r="0.5" fill="currentColor" stroke="none"/>
+                </svg>
+              </a>
+              <a
+                href="https://www.facebook.com/theriverslodge"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Facebook"
+                className="text-[oklch(0.55_0.012_70)] hover:text-[oklch(0.72_0.095_78)] transition-colors"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>
+                </svg>
+              </a>
+            </div>
           </div>
 
-          {/* Weddings & Events */}
+          {/* ── Weddings & Events ─────────────────────────────────────── */}
           <div>
-            <h4 className="text-[10px] tracking-[0.22em] uppercase font-sans font-medium text-[oklch(0.95_0.006_80)] mb-4">Weddings & Events</h4>
-            <nav className="flex flex-col gap-2.5">
-              {[
-                { label: "Weddings", href: "/weddings" },
-                { label: "Corporate & Events", href: "/corporate" },
-                { label: "Lodging & Spaces", href: "/lodging" },
-                { label: "Venue Spaces", href: "/venues" },
-                { label: "Book a Tour", href: "/contact" },
-              ].map((item) => (
-                <Link key={item.href} href={item.href} className="text-xs font-sans hover:text-[oklch(0.95_0.006_80)] transition-colors">
+            <h4 className="text-[10px] tracking-[0.22em] uppercase font-sans font-medium text-[oklch(0.94_0.008_78)] mb-5">
+              Weddings &amp; Events
+            </h4>
+            <nav className="flex flex-col gap-3">
+              {weddingsLinks.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="text-[12px] font-sans hover:text-[oklch(0.70_0.060_50)] transition-colors"
+                >
                   {item.label}
                 </Link>
               ))}
             </nav>
           </div>
 
-          {/* Membership */}
+          {/* ── Membership & Outdoors ─────────────────────────────────── */}
           <div>
-            <h4 className="text-[10px] tracking-[0.22em] uppercase font-sans font-medium text-[oklch(0.95_0.006_80)] mb-4">Membership & Outdoors</h4>
-            <nav className="flex flex-col gap-2.5">
-              {[
-                { label: "Membership", href: "/membership" },
-                { label: "Hunt", href: "/hunt" },
-                { label: "Fish & Sporting Clays", href: "/hunt" },
-                { label: "The Estate", href: "/estate" },
-                { label: "Apply", href: "/membership#apply" },
-              ].map((item) => (
-                <Link key={item.href} href={item.href} className="text-xs font-sans hover:text-[oklch(0.95_0.006_80)] transition-colors">
+            <h4 className="text-[10px] tracking-[0.22em] uppercase font-sans font-medium text-[oklch(0.94_0.008_78)] mb-5">
+              Membership &amp; Outdoors
+            </h4>
+            <nav className="flex flex-col gap-3">
+              {membershipLinks.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="text-[12px] font-sans hover:text-[oklch(0.58_0.065_145)] transition-colors"
+                >
                   {item.label}
                 </Link>
               ))}
             </nav>
           </div>
 
-          {/* Contact */}
+          {/* ── Contact & Legal ───────────────────────────────────────── */}
           <div>
-            <h4 className="text-[10px] tracking-[0.22em] uppercase font-sans font-medium text-[oklch(0.95_0.006_80)] mb-4">Contact</h4>
-            <nav className="flex flex-col gap-2.5">
-              {[
-                { label: "General Inquiry", href: "/contact" },
-                { label: "Gallery", href: "/gallery" },
-                { label: "Member Login", href: "/portal" },
-              ].map((item) => (
-                <Link key={item.href} href={item.href} className="text-xs font-sans hover:text-[oklch(0.95_0.006_80)] transition-colors">
+            <h4 className="text-[10px] tracking-[0.22em] uppercase font-sans font-medium text-[oklch(0.94_0.008_78)] mb-5">
+              Contact &amp; Legal
+            </h4>
+            <nav className="flex flex-col gap-3">
+              {contactLinks.map((item) => (
+                <Link
+                  key={item.label}
+                  href={item.href}
+                  className="text-[12px] font-sans hover:text-[oklch(0.94_0.008_78)] transition-colors"
+                >
                   {item.label}
                 </Link>
               ))}
             </nav>
+            <div className="mt-6 pt-5 border-t border-[oklch(1_0_0/0.06)]">
+              <p className="text-[11px] font-sans leading-relaxed opacity-60">
+                60 minutes from<br />Kansas City, MO
+              </p>
+            </div>
           </div>
         </div>
 
-        <div className="border-t border-white/10 mt-12 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
-          <p className="text-[11px] font-sans opacity-40">
-            © {new Date().getFullYear()} The Rivers Lodge & Hunt Club. All rights reserved.
+        {/* ── Copyright bar ──────────────────────────────────────────────── */}
+        <div className="pt-8 flex flex-col md:flex-row items-center justify-between gap-3">
+          <p className="text-[11px] font-sans opacity-35 tracking-wide">
+            © {new Date().getFullYear()} The Rivers Lodge &amp; Hunt Club. All rights reserved.
           </p>
-          <p className="text-[11px] font-sans opacity-40">
-            La Cygne, Kansas · 60 minutes from Kansas City
+          <p className="text-[11px] font-sans opacity-35 tracking-wide">
+            La Cygne, Kansas
           </p>
         </div>
       </div>

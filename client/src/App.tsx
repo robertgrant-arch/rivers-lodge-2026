@@ -6,6 +6,8 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 // Public pages
 import Home from "./pages/Home";
+import WeddingsLanding from "./pages/WeddingsLanding";
+import MembershipLanding from "./pages/MembershipLanding";
 import Weddings from "./pages/Weddings";
 import Venues from "./pages/Venues";
 import Lodging from "./pages/Lodging";
@@ -42,6 +44,8 @@ function Router() {
     <Switch>
       {/* Public */}
       <Route path="/" component={Home} />
+      <Route path="/events" component={WeddingsLanding} />
+      <Route path="/outdoors" component={MembershipLanding} />
       <Route path="/weddings" component={Weddings} />
       <Route path="/venues" component={Venues} />
       <Route path="/lodging" component={Lodging} />
@@ -87,7 +91,7 @@ function Router() {
 function App() {
   return (
     <ErrorBoundary>
-      <ThemeProvider defaultTheme="light">
+      <ThemeProvider defaultTheme="dark">
         <TooltipProvider>
           <Toaster />
           <Router />

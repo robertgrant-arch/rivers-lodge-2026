@@ -83,12 +83,16 @@ export default function Lodging() {
     <PublicLayout>
       {/* Header */}
       <section className="pt-32 pb-16 md:pt-40 md:pb-20 bg-background">
-        <div className="max-w-7xl mx-auto px-6 lg:px-10">
-          <p className="text-[10px] tracking-[0.24em] uppercase font-sans text-muted-foreground mb-4">On-Site Lodging</p>
-          <h1 className="font-serif text-5xl md:text-6xl text-foreground leading-tight mb-6">
-            Stay on the estate.<br /><span className="italic font-light">All weekend.</span>
+        <div className="max-w-[1440px] mx-auto px-5 lg:px-10">
+          <div className="gold-rule" />
+          <p className="eyebrow text-[oklch(0.55_0.012_70)] mb-4">On-Site Lodging</p>
+          <h1
+            className="font-serif font-light italic text-[oklch(0.94_0.008_78)] leading-tight mb-6"
+            style={{ fontSize: "clamp(2.5rem,5vw,4.5rem)" }}
+          >
+            Stay on the estate.<br />All weekend.
           </h1>
-          <p className="text-base font-sans text-muted-foreground max-w-xl leading-relaxed">
+          <p className="text-[oklch(0.60_0.015_72)] font-sans text-base max-w-xl leading-relaxed">
             Five lodging buildings sleep your entire wedding party on-site. From the 6,000 sq ft Lodge to the secluded Ohana House on its own 20-acre lake — everyone stays together.
           </p>
         </div>
@@ -99,9 +103,9 @@ export default function Lodging() {
         <section
           key={prop.slug}
           id={prop.slug}
-          className={`py-20 md:py-28 ${i % 2 === 0 ? "bg-background" : "bg-secondary/40"}`}
+          className={`section ${i % 2 === 0 ? "bg-background" : "bg-[oklch(0.115_0.007_64)]"}`}
         >
-          <div className="max-w-7xl mx-auto px-6 lg:px-10">
+          <div className="max-w-[1440px] mx-auto px-5 lg:px-10">
             <div className={`grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-start ${i % 2 !== 0 ? "lg:grid-flow-dense" : ""}`}>
               {/* Images */}
               <div className={`grid grid-cols-3 gap-3 ${i % 2 !== 0 ? "lg:col-start-2" : ""}`}>

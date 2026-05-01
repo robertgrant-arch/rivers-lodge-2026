@@ -58,13 +58,17 @@ export default function Contact() {
   return (
     <PublicLayout>
       <section className="pt-32 pb-24 md:pt-40 md:pb-32 bg-background">
-        <div className="max-w-7xl mx-auto px-6 lg:px-10">
+        <div className="max-w-[1440px] mx-auto px-5 lg:px-10">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24">
             {/* Left: Info */}
             <div>
-              <p className="text-[10px] tracking-[0.24em] uppercase font-sans text-muted-foreground mb-4">Get in Touch</p>
-              <h1 className="font-serif text-4xl md:text-5xl text-foreground leading-tight mb-6">
-                Let's start<br /><span className="italic font-light">the conversation.</span>
+              <div className="gold-rule" />
+              <p className="eyebrow text-[oklch(0.55_0.012_70)] mb-4">Get in Touch</p>
+              <h1
+                className="font-serif font-light italic text-[oklch(0.94_0.008_78)] leading-tight mb-6"
+                style={{ fontSize: "clamp(2rem,4vw,3.5rem)" }}
+              >
+                Let's start<br />the conversation.
               </h1>
               <p className="text-base font-sans text-muted-foreground leading-relaxed mb-8">
                 Whether you're planning a wedding weekend, a corporate retreat, or simply want to walk the land — we'd love to hear from you. We respond to every inquiry within 24 hours.

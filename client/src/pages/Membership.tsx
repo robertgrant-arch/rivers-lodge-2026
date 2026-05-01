@@ -49,28 +49,32 @@ export default function Membership() {
   return (
     <PublicLayout>
       {/* Hero */}
-      <section className="relative h-[80vh] min-h-[500px] flex items-end pb-20 overflow-hidden">
+      <section className="relative h-[85vh] min-h-[520px] flex items-end pb-20 overflow-hidden">
         <div className="absolute inset-0">
           <img src={HERO} alt="Membership at Rivers Lodge" className="w-full h-full object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/40 to-black/75" />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/5 via-black/20 to-black/80" />
         </div>
-        <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-10 w-full">
-          <p className="text-[10px] tracking-[0.28em] uppercase font-sans text-white/60 mb-4">Membership & Outdoors</p>
-          <h1 className="font-serif text-5xl md:text-7xl text-white leading-[0.95] mb-5" style={{ textShadow: "0 2px 30px rgba(0,0,0,0.35)" }}>
-            Private access.<br /><span className="italic font-light">Season after season.</span>
+        <div className="relative z-10 max-w-[1440px] mx-auto px-5 lg:px-10 w-full">
+          <div className="h-px w-10 mb-6" style={{ backgroundColor: "oklch(0.58 0.065 145)" }} />
+          <p className="eyebrow text-[oklch(0.94_0.008_78)/55] mb-4">Membership &amp; Outdoors</p>
+          <h1
+            className="font-serif font-light italic text-white leading-tight mb-6"
+            style={{ fontSize: "clamp(2.5rem,6vw,5.5rem)" }}
+          >
+            Private access.<br />Season after season.
           </h1>
-          <p className="text-base font-sans text-white/80 max-w-lg mb-8 leading-relaxed">
-            A private membership club on 10,000+ acres of managed Kansas hunting ground, private fisheries, and old-growth river corridor. Access is earned. Legacy is built here.
+          <p className="text-[oklch(0.94_0.008_78)/75] font-sans text-base max-w-lg mb-10 leading-relaxed">
+            A private membership club on 300 acres of managed Kansas hunting ground, private fisheries, and old-growth river corridor. Access is earned. Legacy is built here.
           </p>
-          <a href="#apply" className="inline-flex items-center justify-center px-8 py-3.5 bg-white text-[oklch(0.15_0.008_66)] text-xs tracking-[0.16em] uppercase font-sans font-medium hover:bg-white/90 transition-colors">
+          <a href="#apply" className="btn-primary">
             Apply for Membership
           </a>
         </div>
       </section>
 
       {/* Privileges */}
-      <section className="py-24 md:py-32 bg-background">
-        <div className="max-w-7xl mx-auto px-6 lg:px-10">
+      <section className="section bg-background">
+        <div className="max-w-[1440px] mx-auto px-5 lg:px-10">
           <div className="mb-12">
             <p className="text-[10px] tracking-[0.24em] uppercase font-sans text-muted-foreground mb-3">Member Privileges</p>
             <h2 className="font-serif text-3xl md:text-4xl text-foreground">What membership includes</h2>
@@ -87,8 +91,8 @@ export default function Membership() {
       </section>
 
       {/* Seasons */}
-      <section className="py-20 md:py-28 bg-[oklch(0.13_0.008_66)]">
-        <div className="max-w-7xl mx-auto px-6 lg:px-10">
+      <section className="section bg-[oklch(0.115_0.007_64)]">
+        <div className="max-w-[1440px] mx-auto px-5 lg:px-10">
           <div className="mb-12">
             <p className="text-[10px] tracking-[0.24em] uppercase font-sans text-white/40 mb-3">The Calendar</p>
             <h2 className="font-serif text-3xl md:text-4xl text-white">A full season on the land</h2>
@@ -119,8 +123,8 @@ export default function Membership() {
       </section>
 
       {/* Tiers */}
-      <section className="py-24 md:py-32 bg-background">
-        <div className="max-w-7xl mx-auto px-6 lg:px-10">
+      <section className="section bg-background">
+        <div className="max-w-[1440px] mx-auto px-5 lg:px-10">
           <div className="mb-12">
             <p className="text-[10px] tracking-[0.24em] uppercase font-sans text-muted-foreground mb-3">Membership Tiers</p>
             <h2 className="font-serif text-3xl md:text-4xl text-foreground">Choose your level</h2>
@@ -140,8 +144,8 @@ export default function Membership() {
       </section>
 
       {/* Application Form */}
-      <section id="apply" className="py-24 md:py-32 bg-secondary/40">
-        <div className="max-w-7xl mx-auto px-6 lg:px-10">
+      <section id="apply" className="section bg-[oklch(0.115_0.007_64)]">
+        <div className="max-w-[1440px] mx-auto px-5 lg:px-10">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
             <div>
               <p className="text-[10px] tracking-[0.24em] uppercase font-sans text-muted-foreground mb-4">Membership Application</p>
