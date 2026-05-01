@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
+import { generateAndStoreWaiverPdf } from "./waiverPdf";
 import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
 import { drizzle } from "drizzle-orm/mysql2";
 import { eq, desc, and, gte, lte, sql, or, like } from "drizzle-orm";
@@ -814,13 +815,37 @@ const waiversPortalRouter = router({
       const [waiver] = await db.select().from(portalWaivers).where(eq(portalWaivers.signingToken, input.token));
       if (!waiver) throw new TRPCError({ code: "NOT_FOUND" });
       if (waiver.status === "signed") throw new TRPCError({ code: "BAD_REQUEST", message: "Already signed" });
+      const signedAt = new Date();
+      // Fetch template content for PDF generation
+      const [template] = waiver.templateId
+        ? await db.select().from(waiverTemplates).where(eq(waiverTemplates.id, waiver.templateId))
+        : [null];
+      const waiverTitle = template?.templateName ?? "Liability Waiver & Release";
+      const waiverContent = template?.bodyText ?? "By signing this document, you acknowledge and agree to the terms and conditions set forth by Rivers Lodge & Hunt Club. You understand and accept all risks associated with the activities at the property, including but not limited to hunting, fishing, equestrian activities, and use of all facilities. You release Rivers Lodge & Hunt Club, its owners, employees, and agents from any liability for injury, loss, or damage arising from your participation in any activities on the property.";
+      // Generate and store signed PDF (non-blocking — signing succeeds even if PDF fails)
+      let signedPdfKey: string | null = null;
+      try {
+        const { key } = await generateAndStoreWaiverPdf({
+          waiverTitle,
+          waiverContent,
+          signatoryName: input.signatoryName,
+          signatoryEmail: waiver.signatoryEmail ?? null,
+          signedAt,
+          ipAddress: input.ipAddress ?? null,
+          waiverToken: input.token,
+        });
+        signedPdfKey = key;
+      } catch (pdfErr) {
+        console.error("[Waiver] PDF generation failed:", pdfErr);
+      }
       await db.update(portalWaivers).set({
         status: "signed",
-        signedAt: new Date(),
+        signedAt,
         signatoryName: input.signatoryName,
         ipAddress: input.ipAddress ?? null,
+        ...(signedPdfKey ? { signedPdfKey } : {}),
       }).where(eq(portalWaivers.signingToken, input.token));
-      return { success: true };
+      return { success: true, pdfKey: signedPdfKey };
     }),
 });
 

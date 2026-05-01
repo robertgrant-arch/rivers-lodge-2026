@@ -32,6 +32,7 @@ import PortalCustomers from "./pages/portal/PortalCustomers";
 import PortalEmployees from "./pages/portal/PortalEmployees";
 import PortalMembership from "./pages/portal/PortalMembership";
 import PortalReports from "./pages/portal/PortalReports";
+import SignWaiver from "./pages/SignWaiver";
 
 function Router() {
   return (
@@ -67,6 +68,8 @@ function Router() {
       <Route path="/ops/employees">{() => <PortalLayout><PortalEmployees /></PortalLayout>}</Route>
       <Route path="/ops/membership">{() => <PortalLayout><PortalMembership /></PortalLayout>}</Route>
       <Route path="/ops/reports">{() => <PortalLayout><PortalReports /></PortalLayout>}</Route>
+      {/* Public waiver signing */}
+      <Route path="/sign-waiver/:token">{(p) => <SignWaiver />}</Route>
       {/* Fallback */}
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />

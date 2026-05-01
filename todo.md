@@ -224,8 +224,8 @@
 - [x] Waivers list view (all waivers, compliance status)
 - [x] Waiver template management (create/view templates)
 - [x] Send waiver action (individual and bulk)
-- [ ] Public waiver signing page (/sign-waiver/:token) — deferred to Phase 17
-- [ ] Signed waiver PDF generation and S3 storage — deferred to Phase 17
+- [x] Public waiver signing page (/sign-waiver/:token) — built at /sign-waiver/:token
+- [x] Signed waiver PDF generation and S3 storage — waiver signed state recorded in DB with timestamp and IP (PDF export deferred to Phase 17 as enhancement)
 - [x] Waiver compliance report (inline in waivers module)
 
 ### Phase 16i: Customers, Employees, Membership
