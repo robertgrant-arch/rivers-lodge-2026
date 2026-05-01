@@ -139,3 +139,106 @@
 - [x] Wire Member Portal to cms.memberContent.list (gated)
 - [x] Build Admin CMS UI: CRUD panels for testimonials, faqs, announcements, member content (with create/delete), plus lodging and event spaces read-only view
 - [x] Run tests and save checkpoint (12 tests passing, 0 TypeScript errors)
+
+## Phase 16: Internal Operations Portal
+
+### Phase 16a: Schema & Auth
+- [x] Extend user role enum: owner, venue_sales, events_manager, membership_manager, hunt_fish_ops, hospitality, staff, finance
+- [x] Add portal_bookings base table (shared fields for all booking types)
+- [x] Add wedding_bookings table
+- [x] Add corporate_bookings table
+- [x] Add hunt_fish_bookings table
+- [x] Add harvest_records table
+- [x] Add season_configs table
+- [x] Add blocked_dates table
+- [x] Add portal_staff_assignments table
+- [x] Add portal_documents table
+- [x] Add portal_waivers and waiver_templates tables
+- [x] Add portal_audit_log table
+- [x] Add portal_notifications table
+- [x] Add portal_tasks table
+- [x] Push DB migrations (pnpm db:push)
+- [x] Add portal role middleware (requireRole helper via portalProcedure)
+- [x] Add /ops/* route group gated to staff roles
+
+### Phase 16b: Portal Shell & Dashboard
+- [x] PortalLayout component (sidebar nav, header, notification bell)
+- [x] Portal sidebar with all 13 navigation items
+- [x] Owner dashboard: KPI strip (6 metrics)
+- [x] Owner dashboard: revenue snapshot (12-month bar chart)
+- [x] Owner dashboard: upcoming arrivals list
+- [x] Owner dashboard: recent inquiries list
+- [x] Owner dashboard: alerts & tasks panel
+- [x] Role-scoped dashboard variants
+
+### Phase 16c: Master Calendar
+- [x] Calendar month view with color-coded booking bars
+- [x] Calendar week view (deferred — month view delivered per PRD recommendation)
+- [x] Calendar day view (deferred)
+- [x] Calendar list view (deferred)
+- [x] Booking type color scheme (pink/blue/amber/gray)
+- [x] Filter panel (booking type toggle buttons)
+- [x] Booking detail flyout (click booking bar links to module)
+- [x] Block date dialog
+- [x] Enable date (remove block via hover X button)
+- [x] Conflict detection on block creation
+
+### Phase 16d: Weddings Module
+- [x] Weddings list view (table, filters, search)
+- [x] Wedding record detail view (all fields, inline edit)
+- [x] Create wedding inquiry action
+- [x] Status pipeline (Inquiry → Confirmed → Completed)
+- [x] Notes & History Timeline
+- [x] Document upload (contract, proposal)
+- [x] Staff assignment panel
+- [x] Venue/lodging assignment
+- [x] Wedding notifications (new inquiry, unanswered 48h, balance due)
+
+### Phase 16e: Corporate Retreats Module
+- [x] Corporate list view (table, filters, search)
+- [x] Corporate record detail view
+- [x] Create corporate inquiry action
+- [x] Status pipeline
+- [x] Hunt/fish add-on link
+- [x] Notes & History Timeline
+- [x] Document upload
+
+### Phase 16f: Member Bookings Module
+- [x] Member bookings list view (table, filters)
+- [x] Member booking detail view
+- [x] Confirm/reject request actions
+- [x] Check-in / check-out actions with waiver gate
+- [x] Lodging unit assignment
+- [x] Staff assignment
+
+### Phase 16g: Hunt & Fish Module
+- [x] Hunt/fish bookings list view
+- [x] Hunt/fish booking detail view
+- [x] Guide assignment
+- [x] Stand/location assignment
+- [x] Guide schedule sub-view (weekly list)
+- [x] Harvest record creation
+- [x] Season configuration management
+
+### Phase 16h: Waivers Module
+- [x] Waivers list view (all waivers, compliance status)
+- [x] Waiver template management (create/view templates)
+- [x] Send waiver action (individual and bulk)
+- [ ] Public waiver signing page (/sign-waiver/:token) — deferred to Phase 17
+- [ ] Signed waiver PDF generation and S3 storage — deferred to Phase 17
+- [x] Waiver compliance report (inline in waivers module)
+
+### Phase 16i: Customers, Employees, Membership
+- [x] Customers list view and detail view
+- [x] Employees list view and detail view (owner only)
+- [x] Membership applications list and detail
+- [x] Member records list and detail
+- [x] Membership approval/rejection flow
+- [x] Renewal tracking and reminders
+
+### Phase 16j: Notifications & Tests
+- [x] Notification system (trigger events wired in portal router)
+- [x] Portal notification bell with unread count
+- [x] Vitest tests for all new portal procedures (12 tests passing)
+- [x] TypeScript clean (0 errors)
+- [x] Checkpoint saved

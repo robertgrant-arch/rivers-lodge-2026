@@ -6,6 +6,7 @@ import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
 import { notifyOwner } from "./_core/notification";
 import * as db from "./db";
+import { portalRouter } from "./portalRouter";
 
 // ─── Admin guard ──────────────────────────────────────────────────────────────
 const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
@@ -673,6 +674,7 @@ export const appRouter = router({
   waivers: waiversRouter,
   admin: adminRouter,
   cms: cmsRouter,
+  portal: portalRouter,
 });
 
 export type AppRouter = typeof appRouter;

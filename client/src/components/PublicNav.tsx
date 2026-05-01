@@ -92,9 +92,9 @@ export default function PublicNav() {
 
         {/* Desktop Nav */}
         <nav className="hidden lg:flex items-center gap-6 xl:gap-8">
-          {navItems.map((item) => (
+          {navItems.map((item, idx) => (
             <Link
-              key={item.href + item.label}
+              key={`desktop-${idx}`}
               href={item.href}
               className={`text-[11px] tracking-[0.12em] uppercase font-sans font-medium transition-opacity hover:opacity-70 whitespace-nowrap ${textColor}`}
             >
@@ -107,10 +107,10 @@ export default function PublicNav() {
         <div className="hidden lg:flex items-center gap-4 shrink-0">
           {isAuthenticated ? (
             <Link
-              href={user?.role === "admin" ? "/admin" : "/portal"}
+              href={user?.role === "admin" || user?.role === "owner" ? "/admin" : ["venue_sales","events_manager","membership_manager","hunt_fish_ops","hospitality","staff","finance"].includes(user?.role ?? "") ? "/ops" : "/portal"}
               className={`text-[11px] tracking-[0.14em] uppercase font-sans font-medium border border-current px-4 py-2 transition-opacity hover:opacity-70 ${textColor}`}
             >
-              {user?.role === "admin" ? "Admin" : "Member Portal"}
+              {user?.role === "admin" || user?.role === "owner" ? "Admin" : ["venue_sales","events_manager","membership_manager","hunt_fish_ops","hospitality","staff","finance"].includes(user?.role ?? "") ? "Operations" : "Member Portal"}
             </Link>
           ) : (
             <a
@@ -136,9 +136,9 @@ export default function PublicNav() {
       {open && (
         <div className="lg:hidden bg-[oklch(0.13_0.008_66)] border-t border-white/10 px-6 pb-8 pt-4">
           <nav className="flex flex-col gap-5">
-            {navItems.map((item) => (
+            {navItems.map((item, idx) => (
               <Link
-                key={item.href + item.label}
+                key={`mobile-${idx}`}
                 href={item.href}
                 className="text-sm tracking-[0.14em] uppercase font-sans text-[oklch(0.90_0.008_80)] hover:text-white transition-colors"
               >
@@ -148,10 +148,10 @@ export default function PublicNav() {
             <div className="border-t border-white/10 pt-4 mt-2">
               {isAuthenticated ? (
                 <Link
-                  href={user?.role === "admin" ? "/admin" : "/portal"}
+                  href={user?.role === "admin" || user?.role === "owner" ? "/admin" : ["venue_sales","events_manager","membership_manager","hunt_fish_ops","hospitality","staff","finance"].includes(user?.role ?? "") ? "/ops" : "/portal"}
                   className="text-sm tracking-[0.14em] uppercase font-sans text-[oklch(0.75_0.080_78)] hover:text-white transition-colors"
                 >
-                  {user?.role === "admin" ? "Admin Dashboard" : "Member Portal"}
+                  {user?.role === "admin" || user?.role === "owner" ? "Admin Dashboard" : ["venue_sales","events_manager","membership_manager","hunt_fish_ops","hospitality","staff","finance"].includes(user?.role ?? "") ? "Operations Portal" : "Member Portal"}
                 </Link>
               ) : (
                 <a

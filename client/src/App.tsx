@@ -4,7 +4,6 @@ import NotFound from "@/pages/NotFound";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
-
 // Public pages
 import Home from "./pages/Home";
 import Weddings from "./pages/Weddings";
@@ -17,10 +16,22 @@ import Contact from "./pages/Contact";
 import Membership from "./pages/Membership";
 import Hunt from "./pages/Hunt";
 import Fish from "./pages/Fish";
-
 // Gated pages
 import MemberPortal from "./pages/MemberPortal";
 import AdminDashboard from "./pages/AdminDashboard";
+// Operations Portal
+import PortalLayout from "./components/PortalLayout";
+import PortalDashboard from "./pages/portal/PortalDashboard";
+import PortalCalendar from "./pages/portal/PortalCalendar";
+import PortalWeddings from "./pages/portal/PortalWeddings";
+import PortalCorporate from "./pages/portal/PortalCorporate";
+import PortalHuntFish from "./pages/portal/PortalHuntFish";
+import PortalMemberBookings from "./pages/portal/PortalMemberBookings";
+import PortalWaivers from "./pages/portal/PortalWaivers";
+import PortalCustomers from "./pages/portal/PortalCustomers";
+import PortalEmployees from "./pages/portal/PortalEmployees";
+import PortalMembership from "./pages/portal/PortalMembership";
+import PortalReports from "./pages/portal/PortalReports";
 
 function Router() {
   return (
@@ -38,10 +49,24 @@ function Router() {
       <Route path="/hunt" component={Hunt} />
       <Route path="/fish" component={Fish} />
 
-      {/* Gated */}
+       {/* Gated */}
       <Route path="/portal" component={MemberPortal} />
       <Route path="/admin" component={AdminDashboard} />
-
+      {/* Operations Portal */}
+      <Route path="/ops">{() => <PortalLayout><PortalDashboard /></PortalLayout>}</Route>
+      <Route path="/ops/calendar">{() => <PortalLayout><PortalCalendar /></PortalLayout>}</Route>
+      <Route path="/ops/weddings/:id">{(p) => <PortalLayout><PortalWeddings /></PortalLayout>}</Route>
+      <Route path="/ops/weddings">{() => <PortalLayout><PortalWeddings /></PortalLayout>}</Route>
+      <Route path="/ops/corporate/:id">{(p) => <PortalLayout><PortalCorporate /></PortalLayout>}</Route>
+      <Route path="/ops/corporate">{() => <PortalLayout><PortalCorporate /></PortalLayout>}</Route>
+      <Route path="/ops/hunt-fish/:id">{(p) => <PortalLayout><PortalHuntFish /></PortalLayout>}</Route>
+      <Route path="/ops/hunt-fish">{() => <PortalLayout><PortalHuntFish /></PortalLayout>}</Route>
+      <Route path="/ops/member-bookings">{() => <PortalLayout><PortalMemberBookings /></PortalLayout>}</Route>
+      <Route path="/ops/waivers">{() => <PortalLayout><PortalWaivers /></PortalLayout>}</Route>
+      <Route path="/ops/customers">{() => <PortalLayout><PortalCustomers /></PortalLayout>}</Route>
+      <Route path="/ops/employees">{() => <PortalLayout><PortalEmployees /></PortalLayout>}</Route>
+      <Route path="/ops/membership">{() => <PortalLayout><PortalMembership /></PortalLayout>}</Route>
+      <Route path="/ops/reports">{() => <PortalLayout><PortalReports /></PortalLayout>}</Route>
       {/* Fallback */}
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />

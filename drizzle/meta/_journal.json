@@ -22,6 +22,20 @@
       "when": 1777660919787,
       "tag": "0002_workable_titanium_man",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1777663637474,
+      "tag": "0003_early_klaw",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1777663661496,
+      "tag": "0004_secret_gunslinger",
+      "breakpoints": true
     }
   ]
 }
