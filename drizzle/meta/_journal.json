@@ -36,6 +36,13 @@
       "when": 1777663661496,
       "tag": "0004_secret_gunslinger",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1777668251816,
+      "tag": "0005_skinny_groot",
+      "breakpoints": true
     }
   ]
 }

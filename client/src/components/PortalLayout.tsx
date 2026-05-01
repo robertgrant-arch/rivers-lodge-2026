@@ -37,9 +37,11 @@ import {
   Heart,
   Home,
   LogOut,
+  Search,
   Settings,
   Shield,
   Target,
+  TrendingUp,
   Users,
   UserCheck,
 } from "lucide-react";
@@ -55,6 +57,9 @@ const navGroups = [
     items: [
       { icon: Home, label: "Dashboard", path: "/ops" },
       { icon: Calendar, label: "Master Calendar", path: "/ops/calendar" },
+      { icon: Search, label: "Availability", path: "/ops/availability" },
+      { icon: BookOpen, label: "All Bookings", path: "/ops/bookings" },
+      { icon: TrendingUp, label: "Sales Pipeline", path: "/ops/leads" },
       { icon: BarChart3, label: "Reports", path: "/ops/reports" },
     ],
   },

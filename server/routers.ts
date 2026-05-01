@@ -7,6 +7,9 @@ import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
 import { notifyOwner } from "./_core/notification";
 import * as db from "./db";
 import { portalRouter } from "./portalRouter";
+import { bookingRouter } from "./bookingRouter";
+import { getDb } from "./db";
+import { leads, reservationRequests } from "../drizzle/booking-schema";
 
 // ─── Admin guard ──────────────────────────────────────────────────────────────
 const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
@@ -39,9 +42,49 @@ const inquiriesRouter = router({
     )
     .mutation(async ({ input }) => {
       await db.createInquiry(input);
+      // Map inquiry type to booking system business line
+      const businessLineMap: Record<string, string> = {
+        wedding: "wedding",
+        corporate: "corporate",
+        tour: "other",
+        general: "other",
+      };
+      const businessLine = businessLineMap[input.type] ?? "other";
+      const database = await getDb();
+      if (!database) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+      // Create a Lead in the sales pipeline
+      const [leadResult] = await database.insert(leads).values({
+        source: "website_form",
+        businessLine: businessLine as "wedding" | "corporate" | "member_stay" | "hunt" | "fish" | "hunt_and_fish" | "membership" | "other",
+        contactName: input.name,
+        contactEmail: input.email,
+        contactPhone: input.phone ?? undefined,
+        estimatedGuestCount: input.guestCount ?? undefined,
+        notes: input.message ?? undefined,
+        status: "new",
+      });
+      // For wedding and corporate inquiries, also create a ReservationRequest
+      if ((input.type === "wedding" || input.type === "corporate") && input.eventDate) {
+        const today = new Date();
+        const requestedStart = new Date(input.eventDate) || new Date(today.getTime() + 90 * 24 * 60 * 60 * 1000);
+        const requestedEnd = new Date(requestedStart.getTime() + (input.type === "wedding" ? 2 : 3) * 24 * 60 * 60 * 1000);
+        await database.insert(reservationRequests).values({
+          source: "public_form",
+          businessLine: businessLine as "wedding" | "corporate" | "member_stay" | "hunt" | "fish" | "hunt_and_fish" | "other",
+          contactName: input.name,
+          contactEmail: input.email,
+          contactPhone: input.phone ?? undefined,
+          requestedStart: requestedStart,
+          requestedEnd: requestedEnd,
+          guestCount: input.guestCount ?? undefined,
+          specialRequests: input.message ?? undefined,
+          eventType: input.type,
+          status: "new",
+        });
+      }
       await notifyOwner({
         title: `New ${input.type} inquiry from ${input.name}`,
-        content: `Email: ${input.email}\nPhone: ${input.phone ?? "—"}\nDate: ${input.eventDate ?? "—"}\nGuests: ${input.guestCount ?? "—"}\n\n${input.message ?? ""}`,
+        content: `Email: ${input.email}\nPhone: ${input.phone ?? "—"}\nDate: ${input.eventDate ?? "—"}\nGuests: ${input.guestCount ?? "—"}\n\n${input.message ?? ""}\n\nLead created in sales pipeline.`,
       });
       return { success: true };
     }),
@@ -675,6 +718,7 @@ export const appRouter = router({
   admin: adminRouter,
   cms: cmsRouter,
   portal: portalRouter,
+  booking: bookingRouter,
 });
 
 export type AppRouter = typeof appRouter;

@@ -242,3 +242,62 @@
 - [x] Vitest tests for all new portal procedures (12 tests passing)
 - [x] TypeScript clean (0 errors)
 - [x] Checkpoint saved
+
+## Phase 17: Booking & Availability System
+
+### Schema
+- [ ] resources table (id, name, slug, type, groupId, capacity, holdbackHours, isActive)
+- [ ] resource_groups table (id, name, slug, type)
+- [ ] availability_rules table (id, resourceId, groupId, dayOfWeek, openTime, closeTime, seasonStart, seasonEnd)
+- [ ] booking_resource_allocations table (id, bookingId, resourceId, allocationStart, allocationEnd, status)
+- [ ] payment_records table (id, bookingId, type, amount, method, status, stripePaymentIntentId)
+- [ ] waiver_requirements table (id, businessLine, waiverTemplateId, requiresAllParticipants)
+- [ ] reservation_requests table (id, customerId, memberId, businessLine, requestedStart, requestedEnd, status)
+- [ ] leads table (id, customerId, businessLine, status, source, assignedToUserId)
+- [ ] Push all migrations
+- [ ] Seed canonical resources (all property resources per spec)
+
+### Availability Engine
+- [ ] server/availability/engine.ts — checkAvailability(), checkMultipleResources()
+- [ ] HC-01 through HC-08 hard conflict rules
+- [ ] SC-01 through SC-06 soft conflict rules
+- [ ] Holdback window computation
+
+### Booking State Machine
+- [ ] server/booking/stateMachine.ts — transitionBookingStatus()
+- [ ] All valid transitions enforced with gate checks
+- [ ] Audit log on every transition
+- [ ] Cancellation flow with refund calculation
+
+### Portal tRPC Procedures
+- [ ] booking.create (resource allocation in transaction)
+- [ ] booking.update (re-runs conflict check)
+- [ ] booking.transition (state machine wrapper)
+- [ ] booking.cancel (with refund record)
+- [ ] booking.list and booking.get
+- [ ] availability.check and availability.checkMultiple
+- [ ] availability.calendar (aggregate for calendar view)
+- [ ] resources.list, resources.get, resources.create, resources.update
+- [ ] blockedDates.create, blockedDates.remove, blockedDates.list
+- [ ] payments.record, payments.list
+- [ ] leads.create, leads.list, leads.update, leads.convert
+- [ ] reservationRequests.create, reservationRequests.list, reservationRequests.convert
+
+### Portal UI
+- [ ] Booking creation wizard (dates → resources → details → review)
+- [ ] Conflict acknowledgment modal
+- [ ] Booking detail page with full timeline
+- [ ] Status transition buttons with gate enforcement
+- [ ] Payment recording panel
+- [ ] Resource availability inline checker
+- [ ] Lead management list and detail
+- [ ] Reservation requests queue
+
+### Public Website
+- [ ] Wire all inquiry forms to create ReservationRequest via tRPC
+- [ ] Update member portal booking request to use reservationRequests.create
+
+### Tests
+- [ ] Availability engine unit tests (all HC and SC rules)
+- [ ] State machine unit tests
+- [ ] Booking creation integration test
