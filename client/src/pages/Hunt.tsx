@@ -42,10 +42,10 @@ export default function Hunt() {
         <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-10 w-full">
           <p className="text-[10px] tracking-[0.28em] uppercase font-sans text-white/60 mb-4">Hunt</p>
           <h1 className="font-serif text-5xl md:text-7xl text-white leading-[0.95] mb-5" style={{ textShadow: "0 2px 30px rgba(0,0,0,0.35)" }}>
-            300 acres.<br /><span className="italic font-light">Private ground.</span>
+            10,000+ acres.<br /><span className="italic font-light">Private ground.</span>
           </h1>
           <p className="text-base font-sans text-white/80 max-w-lg mb-8 leading-relaxed">
-            Managed whitetail, waterfowl, and turkey hunting on exclusive private ground. No public access. No crowds. Just the land and the season.
+            10,000+ acres of managed Kansas hunting ground. Guided whitetail, waterfowl, and turkey hunts on private land managed for conservation, tradition, and the kind of experience that brings members back generation after generation.
           </p>
           <Link href="/membership#apply" className="inline-flex items-center justify-center px-8 py-3.5 bg-white text-[oklch(0.15_0.008_66)] text-xs tracking-[0.16em] uppercase font-sans font-medium hover:bg-white/90 transition-colors">
             Apply for Membership
@@ -79,32 +79,6 @@ export default function Hunt() {
         </section>
       ))}
 
-      {/* Fishing */}
-      <section id="fishing" className="py-20 md:py-28 bg-secondary/40">
-        <div className="max-w-7xl mx-auto px-6 lg:px-10">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center lg:grid-flow-dense">
-            <div className="overflow-hidden aspect-[4/3] lg:col-start-2">
-              <img src="https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=900&q=80&auto=format&fit=crop" alt="Fishing on the Marais des Cygnes" className="w-full h-full object-cover hover:scale-105 transition-transform duration-700" />
-            </div>
-            <div className="lg:col-start-1 lg:row-start-1">
-              <p className="text-[9px] tracking-[0.22em] uppercase font-sans text-muted-foreground mb-2">Year-Round</p>
-              <h2 className="font-serif text-4xl md:text-5xl text-foreground mb-5">Fishing</h2>
-              <p className="text-base font-sans text-muted-foreground leading-relaxed mb-6">
-                The Marais des Cygnes holds bass, catfish, and crappie year-round. Members have exclusive access to private stretches of the river and estate ponds — no public access, no crowds. The river moves slowly through old-growth timber, and a morning on the water is as much a part of the Rivers Lodge experience as any hunt.
-              </p>
-              <div className="grid grid-cols-2 gap-2 mb-8">
-                {["Largemouth & smallmouth bass", "Catfish & crappie", "Private river access", "Estate ponds", "Year-round season", "Guided options available"].map((f) => (
-                  <div key={f} className="flex items-center gap-2 text-xs font-sans text-muted-foreground">
-                    <span className="w-1 h-1 rounded-full bg-muted-foreground flex-shrink-0" />
-                    {f}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* Sporting Clays */}
       <section id="clays" className="py-20 md:py-28 bg-[oklch(0.13_0.008_66)]">
         <div className="max-w-7xl mx-auto px-6 lg:px-10">
@@ -125,7 +99,7 @@ export default function Hunt() {
       <section className="py-20 bg-background text-center">
         <div className="max-w-xl mx-auto px-6">
           <h2 className="font-serif text-3xl md:text-4xl text-foreground mb-5 italic font-light">Access starts with membership.</h2>
-          <p className="text-sm font-sans text-muted-foreground mb-8 leading-relaxed">Apply for membership and gain exclusive access to 300 acres of private Kansas hunting ground.</p>
+          <p className="text-sm font-sans text-muted-foreground mb-8 leading-relaxed">Apply for membership and gain exclusive access to 10,000+ acres of private Kansas hunting ground — and private fisheries on the Marais des Cygnes.</p>
           <Link href="/membership#apply" className="inline-flex items-center justify-center px-10 py-4 bg-foreground text-background text-xs tracking-[0.18em] uppercase font-sans font-medium hover:opacity-90 transition-opacity">
             Apply for Membership
           </Link>

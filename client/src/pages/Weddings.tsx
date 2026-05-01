@@ -63,13 +63,16 @@ export default function Weddings() {
           <div className="max-w-2xl">
             <p className="text-[10px] tracking-[0.24em] uppercase font-sans text-muted-foreground mb-4">The Experience</p>
             <h2 className="font-serif text-3xl md:text-4xl text-foreground mb-6 leading-tight">
-              A wedding weekend,<br /><span className="italic">not just a wedding day.</span>
+              A destination wedding weekend,<br /><span className="italic">one hour from Kansas City.</span>
             </h2>
             <p className="text-base font-sans text-muted-foreground leading-relaxed mb-4">
-              A wedding at Rivers Lodge is not a venue rental. It is a private estate experience — one where the property, the grounds, the lodging, and the staff are entirely yours for the weekend.
+              A wedding at Rivers Lodge is not a venue rental. It is a private estate experience — one where the property, the grounds, the lodging, and the staff are entirely yours for the weekend. One hour south of Kansas City, and a world apart from everything else.
+            </p>
+            <p className="text-base font-sans text-muted-foreground leading-relaxed mb-4">
+              Rivers Lodge is a distinctive Kansas venue unlike anything in the region. The barn was designed by a prominent Kansas City architect. The grounds hold five separate event spaces. The lodging sleeps 16+ guests on-site. We host a limited number of weddings each year — every couple receives our full attention, from the first inquiry to the farewell brunch.
             </p>
             <p className="text-base font-sans text-muted-foreground leading-relaxed">
-              The lodge sleeps your closest people on-site. The reception carries into the evening under the pavilion, which opens fully to the summer air. Rivers Barn holds up to 256 guests with two large patios, two fireplaces, and an indoor/outdoor bar. We host a limited number of weddings each year. Every couple gets our full attention.
+              This is warm hospitality at scale. An elevated but natural setting. A weekend your guests will talk about for years.
             </p>
           </div>
         </div>

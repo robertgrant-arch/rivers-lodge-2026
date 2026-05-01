@@ -16,6 +16,7 @@ import Gallery from "./pages/Gallery";
 import Contact from "./pages/Contact";
 import Membership from "./pages/Membership";
 import Hunt from "./pages/Hunt";
+import Fish from "./pages/Fish";
 
 // Gated pages
 import MemberPortal from "./pages/MemberPortal";
@@ -35,6 +36,7 @@ function Router() {
       <Route path="/contact" component={Contact} />
       <Route path="/membership" component={Membership} />
       <Route path="/hunt" component={Hunt} />
+      <Route path="/fish" component={Fish} />
 
       {/* Gated */}
       <Route path="/portal" component={MemberPortal} />

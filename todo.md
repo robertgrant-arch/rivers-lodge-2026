@@ -71,3 +71,15 @@
 - [x] Vitest: 12 tests passing (auth, admin guards, validation)
 - [x] All pages QA'd in browser
 - [x] Final checkpoint and delivery
+
+## Phase 11: Brief Alignment Fixes
+- [x] Dual-track navigation: Weddings & Events nav (About, Weddings, Corporate Outings & Events, Lodging & Spaces, Contact Us) vs Membership & Outdoors nav (About, Hunt, Fish, Membership, Contact Us, Member Login)
+- [x] Persistent Member Login CTA in top-right nav (both tracks)
+- [x] Build dedicated Fish page (separate from Hunt)
+- [x] Add Fish route to App.tsx
+- [x] Update Membership & Outdoors copy: 10,000+ acres, guided hunting, private fisheries, multi-generational legacy
+- [x] Update Hunt page hero copy to match brief (guided hunting, conservation, tradition)
+- [x] Update Weddings & Events copy: destination wedding, distinctive Kansas venue near Kansas City, event flexibility
+- [x] Update homepage dual-track entry labels and copy to match brief exactly
+- [x] Update homepage hero copy to match brand positioning (cinematic, land-connected, dual-mode estate)
+- [x] Remove Hunt fish section (Fishing moved to dedicated Fish page)

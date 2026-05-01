@@ -21,18 +21,28 @@ function getTrackFromPath(path: string): Track {
   return null;
 }
 
+// Per brief: Weddings & Events nav — About, Weddings, Corporate Outings & Events, Lodging & Spaces, Contact Us
 const weddingsNav = [
-  { label: "The Estate", href: "/estate" },
+  { label: "About", href: "/estate" },
   { label: "Weddings", href: "/weddings" },
-  { label: "Venues", href: "/venues" },
-  { label: "Lodging", href: "/lodging" },
-  { label: "Corporate", href: "/corporate" },
-  { label: "Gallery", href: "/gallery" },
-  { label: "Contact", href: "/contact" },
+  { label: "Corporate Outings & Events", href: "/corporate" },
+  { label: "Lodging & Spaces", href: "/lodging" },
+  { label: "Contact Us", href: "/contact" },
 ];
 
+// Per brief: Membership & Outdoors nav — About, Hunt, Fish, Membership, Contact Us
 const membershipNav = [
-  { label: "The Estate", href: "/estate" },
+  { label: "About", href: "/estate" },
+  { label: "Hunt", href: "/hunt" },
+  { label: "Fish", href: "/fish" },
+  { label: "Membership", href: "/membership" },
+  { label: "Contact Us", href: "/contact" },
+];
+
+// Default nav shown on homepage / neutral pages
+const defaultNav = [
+  { label: "About", href: "/estate" },
+  { label: "Weddings", href: "/weddings" },
   { label: "Hunt", href: "/hunt" },
   { label: "Membership", href: "/membership" },
   { label: "Gallery", href: "/gallery" },
@@ -46,7 +56,11 @@ export default function PublicNav() {
   const { user, isAuthenticated } = useAuth();
 
   const track = getTrackFromPath(location);
-  const navItems = track === "membership" ? membershipNav : weddingsNav;
+  const navItems =
+    track === "weddings" ? weddingsNav :
+    track === "membership" ? membershipNav :
+    defaultNav;
+
   const isHome = location === "/";
   const isTransparent = (isHome || !scrolled) && !open;
 
@@ -67,42 +81,41 @@ export default function PublicNav() {
   const textColor = "text-[oklch(0.97_0.005_80)]";
 
   return (
-    <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${navBg}`}
-    >
+    <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${navBg}`}>
       <div className="max-w-7xl mx-auto px-6 lg:px-10 flex items-center justify-between h-16 md:h-20">
+
         {/* Logo */}
-        <Link href="/" className={`flex flex-col leading-none ${textColor} hover:opacity-80 transition-opacity`}>
+        <Link href="/" className={`flex flex-col leading-none ${textColor} hover:opacity-80 transition-opacity shrink-0`}>
           <span className="font-serif text-xl md:text-2xl tracking-wide">Rivers Lodge</span>
           <span className="text-[10px] tracking-[0.22em] uppercase opacity-70 font-sans font-light">& Hunt Club</span>
         </Link>
 
         {/* Desktop Nav */}
-        <nav className="hidden lg:flex items-center gap-8">
+        <nav className="hidden lg:flex items-center gap-6 xl:gap-8">
           {navItems.map((item) => (
             <Link
-              key={item.href}
+              key={item.href + item.label}
               href={item.href}
-              className={`text-xs tracking-[0.14em] uppercase font-sans font-medium transition-opacity hover:opacity-70 ${textColor}`}
+              className={`text-[11px] tracking-[0.12em] uppercase font-sans font-medium transition-opacity hover:opacity-70 whitespace-nowrap ${textColor}`}
             >
               {item.label}
             </Link>
           ))}
         </nav>
 
-        {/* Right CTAs */}
-        <div className="hidden lg:flex items-center gap-4">
+        {/* Right CTA — Member Login always visible per brief */}
+        <div className="hidden lg:flex items-center gap-4 shrink-0">
           {isAuthenticated ? (
             <Link
               href={user?.role === "admin" ? "/admin" : "/portal"}
-              className={`text-xs tracking-[0.14em] uppercase font-sans font-medium border border-current px-4 py-2 transition-opacity hover:opacity-70 ${textColor}`}
+              className={`text-[11px] tracking-[0.14em] uppercase font-sans font-medium border border-current px-4 py-2 transition-opacity hover:opacity-70 ${textColor}`}
             >
               {user?.role === "admin" ? "Admin" : "Member Portal"}
             </Link>
           ) : (
             <a
               href={getLoginUrl()}
-              className={`text-xs tracking-[0.14em] uppercase font-sans font-medium border border-current px-4 py-2 transition-opacity hover:opacity-70 ${textColor}`}
+              className={`text-[11px] tracking-[0.14em] uppercase font-sans font-medium border border-current px-4 py-2 transition-opacity hover:opacity-70 ${textColor}`}
             >
               Member Login
             </a>
@@ -125,7 +138,7 @@ export default function PublicNav() {
           <nav className="flex flex-col gap-5">
             {navItems.map((item) => (
               <Link
-                key={item.href}
+                key={item.href + item.label}
                 href={item.href}
                 className="text-sm tracking-[0.14em] uppercase font-sans text-[oklch(0.90_0.008_80)] hover:text-white transition-colors"
               >

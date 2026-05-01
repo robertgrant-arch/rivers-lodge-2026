@@ -10,12 +10,12 @@ const FISH = "https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=900&q=
 const CLAY = "https://images.unsplash.com/photo-1509316785289-025f5b846b35?w=900&q=80&auto=format&fit=crop";
 
 const privileges = [
-  { title: "Private Access", desc: "Exclusive access to 300 acres of managed hunting ground and private fisheries — no public access, ever." },
-  { title: "Managed Habitat", desc: "Professionally managed food plots, timber stands, and water features designed to hold and grow quality wildlife." },
+  { title: "10,000+ Acres", desc: "Private access to over 10,000 acres of managed Kansas hunting ground — no public access, no crowds, no compromise." },
+  { title: "Guided Hunting", desc: "Expert local guides who know the land intimately. Whitetail, waterfowl, and turkey hunts guided by people who manage the habitat year-round." },
+  { title: "Private Fisheries", desc: "Exclusive access to the Marais des Cygnes and estate ponds. Trophy bass, catfish, and crappie on water that sees no public pressure." },
   { title: "On-Site Lodging", desc: "Member rates on all estate lodging — from The Lodge to Ohana House on its own private lake." },
-  { title: "Sporting Clays", desc: "Access to the sporting clays course for year-round practice and member events." },
-  { title: "Seasonal Updates", desc: "Regular field reports, harvest data, and seasonal conditions delivered directly to members." },
-  { title: "Concierge Service", desc: "Direct access to estate staff for trip planning, equipment coordination, and special requests." },
+  { title: "Sporting Clays", desc: "Access to the sporting clays course for year-round practice, member events, and pre-season preparation." },
+  { title: "Concierge Service", desc: "Direct access to estate staff for trip planning, equipment coordination, guide scheduling, and special requests." },
 ];
 
 const seasons = [
@@ -60,7 +60,7 @@ export default function Membership() {
             Private access.<br /><span className="italic font-light">Season after season.</span>
           </h1>
           <p className="text-base font-sans text-white/80 max-w-lg mb-8 leading-relaxed">
-            Membership at Rivers Lodge means exclusive access to 300 acres of managed Kansas hunting ground, private fisheries, and the land itself — year after year.
+            A private membership club on 10,000+ acres of managed Kansas hunting ground, private fisheries, and old-growth river corridor. Access is earned. Legacy is built here.
           </p>
           <a href="#apply" className="inline-flex items-center justify-center px-8 py-3.5 bg-white text-[oklch(0.15_0.008_66)] text-xs tracking-[0.16em] uppercase font-sans font-medium hover:bg-white/90 transition-colors">
             Apply for Membership
@@ -149,10 +149,13 @@ export default function Membership() {
                 Apply for<br /><span className="italic">membership.</span>
               </h2>
               <p className="text-base font-sans text-muted-foreground leading-relaxed mb-4">
-                Membership at Rivers Lodge is by application. We review applications on a rolling basis and respond within one week.
+                Membership at Rivers Lodge is by application. We review applications on a rolling basis and respond within one week. Membership is limited — we keep the club small by design.
+              </p>
+              <p className="text-base font-sans text-muted-foreground leading-relaxed mb-4">
+                We are looking for members who share our values: respect for the land, ethical hunting and fishing practices, and a genuine appreciation for what a well-managed private estate can offer across generations.
               </p>
               <p className="text-base font-sans text-muted-foreground leading-relaxed">
-                We are looking for members who share our values: respect for the land, ethical hunting and fishing practices, and a genuine appreciation for what a well-managed private estate can offer.
+                This is not a day-use club. It is a multi-generational relationship with a piece of Kansas that has been managed with intention for decades.
               </p>
             </div>
             <div>

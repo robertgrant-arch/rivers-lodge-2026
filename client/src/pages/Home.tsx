@@ -40,7 +40,7 @@ export default function Home() {
             <span className="italic font-light">& Hunt Club</span>
           </h1>
           <p className="text-base md:text-lg font-sans font-light text-white/80 max-w-md mb-10 leading-relaxed">
-            A private estate on the Marais des Cygnes. Three hundred acres of Kansas landscape — for the wedding of a lifetime or a season on the land.
+            A private estate on the Marais des Cygnes. A destination wedding venue one hour from Kansas City — and a private membership club for those who hunt, fish, and live on the land.
           </p>
           <div className="flex flex-col sm:flex-row gap-3">
             <Link
@@ -98,7 +98,7 @@ export default function Home() {
                 Weddings<br /><span className="italic font-light">& Events</span>
               </h2>
               <p className="text-sm font-sans text-white/70 max-w-xs leading-relaxed mb-6">
-                A destination wedding weekend on a private Kansas estate. The barn, the river, the land — entirely yours.
+                A distinctive Kansas venue one hour from Kansas City. The barn, the river, the land — entirely yours for the weekend. Limited dates. Unlimited attention.
               </p>
               <span className="inline-flex items-center gap-2 text-xs tracking-[0.16em] uppercase font-sans text-white border-b border-white/40 pb-0.5 group-hover:border-white transition-colors">
                 Explore Weddings & Events
@@ -122,7 +122,7 @@ export default function Home() {
                 Membership<br /><span className="italic font-light">& Outdoors</span>
               </h2>
               <p className="text-sm font-sans text-white/70 max-w-xs leading-relaxed mb-6">
-                Private access to 300 acres of managed hunting ground, private fisheries, and the land — season after season.
+                10,000+ acres of managed Kansas hunting ground. Guided hunts. Private fisheries. A multi-generational membership built on conservation and tradition.
               </p>
               <span className="inline-flex items-center gap-2 text-xs tracking-[0.16em] uppercase font-sans text-white border-b border-white/40 pb-0.5 group-hover:border-white transition-colors">
                 Explore Membership
