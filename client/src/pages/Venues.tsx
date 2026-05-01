@@ -9,7 +9,7 @@ const venues = [
     capacity: { ceremony: null, reception: 256 },
     desc: "Designed by a prominent Kansas City architect, Rivers Barn is modern farmhouse — a blank slate that lets a bride and groom or corporate group give it whatever feel they desire. The barn features two large patios, two fireplaces, air-conditioning, an indoor/outdoor bar, and separate luxury bathrooms. The space accommodates up to 256 guests.",
     details: ["Up to 256 guests", "Two large patios", "Two fireplaces", "Air-conditioning", "Indoor/outdoor bar", "Separate luxury bathrooms"],
-    img: "/manus-storage/Rivers_SEPT2022_-109_c2b5fea5.jpg",
+    img: "/manus-storage/6M9A3239_d4c999f4.jpg",
   },
   {
     slug: "clubhouse",
@@ -27,7 +27,7 @@ const venues = [
     capacity: { ceremony: 200, reception: null },
     desc: "A level grass expanse overlooking the Marais des Cygnes. Ceremonies on River Lawn feel like they belong to the land itself — open sky, the river, and nothing competing with the moment. The native landscaping throughout the property footprint provides ample space for wedding party and guest photography.",
     details: ["Overlooks Marais des Cygnes", "Level grass expanse", "Native landscaping", "Outdoor ceremony setting", "Golden-hour photography", "Open-air and unobstructed"],
-    img: "/manus-storage/DJI_0017_538feef1.jpg",
+    img: "/manus-storage/UebeleinWed335_e6a9084a.jpg",
   },
   {
     slug: "timber-edge",
@@ -36,7 +36,7 @@ const venues = [
     capacity: { ceremony: 120, reception: null },
     desc: "Where the open field meets the old-growth timber line along the river. Timber Edge offers a naturally framed ceremony space with dappled light and a sense of enclosure that no constructed venue can replicate. The raw materials of the land — mature trees, native grasses, and the river — do all the work.",
     details: ["Old-growth timber backdrop", "Natural framing", "Dappled light", "Intimate atmosphere", "Along the river", "Up to 120 ceremony guests"],
-    img: "/manus-storage/Rivers_SEPT2022_-134_157d1be5.jpg",
+    img: "/manus-storage/UebeleinWed589_f26542b0.jpg",
   },
   {
     slug: "pavilion",
@@ -45,7 +45,7 @@ const venues = [
     capacity: { ceremony: null, reception: 200 },
     desc: "A covered outdoor structure on the north side of Rivers Barn, featuring a ceiling of string lighting perfect for an ancillary bar cart and dance floor under the stars. The Pavilion extends the event footprint of Rivers Barn and is ideal for cocktail receptions, outdoor dancing, and overflow entertaining.",
     details: ["String-light ceiling", "North side of Rivers Barn", "Dance floor under the stars", "Bar cart setup", "Cocktail reception space", "Up to 200 guests"],
-    img: "/manus-storage/2020JennyShipleySSTheRiverFilm-1_60fc729b.jpg",
+    img: "/manus-storage/UebeleinWed652_e0900d60.jpg",
   },
 ];
 

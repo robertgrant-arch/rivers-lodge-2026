@@ -1,11 +1,11 @@
 import { Link } from "wouter";
 import PublicLayout from "@/components/PublicLayout";
 
-const HERO = "/manus-storage/UebeleinWed335_e6a9084a.jpg";
-const BARN = "/manus-storage/Rivers_SEPT2022_-109_c2b5fea5.jpg";
-const CEREMONY = "/manus-storage/UebeleinWed405_59f02b8c.jpg";
-const RECEPTION = "/manus-storage/UebeleinWed557_b0b3b0ff.jpg";
-const LODGE_ROOM = "/manus-storage/20200515-3M4A7035_5457c1af.jpg";
+const HERO = "/manus-storage/UebeleinWed453_7f9cd26b.jpg";        // couple kissing on ceremony deck
+const BARN = "/manus-storage/6M9A3239_d4c999f4.jpg";              // Rivers Barn interior event setup
+const CEREMONY = "/manus-storage/UebeleinWed335_e6a9084a.jpg";    // outdoor ceremony on deck with water
+const RECEPTION = "/manus-storage/UebeleinWed629_ebea0f99.jpg";   // reception tables inside barn
+const LODGE_ROOM = "/manus-storage/974A8419edit_f37de96e.jpg";    // Lodge living room antler chandelier
 
 const timeline = [
   { day: "Friday Evening", title: "Welcome & Rehearsal", desc: "Guests arrive and settle into The Lodge, Riverhouse Suites, or The Annex & Bridal Suite. Rehearsal dinner at The Clubhouse — the estate's intimate gathering space for cocktail hours and pre-wedding celebrations." },

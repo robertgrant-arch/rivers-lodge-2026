@@ -1,20 +1,20 @@
 import { Link } from "wouter";
 import PublicLayout from "@/components/PublicLayout";
 
-// Real estate photography from theriverslodge.com
-const HERO = "/manus-storage/Rivers_SEPT2022_-253-1_f15787e1.jpg"; // Golden-hour aerial of entire estate
-const AERIAL_RIVER = "/manus-storage/DJI_0017_538feef1.jpg"; // Aerial of river/Riverhouse
-const LODGE_AERIAL = "/manus-storage/Rivers_SEPT2022_-238-1_2bb5d5aa.jpg"; // The Lodge from above
-const FIRE_PIT = "/manus-storage/Rivers_SEPT2022_-134_157d1be5.jpg"; // Fire pit by river
-const CLUBHOUSE_BAR = "/manus-storage/3C0A0304_cb66bc23.jpg"; // Clubhouse bar interior
-const WEDDING_1 = "/manus-storage/UebeleinWed335_e6a9084a.jpg";
-const WEDDING_2 = "/manus-storage/UebeleinWed405_59f02b8c.jpg";
-const WEDDING_3 = "/manus-storage/UebeleinWed557_b0b3b0ff.jpg";
-const GROUNDS_1 = "/manus-storage/Rivers_SEPT2022_-105_85069d29.jpg";
-const GROUNDS_2 = "/manus-storage/Rivers_SEPT2022_-109_c2b5fea5.jpg";
-const GROUNDS_3 = "/manus-storage/Rivers_May2023-8_d07307f4.jpg";
-const INTERIOR_1 = "/manus-storage/20200515-3M4A7035_5457c1af.jpg";
-const INTERIOR_2 = "/manus-storage/20200515-3M4A7063_c65f78b9.jpg";
+// Real estate photography — correctly matched to spaces
+const HERO = "/manus-storage/Rivers_SEPT2022_-134_157d1be5.jpg";   // Aerial of full estate grounds
+const AERIAL_RIVER = "/manus-storage/DJI_0017_538feef1.jpg";       // Drone aerial of river and property
+const LODGE_AERIAL = "/manus-storage/974A9398edit_294e71ff.jpg";   // Exterior of The Lodge building
+const FIRE_PIT = "/manus-storage/Rivers_SEPT2022_-253-1_f15787e1.jpg"; // Estate grounds wide shot
+const CLUBHOUSE_BAR = "/manus-storage/3C0A0304_cb66bc23.jpg";      // Clubhouse interior
+const WEDDING_1 = "/manus-storage/UebeleinWed335_e6a9084a.jpg";    // Outdoor ceremony on deck
+const WEDDING_2 = "/manus-storage/UebeleinWed629_ebea0f99.jpg";    // Reception tables in barn
+const WEDDING_3 = "/manus-storage/UebeleinWed557_b0b3b0ff.jpg";    // Couple by lake with string lights
+const GROUNDS_1 = "/manus-storage/6M9A3253_319f3a3b.jpg";          // Estate grounds aerial
+const GROUNDS_2 = "/manus-storage/6M9A3239_d4c999f4.jpg";          // Rivers Barn interior
+const GROUNDS_3 = "/manus-storage/Rivers_May2023-8_d07307f4.jpg";  // Lodge interior
+const INTERIOR_1 = "/manus-storage/974A8419edit_f37de96e.jpg";     // Lodge living room antler chandelier
+const INTERIOR_2 = "/manus-storage/Rivers_May2023-28_f44fb1bd.jpg"; // Riverhouse Suites interior
 
 export default function Home() {
   return (

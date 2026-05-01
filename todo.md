@@ -91,3 +91,15 @@
 - [x] Fix Weddings.tsx: correct all venue/space references to match source
 - [x] Fix Home.tsx: correct any space/lodging references
 - [x] Fix Corporate.tsx and Estate.tsx: correct any space references
+
+## Phase 13: Correct Photo-to-Space Matching
+
+- [ ] Visually audit theriverslodge.com to identify which photo belongs to which space/property
+- [ ] View all 71 CDN images locally and create a definitive filename-to-space catalog
+- [ ] Fix Venues.tsx: assign correct photo to each of the 5 venue spaces
+- [ ] Fix Lodging.tsx: assign correct photo to each of the 5 lodging properties
+- [ ] Fix Weddings.tsx: assign correct photos to venue previews and lodging section
+- [ ] Fix Home.tsx: assign correct photos to venue cards and lodging section
+- [ ] Fix Corporate.tsx, Estate.tsx, Membership.tsx, Hunt.tsx, Fish.tsx: verify all photos match their context
+- [ ] Fix Gallery.tsx: ensure photos are in the correct filter categories
+- [ ] QA all pages visually, run tests, save checkpoint
