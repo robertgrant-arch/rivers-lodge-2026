@@ -4,7 +4,8 @@ import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import PublicLayout from "@/components/PublicLayout";
 
-type AdminTab = "overview" | "bookings" | "inquiries" | "members" | "applications" | "waivers" | "updates" | "messages";
+type AdminTab = "overview" | "bookings" | "inquiries" | "members" | "applications" | "waivers" | "updates" | "messages" | "cms";
+type CmsSubTab = "testimonials" | "faqs" | "announcements" | "member-content";
 
 export default function AdminDashboard() {
   const { user, isAuthenticated, loading } = useAuth();
@@ -19,6 +20,27 @@ export default function AdminDashboard() {
   const updates = trpc.updates.list.useQuery(undefined, { enabled: isAuthenticated && user?.role === "admin" });
   const allMessages = trpc.messages.allMessages.useQuery(undefined, { enabled: isAuthenticated && user?.role === "admin" });
   const allUsers = trpc.admin.users.useQuery(undefined, { enabled: isAuthenticated && user?.role === "admin" });
+
+  // ─── CMS State & Queries ─────────────────────────────────────────────────────
+  const [cmsSubTab, setCmsSubTab] = useState<CmsSubTab>("testimonials");
+  const cmsTestimonials = trpc.cms.adminGetTestimonials.useQuery(undefined, { enabled: isAuthenticated && user?.role === "admin" });
+  const cmsFaqs = trpc.cms.adminGetFaqs.useQuery(undefined, { enabled: isAuthenticated && user?.role === "admin" });
+  const cmsAnnouncements = trpc.cms.adminGetAnnouncements.useQuery(undefined, { enabled: isAuthenticated && user?.role === "admin" });
+  const cmsMemberContent = trpc.cms.adminGetMemberContent.useQuery(undefined, { enabled: isAuthenticated && user?.role === "admin" });
+  // CMS Mutations
+  const createTestimonial = trpc.cms.adminCreateTestimonial.useMutation({ onSuccess: () => { toast.success("Testimonial created"); cmsTestimonials.refetch(); setTestimonialForm({ authorName: "", authorTitle: "", quote: "", rating: 5, division: "weddings", featured: true }); }, onError: () => toast.error("Failed to create") });
+  const deleteTestimonial = trpc.cms.adminDeleteTestimonial.useMutation({ onSuccess: () => { toast.success("Deleted"); cmsTestimonials.refetch(); }, onError: () => toast.error("Failed to delete") });
+  const createFaq = trpc.cms.adminCreateFaq.useMutation({ onSuccess: () => { toast.success("FAQ created"); cmsFaqs.refetch(); setFaqForm({ question: "", answer: "", division: "weddings", sortOrder: 0 }); }, onError: () => toast.error("Failed to create") });
+  const deleteFaq = trpc.cms.adminDeleteFaq.useMutation({ onSuccess: () => { toast.success("Deleted"); cmsFaqs.refetch(); }, onError: () => toast.error("Failed to delete") });
+  const createAnnouncement = trpc.cms.adminCreateAnnouncement.useMutation({ onSuccess: () => { toast.success("Announcement created"); cmsAnnouncements.refetch(); setAnnouncementForm({ title: "", body: "", type: "news", audience: "public", ctaLabel: "", ctaUrl: "" }); }, onError: () => toast.error("Failed to create") });
+  const deleteAnnouncement = trpc.cms.adminDeleteAnnouncement.useMutation({ onSuccess: () => { toast.success("Deleted"); cmsAnnouncements.refetch(); }, onError: () => toast.error("Failed to delete") });
+  const createMemberContent = trpc.cms.adminCreateMemberContent.useMutation({ onSuccess: () => { toast.success("Content created"); cmsMemberContent.refetch(); setMemberContentForm({ title: "", slug: "", body: "", contentType: "hunt_report", season: "" }); }, onError: () => toast.error("Failed to create") });
+  const deleteMemberContent = trpc.cms.adminDeleteMemberContent.useMutation({ onSuccess: () => { toast.success("Deleted"); cmsMemberContent.refetch(); }, onError: () => toast.error("Failed to delete") });
+  // CMS Forms
+  const [testimonialForm, setTestimonialForm] = useState<{ authorName: string; authorTitle: string; quote: string; rating: number; division: "weddings" | "corporate" | "general" | "membership"; featured: boolean }>({ authorName: "", authorTitle: "", quote: "", rating: 5, division: "weddings", featured: true });
+  const [faqForm, setFaqForm] = useState<{ question: string; answer: string; division: "weddings" | "corporate" | "general" | "membership"; sortOrder: number }>({ question: "", answer: "", division: "weddings", sortOrder: 0 });
+  const [announcementForm, setAnnouncementForm] = useState<{ title: string; body: string; type: "banner" | "alert" | "news"; audience: "public" | "members" | "all"; ctaLabel: string; ctaUrl: string }>({ title: "", body: "", type: "news", audience: "public", ctaLabel: "", ctaUrl: "" });
+  const [memberContentForm, setMemberContentForm] = useState<{ title: string; slug: string; body: string; contentType: "season_date" | "hunt_report" | "fish_report" | "member_news" | "policy_update"; season: string }>({ title: "", slug: "", body: "", contentType: "hunt_report", season: "" });
 
   // ─── Mutations ────────────────────────────────────────────────────────────
   const updateInquiryStatus = trpc.inquiries.updateStatus.useMutation({
@@ -101,6 +123,7 @@ export default function AdminDashboard() {
     { key: "waivers", label: "Waivers" },
     { key: "updates", label: "Updates" },
     { key: "messages", label: "Messages" },
+    { key: "cms", label: "CMS" },
   ];
 
   return (
@@ -424,6 +447,180 @@ export default function AdminDashboard() {
                 ))}
                 {(allMessages.data ?? []).length === 0 && <p className="text-sm font-sans text-muted-foreground py-8 text-center">No messages yet.</p>}
               </div>
+            </div>
+          )}
+
+          {/* CMS */}
+          {tab === "cms" && (
+            <div>
+              <h2 className="font-serif text-2xl text-foreground mb-6">Content Management</h2>
+              {/* CMS Sub-tabs */}
+              <div className="flex gap-0 border-b border-border mb-8 overflow-x-auto">
+                {(["testimonials", "faqs", "announcements", "member-content"] as CmsSubTab[]).map((st) => (
+                  <button key={st} onClick={() => setCmsSubTab(st)} className={`px-4 py-3 text-[10px] tracking-[0.14em] uppercase font-sans whitespace-nowrap transition-colors border-b-2 ${
+                    cmsSubTab === st ? "border-foreground text-foreground" : "border-transparent text-muted-foreground hover:text-foreground"
+                  }`}>
+                    {st.replace("-", " ")}
+                  </button>
+                ))}
+              </div>
+
+              {/* Testimonials */}
+              {cmsSubTab === "testimonials" && (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                  <div>
+                    <h3 className="font-serif text-lg text-foreground mb-4">Add Testimonial</h3>
+                    <form onSubmit={(e) => { e.preventDefault(); createTestimonial.mutate(testimonialForm); }} className="flex flex-col gap-3">
+                      <input required value={testimonialForm.authorName} onChange={(e) => setTestimonialForm({...testimonialForm, authorName: e.target.value})} placeholder="Author Name *" className="w-full border border-border bg-background px-4 py-2.5 text-sm font-sans text-foreground focus:outline-none focus:border-foreground" />
+                      <input value={testimonialForm.authorTitle} onChange={(e) => setTestimonialForm({...testimonialForm, authorTitle: e.target.value})} placeholder="Author Title / Location" className="w-full border border-border bg-background px-4 py-2.5 text-sm font-sans text-foreground focus:outline-none focus:border-foreground" />
+                      <textarea required value={testimonialForm.quote} onChange={(e) => setTestimonialForm({...testimonialForm, quote: e.target.value})} rows={4} placeholder="Quote *" className="w-full border border-border bg-background px-4 py-2.5 text-sm font-sans text-foreground focus:outline-none focus:border-foreground resize-none" />
+                      <div className="grid grid-cols-2 gap-3">
+                        <select value={testimonialForm.division} onChange={(e) => setTestimonialForm({...testimonialForm, division: e.target.value as typeof testimonialForm.division})} className="border border-border bg-background px-4 py-2.5 text-sm font-sans text-foreground focus:outline-none">
+                          {["weddings","corporate","general","membership"].map(d => <option key={d} value={d}>{d}</option>)}
+                        </select>
+                        <select value={testimonialForm.rating} onChange={(e) => setTestimonialForm({...testimonialForm, rating: Number(e.target.value)})} className="border border-border bg-background px-4 py-2.5 text-sm font-sans text-foreground focus:outline-none">
+                          {[5,4,3,2,1].map(r => <option key={r} value={r}>{r} stars</option>)}
+                        </select>
+                      </div>
+                      <label className="flex items-center gap-2 text-sm font-sans text-foreground">
+                        <input type="checkbox" checked={testimonialForm.featured} onChange={(e) => setTestimonialForm({...testimonialForm, featured: e.target.checked})} className="w-4 h-4" />
+                        Featured on homepage
+                      </label>
+                      <button type="submit" disabled={createTestimonial.isPending} className="w-full py-3 bg-foreground text-background text-xs tracking-[0.16em] uppercase font-sans font-medium hover:opacity-90 disabled:opacity-50">
+                        {createTestimonial.isPending ? "Adding..." : "Add Testimonial"}
+                      </button>
+                    </form>
+                  </div>
+                  <div>
+                    <h3 className="font-serif text-lg text-foreground mb-4">Published Testimonials ({cmsTestimonials.data?.length ?? 0})</h3>
+                    <div className="flex flex-col gap-3 max-h-[500px] overflow-y-auto">
+                      {(cmsTestimonials.data ?? []).map((t) => (
+                        <div key={t.id} className="bg-card border border-border p-4 flex items-start justify-between gap-3">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-sans font-medium text-foreground">{t.authorName}</p>
+                            <p className="text-xs font-sans text-muted-foreground">{t.division} · {t.rating}★{t.featured ? " · Featured" : ""}</p>
+                            <p className="text-xs font-sans text-muted-foreground mt-1 line-clamp-2 italic">&ldquo;{t.quote}&rdquo;</p>
+                          </div>
+                          <button onClick={() => { if (confirm("Delete?")) deleteTestimonial.mutate({ id: t.id }); }} className="text-xs text-red-500 hover:text-red-700 flex-shrink-0">Delete</button>
+                        </div>
+                      ))}
+                      {(cmsTestimonials.data ?? []).length === 0 && <p className="text-sm font-sans text-muted-foreground">No testimonials yet.</p>}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* FAQs */}
+              {cmsSubTab === "faqs" && (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                  <div>
+                    <h3 className="font-serif text-lg text-foreground mb-4">Add FAQ</h3>
+                    <form onSubmit={(e) => { e.preventDefault(); createFaq.mutate(faqForm); }} className="flex flex-col gap-3">
+                      <input required value={faqForm.question} onChange={(e) => setFaqForm({...faqForm, question: e.target.value})} placeholder="Question *" className="w-full border border-border bg-background px-4 py-2.5 text-sm font-sans text-foreground focus:outline-none focus:border-foreground" />
+                      <textarea required value={faqForm.answer} onChange={(e) => setFaqForm({...faqForm, answer: e.target.value})} rows={4} placeholder="Answer *" className="w-full border border-border bg-background px-4 py-2.5 text-sm font-sans text-foreground focus:outline-none focus:border-foreground resize-none" />
+                      <select value={faqForm.division} onChange={(e) => setFaqForm({...faqForm, division: e.target.value as typeof faqForm.division})} className="border border-border bg-background px-4 py-2.5 text-sm font-sans text-foreground focus:outline-none">
+                        {["weddings","corporate","general","membership"].map(d => <option key={d} value={d}>{d}</option>)}
+                      </select>
+                      <button type="submit" disabled={createFaq.isPending} className="w-full py-3 bg-foreground text-background text-xs tracking-[0.16em] uppercase font-sans font-medium hover:opacity-90 disabled:opacity-50">
+                        {createFaq.isPending ? "Adding..." : "Add FAQ"}
+                      </button>
+                    </form>
+                  </div>
+                  <div>
+                    <h3 className="font-serif text-lg text-foreground mb-4">Published FAQs ({cmsFaqs.data?.length ?? 0})</h3>
+                    <div className="flex flex-col gap-3 max-h-[500px] overflow-y-auto">
+                      {(cmsFaqs.data ?? []).map((f) => (
+                        <div key={f.id} className="bg-card border border-border p-4 flex items-start justify-between gap-3">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-sans font-medium text-foreground line-clamp-2">{f.question}</p>
+                            <p className="text-xs font-sans text-muted-foreground">{f.division}</p>
+                          </div>
+                          <button onClick={() => { if (confirm("Delete?")) deleteFaq.mutate({ id: f.id }); }} className="text-xs text-red-500 hover:text-red-700 flex-shrink-0">Delete</button>
+                        </div>
+                      ))}
+                      {(cmsFaqs.data ?? []).length === 0 && <p className="text-sm font-sans text-muted-foreground">No FAQs yet.</p>}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Announcements */}
+              {cmsSubTab === "announcements" && (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                  <div>
+                    <h3 className="font-serif text-lg text-foreground mb-4">Create Announcement</h3>
+                    <form onSubmit={(e) => { e.preventDefault(); createAnnouncement.mutate(announcementForm); }} className="flex flex-col gap-3">
+                      <input required value={announcementForm.title} onChange={(e) => setAnnouncementForm({...announcementForm, title: e.target.value})} placeholder="Title *" className="w-full border border-border bg-background px-4 py-2.5 text-sm font-sans text-foreground focus:outline-none focus:border-foreground" />
+                      <textarea value={announcementForm.body} onChange={(e) => setAnnouncementForm({...announcementForm, body: e.target.value})} rows={3} placeholder="Body text" className="w-full border border-border bg-background px-4 py-2.5 text-sm font-sans text-foreground focus:outline-none focus:border-foreground resize-none" />
+                      <div className="grid grid-cols-2 gap-3">
+                        <select value={announcementForm.type} onChange={(e) => setAnnouncementForm({...announcementForm, type: e.target.value as typeof announcementForm.type})} className="border border-border bg-background px-4 py-2.5 text-sm font-sans text-foreground focus:outline-none">
+                          {["news","banner","alert"].map(t => <option key={t} value={t}>{t}</option>)}
+                        </select>
+                        <select value={announcementForm.audience} onChange={(e) => setAnnouncementForm({...announcementForm, audience: e.target.value as typeof announcementForm.audience})} className="border border-border bg-background px-4 py-2.5 text-sm font-sans text-foreground focus:outline-none">
+                          {["public","members","all"].map(a => <option key={a} value={a}>{a}</option>)}
+                        </select>
+                      </div>
+                      <input value={announcementForm.ctaLabel} onChange={(e) => setAnnouncementForm({...announcementForm, ctaLabel: e.target.value})} placeholder="CTA Label (optional)" className="w-full border border-border bg-background px-4 py-2.5 text-sm font-sans text-foreground focus:outline-none focus:border-foreground" />
+                      <input value={announcementForm.ctaUrl} onChange={(e) => setAnnouncementForm({...announcementForm, ctaUrl: e.target.value})} placeholder="CTA URL (optional)" className="w-full border border-border bg-background px-4 py-2.5 text-sm font-sans text-foreground focus:outline-none focus:border-foreground" />
+                      <button type="submit" disabled={createAnnouncement.isPending} className="w-full py-3 bg-foreground text-background text-xs tracking-[0.16em] uppercase font-sans font-medium hover:opacity-90 disabled:opacity-50">
+                        {createAnnouncement.isPending ? "Creating..." : "Create Announcement"}
+                      </button>
+                    </form>
+                  </div>
+                  <div>
+                    <h3 className="font-serif text-lg text-foreground mb-4">Active Announcements ({cmsAnnouncements.data?.length ?? 0})</h3>
+                    <div className="flex flex-col gap-3 max-h-[500px] overflow-y-auto">
+                      {(cmsAnnouncements.data ?? []).map((a) => (
+                        <div key={a.id} className="bg-card border border-border p-4 flex items-start justify-between gap-3">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-sans font-medium text-foreground">{a.title}</p>
+                            <p className="text-xs font-sans text-muted-foreground">{a.type} · {a.audience}</p>
+                            {a.body && <p className="text-xs font-sans text-muted-foreground mt-1 line-clamp-2">{a.body}</p>}
+                          </div>
+                          <button onClick={() => { if (confirm("Delete?")) deleteAnnouncement.mutate({ id: a.id }); }} className="text-xs text-red-500 hover:text-red-700 flex-shrink-0">Delete</button>
+                        </div>
+                      ))}
+                      {(cmsAnnouncements.data ?? []).length === 0 && <p className="text-sm font-sans text-muted-foreground">No announcements yet.</p>}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Member Content */}
+              {cmsSubTab === "member-content" && (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                  <div>
+                    <h3 className="font-serif text-lg text-foreground mb-4">Add Member Content</h3>
+                    <form onSubmit={(e) => { e.preventDefault(); createMemberContent.mutate(memberContentForm); }} className="flex flex-col gap-3">
+                      <input required value={memberContentForm.title} onChange={(e) => setMemberContentForm({...memberContentForm, title: e.target.value})} placeholder="Title *" className="w-full border border-border bg-background px-4 py-2.5 text-sm font-sans text-foreground focus:outline-none focus:border-foreground" />
+                      <textarea required value={memberContentForm.body} onChange={(e) => setMemberContentForm({...memberContentForm, body: e.target.value})} rows={5} placeholder="Content body *" className="w-full border border-border bg-background px-4 py-2.5 text-sm font-sans text-foreground focus:outline-none focus:border-foreground resize-none" />
+                      <input required value={memberContentForm.slug} onChange={(e) => setMemberContentForm({...memberContentForm, slug: e.target.value.toLowerCase().replace(/\s+/g, "-")})} placeholder="Slug (auto-generated from title)" className="w-full border border-border bg-background px-4 py-2.5 text-sm font-sans text-foreground focus:outline-none focus:border-foreground" />
+                      <select value={memberContentForm.contentType} onChange={(e) => setMemberContentForm({...memberContentForm, contentType: e.target.value as typeof memberContentForm.contentType})} className="border border-border bg-background px-4 py-2.5 text-sm font-sans text-foreground focus:outline-none">
+                        {["hunt_report","fish_report","season_date","member_news","policy_update"].map(t => <option key={t} value={t}>{t.replace(/_/g, " ")}</option>)}
+                      </select>
+                      <input value={memberContentForm.season} onChange={(e) => setMemberContentForm({...memberContentForm, season: e.target.value})} placeholder="Season (e.g. Fall 2025)" className="w-full border border-border bg-background px-4 py-2.5 text-sm font-sans text-foreground focus:outline-none focus:border-foreground" />
+                      <button type="submit" disabled={createMemberContent.isPending} className="w-full py-3 bg-foreground text-background text-xs tracking-[0.16em] uppercase font-sans font-medium hover:opacity-90 disabled:opacity-50">
+                        {createMemberContent.isPending ? "Creating..." : "Create Content"}
+                      </button>
+                    </form>
+                  </div>
+                  <div>
+                    <h3 className="font-serif text-lg text-foreground mb-4">Published Content ({cmsMemberContent.data?.length ?? 0})</h3>
+                    <div className="flex flex-col gap-3 max-h-[500px] overflow-y-auto">
+                      {(cmsMemberContent.data ?? []).map((c) => (
+                        <div key={c.id} className="bg-card border border-border p-4 flex items-start justify-between gap-3">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-sans font-medium text-foreground">{c.title}</p>
+                            <p className="text-xs font-sans text-muted-foreground">{c.contentType.replace(/_/g, " ")}{c.season ? ` · ${c.season}` : ""}</p>
+                          </div>
+                          <button onClick={() => { if (confirm("Delete?")) deleteMemberContent.mutate({ id: c.id }); }} className="text-xs text-red-500 hover:text-red-700 flex-shrink-0">Delete</button>
+                        </div>
+                      ))}
+                      {(cmsMemberContent.data ?? []).length === 0 && <p className="text-sm font-sans text-muted-foreground">No content yet.</p>}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

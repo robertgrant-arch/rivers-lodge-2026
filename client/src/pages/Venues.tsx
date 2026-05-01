@@ -1,7 +1,8 @@
 import { Link } from "wouter";
 import PublicLayout from "@/components/PublicLayout";
+import { trpc } from "@/lib/trpc";
 
-const venues = [
+const FALLBACK_VENUES = [
   {
     slug: "rivers-barn",
     name: "Rivers Barn",
@@ -50,6 +51,20 @@ const venues = [
 ];
 
 export default function Venues() {
+  const { data: cmsSpaces } = trpc.cms.getEventSpaces.useQuery();
+
+  const venues = (cmsSpaces && cmsSpaces.length > 0)
+    ? cmsSpaces.map((space) => ({
+        slug: space.slug,
+        name: space.name,
+        type: space.indoorOutdoor === "indoor" ? "Indoor" : space.indoorOutdoor === "outdoor" ? "Outdoor" : "Indoor / Outdoor",
+        capacity: { ceremony: space.capacitySeated, reception: space.capacityReception },
+        desc: space.longDescription ?? space.shortDescription ?? "",
+        details: Array.isArray(space.features) ? (space.features as string[]) : [],
+        img: space.heroImage ?? (Array.isArray(space.galleryImages) ? (space.galleryImages as string[])[0] : "") ?? "",
+      }))
+    : FALLBACK_VENUES;
+
   return (
     <PublicLayout>
       {/* Header */}

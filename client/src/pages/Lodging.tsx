@@ -1,7 +1,8 @@
 import { Link } from "wouter";
 import PublicLayout from "@/components/PublicLayout";
+import { trpc } from "@/lib/trpc";
 
-const lodgingProperties = [
+const FALLBACK_LODGING = [
   {
     slug: "the-lodge",
     name: "The Lodge",
@@ -60,6 +61,24 @@ const lodgingProperties = [
 ];
 
 export default function Lodging() {
+  const { data: cmsUnits } = trpc.cms.getLodgingUnits.useQuery();
+
+  // Map CMS units to display format, falling back to static data
+  const lodgingProperties = (cmsUnits && cmsUnits.length > 0)
+    ? cmsUnits.map((unit) => ({
+        slug: unit.slug,
+        name: unit.name,
+        tagline: unit.shortDescription ?? "",
+        sqft: unit.squareFootage ? `${unit.squareFootage.toLocaleString()} sq ft` : null,
+        bedrooms: unit.bedrooms,
+        maxGuests: unit.maxGuests,
+        desc: unit.longDescription ?? "",
+        features: Array.isArray(unit.features) ? (unit.features as string[]) : [],
+        img: unit.heroImage ?? (Array.isArray(unit.galleryImages) ? (unit.galleryImages as string[])[0] : "") ?? "",
+        img2: Array.isArray(unit.galleryImages) ? ((unit.galleryImages as string[])[1] ?? (unit.galleryImages as string[])[0] ?? "") : "",
+      }))
+    : FALLBACK_LODGING;
+
   return (
     <PublicLayout>
       {/* Header */}
@@ -95,17 +114,23 @@ export default function Lodging() {
               </div>
 
               {/* Content */}
-              <div className={i % 2 !== 0 ? "lg:col-start-1 lg:row-start-1" : ""}>
-                <p className="text-[9px] tracking-[0.22em] uppercase font-sans text-muted-foreground mb-2">{prop.tagline}</p>
+                <div className={i % 2 !== 0 ? "lg:col-start-1 lg:row-start-1" : ""}>
+                <p className="text-[9px] tracking-[0.22em] uppercase font-sans text-muted-foreground mb-2">{(prop as { tagline?: string }).tagline ?? ""}</p>
                 <h2 className="font-serif text-4xl md:text-5xl text-foreground mb-2">{prop.name}</h2>
                 <div className="flex items-center gap-3 mb-5">
                   {prop.bedrooms && (
                     <span className="text-xs font-sans text-muted-foreground">{prop.bedrooms} Bedrooms</span>
                   )}
-                  {prop.sqft && (
+                  {(prop as { sqft?: string | null }).sqft && (
                     <>
                       <span className="w-1 h-1 rounded-full bg-border" />
-                      <span className="text-xs font-sans text-muted-foreground">{prop.sqft}</span>
+                      <span className="text-xs font-sans text-muted-foreground">{(prop as { sqft?: string | null }).sqft}</span>
+                    </>
+                  )}
+                  {(prop as { maxGuests?: number | null }).maxGuests && !(prop as { sqft?: string | null }).sqft && (
+                    <>
+                      <span className="w-1 h-1 rounded-full bg-border" />
+                      <span className="text-xs font-sans text-muted-foreground">Sleeps {(prop as { maxGuests?: number | null }).maxGuests}</span>
                     </>
                   )}
                 </div>

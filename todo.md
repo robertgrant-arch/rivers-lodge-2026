@@ -120,3 +120,22 @@
 
 - [x] Fix RIVER_LAWN on /weddings: now uses Rivers_SEPT2022_-253-1 (aerial sunset showing barn, ceremony area, grounds, pond)
 - [x] Browser QA pass on /weddings after image fixes
+
+## Phase 15: CMS Schema Integration
+
+- [x] Extend Drizzle schema: cms_amenities, cms_lodging_units, cms_event_spaces, cms_packages, cms_galleries, cms_gallery_images, cms_testimonials, cms_faqs, cms_policies, cms_announcements, cms_inquiry_forms, cms_form_fields, cms_contact_routes, cms_member_content, cms_singletons
+- [x] Push DB migrations
+- [x] Seed canonical data: 5 lodging units, 5 event spaces, 13 amenities, 1 package, 5 inquiry forms, 5 contact routes
+- [x] Seed singleton CMS records: global_settings, brand_settings, navigation, footer, seo_defaults, homepage, estate_page
+- [x] Build tRPC CMS routers: cms.lodging, cms.spaces, cms.amenities, cms.packages, cms.galleries, cms.testimonials, cms.faqs, cms.announcements, cms.memberContent, cms.admin (CRUD for all)
+- [x] Wire Lodging page to cms.lodging.list
+- [x] Wire Venues page to cms.spaces.list
+- [x] Wire Weddings page to cms.spaces.list + cms.lodging.list + cms.packages.list
+- [x] Wire Corporate page to cms.spaces.list + cms.packages.list
+- [x] Wire Estate page to cms.singletons.estate
+- [x] Wire Gallery page to cms.galleries.list
+- [x] Wire Membership page to cms.memberContent (seasonal calendar)
+- [x] Wire Hunt/Fish pages to cms data
+- [x] Wire Member Portal to cms.memberContent.list (gated)
+- [x] Build Admin CMS UI: CRUD panels for testimonials, faqs, announcements, member content (with create/delete), plus lodging and event spaces read-only view
+- [x] Run tests and save checkpoint (12 tests passing, 0 TypeScript errors)

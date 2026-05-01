@@ -1,5 +1,6 @@
 import { Link } from "wouter";
 import PublicLayout from "@/components/PublicLayout";
+import { trpc } from "@/lib/trpc";
 
 const HERO = "/manus-storage/Rivers_SEPT2022_-253-1_f15787e1.jpg";
 const MEETING = "/manus-storage/3C0A0304_cb66bc23.jpg";
@@ -24,6 +25,16 @@ const packages = [
 ];
 
 export default function Corporate() {
+  const { data: cmsPackages } = trpc.cms.getPackages.useQuery({ division: "corporate" });
+
+  const corporatePackages = (cmsPackages && cmsPackages.length > 0)
+    ? cmsPackages.map((pkg) => ({
+        name: pkg.name,
+        desc: pkg.description ?? pkg.tagline ?? "",
+        includes: Array.isArray(pkg.includes) ? (pkg.includes as string[]) : [],
+      }))
+    : packages;
+
   return (
     <PublicLayout>
       {/* Hero */}
@@ -85,7 +96,7 @@ export default function Corporate() {
             <h2 className="font-serif text-3xl md:text-4xl text-foreground">Built around your group</h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {packages.map((pkg) => (
+            {corporatePackages.map((pkg) => (
               <div key={pkg.name} className="bg-card border border-border p-8">
                 <h3 className="font-serif text-2xl text-foreground mb-3">{pkg.name}</h3>
                 <p className="text-sm font-sans text-muted-foreground leading-relaxed mb-6">{pkg.desc}</p>

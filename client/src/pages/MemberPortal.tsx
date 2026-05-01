@@ -70,6 +70,8 @@ export default function MemberPortal() {
   const memberStatus = trpc.membership.myStatus.useQuery(undefined, { enabled: isAuthenticated });
   const blockedDates = trpc.bookings.blockedDates.useQuery();
   const updates = trpc.updates.list.useQuery();
+  const cmsMemberContent = trpc.cms.getMemberContent.useQuery(undefined, { enabled: isAuthenticated });
+  const cmsAnnouncements = trpc.cms.getAnnouncements.useQuery({ audience: "members" });
   const myMessages = trpc.messages.myMessages.useQuery(undefined, { enabled: isAuthenticated });
 
   const sendMsg = trpc.messages.send.useMutation({
@@ -274,7 +276,40 @@ export default function MemberPortal() {
           {/* Updates */}
           {tab === "updates" && (
             <div>
-              <h2 className="font-serif text-2xl text-foreground mb-6">Seasonal Updates</h2>
+              <h2 className="font-serif text-2xl text-foreground mb-6">Seasonal Updates & Member Content</h2>
+              {/* CMS Announcements for members */}
+              {cmsAnnouncements.data && cmsAnnouncements.data.length > 0 && (
+                <div className="mb-8 flex flex-col gap-3">
+                  {cmsAnnouncements.data.map((a) => (
+                    <div key={a.id} className={`border-l-4 px-5 py-4 ${
+                      a.type === "alert" ? "border-red-500 bg-red-50 dark:bg-red-900/10" : "border-foreground bg-secondary/40"
+                    }`}>
+                      <p className="text-sm font-sans font-medium text-foreground">{a.title}</p>
+                      {a.body && <p className="text-xs font-sans text-muted-foreground mt-1">{a.body}</p>}
+                      {a.ctaLabel && a.ctaUrl && (
+                        <a href={a.ctaUrl} className="text-xs font-sans text-foreground underline mt-2 inline-block">{a.ctaLabel}</a>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+              {/* CMS Member Content */}
+              {cmsMemberContent.data && cmsMemberContent.data.length > 0 && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                  {cmsMemberContent.data.map((c) => (
+                    <div key={c.id} className="bg-card border border-border p-6">
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="text-[9px] tracking-[0.16em] uppercase font-sans text-muted-foreground">{c.contentType.replace(/_/g, " ")}</span>
+                        {c.publishedAt && <span className="text-[9px] font-sans text-muted-foreground">{new Date(c.publishedAt).toLocaleDateString()}</span>}
+                      </div>
+                      <h3 className="font-serif text-xl text-foreground mb-3">{c.title}</h3>
+                      <p className="text-sm font-sans text-muted-foreground leading-relaxed line-clamp-4">{c.body}</p>
+                      {c.season && <p className="text-xs font-sans text-muted-foreground mt-3">Season: {c.season}</p>}
+                    </div>
+                  ))}
+                </div>
+              )}
+              {/* Legacy seasonal updates */}
               {updates.isLoading ? (
                 <p className="text-sm font-sans text-muted-foreground">Loading updates...</p>
               ) : updates.data && updates.data.length > 0 ? (
@@ -290,11 +325,11 @@ export default function MemberPortal() {
                     </div>
                   ))}
                 </div>
-              ) : (
+              ) : (!cmsMemberContent.data || cmsMemberContent.data.length === 0) ? (
                 <div className="text-center py-16 text-muted-foreground font-sans text-sm">
                   No updates yet. Check back as the season progresses.
                 </div>
-              )}
+              ) : null}
             </div>
           )}
 

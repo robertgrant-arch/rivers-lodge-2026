@@ -1,5 +1,6 @@
 import { Link } from "wouter";
 import PublicLayout from "@/components/PublicLayout";
+import { trpc } from "@/lib/trpc";
 
 const HERO = "/manus-storage/Rivers_SEPT2022_-253-1_f15787e1.jpg";
 const AERIAL = "/manus-storage/DJI_0017_538feef1.jpg";
@@ -35,6 +36,7 @@ const grounds = [
 ];
 
 export default function Estate() {
+  const testimonials = trpc.cms.getTestimonials.useQuery({ division: "general", featuredOnly: true });
   return (
     <PublicLayout>
       {/* Hero */}
@@ -174,6 +176,29 @@ export default function Estate() {
           </div>
         </div>
       </section>
+
+      {/* Testimonials from CMS */}
+      {testimonials.data && testimonials.data.length > 0 && (
+        <section className="py-20 md:py-28 bg-secondary/40">
+          <div className="max-w-7xl mx-auto px-6 lg:px-10">
+            <div className="mb-12 text-center">
+              <p className="text-[10px] tracking-[0.24em] uppercase font-sans text-muted-foreground mb-3">What Guests Say</p>
+              <h2 className="font-serif text-3xl md:text-4xl text-foreground">Stories from the estate</h2>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {testimonials.data.slice(0, 3).map((t) => (
+                <div key={t.id} className="bg-card border border-border p-8">
+                  <p className="text-muted-foreground font-sans text-sm leading-relaxed italic mb-6">&ldquo;{t.quote}&rdquo;</p>
+                  <div>
+                    <p className="font-serif text-base text-foreground">{t.authorName}</p>
+                    {t.authorTitle && <p className="text-xs font-sans text-muted-foreground mt-1">{t.authorTitle}</p>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Dual CTA */}
       <section className="py-16 bg-[oklch(0.13_0.008_66)]">

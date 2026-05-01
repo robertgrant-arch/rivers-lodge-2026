@@ -1,5 +1,6 @@
 import { Link } from "wouter";
 import PublicLayout from "@/components/PublicLayout";
+import { trpc } from "@/lib/trpc";
 
 // Real estate photography — correctly matched to spaces
 const HERO = "/manus-storage/DJI_0017_538feef1.jpg";              // Wide aerial drone shot — full property, river, lodge, lawn
@@ -17,6 +18,9 @@ const INTERIOR_1 = "/manus-storage/974A8419edit_f37de96e.jpg";     // Lodge livi
 const INTERIOR_2 = "/manus-storage/Rivers_May2023-28_f44fb1bd.jpg"; // Riverhouse Suites interior
 
 export default function Home() {
+  const { data: testimonials } = trpc.cms.getTestimonials.useQuery({ featuredOnly: true });
+  const { data: announcements } = trpc.cms.getAnnouncements.useQuery({ audience: "public" });
+
   return (
     <PublicLayout>
       {/* ── Cinematic Hero ─────────────────────────────────────────────── */}
@@ -255,6 +259,42 @@ export default function Home() {
           </Link>
         </div>
       </section>
+
+      {/* ── Testimonials ───────────────────────────────────────────────── */}
+      {testimonials && testimonials.length > 0 && (
+        <section className="py-20 md:py-28 bg-secondary/30">
+          <div className="max-w-7xl mx-auto px-6 lg:px-10">
+            <p className="text-[10px] tracking-[0.24em] uppercase font-sans text-muted-foreground mb-12 text-center">What Our Guests Say</p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {testimonials.slice(0, 3).map((t) => (
+                <div key={t.id} className="flex flex-col">
+                  <div className="flex gap-1 mb-4">
+                    {Array.from({ length: t.rating ?? 5 }).map((_, i) => (
+                      <span key={i} className="text-amber-500 text-sm">★</span>
+                    ))}
+                  </div>
+                  <p className="font-serif text-lg text-foreground italic leading-relaxed mb-6">&ldquo;{t.quote}&rdquo;</p>
+                  <div className="mt-auto">
+                    <p className="text-sm font-sans font-medium text-foreground">{t.authorName}</p>
+                    {t.authorTitle && <p className="text-xs font-sans text-muted-foreground">{t.authorTitle}</p>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ── Announcements Banner ────────────────────────────────────────── */}
+      {announcements && announcements.filter(a => a.type === "banner" || a.type === "alert").length > 0 && (
+        <div className="bg-foreground text-background py-3 px-6 text-center">
+          {announcements.filter(a => a.type === "banner" || a.type === "alert").slice(0, 1).map((a) => (
+            <p key={a.id} className="text-xs font-sans tracking-wide">
+              {a.title}{a.ctaLabel && a.ctaUrl && <> &mdash; <a href={a.ctaUrl} className="underline underline-offset-2 hover:opacity-80">{a.ctaLabel}</a></>}
+            </p>
+          ))}
+        </div>
+      )}
 
       {/* ── Membership CTA ─────────────────────────────────────────────── */}
       <section className="relative py-28 overflow-hidden">

@@ -1,5 +1,6 @@
 import { Link } from "wouter";
 import PublicLayout from "@/components/PublicLayout";
+import { trpc } from "@/lib/trpc";
 
 const HERO = "/manus-storage/UebeleinWed453_7f9cd26b.jpg";        // couple kissing on ceremony deck
 const BARN = "/manus-storage/IMG_0646_6bb80f84.jpg";              // Rivers Barn exterior at dusk — the actual barn building
@@ -31,6 +32,28 @@ const lodging = [
 ];
 
 export default function Weddings() {
+  const { data: cmsSpaces } = trpc.cms.getEventSpaces.useQuery({ division: "weddings" });
+  const { data: cmsLodging } = trpc.cms.getLodgingUnits.useQuery({ forWeddings: true });
+
+  const weddingVenues = (cmsSpaces && cmsSpaces.length > 0)
+    ? cmsSpaces.slice(0, 3).map((space) => ({
+        name: space.name,
+        capacity: space.capacitySeated ? `Up to ${space.capacitySeated} guests` : space.capacityReception ? `Up to ${space.capacityReception} guests` : "Flexible capacity",
+        type: space.indoorOutdoor === "indoor" ? "Indoor" : space.indoorOutdoor === "outdoor" ? "Outdoor" : "Indoor / Outdoor",
+        desc: space.shortDescription ?? "",
+        href: `/venues#${space.slug}`,
+        img: space.heroImage ?? BARN,
+      }))
+    : venues;
+
+  const weddingLodging = (cmsLodging && cmsLodging.length > 0)
+    ? cmsLodging.map((unit) => ({
+        name: unit.name,
+        detail: [unit.bedrooms ? `${unit.bedrooms} Bedrooms` : null, unit.squareFootage ? `${unit.squareFootage.toLocaleString()} sq ft` : null].filter(Boolean).join(" · ") || unit.shortDescription || "",
+        href: `/lodging#${unit.slug}`,
+      }))
+    : lodging;
+
   return (
     <PublicLayout>
       {/* Hero */}
@@ -120,7 +143,7 @@ export default function Weddings() {
             </Link>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {venues.map((v) => (
+            {weddingVenues.map((v) => (
               <Link key={v.name} href={v.href} className="group block">
                 <div className="overflow-hidden aspect-[4/3] mb-5">
                   <img src={v.img} alt={v.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
@@ -151,7 +174,7 @@ export default function Weddings() {
                 Five lodging buildings sleep your wedding party on-site. From the 6,000 sq ft Lodge decorated by a prominent Kansas City designer, to the light-filled Annex & Bridal Suite just steps from the barn — everyone stays together.
               </p>
               <div className="flex flex-col gap-3 mb-8">
-                {lodging.map((l) => (
+                {weddingLodging.map((l) => (
                   <Link key={l.name} href={l.href} className="flex items-center justify-between py-3 border-b border-white/10 group">
                     <span className="font-serif text-lg text-white group-hover:opacity-70 transition-opacity">{l.name}</span>
                     <span className="text-xs font-sans text-white/40">{l.detail}</span>

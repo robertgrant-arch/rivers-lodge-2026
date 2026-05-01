@@ -1,5 +1,6 @@
 import { Link } from "wouter";
 import PublicLayout from "@/components/PublicLayout";
+import { trpc } from "@/lib/trpc";
 
 const HERO = "/manus-storage/DJI_0017_538feef1.jpg";
 const BASS = "/manus-storage/Rivers_SEPT2022_-253-1_f15787e1.jpg";
@@ -55,6 +56,7 @@ const fisheries = [
 ];
 
 export default function Fish() {
+  const fishReports = trpc.cms.getMemberContent.useQuery({ contentType: "fish_report" });
   return (
     <PublicLayout>
       {/* Hero */}
@@ -160,6 +162,27 @@ export default function Fish() {
           </div>
         </div>
       </section>
+
+      {/* Fish Reports from CMS */}
+      {fishReports.data && fishReports.data.length > 0 && (
+        <section className="py-20 md:py-28 bg-secondary/40">
+          <div className="max-w-7xl mx-auto px-6 lg:px-10">
+            <div className="mb-10">
+              <p className="text-[10px] tracking-[0.24em] uppercase font-sans text-muted-foreground mb-3">From the Water</p>
+              <h2 className="font-serif text-3xl md:text-4xl text-foreground">Recent Fishing Reports</h2>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {fishReports.data.slice(0, 3).map((r) => (
+                <div key={r.id} className="bg-card border border-border p-6">
+                  <p className="text-[9px] tracking-[0.16em] uppercase font-sans text-muted-foreground mb-2">{r.contentType.replace(/_/g, " ")}{r.season ? ` · ${r.season}` : ""}</p>
+                  <h3 className="font-serif text-xl text-foreground mb-3">{r.title}</h3>
+                  <p className="text-sm font-sans text-muted-foreground leading-relaxed line-clamp-4">{r.body}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* CTA */}
       <section className="py-20 bg-background">

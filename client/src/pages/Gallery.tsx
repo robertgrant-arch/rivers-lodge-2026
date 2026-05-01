@@ -1,5 +1,6 @@
 import { useState } from "react";
 import PublicLayout from "@/components/PublicLayout";
+import { trpc } from "@/lib/trpc";
 
 type Category = "all" | "weddings" | "venues" | "lodging" | "grounds" | "outdoors";
 
@@ -69,10 +70,32 @@ const photos: { src: string; alt: string; category: Category; span?: "wide" | "t
   { src: "/manus-storage/20200515-3M4A7106_ae87fae0.jpg", alt: "Hunting and outdoor pursuits at Rivers Lodge", category: "outdoors" },
 ];
 
+// Map CMS gallery category slugs to our Category type
+const CMS_CATEGORY_MAP: Record<string, Category> = {
+  weddings: "weddings",
+  venues: "venues",
+  lodging: "lodging",
+  outdoors: "outdoors",
+  estate: "grounds",
+};
+
 export default function Gallery() {
   const [active, setActive] = useState<Category>("all");
+  const { data: cmsGalleries } = trpc.cms.getAllGalleriesWithImages.useQuery();
 
-  const filtered = active === "all" ? photos : photos.filter((p) => p.category === active);
+  // Build photo list from CMS data if available, otherwise use static fallback
+  const allPhotos: { src: string; alt: string; category: Category }[] = (cmsGalleries && cmsGalleries.length > 0)
+    ? cmsGalleries.flatMap((gallery) => {
+        const cat = CMS_CATEGORY_MAP[gallery.category] ?? "grounds";
+        return (gallery.images ?? []).map((img) => ({
+          src: img.url,
+          alt: img.altText ?? gallery.name,
+          category: cat,
+        }));
+      })
+    : photos;
+
+  const filtered = active === "all" ? allPhotos : allPhotos.filter((p) => p.category === active);
 
   return (
     <PublicLayout>
