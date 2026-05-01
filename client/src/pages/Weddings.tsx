@@ -8,7 +8,7 @@ const RECEPTION = "/manus-storage/UebeleinWed557_b0b3b0ff.jpg";
 const LODGE_ROOM = "/manus-storage/20200515-3M4A7035_5457c1af.jpg";
 
 const timeline = [
-  { day: "Friday Evening", title: "Welcome & Rehearsal", desc: "Guests arrive and settle into The Lodge, Riverhouse Suites, or The Annex. Rehearsal dinner at The Clubhouse with drinks on the pond deck." },
+  { day: "Friday Evening", title: "Welcome & Rehearsal", desc: "Guests arrive and settle into The Lodge, Riverhouse Suites, or The Annex & Bridal Suite. Rehearsal dinner at The Clubhouse — the estate's intimate gathering space for cocktail hours and pre-wedding celebrations." },
   { day: "Saturday Morning", title: "Getting Ready", desc: "The bridal party takes over The Annex & Bridal Suite — four bedrooms, three bathrooms, light-filled and steps from the barn." },
   { day: "Saturday Afternoon", title: "Ceremony", desc: "Exchange vows on the River Lawn with the Marais des Cygnes as your backdrop, or choose the Timber Edge for a ceremony framed by old-growth trees." },
   { day: "Saturday Evening", title: "Reception", desc: "Dinner in Rivers Barn or under the Pavilion. Two fireplaces, an indoor/outdoor bar, and patios with string lights that carry the celebration into the night." },
@@ -16,17 +16,17 @@ const timeline = [
 ];
 
 const venues = [
-  { name: "Rivers Barn", capacity: "256 guests", type: "Indoor / Outdoor", desc: "Designed by a prominent Kansas City architect. Floor-to-ceiling windows, 22-foot facade doors, a lookout balcony, two fireplaces, and an indoor/outdoor bar.", href: "/venues/rivers-barn", img: BARN },
-  { name: "Clubhouse", capacity: "80 guests", type: "Indoor / Outdoor", desc: "Rehearsal dinners, cocktail hours, intimate ceremonies. Sits by a pond with its own gazebo, bar, and flexible layout.", href: "/venues/clubhouse", img: CEREMONY },
-  { name: "River Lawn", capacity: "200 guests", type: "Outdoor", desc: "A level grass expanse with direct sightlines to the Marais des Cygnes. The natural backdrop for an outdoor ceremony.", href: "/venues/river-lawn", img: RECEPTION },
+  { name: "Rivers Barn", capacity: "Up to 256 guests", type: "Indoor / Outdoor", desc: "Designed by a prominent Kansas City architect. Modern farmhouse with two large patios, two fireplaces, air-conditioning, an indoor/outdoor bar, and separate luxury bathrooms.", href: "/venues#rivers-barn", img: BARN },
+  { name: "Clubhouse", capacity: "Intimate events", type: "Indoor / Outdoor", desc: "Often used as a rehearsal dinner space, cocktail hour space, or intimate wedding ceremony location. A warm, character-filled gathering point.", href: "/venues#clubhouse", img: CEREMONY },
+  { name: "River Lawn", capacity: "Up to 200 guests", type: "Outdoor Ceremony", desc: "A level grass expanse overlooking the Marais des Cygnes. Open sky, the river, and nothing competing with the moment.", href: "/venues#river-lawn", img: RECEPTION },
 ];
 
 const lodging = [
-  { name: "The Lodge", detail: "4 Bedrooms · 5,200 sq ft", href: "/lodging/the-lodge" },
-  { name: "Riverhouse Suites", detail: "4 Private Suites", href: "/lodging/riverhouse-suites" },
-  { name: "The Annex & Bridal Suite", detail: "4 Bedrooms · 3 Baths", href: "/lodging/annex-bridal-suite" },
-  { name: "Ohana House", detail: "4 Bedrooms · Private Lake", href: "/lodging/ohana-house" },
-  { name: "The Farmhouse", detail: "Private Lodging", href: "/lodging/the-farmhouse" },
+  { name: "The Lodge", detail: "4 Bedrooms · 6,000 sq ft", href: "/lodging#the-lodge" },
+  { name: "Riverhouse Suites", detail: "4 Private Suites · Completed 2022", href: "/lodging#riverhouse-suites" },
+  { name: "The Annex & Bridal Suite", detail: "4 Bedrooms · 3 Baths · Remodeled 2021", href: "/lodging#annex-bridal-suite" },
+  { name: "Ohana House", detail: "4 Bedrooms · 20-Acre Lake", href: "/lodging#ohana-house" },
+  { name: "The Farmhouse", detail: "Classic Kansas Character", href: "/lodging#the-farmhouse" },
 ];
 
 export default function Weddings() {
@@ -147,7 +147,7 @@ export default function Weddings() {
                 Your guests stay<br /><span className="italic font-light">on the estate.</span>
               </h2>
               <p className="text-base font-sans text-white/65 leading-relaxed mb-8">
-                Five lodging buildings sleep your wedding party on-site. From the 5,200 sq ft Lodge with its full kitchen and bar, to the light-filled Annex designed for the bridal party — everyone stays together.
+                Five lodging buildings sleep your wedding party on-site. From the 6,000 sq ft Lodge decorated by a prominent Kansas City designer, to the light-filled Annex & Bridal Suite just steps from the barn — everyone stays together.
               </p>
               <div className="flex flex-col gap-3 mb-8">
                 {lodging.map((l) => (

@@ -179,8 +179,8 @@ export default function Home() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[
-              { name: "Rivers Barn", desc: "The centerpiece event venue. Soaring ceilings, exposed timber, and flexible floor plans for up to 220+ guests.", img: GROUNDS_2, href: "/venues" },
-              { name: "Clubhouse", desc: "A full bar, lounge seating, and indoor-outdoor flow. The social heart of the estate.", img: CLUBHOUSE_BAR, href: "/venues" },
+              { name: "Rivers Barn", desc: "Designed by a prominent Kansas City architect. Modern farmhouse with two patios, two fireplaces, an indoor/outdoor bar, and capacity for up to 256 guests.", img: GROUNDS_2, href: "/venues" },
+              { name: "Clubhouse", desc: "The estate's intimate gathering space — rehearsal dinners, cocktail hours, and intimate ceremony location.", img: CLUBHOUSE_BAR, href: "/venues" },
               { name: "River Lawn", desc: "Open-air ceremony and reception space on the banks of the Marais des Cygnes.", img: AERIAL_RIVER, href: "/venues" },
             ].map((v) => (
               <Link key={v.name} href={v.href} className="group block">

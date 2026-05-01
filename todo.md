@@ -83,3 +83,11 @@
 - [x] Update homepage dual-track entry labels and copy to match brief exactly
 - [x] Update homepage hero copy to match brand positioning (cinematic, land-connected, dual-mode estate)
 - [x] Remove Hunt fish section (Fishing moved to dedicated Fish page)
+
+## Phase 12: Space & Venue Label Corrections
+
+- [x] Fix Venues.tsx: Rivers Barn (256 capacity, KC architect, modern farmhouse, 2 patios, 2 fireplaces, A/C, indoor/outdoor bar, luxury bathrooms), Clubhouse (rehearsal dinners, cocktail hours, intimate ceremony), Annex & Bridal Suite (remodeled 2021, 4BR/3BA, steps from barn), River Lawn, Timber Edge, Pavilion (outdoor ceremony/reception spaces)
+- [x] Fix Lodging.tsx: The Lodge is 6,000 sq ft (not 5,200), Ohana House (4BR, 20-acre lake, fire pit, nature trails, canoeing/paddleboarding/hammocks, 15 min from main lodge), Riverhouse Suites (2022, luxury, private baths, individual HVAC), Annex & Bridal Suite (4BR/3BA, 2021 remodel, steps from barn), Farmhouse (classic Kansas character)
+- [x] Fix Weddings.tsx: correct all venue/space references to match source
+- [x] Fix Home.tsx: correct any space/lodging references
+- [x] Fix Corporate.tsx and Estate.tsx: correct any space references

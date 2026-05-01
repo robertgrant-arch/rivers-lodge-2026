@@ -6,10 +6,10 @@ const lodgingProperties = [
     slug: "the-lodge",
     name: "The Lodge",
     tagline: "The social center of the property.",
-    sqft: "5,200 sq ft",
+    sqft: "6,000 sq ft",
     bedrooms: 4,
-    desc: "Our 5,200 square foot lodge has 4 bedrooms decorated by a prominent Kansas City designer. A full kitchen, large balcony, heated floors, and a recreation room make it the place where the rehearsal dinner becomes a late-night card game. The Lodge bar — with a canoe on the ceiling — is where stories get told and retold for years.",
-    features: ["4 bedrooms", "Full kitchen", "Lodge bar (canoe ceiling)", "Heated floors", "Large balcony", "Recreation room", "Kansas City designer interiors"],
+    desc: "Our 6,000 square foot lodge has 4 bedrooms decorated by a prominent Kansas City designer and incorporates many aspects of history and outdoor pursuits from the area. The lodge has a full kitchen, large balcony, heated floors, heating/AC, and a large recreation room.",
+    features: ["4 bedrooms", "6,000 sq ft", "Full kitchen", "Large balcony", "Heated floors", "Recreation room", "Kansas City designer interiors"],
     img: "/manus-storage/20200515-3M4A7035_5457c1af.jpg",
     img2: "/manus-storage/20200515-3M4A7063_c65f78b9.jpg",
   },
@@ -19,8 +19,8 @@ const lodgingProperties = [
     tagline: "Four private suites with luxury finishes.",
     sqft: null,
     bedrooms: 4,
-    desc: "Completed in 2022 with luxury finishes. Each suite is uniquely decorated with a private bath and individual climate control. The Riverhouse Suites offer a boutique hotel experience within the privacy of the estate.",
-    features: ["4 private suites", "Private bath per suite", "Individual climate control", "Luxury finishes", "Completed 2022", "Boutique hotel feel"],
+    desc: "The Riverhouse Suites were completed in 2022 and designed with luxury in mind. Each room is uniquely decorated and all rooms have their own bathrooms and individual heating/AC units.",
+    features: ["4 private suites", "Private bath per suite", "Individual heating/AC", "Uniquely decorated rooms", "Luxury finishes", "Completed 2022"],
     img: "/manus-storage/6M9A3214-2_bcea97ca.jpg",
     img2: "/manus-storage/6M9A3225_b9b3368e.jpg",
   },
@@ -30,8 +30,8 @@ const lodgingProperties = [
     tagline: "Steps from the barn. Built for the bridal party.",
     sqft: null,
     bedrooms: 4,
-    desc: "Modern farmhouse aesthetic, light and airy. Four bedrooms and three bathrooms — steps from Rivers Barn. Designed as the perfect bridal party headquarters, with space to get ready, relax, and celebrate before the ceremony.",
-    features: ["4 bedrooms", "3 bathrooms", "Steps from Rivers Barn", "Modern farmhouse aesthetic", "Light-filled interiors", "Bridal party ready"],
+    desc: "The Annex & Bridal Suite was completely remodeled in 2021. It has a modern farmhouse feel with a light and airy design. Just steps away from Rivers Barn, it is the perfect spot to spend the day getting ready for your big day. The Annex & Bridal Suite has 4 bedrooms and 3 bathrooms.",
+    features: ["4 bedrooms", "3 bathrooms", "Steps from Rivers Barn", "Remodeled 2021", "Modern farmhouse feel", "Light and airy design"],
     img: "/manus-storage/20200515-3M4A7081_73fef076.jpg",
     img2: "/manus-storage/20200515-3M4A7085_b71229e5.jpg",
   },
@@ -41,8 +41,8 @@ const lodgingProperties = [
     tagline: "On its own lake. A world apart.",
     sqft: null,
     bedrooms: 4,
-    desc: "Set on its own 20-acre lake, 15 minutes from the main lodge. Fire pit, nature trails, canoes, and hammocks. Ohana House offers a more secluded experience — ideal for the honeymoon couple, close family, or a private retreat within the retreat.",
-    features: ["4 bedrooms", "Private 20-acre lake", "Fire pit", "Nature trails", "Canoes & hammocks", "15 min from main lodge"],
+    desc: "The Ohana House is located approximately 15 minutes from the main lodge. It has 4 bedrooms and bathrooms, a 20-acre lake, a gorgeous fire pit, and miles of nature trails. Enjoy fishing, canoeing, paddle boarding, hiking, or just laying on a hammock. The Ohana House can be rented as part of a corporate or wedding package, or is a perfect place for just a family getaway.",
+    features: ["4 bedrooms & bathrooms", "20-acre private lake", "Gorgeous fire pit", "Miles of nature trails", "Fishing, canoeing, paddleboarding", "15 min from main lodge"],
     img: "/manus-storage/Rivers_May2023-28_f44fb1bd.jpg",
     img2: "/manus-storage/Rivers_May2023-27_33df99ba.jpg",
   },
@@ -70,7 +70,7 @@ export default function Lodging() {
             Stay on the estate.<br /><span className="italic font-light">All weekend.</span>
           </h1>
           <p className="text-base font-sans text-muted-foreground max-w-xl leading-relaxed">
-            Five lodging buildings sleep your entire wedding party on-site. From the 5,200 sq ft Lodge to the secluded Ohana House on its own lake — everyone stays together.
+            Five lodging buildings sleep your entire wedding party on-site. From the 6,000 sq ft Lodge to the secluded Ohana House on its own 20-acre lake — everyone stays together.
           </p>
         </div>
       </section>
