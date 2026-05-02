@@ -5,7 +5,7 @@ import { trpc } from "@/lib/trpc";
 
 /* ── Image constants ─────────────────────────────────────────────────────── */
 const HERO          = "/manus-storage/DJI_0017_538feef1.jpg";
-const AERIAL_RIVER  = "/manus-storage/Rivers_SEPT2022_-134_157d1be5.jpg";
+const AERIAL_RIVER  = "/manus-storage/Rivers_SEPT2022_-253-1_f15787e1.jpg";
 const LODGE_EXT     = "/manus-storage/974A9398edit_294e71ff.jpg";
 const FIRE_PIT      = "/manus-storage/Rivers_SEPT2022_-253-1_f15787e1.jpg";
 const CLUBHOUSE_BAR = "/manus-storage/3C0A0304_cb66bc23.jpg";
@@ -14,7 +14,7 @@ const WEDDING_2     = "/manus-storage/UebeleinWed629_ebea0f99.jpg";
 const WEDDING_3     = "/manus-storage/UebeleinWed557_b0b3b0ff.jpg";
 const GROUNDS_1     = "/manus-storage/6M9A3253_319f3a3b.jpg";
 const GROUNDS_2     = "/manus-storage/6M9A3239_d4c999f4.jpg";
-const GROUNDS_3     = "/manus-storage/Rivers_May2023-8_d07307f4.jpg";
+const GROUNDS_3     = "/manus-storage/Rivers_SEPT2022_-241_9b9f5433.jpg";
 const INTERIOR_1    = "/manus-storage/974A8419edit_f37de96e.jpg";
 const INTERIOR_2    = "/manus-storage/Rivers_May2023-28_f44fb1bd.jpg";
 

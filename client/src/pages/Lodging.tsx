@@ -44,8 +44,8 @@ const FALLBACK_LODGING = [
     bedrooms: 4,
     desc: "The Ohana House is located approximately 15 minutes from the main lodge. It has 4 bedrooms and bathrooms, a 20-acre lake, a gorgeous fire pit, and miles of nature trails. Enjoy fishing, canoeing, paddle boarding, hiking, or just laying on a hammock. The Ohana House can be rented as part of a corporate or wedding package, or is a perfect place for just a family getaway.",
     features: ["4 bedrooms & bathrooms", "20-acre private lake", "Gorgeous fire pit", "Miles of nature trails", "Fishing, canoeing, paddleboarding", "15 min from main lodge"],
-    img: "/manus-storage/DJI_0017_538feef1.jpg",
-    img2: "/manus-storage/Rivers_SEPT2022_-253-1_f15787e1.jpg",
+    img: "/manus-storage/6M9A3255_b8f0386f.jpg",
+    img2: "/manus-storage/DJI_0017_538feef1.jpg",
   },
   {
     slug: "the-farmhouse",

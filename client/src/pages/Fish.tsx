@@ -2,10 +2,10 @@ import { useRef, useEffect } from "react";
 import { Link } from "wouter";
 import PublicLayout from "@/components/PublicLayout";
 
-const HERO   = "/manus-storage/Rivers_SEPT2022_-238-1_2bb5d5aa.jpg";
-const RIVER  = "/manus-storage/Rivers_SEPT2022_-134_157d1be5.jpg";
+const HERO   = "/manus-storage/20200515-3M4A7106_ae87fae0.jpg";
+const RIVER  = "/manus-storage/20200515-3M4A7755_40689230.jpg";
 const AERIAL = "/manus-storage/DJI_0017_538feef1.jpg";
-const FIELD  = "/manus-storage/Rivers_May2023-8_d07307f4.jpg";
+const FIELD  = "/manus-storage/6M9A3255_b8f0386f.jpg";
 
 function useFadeUp(t = 0.12) {
   const ref = useRef<HTMLElement>(null);

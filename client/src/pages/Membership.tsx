@@ -2,9 +2,9 @@ import { useRef, useEffect } from "react";
 import { Link } from "wouter";
 import PublicLayout from "@/components/PublicLayout";
 
-const HERO    = "/manus-storage/Rivers_SEPT2022_-134_157d1be5.jpg";
+const HERO    = "/manus-storage/Rivers_SEPT2022_-253-1_f15787e1.jpg";
 const AERIAL  = "/manus-storage/DJI_0017_538feef1.jpg";
-const RIVER   = "/manus-storage/Rivers_SEPT2022_-238-1_2bb5d5aa.jpg";
+const RIVER   = "/manus-storage/6M9A3255_b8f0386f.jpg";
 const GROUNDS = "/manus-storage/6M9A3253_319f3a3b.jpg";
 const LODGE   = "/manus-storage/974A9398edit_294e71ff.jpg";
 

@@ -9,7 +9,7 @@ const CEREMONY   = "/manus-storage/UebeleinWed335_e6a9084a.jpg";
 const RECEPTION  = "/manus-storage/UebeleinWed629_ebea0f99.jpg";
 const LODGE_EXT  = "/manus-storage/974A9398edit_294e71ff.jpg";
 const INTERIOR   = "/manus-storage/974A8419edit_f37de96e.jpg";
-const GROUNDS    = "/manus-storage/Rivers_SEPT2022_-134_157d1be5.jpg";
+const GROUNDS    = "/manus-storage/20200515-3M4A7947_af6607de.jpg";
 
 const BLUSH = "oklch(0.70 0.060 50)";
 

@@ -46,28 +46,28 @@ const photos: { src: string; alt: string; category: Category; span?: "wide" | "t
   { src: "/manus-storage/974A8421edit_b5f9c7f2.jpg", alt: "The Lodge living room with dark sectional sofa", category: "lodging" },
   { src: "/manus-storage/974A8402edit_edf7618a.jpg", alt: "Rivers Lodge & Hunt Club sign at The Lodge", category: "lodging" },
   // Lodging — Riverhouse Suites
-  { src: "/manus-storage/Rivers_May2023-28_f44fb1bd.jpg", alt: "Riverhouse Suites — luxury suite interior", category: "lodging", span: "wide" },
-  { src: "/manus-storage/Rivers_SEPT2022_-241_9b9f5433.jpg", alt: "Riverhouse Suites interior", category: "lodging" },
+  { src: "/manus-storage/Rivers_May2023-28_f44fb1bd.jpg", alt: "Riverhouse Suites exterior — blue Adirondack chairs, green lawn", category: "lodging", span: "wide" },
+  { src: "/manus-storage/Rivers_SEPT2022_-241_9b9f5433.jpg", alt: "Riverhouse Suites exterior — individual room entries", category: "lodging" },
   { src: "/manus-storage/6M9A3226_ec961447.jpg", alt: "Riverhouse Suites suite detail", category: "lodging" },
-  { src: "/manus-storage/Rivers_May2023-27_33df99ba.jpg", alt: "Riverhouse Suites room", category: "lodging" },
-  { src: "/manus-storage/Rivers_May2023-15_616c20aa.jpg", alt: "Riverhouse Suites interior detail", category: "lodging" },
+  { src: "/manus-storage/Rivers_May2023-27_33df99ba.jpg", alt: "Annex bedroom — gallery wall, white bedding", category: "lodging" },
+  { src: "/manus-storage/Rivers_May2023-15_616c20aa.jpg", alt: "Riverhouse Suite bedroom — dark olive walls, chandelier", category: "lodging" },
   { src: "/manus-storage/Rivers_May2023-6_7bd714f8.jpg", alt: "Riverhouse Suites suite", category: "lodging" },
   // Lodging — The Farmhouse
   { src: "/manus-storage/6M9A3214-2_bcea97ca.jpg", alt: "The Farmhouse at Rivers Lodge", category: "lodging" },
   { src: "/manus-storage/6M9A3217_33692de0.jpg", alt: "The Farmhouse exterior", category: "lodging" },
   // Grounds — Aerial and estate-wide shots
-  { src: "/manus-storage/Rivers_SEPT2022_-134_157d1be5.jpg", alt: "Aerial view of the full Rivers Lodge estate", category: "grounds", span: "wide" },
+  { src: "/manus-storage/Rivers_SEPT2022_-134_157d1be5.jpg", alt: "Fire pit and grounds at Rivers Lodge", category: "grounds", span: "wide" },
   { src: "/manus-storage/DJI_0017_538feef1.jpg", alt: "Drone aerial of the river and estate grounds", category: "grounds" },
   { src: "/manus-storage/6M9A3253_319f3a3b.jpg", alt: "Estate grounds from above", category: "grounds" },
-  { src: "/manus-storage/Rivers_SEPT2022_-253-1_f15787e1.jpg", alt: "Wide aerial view of Rivers Lodge property", category: "grounds" },
-  { src: "/manus-storage/6M9A3255_b8f0386f.jpg", alt: "Estate grounds aerial view", category: "grounds" },
+  { src: "/manus-storage/Rivers_SEPT2022_-253-1_f15787e1.jpg", alt: "Golden-hour aerial of the full Rivers Lodge estate — barn, pond, and lodge", category: "grounds" },
+  { src: "/manus-storage/6M9A3255_b8f0386f.jpg", alt: "Ohana House dock at sunset", category: "grounds" },
   // Outdoors — Lodge interiors used as membership/outdoors context
-  { src: "/manus-storage/Rivers_SEPT2022_-112_c0e7fb5f.jpg", alt: "The Lodge interior — fall atmosphere", category: "outdoors", span: "wide" },
-  { src: "/manus-storage/Rivers_SEPT2022_-105_85069d29.jpg", alt: "The Lodge interior detail", category: "outdoors" },
-  { src: "/manus-storage/Rivers_SEPT2022_-109_c2b5fea5.jpg", alt: "The Lodge interior", category: "outdoors" },
-  { src: "/manus-storage/Rivers_SEPT2022_-116_e668dc61.jpg", alt: "Riverhouse Suites interior", category: "outdoors" },
-  { src: "/manus-storage/Rivers_SEPT2022_-128_9bced2c9.jpg", alt: "The Lodge interior — warm lighting", category: "outdoors" },
-  { src: "/manus-storage/20200515-3M4A7106_ae87fae0.jpg", alt: "Hunting and outdoor pursuits at Rivers Lodge", category: "outdoors" },
+  { src: "/manus-storage/Rivers_SEPT2022_-112_c0e7fb5f.jpg", alt: "The Lodge interior — fall atmosphere", category: "lodging", span: "wide" },
+  { src: "/manus-storage/Rivers_SEPT2022_-105_85069d29.jpg", alt: "The Lodge interior detail", category: "lodging" },
+  { src: "/manus-storage/Rivers_SEPT2022_-109_c2b5fea5.jpg", alt: "The Lodge interior", category: "lodging" },
+  { src: "/manus-storage/Rivers_SEPT2022_-116_e668dc61.jpg", alt: "Riverhouse Suites interior", category: "lodging" },
+  { src: "/manus-storage/Rivers_SEPT2022_-128_9bced2c9.jpg", alt: "The Lodge interior — warm lighting", category: "lodging" },
+  { src: "/manus-storage/20200515-3M4A7106_ae87fae0.jpg", alt: "Fishing from the dock at Rivers Lodge", category: "outdoors" },
 ];
 
 // Map CMS gallery category slugs to our Category type

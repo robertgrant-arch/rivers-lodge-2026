@@ -4,12 +4,12 @@ import PublicLayout from "@/components/PublicLayout";
 import { trpc } from "@/lib/trpc";
 
 const HERO      = "/manus-storage/UebeleinWed335_e6a9084a.jpg";
-const CEREMONY  = "/manus-storage/UebeleinWed629_ebea0f99.jpg";
+const CEREMONY  = "/manus-storage/UebeleinWed405_59f02b8c.jpg";
 const RECEPTION = "/manus-storage/UebeleinWed557_b0b3b0ff.jpg";
 const BARN_INT  = "/manus-storage/6M9A3239_d4c999f4.jpg";
 const GROUNDS   = "/manus-storage/6M9A3253_319f3a3b.jpg";
 const AERIAL    = "/manus-storage/DJI_0017_538feef1.jpg";
-const RIVER_LWN = "/manus-storage/Rivers_May2023-8_d07307f4.jpg";
+const RIVER_LWN = "/manus-storage/20200515-3M4A7947_af6607de.jpg";
 const LODGE     = "/manus-storage/974A9398edit_294e71ff.jpg";
 const INTERIOR  = "/manus-storage/974A8419edit_f37de96e.jpg";
 

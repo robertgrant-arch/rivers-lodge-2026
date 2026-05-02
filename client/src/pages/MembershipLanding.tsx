@@ -4,12 +4,12 @@ import { trpc } from "@/lib/trpc";
 
 /* ── Images ──────────────────────────────────────────────────────────────── */
 const HERO       = "/manus-storage/DJI_0017_538feef1.jpg";
-const RIVER      = "/manus-storage/Rivers_SEPT2022_-134_157d1be5.jpg";
-const FIRE_PIT   = "/manus-storage/Rivers_SEPT2022_-253-1_f15787e1.jpg";
+const RIVER      = "/manus-storage/6M9A3255_b8f0386f.jpg";
+const FIRE_PIT   = "/manus-storage/Rivers_SEPT2022_-134_157d1be5.jpg";
 const LODGE_EXT  = "/manus-storage/974A9398edit_294e71ff.jpg";
 const INTERIOR   = "/manus-storage/974A8419edit_f37de96e.jpg";
 const GROUNDS    = "/manus-storage/6M9A3253_319f3a3b.jpg";
-const LODGE_INT  = "/manus-storage/Rivers_May2023-8_d07307f4.jpg";
+const LODGE_INT  = "/manus-storage/3C0A0304_cb66bc23.jpg";
 
 const SAGE = "oklch(0.58 0.065 145)";
 
