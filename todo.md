@@ -352,9 +352,9 @@
 - [x] Live testimonials carousel on homepage — auto-advance, fade transition, sourced from cms_testimonials DB
 - [x] Gallery page — editorial masonry grid with track-accent filter tabs (All/Weddings/Outdoors/Estate)
 - [x] FAQ accordion sections on Weddings and Membership pages
-- [ ] Venue capacity and planning process timeline on Weddings page
+- [x] Venue capacity and planning process timeline on Weddings page (5-step alternating timeline added to WeddingsLanding.tsx)
 - [x] Season calendar visual on Hunt and Fish pages
-- [ ] Homepage dual-track hover expansion — flex panels expand/contract on hover with correct easing
+- [x] Homepage dual-track hover expansion — flex panels expand/contract on hover with correct easing (TrackPanel with cubic-bezier(0.16,1,0.3,1) in Home.tsx)
 - [x] Sticky inquiry CTA bar on Weddings and Corporate pages
 
 ### Booking Flow
