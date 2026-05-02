@@ -174,20 +174,22 @@ export default function MemberPortal() {
     <PublicLayout>
       <div className="min-h-screen bg-background">
         {/* Portal Header */}
-        <div className="bg-[oklch(0.13_0.008_66)] pt-24 pb-8">
-          <div className="max-w-7xl mx-auto px-6 lg:px-10">
-            <p className="text-[9px] tracking-[0.22em] uppercase font-sans text-white/40 mb-2">Member Portal</p>
-            <h1 className="font-serif text-3xl md:text-4xl text-white mb-1">Welcome back, {user?.name?.split(" ")[0]}.</h1>
-            <p className="text-sm font-sans text-white/50">
-              {member.tier ? member.tier.charAt(0).toUpperCase() + member.tier.slice(1) : "Standard"} Member
-              {member.memberNumber ? ` · #${member.memberNumber}` : ""}
-            </p>
+        <div className="bg-[oklch(0.10_0.010_66)] border-b border-white/8 pt-24 pb-10">
+          <div className="max-w-[1440px] mx-auto px-6 lg:px-16">
+            <p className="eyebrow text-white/40 mb-3">Member Portal</p>
+            <h1 className="font-serif text-3xl md:text-5xl text-white mb-2">Welcome back, {user?.name?.split(" ")[0]}.</h1>
+            <div className="flex items-center gap-3">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 border border-[var(--gold)]/40 text-[var(--gold)] text-[10px] tracking-[0.18em] uppercase font-sans">
+                {member.tier ? member.tier.charAt(0).toUpperCase() + member.tier.slice(1) : "Standard"} Member
+              </span>
+              {member.memberNumber && <span className="text-sm font-sans text-white/40">#{member.memberNumber}</span>}
+            </div>
           </div>
         </div>
 
         {/* Tabs */}
-        <div className="border-b border-border bg-background sticky top-0 z-10">
-          <div className="max-w-7xl mx-auto px-6 lg:px-10">
+        <div className="border-b border-white/10 bg-[oklch(0.10_0.010_66)] sticky top-0 z-10">
+          <div className="max-w-[1440px] mx-auto px-6 lg:px-16">
             <div className="flex gap-0 overflow-x-auto">
               {tabs.map((t) => (
                 <button
@@ -207,12 +209,12 @@ export default function MemberPortal() {
         </div>
 
         {/* Content */}
-        <div className="max-w-7xl mx-auto px-6 lg:px-10 py-12">
+        <div className="max-w-[1440px] mx-auto px-6 lg:px-16 py-12">
           {/* Dashboard */}
           {tab === "dashboard" && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <div className="bg-card border border-border p-6">
-                <p className="text-[9px] tracking-[0.18em] uppercase font-sans text-muted-foreground mb-3">Membership</p>
+              <div className="bg-[oklch(0.13_0.008_66)] border border-white/8 p-6">
+                <p className="eyebrow text-white/40 mb-3">Membership</p>
                 <div className="font-serif text-2xl text-foreground mb-1">{member.tier ? member.tier.charAt(0).toUpperCase() + member.tier.slice(1) : "Standard"}</div>
                 <div className="text-sm font-sans text-muted-foreground">Active Member</div>
                 {member.renewalDate && (
@@ -221,13 +223,13 @@ export default function MemberPortal() {
                   </div>
                 )}
               </div>
-              <div className="bg-card border border-border p-6">
-                <p className="text-[9px] tracking-[0.18em] uppercase font-sans text-muted-foreground mb-3">Current Season</p>
+              <div className="bg-[oklch(0.13_0.008_66)] border border-white/8 p-6">
+                <p className="eyebrow text-white/40 mb-3">Current Season</p>
                 <div className="font-serif text-2xl text-foreground mb-1">Spring 2026</div>
                 <div className="text-sm font-sans text-muted-foreground">Turkey · Fishing · Clays</div>
               </div>
-              <div className="bg-card border border-border p-6">
-                <p className="text-[9px] tracking-[0.18em] uppercase font-sans text-muted-foreground mb-3">Messages</p>
+              <div className="bg-[oklch(0.13_0.008_66)] border border-white/8 p-6">
+                <p className="eyebrow text-white/40 mb-3">Messages</p>
                 <div className="font-serif text-2xl text-foreground mb-1">{myMessages.data?.length ?? 0}</div>
                 <div className="text-sm font-sans text-muted-foreground">
                   <button onClick={() => setTab("messages")} className="text-foreground underline underline-offset-2 hover:no-underline">
@@ -237,8 +239,8 @@ export default function MemberPortal() {
               </div>
 
               {/* Recent updates */}
-              <div className="md:col-span-2 lg:col-span-3 bg-card border border-border p-6">
-                <p className="text-[9px] tracking-[0.18em] uppercase font-sans text-muted-foreground mb-4">Latest Updates</p>
+              <div className="md:col-span-2 lg:col-span-3 bg-[oklch(0.13_0.008_66)] border border-white/8 p-6">
+                <p className="eyebrow text-white/40 mb-4">Latest Updates</p>
                 {updates.data && updates.data.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {updates.data.slice(0, 3).map((u) => (
@@ -357,11 +359,11 @@ export default function MemberPortal() {
                 <form onSubmit={(e) => { e.preventDefault(); sendMsg.mutate(msgForm); }} className="flex flex-col gap-4">
                   <div>
                     <label className="block text-[10px] tracking-[0.18em] uppercase font-sans text-muted-foreground mb-2">Subject</label>
-                    <input value={msgForm.subject} onChange={(e) => setMsgForm({ ...msgForm, subject: e.target.value })} className="w-full border border-border bg-background px-4 py-3 text-sm font-sans text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground transition-colors" placeholder="e.g. Trip planning for October" />
+                    <input value={msgForm.subject} onChange={(e) => setMsgForm({ ...msgForm, subject: e.target.value })} className="w-full border-0 border-b border-white/20 bg-transparent px-0 py-3 text-sm font-sans text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-[var(--gold)] transition-colors" placeholder="e.g. Trip planning for October" />
                   </div>
                   <div>
                     <label className="block text-[10px] tracking-[0.18em] uppercase font-sans text-muted-foreground mb-2">Message *</label>
-                    <textarea required value={msgForm.body} onChange={(e) => setMsgForm({ ...msgForm, body: e.target.value })} rows={6} className="w-full border border-border bg-background px-4 py-3 text-sm font-sans text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground transition-colors resize-none" placeholder="How can we help?" />
+                    <textarea required value={msgForm.body} onChange={(e) => setMsgForm({ ...msgForm, body: e.target.value })} rows={6} className="w-full border-0 border-b border-white/20 bg-transparent px-0 py-3 text-sm font-sans text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-[var(--gold)] transition-colors resize-none" placeholder="How can we help?" />
                   </div>
                   <button type="submit" disabled={sendMsg.isPending} className="w-full py-3.5 bg-foreground text-background text-xs tracking-[0.16em] uppercase font-sans font-medium hover:opacity-90 transition-opacity disabled:opacity-50">
                     {sendMsg.isPending ? "Sending..." : "Send Message"}
@@ -419,7 +421,7 @@ export default function MemberPortal() {
                     required
                     value={requestForm.businessLine}
                     onChange={(e) => setRequestForm({ ...requestForm, businessLine: e.target.value as typeof requestForm.businessLine })}
-                    className="w-full border border-border bg-background px-4 py-3 text-sm font-sans text-foreground focus:outline-none focus:border-foreground transition-colors"
+                    className="w-full border-0 border-b border-white/20 bg-transparent px-0 py-3 text-sm font-sans text-foreground focus:outline-none focus:border-[var(--gold)] transition-colors"
                   >
                     <option value="member_stay">Lodging Stay</option>
                     <option value="hunt">Hunting</option>
