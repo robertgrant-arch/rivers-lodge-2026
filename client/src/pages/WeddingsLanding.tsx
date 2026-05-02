@@ -3,6 +3,7 @@ import PublicLayout from "@/components/PublicLayout";
 import { trpc } from "@/lib/trpc";
 import SEOHead, { structuredData } from "@/components/SEOHead";
 import AvailabilityCalendar from "@/components/AvailabilityCalendar";
+import FAQAccordion from "@/components/FAQAccordion";
 
 
 /* ── Images ──────────────────────────────────────────────────────────────── */
@@ -112,14 +113,14 @@ export default function WeddingsLanding() {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="aspect-[3/4] overflow-hidden">
-                  <img src={CEREMONY} alt="Outdoor ceremony" className="w-full h-full object-cover" />
+                  <img src={CEREMONY} alt="Outdoor ceremony" className="w-full h-full object-cover" loading="lazy" />
                 </div>
                 <div className="flex flex-col gap-3 pt-8">
                   <div className="aspect-square overflow-hidden">
-                    <img src={RECEPTION} alt="Reception tables" className="w-full h-full object-cover" />
+                    <img src={RECEPTION} alt="Reception tables" className="w-full h-full object-cover" loading="lazy" />
                   </div>
                   <div className="aspect-square overflow-hidden">
-                    <img src={BARN_INT} alt="Rivers Barn interior" className="w-full h-full object-cover" />
+                    <img src={BARN_INT} alt="Rivers Barn interior" className="w-full h-full object-cover" loading="lazy" />
                   </div>
                 </div>
               </div>
@@ -179,7 +180,7 @@ export default function WeddingsLanding() {
               {venues.map((v) => (
                 <div key={v.name} className="w-[300px] md:w-[360px] shrink-0">
                   <div className="aspect-[4/3] overflow-hidden mb-4">
-                    <img src={v.image} alt={v.name} className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
+                    <img src={v.image} alt={v.name} className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" loading="lazy" />
                   </div>
                   <p className="text-[oklch(0.94_0.008_78)] font-sans text-sm font-medium mb-1">{v.name}</p>
                   <p className="eyebrow text-[oklch(0.55_0.012_70)] mb-1" style={{ fontSize: "10px" }}>{v.type}</p>
@@ -251,6 +252,54 @@ export default function WeddingsLanding() {
               <div className="flex justify-center mt-8">
                 <Link href="/contact?type=wedding" className="btn-primary">Inquire About Your Date</Link>
               </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ── FAQ ──────────────────────────────────────────────────────────── */}
+        <section className="section bg-[oklch(0.115_0.007_64)]">
+          <div className="max-w-[1440px] mx-auto px-5 lg:px-10">
+            <div className="max-w-3xl mx-auto">
+              <div className="text-center mb-12">
+                <div className="h-px w-10 mx-auto mb-6" style={{ backgroundColor: BLUSH }} />
+                <p className="eyebrow text-[oklch(0.55_0.012_70)] mb-3">Common Questions</p>
+                <h2 className="font-serif text-[oklch(0.94_0.008_78)] text-3xl md:text-4xl leading-tight">
+                  Everything you need to know.
+                </h2>
+              </div>
+              <FAQAccordion
+                accentColor={BLUSH}
+                items={[
+                  {
+                    question: "How many weddings do you host per year?",
+                    answer: "We host a very limited number of weddings each year to ensure every couple receives our full attention and the estate is presented at its finest. This exclusivity is central to the Rivers Lodge experience."
+                  },
+                  {
+                    question: "What is the guest capacity?",
+                    answer: "The Rivers Barn accommodates up to 256 guests for seated receptions, with two patios, an indoor/outdoor bar, and luxury bathrooms. Ceremony spaces on the River Lawn and Timber Edge can accommodate similar numbers. We work with you to design the perfect layout."
+                  },
+                  {
+                    question: "Do you offer exclusive-use buyouts?",
+                    answer: "Yes. Many of our wedding clients choose to reserve the entire estate — including The Lodge, Riverhouse Suites, Ohana House, and the Annex & Bridal Suite — for complete privacy and an immersive experience for you and your guests."
+                  },
+                  {
+                    question: "Are outside vendors allowed?",
+                    answer: "We maintain a curated list of preferred vendors who know the estate well. We are happy to work with your chosen vendors too — we simply ask that all vendors be approved in advance to ensure a seamless experience."
+                  },
+                  {
+                    question: "What is included in the venue fee?",
+                    answer: "The venue fee includes exclusive use of your selected spaces, on-site coordination, setup and breakdown, tables and chairs, and access to estate grounds for photography. Catering, floral, and additional services are arranged separately through our preferred vendor network."
+                  },
+                  {
+                    question: "How far in advance should we book?",
+                    answer: "Peak dates — particularly spring and fall weekends — are typically reserved 12 to 18 months in advance. We recommend reaching out as early as possible to check availability for your preferred date."
+                  },
+                  {
+                    question: "Do you offer site tours?",
+                    answer: "Absolutely. We invite all prospective couples to schedule a private tour of the estate. Seeing the property in person is the best way to understand the scale, beauty, and possibilities of Rivers Lodge. Contact us to arrange a visit."
+                  },
+                ]}
+              />
             </div>
           </div>
         </section>

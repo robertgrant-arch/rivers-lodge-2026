@@ -135,29 +135,55 @@ export default function Hunt() {
               Kansas hunting seasons.
             </h2>
           </div>
+          {/* Month header */}
           <div className="overflow-x-auto">
-            <table className="w-full font-sans text-sm">
-              <thead>
-                <tr className="border-b border-border">
-                  <th className="text-left eyebrow text-muted-brand pb-4 pr-8" style={{ fontSize: "10px" }}>Species</th>
-                  <th className="text-left eyebrow text-muted-brand pb-4 pr-8" style={{ fontSize: "10px" }}>Opens</th>
-                  <th className="text-left eyebrow text-muted-brand pb-4 pr-8" style={{ fontSize: "10px" }}>Closes</th>
-                  <th className="text-left eyebrow text-muted-brand pb-4" style={{ fontSize: "10px" }}>Notes</th>
-                </tr>
-              </thead>
-              <tbody>
-                {seasons.map((s, i) => (
-                  <tr key={s.species} className={`border-b border-border/50 ${i % 2 === 0 ? "" : "bg-surface/30"}`}>
-                    <td className="py-4 pr-8 text-warm font-medium">{s.species}</td>
-                    <td className="py-4 pr-8 text-muted-brand">{s.open}</td>
-                    <td className="py-4 pr-8 text-muted-brand">{s.close}</td>
-                    <td className="py-4 text-muted-brand">{s.notes}</td>
-                  </tr>
+            <div className="min-w-[640px]">
+              <div className="flex mb-2 pl-[180px]">
+                {["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"].map((m) => (
+                  <div key={m} className="flex-1 text-center eyebrow text-muted-brand" style={{ fontSize: "9px" }}>{m}</div>
                 ))}
-              </tbody>
-            </table>
+              </div>
+              {/* Season bars */}
+              {[
+                { species: "Whitetail Deer",   startMonth: 8.5,  endMonth: 12.5, notes: "Archery, rifle, muzzleloader" },
+                { species: "Waterfowl",         startMonth: 9,    endMonth: 12.9, notes: "Duck & goose, split seasons" },
+                { species: "Turkey (Spring)",   startMonth: 3,    endMonth: 4.9,  notes: "Shotgun & archery" },
+                { species: "Turkey (Fall)",     startMonth: 9,    endMonth: 10.9, notes: "Shotgun & archery" },
+                { species: "Sporting Clays",    startMonth: 0,    endMonth: 11.9, notes: "Members & guests year-round" },
+              ].map((s) => {
+                const left = (s.startMonth / 12) * 100;
+                const width = ((s.endMonth - s.startMonth) / 12) * 100;
+                return (
+                  <div key={s.species} className="flex items-center gap-4 mb-3">
+                    <div className="w-[180px] shrink-0">
+                      <p className="font-sans text-warm text-sm font-medium leading-tight">{s.species}</p>
+                      <p className="font-sans text-muted-brand" style={{ fontSize: "10px" }}>{s.notes}</p>
+                    </div>
+                    <div className="flex-1 relative h-7 bg-white/4 rounded-none">
+                      <div
+                        className="absolute top-0 bottom-0 rounded-none"
+                        style={{
+                          left: `${left}%`,
+                          width: `${width}%`,
+                          background: "oklch(0.58 0.065 145 / 0.75)",
+                          borderLeft: "2px solid oklch(0.58 0.065 145)",
+                        }}
+                      />
+                      {/* Month grid lines */}
+                      {[1,2,3,4,5,6,7,8,9,10,11].map((m) => (
+                        <div
+                          key={m}
+                          className="absolute top-0 bottom-0 w-px"
+                          style={{ left: `${(m/12)*100}%`, background: "oklch(0.22 0.008 64)" }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
-          <p className="font-sans text-muted-brand text-xs mt-4">* Seasons subject to Kansas Wildlife &amp; Parks regulations. Verify current seasons before hunting.</p>
+          <p className="font-sans text-muted-brand text-xs mt-6">* Seasons subject to Kansas Wildlife &amp; Parks regulations. Verify current seasons before hunting.</p>
         </div>
       </section>
 

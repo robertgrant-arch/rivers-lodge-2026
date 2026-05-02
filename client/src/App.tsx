@@ -39,7 +39,8 @@ import PortalLeads from "./pages/portal/PortalLeads";
 import PortalAvailability from "./pages/portal/PortalAvailability";
 import PortalNotifications from "./pages/portal/PortalNotifications";
 import SignWaiver from "./pages/SignWaiver";
-import Privacy from "./pages/Privacy";
+import Privacy from "@/pages/Privacy";
+import InquiryConfirmed from "@/pages/InquiryConfirmed";
 
 function Router() {
   return (
@@ -61,7 +62,8 @@ function Router() {
 
        {/* Gated */}
       <Route path="/portal" component={MemberPortal} />
-      <Route path="/privacy" component={Privacy} />
+          <Route path="/privacy" component={Privacy} />
+          <Route path="/inquiry-confirmed" component={InquiryConfirmed} />
       <Route path="/admin" component={AdminDashboard} />
       {/* Operations Portal */}
       <Route path="/ops">{() => <PortalLayout><PortalDashboard /></PortalLayout>}</Route>

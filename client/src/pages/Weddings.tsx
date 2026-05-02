@@ -3,6 +3,7 @@ import { Link } from "wouter";
 import PublicLayout from "@/components/PublicLayout";
 import { trpc } from "@/lib/trpc";
 import SEOHead, { structuredData } from "@/components/SEOHead";
+import StickyInquiryCTA from "@/components/StickyInquiryCTA";
 
 
 const HERO      = "/manus-storage/UebeleinWed335_e6a9084a.jpg";
@@ -190,6 +191,11 @@ export default function Weddings() {
       </section>
 
       </div>
+      <StickyInquiryCTA
+        href="/contact?type=wedding"
+        label="Begin Wedding Inquiry"
+        accentColor="oklch(0.70 0.060 50)"
+      />
     </PublicLayout>
   );
 }

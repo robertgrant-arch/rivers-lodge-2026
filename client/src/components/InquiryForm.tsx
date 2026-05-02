@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import AvailabilityCalendar from "./AvailabilityCalendar";
 
@@ -24,6 +25,7 @@ const TYPE_LABELS: Record<InquiryType, string> = {
 };
 
 export default function InquiryForm({ defaultType = "general", track, onSuccess, className = "" }: Props) {
+  const [, navigate] = useLocation();
   const [step, setStep] = useState(0);
   const [submitted, setSubmitted] = useState(false);
   const [form, setForm] = useState({
@@ -40,6 +42,8 @@ export default function InquiryForm({ defaultType = "general", track, onSuccess,
     onSuccess: () => {
       setSubmitted(true);
       onSuccess?.();
+      const encodedName = encodeURIComponent(form.name);
+      navigate(`/inquiry-confirmed?type=${form.type}&name=${encodedName}`);
     },
   });
 

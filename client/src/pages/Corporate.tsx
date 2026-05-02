@@ -2,6 +2,7 @@ import { useRef, useEffect } from "react";
 import { Link } from "wouter";
 import PublicLayout from "@/components/PublicLayout";
 import SEOHead from "@/components/SEOHead";
+import StickyInquiryCTA from "@/components/StickyInquiryCTA";
 
 
 const HERO     = "/manus-storage/3C0A0304_cb66bc23.jpg";
@@ -178,6 +179,10 @@ export default function Corporate() {
       </section>
 
       </div>
+      <StickyInquiryCTA
+        href="/contact?type=corporate"
+        label="Begin Corporate Inquiry"
+      />
     </PublicLayout>
   );
 }

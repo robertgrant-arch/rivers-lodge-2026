@@ -117,10 +117,10 @@ export default function Lodging() {
               {/* Images */}
               <div className={`grid grid-cols-3 gap-3 ${i % 2 !== 0 ? "lg:col-start-2" : ""}`}>
                 <div className="col-span-2 overflow-hidden aspect-[4/3]">
-                  <img src={prop.img} alt={prop.name} className="w-full h-full object-cover hover:scale-105 transition-transform duration-700" />
+                  <img src={prop.img} alt={prop.name} className="w-full h-full object-cover hover:scale-105 transition-transform duration-700" loading="lazy" />
                 </div>
                 <div className="overflow-hidden aspect-[3/4]">
-                  <img src={prop.img2} alt={`${prop.name} interior`} className="w-full h-full object-cover hover:scale-105 transition-transform duration-700" />
+                  <img src={prop.img2} alt={`${prop.name} interior`} className="w-full h-full object-cover hover:scale-105 transition-transform duration-700" loading="lazy" />
                 </div>
               </div>
 

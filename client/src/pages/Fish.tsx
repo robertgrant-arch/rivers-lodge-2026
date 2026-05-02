@@ -99,36 +99,64 @@ export default function Fish() {
         </div>
       </section>
 
-      {/* Species */}
+      {/* Species / Season Calendar */}
       <section ref={speciesRef as React.RefObject<HTMLDivElement>} className="fade-up section bg-surface">
         <div className="max-w-[1440px] mx-auto px-5 lg:px-14">
           <div className="mb-12">
             <div style={{ height: "1px", width: "2rem", backgroundColor: "oklch(0.58 0.065 145)", marginBottom: "1.25rem" }} />
-            <p className="eyebrow text-muted-brand mb-4">Species Guide</p>
+            <p className="eyebrow text-muted-brand mb-4">Species & Season Guide</p>
             <h2 className="font-serif font-light text-warm leading-tight" style={{ fontSize: "clamp(1.75rem,3vw,2.5rem)" }}>
-              What lives in the water.
+              When to fish, and how.
             </h2>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full font-sans text-sm">
-              <thead>
-                <tr className="border-b border-border">
-                  <th className="text-left eyebrow text-muted-brand pb-4 pr-8" style={{ fontSize: "10px" }}>Species</th>
-                  <th className="text-left eyebrow text-muted-brand pb-4 pr-8" style={{ fontSize: "10px" }}>Best Season</th>
-                  <th className="text-left eyebrow text-muted-brand pb-4" style={{ fontSize: "10px" }}>Recommended Method</th>
-                </tr>
-              </thead>
-              <tbody>
-                {species.map((s, i) => (
-                  <tr key={s.name} className={`border-b border-border/50 ${i % 2 === 0 ? "" : "bg-background/30"}`}>
-                    <td className="py-4 pr-8 text-warm font-medium">{s.name}</td>
-                    <td className="py-4 pr-8 text-muted-brand">{s.season}</td>
-                    <td className="py-4 text-muted-brand">{s.method}</td>
-                  </tr>
+            <div className="min-w-[640px]">
+              {/* Month header */}
+              <div className="flex mb-2 pl-[200px]">
+                {["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"].map((m) => (
+                  <div key={m} className="flex-1 text-center eyebrow text-muted-brand" style={{ fontSize: "9px" }}>{m}</div>
                 ))}
-              </tbody>
-            </table>
+              </div>
+              {/* Season bars */}
+              {[
+                { name: "Largemouth Bass",  startMonth: 0,   endMonth: 11.9, method: "Lure, fly, live bait" },
+                { name: "Channel Catfish",  startMonth: 0,   endMonth: 11.9, method: "Cut bait, live bait" },
+                { name: "Flathead Catfish", startMonth: 3,   endMonth: 9.9,  method: "Live bait" },
+                { name: "Crappie",          startMonth: 2,   endMonth: 5.9,  method: "Jig, minnow" },
+                { name: "Bluegill",         startMonth: 4,   endMonth: 8.9,  method: "Fly, small jig" },
+              ].map((s) => {
+                const left = (s.startMonth / 12) * 100;
+                const width = ((s.endMonth - s.startMonth) / 12) * 100;
+                return (
+                  <div key={s.name} className="flex items-center gap-4 mb-3">
+                    <div className="w-[200px] shrink-0">
+                      <p className="font-sans text-warm text-sm font-medium leading-tight">{s.name}</p>
+                      <p className="font-sans text-muted-brand" style={{ fontSize: "10px" }}>{s.method}</p>
+                    </div>
+                    <div className="flex-1 relative h-7 bg-white/4">
+                      <div
+                        className="absolute top-0 bottom-0"
+                        style={{
+                          left: `${left}%`,
+                          width: `${width}%`,
+                          background: "oklch(0.58 0.065 145 / 0.75)",
+                          borderLeft: "2px solid oklch(0.58 0.065 145)",
+                        }}
+                      />
+                      {[1,2,3,4,5,6,7,8,9,10,11].map((m) => (
+                        <div
+                          key={m}
+                          className="absolute top-0 bottom-0 w-px"
+                          style={{ left: `${(m/12)*100}%`, background: "oklch(0.22 0.008 64)" }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
+          <p className="font-sans text-muted-brand text-xs mt-6">Peak seasons shown. All species available year-round on private water.</p>
         </div>
       </section>
 

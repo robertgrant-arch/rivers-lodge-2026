@@ -3,6 +3,7 @@ import PublicLayout from "@/components/PublicLayout";
 import { trpc } from "@/lib/trpc";
 import SEOHead, { structuredData } from "@/components/SEOHead";
 import AvailabilityCalendar from "@/components/AvailabilityCalendar";
+import FAQAccordion from "@/components/FAQAccordion";
 
 
 /* ── Images ──────────────────────────────────────────────────────────────── */
@@ -123,14 +124,14 @@ export default function MembershipLanding() {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="aspect-[3/4] overflow-hidden">
-                  <img src={RIVER} alt="Marais des Cygnes River" className="w-full h-full object-cover" />
+                  <img src={RIVER} alt="Marais des Cygnes River" className="w-full h-full object-cover" loading="lazy" />
                 </div>
                 <div className="flex flex-col gap-3 pt-8">
                   <div className="aspect-square overflow-hidden">
-                    <img src={FIRE_PIT} alt="Estate grounds" className="w-full h-full object-cover" />
+                    <img src={FIRE_PIT} alt="Estate grounds" className="w-full h-full object-cover" loading="lazy" />
                   </div>
                   <div className="aspect-square overflow-hidden">
-                    <img src={LODGE_INT} alt="Lodge interior" className="w-full h-full object-cover" />
+                    <img src={LODGE_INT} alt="Lodge interior" className="w-full h-full object-cover" loading="lazy" />
                   </div>
                 </div>
               </div>
@@ -266,6 +267,54 @@ export default function MembershipLanding() {
               <div className="flex justify-center mt-8">
                 <Link href="/contact?type=membership" className="btn-primary">Discuss Availability</Link>
               </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ── FAQ ─────────────────────────────────────────────────────────────── */}
+        <section className="section bg-[oklch(0.115_0.007_64)]">
+          <div className="max-w-[1440px] mx-auto px-5 lg:px-10">
+            <div className="max-w-3xl mx-auto">
+              <div className="text-center mb-12">
+                <div className="h-px w-10 mx-auto mb-6" style={{ backgroundColor: SAGE }} />
+                <p className="eyebrow text-[oklch(0.55_0.012_70)] mb-3">Common Questions</p>
+                <h2 className="font-serif text-[oklch(0.94_0.008_78)] text-3xl md:text-4xl leading-tight">
+                  Membership, answered.
+                </h2>
+              </div>
+              <FAQAccordion
+                accentColor={SAGE}
+                items={[
+                  {
+                    question: "How does membership work?",
+                    answer: "Rivers Lodge membership provides exclusive access to the estate for hunting, fishing, and recreational stays throughout the year. Members enjoy priority booking, curated seasonal experiences, and access to all estate amenities including The Lodge, Riverhouse Suites, and Ohana House."
+                  },
+                  {
+                    question: "Is membership by invitation only?",
+                    answer: "Yes. Membership is by invitation or referral to maintain the intimate character of the club. We accept a limited number of new members each year. If you are interested, we encourage you to reach out — we will be in touch when a suitable opening arises."
+                  },
+                  {
+                    question: "What hunting opportunities are available?",
+                    answer: "The estate offers world-class upland bird hunting (pheasant, quail, and chukar), whitetail deer hunting across 300 acres of managed habitat, and turkey hunting in season. All hunts are guided by our experienced staff."
+                  },
+                  {
+                    question: "What fishing is available on the property?",
+                    answer: "The estate features a 20-acre private lake stocked with bass, crappie, and catfish, as well as river access for fly fishing. Members may fish from the dock, kayak, or paddleboard at their leisure."
+                  },
+                  {
+                    question: "Can members bring guests?",
+                    answer: "Yes. Members may bring guests for hunts, fishing, and stays, subject to availability and advance notice. Guest fees may apply for certain activities. Please contact us to arrange guest visits."
+                  },
+                  {
+                    question: "How do I book a stay or hunt?",
+                    answer: "Members book all stays and activities through the member portal. The portal shows real-time availability, allows you to submit requests, and connects you directly with our concierge team for custom arrangements."
+                  },
+                  {
+                    question: "What is included in the membership fee?",
+                    answer: "Membership fees cover access to all estate grounds, guided hunts (within your membership tier), fishing access, and use of all recreational amenities. Lodging, meals, and additional guided experiences are available at member rates."
+                  },
+                ]}
+              />
             </div>
           </div>
         </section>

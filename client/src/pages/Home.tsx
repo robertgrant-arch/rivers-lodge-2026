@@ -397,7 +397,7 @@ export default function Home() {
             { track: "Membership & Outdoors", title: "Hunt, fish, and belong.", cta: "Explore Membership", href: "/outdoors", image: AERIAL_RIVER, accent: "oklch(0.58 0.065 145)" },
           ].map((card) => (
             <div key={card.track} className="relative overflow-hidden" style={{ height: "62vw", minHeight: "280px" }}>
-              <img src={card.image} alt={card.title} className="absolute inset-0 w-full h-full object-cover" />
+              <img src={card.image} alt={card.title} className="absolute inset-0 w-full h-full object-cover" loading="lazy" />
               <div className="absolute inset-0" style={{ background: "linear-gradient(to top, oklch(0 0 0/0.82) 0%, oklch(0 0 0/0.25) 60%, transparent 100%)" }} />
               <div className="absolute inset-0 flex flex-col justify-end p-6">
                 <p className="eyebrow text-white/50 mb-2" style={{ fontSize: "10px" }}>{card.track}</p>

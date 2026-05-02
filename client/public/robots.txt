@@ -1,0 +1,14 @@
+User-agent: *
+Allow: /
+
+# Disallow internal/operational paths
+Disallow: /ops
+Disallow: /ops/
+Disallow: /admin
+Disallow: /admin/
+Disallow: /portal
+Disallow: /portal/
+Disallow: /api/
+
+# Sitemap
+Sitemap: https://riverslodge-4jorgt96.manus.space/sitemap.xml

@@ -4,8 +4,9 @@ import { trpc } from "@/lib/trpc";
 import { getLoginUrl } from "@/const";
 import { toast } from "sonner";
 import PublicLayout from "@/components/PublicLayout";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
-type Tab = "dashboard" | "bookings" | "calendar" | "request" | "updates" | "messages";
+type Tab = "dashboard" | "bookings" | "calendar" | "request" | "updates" | "messages" | "profile";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -97,6 +98,8 @@ export default function MemberPortal() {
   const [tab, setTab] = useState<Tab>("dashboard");
   const [msgForm, setMsgForm] = useState({ subject: "", body: "" });
   const [notifOpen, setNotifOpen] = useState(false);
+  type RequestItem = NonNullable<typeof myRequests.data>[number];
+  const [selectedRequest, setSelectedRequest] = useState<RequestItem | null>(null);
 
   const memberStatus   = trpc.membership.myStatus.useQuery(undefined, { enabled: isAuthenticated });
   const blockedDates   = trpc.bookings.blockedDates.useQuery();
@@ -217,6 +220,7 @@ export default function MemberPortal() {
     { key: "request",    label: "Request a Stay" },
     { key: "updates",    label: "Seasonal Updates" },
     { key: "messages",   label: "Concierge", badge: (myMessages.data ?? []).length || undefined },
+    { key: "profile",    label: "Profile" },
   ];
 
   const tierLabel = member?.tier ? member.tier.charAt(0).toUpperCase() + member.tier.slice(1) : "Standard";
@@ -535,18 +539,26 @@ export default function MemberPortal() {
                           </div>
                         )}
 
-                        <div className="border-t border-white/8 pt-3 mt-4 flex items-center justify-between">
+                        <div className="border-t border-white/8 pt-3 mt-4 flex items-center justify-between gap-3">
                           <span className="text-[9px] font-sans text-white/25">
                             Submitted {new Date(req.createdAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
                           </span>
-                          {!isTerminal && req.status === "new" && (
+                          <div className="flex items-center gap-3">
                             <button
-                              onClick={() => setTab("messages")}
-                              className="text-[10px] font-sans text-[var(--gold)] hover:underline tracking-[0.1em] uppercase"
+                              onClick={() => setSelectedRequest(req)}
+                              className="text-[10px] font-sans text-white/40 hover:text-white transition-colors tracking-[0.1em] uppercase"
                             >
-                              Message Concierge →
+                              View Details
                             </button>
-                          )}
+                            {!isTerminal && req.status === "new" && (
+                              <button
+                                onClick={() => setTab("messages")}
+                                className="text-[10px] font-sans text-[var(--gold)] hover:underline tracking-[0.1em] uppercase"
+                              >
+                                Message Concierge →
+                              </button>
+                            )}
+                          </div>
                         </div>
                       </div>
                     );
@@ -840,7 +852,119 @@ export default function MemberPortal() {
           )}
 
         </div>
+
+        {/* ── Profile Tab ───────────────────────────────────────────── */}
+        {tab === "profile" && (
+          <div className="max-w-2xl">
+            <h2 className="font-serif text-3xl text-white mb-2">My Profile</h2>
+            <p className="text-sm font-sans text-white/40 mb-8">Your membership details and account information.</p>
+            <div className="flex flex-col gap-6">
+              {/* Account info */}
+              <div className="bg-[oklch(0.13_0.008_66)] border border-white/8 p-6">
+                <p className="eyebrow text-white/30 mb-5">Account</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                  {[
+                    { label: "Name", value: user?.name ?? "—" },
+                    { label: "Email", value: user?.email ?? "—" },
+                    { label: "Membership Tier", value: tierLabel },
+                    { label: "Member Number", value: member?.memberNumber ? `#${member.memberNumber}` : "—" },
+                    { label: "Status", value: member?.active ? "Active" : "Inactive" },
+                    { label: "Member Since", value: member?.joinDate ? new Date(member.joinDate).toLocaleDateString("en-US", { month: "long", year: "numeric" }) : "—" },
+                    { label: "Renewal Date", value: member?.renewalDate ? new Date(member.renewalDate).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }) : "—" },
+                  ].map((field) => (
+                    <div key={field.label}>
+                      <p className="text-[9px] tracking-[0.16em] uppercase font-sans text-white/30 mb-1">{field.label}</p>
+                      <p className="text-sm font-sans text-white">{field.value}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              {/* Member notes */}
+              {member?.notes && (
+                <div className="bg-[oklch(0.13_0.008_66)] border border-white/8 p-6">
+                  <p className="eyebrow text-white/30 mb-3">Notes from the Lodge</p>
+                  <p className="text-sm font-sans text-white/50 leading-relaxed">{member.notes}</p>
+                </div>
+              )}
+              {/* Contact */}
+              <div className="border border-[var(--gold)]/20 bg-[var(--gold)]/5 p-5">
+                <p className="text-[10px] tracking-[0.14em] uppercase font-sans text-[var(--gold)] mb-1">Need to update your information?</p>
+                <p className="text-xs font-sans text-white/50 leading-relaxed mb-3">Contact our concierge team to update your contact details, preferences, or membership information.</p>
+                <button onClick={() => setTab("messages")} className="text-[10px] font-sans text-[var(--gold)] hover:underline tracking-[0.1em] uppercase">
+                  Message Concierge →
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
       </div>
+
+      {/* ── Booking Detail Modal ──────────────────────────────────── */}
+      <Dialog open={!!selectedRequest} onOpenChange={(open) => { if (!open) setSelectedRequest(null); }}>
+        <DialogContent className="max-w-lg bg-[oklch(0.13_0.008_66)] border border-white/10 text-white rounded-none p-0 overflow-hidden">
+          <DialogHeader className="px-6 pt-6 pb-4 border-b border-white/8">
+            <DialogTitle className="font-serif text-xl text-white">
+              {selectedRequest ? (ACTIVITY_LABELS[selectedRequest.businessLine] ?? selectedRequest.businessLine) : ""}
+            </DialogTitle>
+          </DialogHeader>
+          {selectedRequest && (
+            <div className="px-6 py-5 flex flex-col gap-5">
+              {/* Status */}
+              <div className="flex items-center justify-between">
+                <span className="text-[9px] tracking-[0.16em] uppercase font-sans text-white/30">Status</span>
+                <StatusBadge status={selectedRequest.status} />
+              </div>
+              {/* Dates */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-[9px] tracking-[0.16em] uppercase font-sans text-white/30 mb-1">Arrival</p>
+                  <p className="text-sm font-sans text-white">{new Date(selectedRequest.requestedStart).toLocaleDateString("en-US", { weekday: "short", month: "long", day: "numeric", year: "numeric" })}</p>
+                </div>
+                <div>
+                  <p className="text-[9px] tracking-[0.16em] uppercase font-sans text-white/30 mb-1">Departure</p>
+                  <p className="text-sm font-sans text-white">{new Date(selectedRequest.requestedEnd).toLocaleDateString("en-US", { weekday: "short", month: "long", day: "numeric", year: "numeric" })}</p>
+                </div>
+              </div>
+              {/* Guests */}
+              {selectedRequest.guestCount && (
+                <div>
+                  <p className="text-[9px] tracking-[0.16em] uppercase font-sans text-white/30 mb-1">Guests</p>
+                  <p className="text-sm font-sans text-white">{selectedRequest.guestCount}</p>
+                </div>
+              )}
+              {/* Special requests */}
+              {selectedRequest.specialRequests && (
+                <div>
+                  <p className="text-[9px] tracking-[0.16em] uppercase font-sans text-white/30 mb-1">Special Requests</p>
+                  <p className="text-sm font-sans text-white/60 leading-relaxed">{selectedRequest.specialRequests}</p>
+                </div>
+              )}
+              {/* Submitted */}
+              <div className="border-t border-white/8 pt-4">
+                <p className="text-[9px] tracking-[0.16em] uppercase font-sans text-white/30 mb-1">Submitted</p>
+                <p className="text-xs font-sans text-white/50">{new Date(selectedRequest.createdAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</p>
+              </div>
+              {/* Actions */}
+              <div className="flex gap-3 pt-1">
+                <button
+                  onClick={() => { setSelectedRequest(null); setTab("messages"); }}
+                  className="flex-1 py-2.5 border border-white/15 text-white/60 text-[10px] tracking-[0.14em] uppercase font-sans hover:border-white/30 hover:text-white transition-colors"
+                >
+                  Message Concierge
+                </button>
+                <button
+                  onClick={() => setSelectedRequest(null)}
+                  className="flex-1 py-2.5 bg-white text-black text-[10px] tracking-[0.14em] uppercase font-sans hover:bg-white/90 transition-colors"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
     </PublicLayout>
   );
 }
