@@ -39,6 +39,10 @@ import PortalLeads from "./pages/portal/PortalLeads";
 import PortalAvailability from "./pages/portal/PortalAvailability";
 import PortalNotifications from "./pages/portal/PortalNotifications";
 import PortalTestimonials from "./pages/portal/PortalTestimonials";
+import PortalProperties from "./pages/portal/PortalProperties";
+import PropertyBrowser from "./pages/portal/PropertyBrowser";
+import PropertyDetail from "./pages/portal/PropertyDetail";
+import MyBookings from "./pages/portal/MyBookings";
 import SignWaiver from "./pages/SignWaiver";
 import Privacy from "@/pages/Privacy";
 import InquiryConfirmed from "@/pages/InquiryConfirmed";
@@ -63,6 +67,9 @@ function Router() {
 
        {/* Gated */}
       <Route path="/portal" component={MemberPortal} />
+      <Route path="/portal/properties" component={PropertyBrowser} />
+      <Route path="/portal/properties/:id" component={PropertyDetail} />
+      <Route path="/portal/my-bookings" component={MyBookings} />
           <Route path="/privacy" component={Privacy} />
           <Route path="/inquiry-confirmed" component={InquiryConfirmed} />
       <Route path="/admin" component={AdminDashboard} />
@@ -87,6 +94,7 @@ function Router() {
       <Route path="/ops/leads">{() => <PortalLayout><PortalLeads /></PortalLayout>}</Route>
       <Route path="/ops/availability">{() => <PortalLayout><PortalAvailability /></PortalLayout>}</Route>
       <Route path="/ops/testimonials">{() => <PortalLayout><PortalTestimonials /></PortalLayout>}</Route>
+      <Route path="/ops/properties">{() => <PortalLayout><PortalProperties /></PortalLayout>}</Route>
       {/* Public waiver signing */}
       <Route path="/sign-waiver/:token">{(p) => <SignWaiver />}</Route>
       {/* Fallback */}

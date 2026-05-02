@@ -408,3 +408,46 @@
 - [x] Preview as Member button in admin/ops portal header — opens member portal in preview mode
 - [x] Member portal preview mode banner — sticky "Previewing as Member / Exit Preview" bar for admin
 - [x] MemberPortal reads preview flag so admin sees full member experience
+
+## Phase 24: Enterprise Property Booking System
+
+### Research
+- [x] Deep research: enterprise reservation system patterns, hunting lodge booking schemas (HuntStand, Vally, YellowStone PMS, ByteByteGo hotel schema)
+- [x] Schema design document: docs/booking-schema-design.md
+
+### Schema (13 new tables migrated to DB)
+- [x] hunting_properties — id, name, slug, type (stand/blind/field/pond/zone), description, acreage, maxHunters, coordinates, amenities, images, isActive, sortOrder
+- [x] property_zones — sub-areas within a property (e.g. North Pasture, South Blind)
+- [x] property_availability_rules — recurring availability windows per property (dayOfWeek, seasonStart, seasonEnd, openTime, closeTime)
+- [x] property_blocked_dates — one-off blocked dates per property with reason
+- [x] property_booking_slots — generated or manually created bookable slots (date, startTime, endTime, maxHunters, status, price)
+- [x] property_bookings — confirmed member bookings (memberId, slotId, propertyId, partySize, status, paymentStatus, notes, timestamps)
+- [x] property_booking_guests — per-guest records (bookingId, name, licenseNumber, waiverStatus)
+- [x] property_booking_payments — payment records per booking (amount, method, stripeId, status)
+- [x] property_booking_rules — per-property booking rules (advanceBookingDays, maxConsecutiveDays, cancellationHours, depositPercent, tierRestrictions)
+- [x] property_harvest_records — harvest log per booking (species, count, weight, notes, photos)
+- [x] property_audit_log — immutable audit trail for all property booking events
+- [x] property_waitlist — waitlist entries when a slot is full
+- [x] property_member_restrictions — per-member restrictions (blackout dates, tier overrides)
+
+### Backend (propertyBookingRouter.ts)
+- [x] trpc.propertyBooking.properties.list — public property browser with filters (type, activity, availability)
+- [x] trpc.propertyBooking.properties.get — full property detail with rules, zones, images
+- [x] trpc.propertyBooking.availability.getSlots — available slots for a property in a date range
+- [x] trpc.propertyBooking.availability.checkSlot — real-time conflict check before booking
+- [x] trpc.propertyBooking.bookings.create — member self-booking with conflict detection, deposit calculation, audit log
+- [x] trpc.propertyBooking.bookings.myBookings — member's booking history with status
+- [x] trpc.propertyBooking.bookings.cancel — member cancellation with refund calculation
+- [x] trpc.propertyBooking.admin.properties.create/update/delete — ops CRUD
+- [x] trpc.propertyBooking.admin.slots.create/update/delete — slot management
+- [x] trpc.propertyBooking.admin.bookings.list/approve/decline/checkin/checkout — booking pipeline
+- [x] trpc.propertyBooking.admin.harvest.record — harvest log entry
+
+### Member Portal UI
+- [x] PropertyBrowser page at /portal/properties — grid of all active properties with type/activity filters, availability badge, capacity, quick-book CTA
+- [x] PropertyDetail page at /portal/properties/:id — full property info, availability calendar, booking form (date/party size/notes), deposit calculation, confirmation
+- [x] MyBookings page at /portal/my-bookings — full booking history with status badges, cancel action, harvest log link
+
+### Ops Portal UI
+- [x] PortalProperties page at /ops/properties — property CRUD (create/edit/delete), slot management, booking pipeline per property
+- [x] Properties nav item in PortalLayout sidebar (Outdoor Operations section)

@@ -46,6 +46,7 @@ import {
   Users,
   UserCheck,
   MessageSquare,
+  TreePine,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "wouter";
@@ -75,6 +76,7 @@ const navGroups = [
   {
     label: "Outdoor Operations",
     items: [
+      { icon: TreePine, label: "Properties", path: "/ops/properties" },
       { icon: Target, label: "Hunt & Fish", path: "/ops/hunt-fish" },
       { icon: BookOpen, label: "Member Bookings", path: "/ops/member-bookings" },
     ],
