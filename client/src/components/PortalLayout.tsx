@@ -33,6 +33,7 @@ import {
   Calendar,
   ChevronDown,
   ClipboardList,
+  Eye,
   Fish,
   Heart,
   Home,
@@ -93,6 +94,8 @@ const navGroups = [
 export default function PortalLayout({ children }: { children: React.ReactNode }) {
   const { loading, user, logout } = useAuth();
   const [location] = useLocation();
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const ensureMember = trpc.membership.ensureMemberForPreview.useMutation();
   const notificationsQuery = trpc.portal.dashboard.notifications.useQuery(undefined, {
     enabled: !!user && STAFF_ROLES.includes(user.role ?? ""),
     refetchInterval: 30000,
@@ -221,6 +224,27 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
           <header className="flex items-center gap-3 px-4 py-3 border-b border-border bg-background/95 backdrop-blur sticky top-0 z-10">
             <SidebarTrigger className="text-muted-foreground hover:text-foreground" />
             <div className="flex-1" />
+            {/* Preview as Member — owner/admin only */}
+            {(user?.role === "owner" || user?.role === "admin") && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5 text-xs h-8 border-amber-600/40 text-amber-500 hover:bg-amber-600/10 hover:text-amber-400 hover:border-amber-500/60"
+                disabled={previewLoading}
+                onClick={async () => {
+                  setPreviewLoading(true);
+                  try {
+                    await ensureMember.mutateAsync();
+                    window.location.href = "/portal?preview=1";
+                  } catch {
+                    setPreviewLoading(false);
+                  }
+                }}
+              >
+                <Eye className="w-3.5 h-3.5" />
+                {previewLoading ? "Setting up…" : "Preview as Member"}
+              </Button>
+            )}
             <Link href="/ops/notifications" className="relative">
               <Button variant="ghost" size="icon" className="relative">
                 <Bell className="w-4 h-4" />

@@ -401,3 +401,10 @@
 ## Phase 22: Logout & Auth UX
 
 - [x] Add Sign Out option to PublicNav — user avatar/name dropdown with Sign Out for logged-in users (desktop + mobile)
+
+## Phase 23: Preview as Member
+
+- [x] previewAsMember tRPC procedure — auto-creates member record for owner if missing, returns member data
+- [x] Preview as Member button in admin/ops portal header — opens member portal in preview mode
+- [x] Member portal preview mode banner — sticky "Previewing as Member / Exit Preview" bar for admin
+- [x] MemberPortal reads preview flag so admin sees full member experience

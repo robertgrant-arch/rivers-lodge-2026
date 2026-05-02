@@ -181,6 +181,24 @@ const membershipRouter = router({
   myStatus: protectedProcedure.query(async ({ ctx }) => {
     return db.getMemberByUserId(ctx.user.id);
   }),
+  // Admin-only: ensure the calling user has a member record so they can preview the member portal.
+  // Creates a "Founding" member record automatically if one doesn't exist.
+  ensureMemberForPreview: adminProcedure.mutation(async ({ ctx }) => {
+    const existing = await db.getMemberByUserId(ctx.user.id);
+    if (existing) return { member: existing, created: false };
+    // Auto-generate member number RL-YYYY-PREVIEW
+    const year = new Date().getFullYear();
+    const memberNumber = `RL-${year}-PREVIEW`;
+    await db.createMember({
+      userId: ctx.user.id,
+      memberNumber,
+      tier: "founding",
+      active: true,
+      joinDate: new Date().toISOString().split("T")[0],
+    } as any);
+    const created = await db.getMemberByUserId(ctx.user.id);
+    return { member: created, created: true };
+  }),
 });
 
 // ─── Bookings ─────────────────────────────────────────────────────────────────

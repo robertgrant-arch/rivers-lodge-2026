@@ -5,6 +5,7 @@ import { getLoginUrl } from "@/const";
 import { toast } from "sonner";
 import PublicLayout from "@/components/PublicLayout";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Eye, X } from "lucide-react";
 
 type Tab = "dashboard" | "bookings" | "calendar" | "request" | "updates" | "messages" | "profile";
 
@@ -359,9 +360,28 @@ export default function MemberPortal() {
   const pendingRequests = (myRequests.data ?? []).filter(r => !["converted","rejected","lost"].includes(r.status));
   const announcements = cmsAnnouncements.data ?? [];
 
+  // Detect admin preview mode via ?preview=1 query param
+  const isPreviewMode = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("preview") === "1";
+
   return (
     <PublicLayout>
-      <div className="min-h-screen bg-background">
+      {/* Admin preview banner */}
+      {isPreviewMode && (
+        <div className="fixed top-0 left-0 right-0 z-[200] bg-amber-600 text-white text-sm font-medium flex items-center justify-between px-4 py-2 shadow-lg">
+          <div className="flex items-center gap-2">
+            <Eye className="w-4 h-4 flex-shrink-0" />
+            <span>Admin Preview Mode — you are viewing the Member Portal as a Founding Member.</span>
+          </div>
+          <a
+            href="/ops"
+            className="flex items-center gap-1.5 bg-white/20 hover:bg-white/30 rounded px-3 py-1 text-xs font-semibold transition-colors whitespace-nowrap ml-4"
+          >
+            <X className="w-3.5 h-3.5" />
+            Exit Preview
+          </a>
+        </div>
+      )}
+      <div className="min-h-screen bg-background" style={isPreviewMode ? { paddingTop: "2.5rem" } : {}}>
 
         {/* ── Portal Header ─────────────────────────────────────────────── */}
         <div className="bg-[oklch(0.10_0.010_66)] border-b border-white/8 pt-24 pb-8">
