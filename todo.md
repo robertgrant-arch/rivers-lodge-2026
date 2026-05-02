@@ -397,3 +397,7 @@
 - [x] Add Member form in PortalMembership — user search by email/name, tier, join/renewal dates, member number
 - [x] Member detail drawer in PortalMembership — full profile, booking history, trip requests, audit trail
 - [x] Hunt/Fish slot management page — create/edit/delete availability slots with capacity (tripsRouter admin procedures)
+
+## Phase 22: Logout & Auth UX
+
+- [x] Add Sign Out option to PublicNav — user avatar/name dropdown with Sign Out for logged-in users (desktop + mobile)

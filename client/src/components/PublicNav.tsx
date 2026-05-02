@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "wouter";
-import { Menu, X, ChevronDown } from "lucide-react";
+import { Menu, X, ChevronDown, LogOut, User } from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
 
@@ -61,7 +61,9 @@ export default function PublicNav() {
   const [membershipOpen, setMembershipOpen] = useState(false);
   const [mobileWeddingsOpen, setMobileWeddingsOpen] = useState(false);
   const [mobileMembershipOpen, setMobileMembershipOpen] = useState(false);
-  const { user, isAuthenticated } = useAuth();
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
+  const { user, isAuthenticated, logout } = useAuth();
 
   const track = getTrackFromPath(location);
   const isHome = location === "/";
@@ -90,6 +92,9 @@ export default function PublicNav() {
       }
       if (membershipRef.current && !membershipRef.current.contains(e.target as Node)) {
         setMembershipOpen(false);
+      }
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setUserMenuOpen(false);
       }
     }
     document.addEventListener("mousedown", handleClick);
@@ -221,12 +226,36 @@ export default function PublicNav() {
           {/* ── Right CTA ────────────────────────────────────────────────── */}
           <div className="hidden lg:flex items-center gap-4 shrink-0">
             {isAuthenticated ? (
-              <Link
-                href={getPortalHref(user?.role)}
-                className="text-[11px] tracking-[0.15em] uppercase font-sans font-medium border border-[oklch(0.72_0.095_78)] text-[oklch(0.72_0.095_78)] px-5 py-2.5 hover:bg-[oklch(0.72_0.095_78)] hover:text-[oklch(0.095_0.006_64)] transition-all duration-200"
-              >
-                {getPortalLabel(user?.role)}
-              </Link>
+              <div className="relative" ref={userMenuRef}>
+                <button
+                  onClick={() => setUserMenuOpen(!userMenuOpen)}
+                  className="flex items-center gap-2 text-[11px] tracking-[0.15em] uppercase font-sans font-medium border border-[oklch(0.72_0.095_78)] text-[oklch(0.72_0.095_78)] px-4 py-2.5 hover:bg-[oklch(0.72_0.095_78)] hover:text-[oklch(0.095_0.006_64)] transition-all duration-200"
+                >
+                  <User size={13} />
+                  <span>{user?.name?.split(" ")[0] ?? getPortalLabel(user?.role)}</span>
+                  <ChevronDown size={11} className={`transition-transform duration-200 ${userMenuOpen ? "rotate-180" : ""}`} />
+                </button>
+                {userMenuOpen && (
+                  <div className="absolute right-0 top-full mt-1 w-52 bg-[oklch(0.115_0.007_64)] border border-[oklch(0.22_0.008_64)] shadow-2xl z-50">
+                    <Link
+                      href={getPortalHref(user?.role)}
+                      onClick={() => setUserMenuOpen(false)}
+                      className="flex items-center gap-2.5 px-4 py-3 text-[11px] tracking-[0.12em] uppercase font-sans text-[oklch(0.94_0.008_78)] hover:bg-[oklch(0.18_0.006_64)] transition-colors"
+                    >
+                      <User size={13} />
+                      {getPortalLabel(user?.role)}
+                    </Link>
+                    <div className="border-t border-[oklch(0.22_0.008_64)]" />
+                    <button
+                      onClick={() => { setUserMenuOpen(false); logout(); }}
+                      className="w-full flex items-center gap-2.5 px-4 py-3 text-[11px] tracking-[0.12em] uppercase font-sans text-[oklch(0.72_0.095_78)] hover:bg-[oklch(0.18_0.006_64)] transition-colors"
+                    >
+                      <LogOut size={13} />
+                      Sign Out
+                    </button>
+                  </div>
+                )}
+              </div>
             ) : (
               <a
                 href={getLoginUrl()}
@@ -261,12 +290,26 @@ export default function PublicNav() {
           {/* Member Login — prominent at top */}
           <div className="pb-8 mb-8 border-b border-[oklch(0.22_0.008_64)]">
             {isAuthenticated ? (
-              <Link
-                href={getPortalHref(user?.role)}
-                className="inline-flex items-center justify-center w-full py-3.5 border border-[oklch(0.72_0.095_78)] text-[oklch(0.72_0.095_78)] text-[11px] tracking-[0.18em] uppercase font-sans font-medium"
-              >
-                {getPortalLabel(user?.role)}
-              </Link>
+              <div className="flex flex-col gap-2">
+                <p className="text-[10px] tracking-[0.16em] uppercase font-sans text-[oklch(0.50_0.010_70)] mb-1">
+                  Signed in as {user?.name ?? user?.email ?? "you"}
+                </p>
+                <Link
+                  href={getPortalHref(user?.role)}
+                  onClick={() => setMobileOpen(false)}
+                  className="inline-flex items-center justify-center gap-2 w-full py-3.5 border border-[oklch(0.72_0.095_78)] text-[oklch(0.72_0.095_78)] text-[11px] tracking-[0.18em] uppercase font-sans font-medium"
+                >
+                  <User size={13} />
+                  {getPortalLabel(user?.role)}
+                </Link>
+                <button
+                  onClick={() => { setMobileOpen(false); logout(); }}
+                  className="inline-flex items-center justify-center gap-2 w-full py-3 text-[11px] tracking-[0.16em] uppercase font-sans font-medium text-[oklch(0.72_0.095_78)] hover:opacity-70 transition-opacity"
+                >
+                  <LogOut size={13} />
+                  Sign Out
+                </button>
+              </div>
             ) : (
               <a
                 href={getLoginUrl()}
