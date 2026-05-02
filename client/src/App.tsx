@@ -38,6 +38,7 @@ import PortalBookings from "./pages/portal/PortalBookings";
 import PortalLeads from "./pages/portal/PortalLeads";
 import PortalAvailability from "./pages/portal/PortalAvailability";
 import PortalNotifications from "./pages/portal/PortalNotifications";
+import PortalTestimonials from "./pages/portal/PortalTestimonials";
 import SignWaiver from "./pages/SignWaiver";
 import Privacy from "@/pages/Privacy";
 import InquiryConfirmed from "@/pages/InquiryConfirmed";
@@ -85,6 +86,7 @@ function Router() {
       <Route path="/ops/bookings">{() => <PortalLayout><PortalBookings /></PortalLayout>}</Route>
       <Route path="/ops/leads">{() => <PortalLayout><PortalLeads /></PortalLayout>}</Route>
       <Route path="/ops/availability">{() => <PortalLayout><PortalAvailability /></PortalLayout>}</Route>
+      <Route path="/ops/testimonials">{() => <PortalLayout><PortalTestimonials /></PortalLayout>}</Route>
       {/* Public waiver signing */}
       <Route path="/sign-waiver/:token">{(p) => <SignWaiver />}</Route>
       {/* Fallback */}

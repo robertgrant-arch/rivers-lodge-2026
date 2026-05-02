@@ -91,7 +91,139 @@ function MiniCalendar({ blockedDates }: { blockedDates: string[] }) {
   );
 }
 
-// ─── Main Portal ──────────────────────────────────────────────────────────────
+// ─── UpdatesTab Component ──────────────────────────────────────────────────────────────────────────────────
+
+type CmsAnnouncement = { id: number; title: string; body?: string | null; type?: string | null; ctaLabel?: string | null; ctaUrl?: string | null };
+type CmsMemberContent = { id: number; title: string; body?: string | null; contentType: string; season?: string | null; publishedAt?: Date | null };
+type SeasonalUpdate = { id: number; title: string; body: string; category: string; publishedAt: Date };
+
+const CONTENT_CATEGORIES = ["All", "Hunt", "Fish", "Estate", "Events", "Announcements"] as const;
+type ContentCategory = typeof CONTENT_CATEGORIES[number];
+
+function UpdatesTab({
+  announcements,
+  cmsMemberContent,
+  updates,
+  isLoading,
+}: {
+  announcements: CmsAnnouncement[];
+  cmsMemberContent: CmsMemberContent[];
+  updates: SeasonalUpdate[];
+  isLoading: boolean;
+}) {
+  const [activeCategory, setActiveCategory] = useState<ContentCategory>("All");
+
+  const filteredCmsContent = cmsMemberContent.filter((c) => {
+    if (activeCategory === "All") return true;
+    if (activeCategory === "Hunt") return c.contentType.toLowerCase().includes("hunt");
+    if (activeCategory === "Fish") return c.contentType.toLowerCase().includes("fish");
+    if (activeCategory === "Estate") return c.contentType.toLowerCase().includes("estate") || c.contentType.toLowerCase().includes("lodge");
+    if (activeCategory === "Events") return c.contentType.toLowerCase().includes("event") || c.contentType.toLowerCase().includes("wedding");
+    if (activeCategory === "Announcements") return c.contentType.toLowerCase().includes("announcement") || c.contentType.toLowerCase().includes("news");
+    return true;
+  });
+
+  const filteredUpdates = updates.filter((u) => {
+    if (activeCategory === "All") return true;
+    return u.category.toLowerCase().includes(activeCategory.toLowerCase());
+  });
+
+  const showAnnouncements = activeCategory === "All" || activeCategory === "Announcements";
+  const hasContent = (showAnnouncements && announcements.length > 0) || filteredCmsContent.length > 0 || filteredUpdates.length > 0;
+
+  return (
+    <div>
+      <div className="flex items-start justify-between gap-4 mb-6">
+        <div>
+          <h2 className="font-serif text-3xl text-white mb-1">Seasonal Updates</h2>
+          <p className="text-sm font-sans text-white/40">Member-exclusive news, season reports, and estate updates.</p>
+        </div>
+      </div>
+
+      {/* Category filter tabs */}
+      <div className="flex gap-0 overflow-x-auto scrollbar-none border-b border-white/8 mb-8">
+        {CONTENT_CATEGORIES.map((cat) => (
+          <button
+            key={cat}
+            onClick={() => setActiveCategory(cat)}
+            className={`px-4 py-2.5 text-[10px] tracking-[0.14em] uppercase font-sans whitespace-nowrap border-b-2 transition-colors ${
+              activeCategory === cat
+                ? "border-[var(--gold)] text-white"
+                : "border-transparent text-white/40 hover:text-white"
+            }`}
+          >
+            {cat}
+          </button>
+        ))}
+      </div>
+
+      {/* Announcements (shown in All and Announcements tabs) */}
+      {showAnnouncements && announcements.length > 0 && (
+        <div className="mb-8 flex flex-col gap-3">
+          {announcements.map((a) => (
+            <div key={a.id} className={`border-l-2 px-5 py-4 ${
+              a.type === "alert"
+                ? "border-red-500 bg-red-900/10"
+                : "border-[var(--gold)] bg-[var(--gold)]/5"
+            }`}>
+              <p className="text-sm font-sans font-medium text-white">{a.title}</p>
+              {a.body && <p className="text-xs font-sans text-white/50 mt-1 leading-relaxed">{a.body}</p>}
+              {a.ctaLabel && a.ctaUrl && (
+                <a href={a.ctaUrl} className="text-xs font-sans text-[var(--gold)] underline mt-2 inline-block hover:no-underline">{a.ctaLabel} →</a>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* CMS Member Content */}
+      {filteredCmsContent.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-8">
+          {filteredCmsContent.map((c) => (
+            <div key={c.id} className="bg-[oklch(0.13_0.008_66)] border border-white/8 p-6">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-[9px] tracking-[0.16em] uppercase font-sans text-white/30">{c.contentType.replace(/_/g, " ")}</span>
+                {c.publishedAt && <span className="text-[9px] font-sans text-white/25">{new Date(c.publishedAt).toLocaleDateString()}</span>}
+              </div>
+              <h3 className="font-serif text-xl text-white mb-3">{c.title}</h3>
+              <p className="text-sm font-sans text-white/50 leading-relaxed line-clamp-4">{c.body}</p>
+              {c.season && <p className="text-xs font-sans text-white/30 mt-3 border-t border-white/8 pt-3">Season: {c.season}</p>}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Seasonal updates from DB */}
+      {isLoading ? (
+        <div className="flex items-center justify-center py-12">
+          <div className="w-6 h-6 border border-white/20 border-t-white/60 rounded-full animate-spin" />
+        </div>
+      ) : filteredUpdates.length > 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          {filteredUpdates.map((u) => (
+            <div key={u.id} className="bg-[oklch(0.13_0.008_66)] border border-white/8 p-6">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-[9px] tracking-[0.16em] uppercase font-sans text-white/30">{u.category}</span>
+                <span className="text-[9px] font-sans text-white/25">{new Date(u.publishedAt).toLocaleDateString()}</span>
+              </div>
+              <h3 className="font-serif text-xl text-white mb-3">{u.title}</h3>
+              <p className="text-sm font-sans text-white/50 leading-relaxed">{u.body}</p>
+            </div>
+          ))}
+        </div>
+      ) : !hasContent ? (
+        <div className="text-center py-16 border border-white/8 bg-[oklch(0.13_0.008_66)]">
+          <p className="font-serif text-xl text-white mb-2">
+            {activeCategory === "All" ? "No updates yet." : `No ${activeCategory} updates yet.`}
+          </p>
+          <p className="text-sm font-sans text-white/40">Check back as the season progresses.</p>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+// ─── Main Portal ──────────────────────────────────────────────────────────────────────────────────
 
 export default function MemberPortal() {
   const { user, isAuthenticated, loading } = useAuth();
@@ -716,72 +848,14 @@ export default function MemberPortal() {
 
           {/* ── SEASONAL UPDATES ──────────────────────────────────────── */}
           {tab === "updates" && (
-            <div>
-              <h2 className="font-serif text-3xl text-white mb-2">Seasonal Updates</h2>
-              <p className="text-sm font-sans text-white/40 mb-8">Member-exclusive news, season reports, and estate updates.</p>
-
-              {/* Announcements */}
-              {announcements.length > 0 && (
-                <div className="mb-8 flex flex-col gap-3">
-                  {announcements.map((a) => (
-                    <div key={a.id} className={`border-l-2 px-5 py-4 ${
-                      a.type === "alert"
-                        ? "border-red-500 bg-red-900/10"
-                        : "border-[var(--gold)] bg-[var(--gold)]/5"
-                    }`}>
-                      <p className="text-sm font-sans font-medium text-white">{a.title}</p>
-                      {a.body && <p className="text-xs font-sans text-white/50 mt-1 leading-relaxed">{a.body}</p>}
-                      {a.ctaLabel && a.ctaUrl && (
-                        <a href={a.ctaUrl} className="text-xs font-sans text-[var(--gold)] underline mt-2 inline-block hover:no-underline">{a.ctaLabel} →</a>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* CMS Member Content */}
-              {cmsMemberContent.data && cmsMemberContent.data.length > 0 && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-8">
-                  {cmsMemberContent.data.map((c) => (
-                    <div key={c.id} className="bg-[oklch(0.13_0.008_66)] border border-white/8 p-6">
-                      <div className="flex items-center justify-between mb-3">
-                        <span className="text-[9px] tracking-[0.16em] uppercase font-sans text-white/30">{c.contentType.replace(/_/g, " ")}</span>
-                        {c.publishedAt && <span className="text-[9px] font-sans text-white/25">{new Date(c.publishedAt).toLocaleDateString()}</span>}
-                      </div>
-                      <h3 className="font-serif text-xl text-white mb-3">{c.title}</h3>
-                      <p className="text-sm font-sans text-white/50 leading-relaxed line-clamp-4">{c.body}</p>
-                      {c.season && <p className="text-xs font-sans text-white/30 mt-3 border-t border-white/8 pt-3">Season: {c.season}</p>}
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* Seasonal updates */}
-              {updates.isLoading ? (
-                <div className="flex items-center justify-center py-12">
-                  <div className="w-6 h-6 border border-white/20 border-t-white/60 rounded-full animate-spin" />
-                </div>
-              ) : (updates.data ?? []).length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  {(updates.data ?? []).map((u) => (
-                    <div key={u.id} className="bg-[oklch(0.13_0.008_66)] border border-white/8 p-6">
-                      <div className="flex items-center justify-between mb-3">
-                        <span className="text-[9px] tracking-[0.16em] uppercase font-sans text-white/30">{u.category}</span>
-                        <span className="text-[9px] font-sans text-white/25">{new Date(u.publishedAt).toLocaleDateString()}</span>
-                      </div>
-                      <h3 className="font-serif text-xl text-white mb-3">{u.title}</h3>
-                      <p className="text-sm font-sans text-white/50 leading-relaxed">{u.body}</p>
-                    </div>
-                  ))}
-                </div>
-              ) : (!cmsMemberContent.data || cmsMemberContent.data.length === 0) ? (
-                <div className="text-center py-16 border border-white/8 bg-[oklch(0.13_0.008_66)]">
-                  <p className="font-serif text-xl text-white mb-2">No updates yet.</p>
-                  <p className="text-sm font-sans text-white/40">Check back as the season progresses.</p>
-                </div>
-              ) : null}
-            </div>
+            <UpdatesTab
+              announcements={announcements}
+              cmsMemberContent={cmsMemberContent.data ?? []}
+              updates={updates.data ?? []}
+              isLoading={updates.isLoading}
+            />
           )}
+
 
           {/* ── CONCIERGE MESSAGES ────────────────────────────────────── */}
           {tab === "messages" && (

@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { Search, Plus, ChevronRight, Calendar, Users, DollarSign, ArrowRight, Clock, AlertTriangle } from "lucide-react";
+import { Search, Plus, ChevronRight, Calendar, Users, DollarSign, ArrowRight, Clock, AlertTriangle, LayoutList, Columns } from "lucide-react";
 
 const BOOKING_TYPES = [
   { value: "all", label: "All Types" },
@@ -70,6 +70,7 @@ export default function PortalBookings() {
   const [typeFilter, setTypeFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [viewMode, setViewMode] = useState<"list" | "kanban">("list");
   const [showCreate, setShowCreate] = useState(false);
   const [transitionTarget, setTransitionTarget] = useState<string | null>(null);
   const [transitionNotes, setTransitionNotes] = useState("");
@@ -145,9 +146,29 @@ export default function PortalBookings() {
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-border">
           <h1 className="text-xl font-semibold">Bookings</h1>
-          <Button size="sm" onClick={() => setShowCreate(true)}>
-            <Plus className="w-4 h-4 mr-1" /> New Booking
-          </Button>
+          <div className="flex items-center gap-2">
+            <div className="flex border border-border rounded-md overflow-hidden">
+              <button
+                onClick={() => setViewMode("list")}
+                className={`px-2.5 py-1.5 text-xs flex items-center gap-1.5 transition-colors ${
+                  viewMode === "list" ? "bg-primary text-primary-foreground" : "hover:bg-muted"
+                }`}
+              >
+                <LayoutList className="w-3.5 h-3.5" /> List
+              </button>
+              <button
+                onClick={() => { setViewMode("kanban"); setSelectedId(null); }}
+                className={`px-2.5 py-1.5 text-xs flex items-center gap-1.5 border-l border-border transition-colors ${
+                  viewMode === "kanban" ? "bg-primary text-primary-foreground" : "hover:bg-muted"
+                }`}
+              >
+                <Columns className="w-3.5 h-3.5" /> Pipeline
+              </button>
+            </div>
+            <Button size="sm" onClick={() => setShowCreate(true)}>
+              <Plus className="w-4 h-4 mr-1" /> New Booking
+            </Button>
+          </div>
         </div>
 
         {/* Filters */}
@@ -215,6 +236,60 @@ export default function PortalBookings() {
           )}
         </div>
       </div>
+
+      {/* Kanban Pipeline View */}
+      {viewMode === "kanban" && (
+        <div className="flex-1 overflow-x-auto">
+          <div className="flex gap-3 p-4 h-full min-w-max">
+            {[
+              { key: "inquiry", label: "Inquiry" },
+              { key: "qualified", label: "Qualified" },
+              { key: "proposal_sent", label: "Proposal Sent" },
+              { key: "contract_sent", label: "Contract Sent" },
+              { key: "deposit_received", label: "Deposit Received" },
+              { key: "confirmed", label: "Confirmed" },
+            ].map((col) => {
+              const colItems = (listQuery.data?.items ?? []).filter((b) => b.status === col.key);
+              return (
+                <div key={col.key} className="flex flex-col w-56 flex-shrink-0">
+                  <div className="flex items-center justify-between mb-2 px-1">
+                    <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{col.label}</span>
+                    <span className="text-xs text-muted-foreground bg-muted rounded-full px-1.5 py-0.5">{colItems.length}</span>
+                  </div>
+                  <div className="flex flex-col gap-2 flex-1 overflow-y-auto">
+                    {colItems.map((b) => (
+                      <button
+                        key={b.id}
+                        onClick={() => { setSelectedId(b.id); setViewMode("list"); }}
+                        className="text-left p-3 bg-card border border-border rounded-lg hover:border-primary/50 transition-colors shadow-sm"
+                      >
+                        <div className="flex items-center gap-1.5 mb-1.5">
+                          <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
+                            b.type === "wedding" ? "bg-pink-400" : b.type === "corporate" ? "bg-blue-400" : b.type === "hunt_fish" ? "bg-amber-500" : "bg-green-400"
+                          }`} />
+                          <span className="text-xs text-muted-foreground capitalize">{b.type?.replace("_", " ")}</span>
+                        </div>
+                        <p className="text-sm font-medium leading-tight mb-1">{b.clientName}</p>
+                        {b.startDate && (
+                          <p className="text-xs text-muted-foreground">{new Date(b.startDate).toLocaleDateString()}</p>
+                        )}
+                        {b.totalRevenue && (
+                          <p className="text-xs text-green-600 font-medium mt-1">${parseFloat(b.totalRevenue).toLocaleString()}</p>
+                        )}
+                      </button>
+                    ))}
+                    {colItems.length === 0 && (
+                      <div className="flex items-center justify-center py-8 border-2 border-dashed border-border rounded-lg">
+                        <p className="text-xs text-muted-foreground">Empty</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Right: Detail */}
       {selectedId && (

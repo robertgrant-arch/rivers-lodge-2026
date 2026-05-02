@@ -256,7 +256,51 @@ export default function WeddingsLanding() {
           </div>
         </section>
 
-        {/* ── FAQ ──────────────────────────────────────────────────────────── */}
+        <section className="section bg-background">
+          <div className="max-w-[1440px] mx-auto px-5 lg:px-10">
+            <div className="text-center mb-14">
+              <div className="h-px w-10 mx-auto mb-6" style={{ backgroundColor: BLUSH }} />
+              <p className="eyebrow text-[oklch(0.55_0.012_70)] mb-3">How It Works</p>
+              <h2 className="font-serif text-[oklch(0.94_0.008_78)] text-3xl md:text-4xl leading-tight">
+                From first inquiry to your perfect day.
+              </h2>
+            </div>
+            <div className="relative">
+              {/* Vertical line */}
+              <div className="absolute left-1/2 top-0 bottom-0 w-px bg-white/8 hidden lg:block" />
+              <div className="flex flex-col gap-0">
+                {[
+                  { step: "01", title: "Reach Out", desc: "Submit an inquiry or call us directly. We'll confirm availability for your preferred dates and schedule a private estate tour.", side: "left" },
+                  { step: "02", title: "Estate Tour", desc: "Walk the grounds, see the spaces, and meet our team. Most couples book within days of their first visit.", side: "right" },
+                  { step: "03", title: "Design Your Weekend", desc: "We work with you to design every detail — venue layout, lodging assignments, vendor coordination, and the weekend-long flow.", side: "left" },
+                  { step: "04", title: "Confirm & Secure", desc: "A signed agreement and deposit secures your date. We limit the number of weddings per year to ensure every event receives our full focus.", side: "right" },
+                  { step: "05", title: "Your Perfect Day", desc: "Arrive to a fully prepared estate. Our on-site team handles setup, coordination, and every detail so you can be fully present.", side: "left" },
+                ].map((item, i) => (
+                  <div key={item.step} className={`relative grid grid-cols-1 lg:grid-cols-2 gap-0 ${
+                    i % 2 === 0 ? "" : "lg:direction-rtl"
+                  }`}>
+                    <div className={`py-10 px-8 lg:px-16 ${
+                      item.side === "left" ? "lg:text-right" : "lg:col-start-2"
+                    }`}>
+                      <div className="inline-flex items-center gap-3 mb-4">
+                        <span className="font-serif text-5xl leading-none" style={{ color: BLUSH }}>{item.step}</span>
+                      </div>
+                      <h3 className="font-serif text-2xl text-[oklch(0.94_0.008_78)] mb-3">{item.title}</h3>
+                      <p className={`font-sans text-sm text-[oklch(0.60_0.015_72)] leading-relaxed max-w-sm ${
+                        item.side === "left" ? "ml-auto" : ""
+                      }`}>{item.desc}</p>
+                    </div>
+                    {/* Center dot */}
+                    <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 rounded-full border-2 bg-background hidden lg:block" style={{ borderColor: BLUSH }} />
+                    {item.side === "right" && <div className="hidden lg:block" />}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ── FAQ ────────────────────────────────────────────────────────────────────── */}
         <section className="section bg-[oklch(0.115_0.007_64)]">
           <div className="max-w-[1440px] mx-auto px-5 lg:px-10">
             <div className="max-w-3xl mx-auto">

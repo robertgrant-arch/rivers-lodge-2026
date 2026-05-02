@@ -44,6 +44,7 @@ import {
   TrendingUp,
   Users,
   UserCheck,
+  MessageSquare,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "wouter";
@@ -84,6 +85,7 @@ const navGroups = [
       { icon: Users, label: "Customers", path: "/ops/customers" },
       { icon: UserCheck, label: "Employees", path: "/ops/employees" },
       { icon: Shield, label: "Membership", path: "/ops/membership" },
+      { icon: MessageSquare, label: "Testimonials", path: "/ops/testimonials" },
     ],
   },
 ];

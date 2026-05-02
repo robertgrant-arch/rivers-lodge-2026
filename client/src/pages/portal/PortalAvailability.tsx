@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { CheckCircle, XCircle, AlertTriangle, Search, Calendar, Building2 } from "lucide-react";
+import { CheckCircle, XCircle, AlertTriangle, Search, Calendar, Building2, Plus, Trash2, Ban } from "lucide-react";
 
 const RESOURCE_TYPE_LABELS: Record<string, string> = {
   event_space: "Event Space",
@@ -24,6 +24,30 @@ export default function PortalAvailability() {
   const [endDate, setEndDate] = useState("");
   const [selectedResourceIds, setSelectedResourceIds] = useState<number[]>([]);
   const [hasChecked, setHasChecked] = useState(false);
+  const [activeTab, setActiveTab] = useState<"check" | "blocked">("check");
+  const [newBlockedDate, setNewBlockedDate] = useState("");
+  const [newBlockedReason, setNewBlockedReason] = useState("");
+
+  const blockedDatesQuery = trpc.bookings.blockedDates.useQuery();
+  const utils = trpc.useUtils();
+
+  const addBlockedDate = trpc.bookings.addBlockedDate.useMutation({
+    onSuccess: () => {
+      toast.success("Date blocked");
+      setNewBlockedDate("");
+      setNewBlockedReason("");
+      utils.bookings.blockedDates.invalidate();
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const removeBlockedDate = trpc.bookings.removeBlockedDate.useMutation({
+    onSuccess: () => {
+      toast.success("Date unblocked");
+      utils.bookings.blockedDates.invalidate();
+    },
+    onError: (err) => toast.error(err.message),
+  });
 
   const resourcesQuery = trpc.booking.resources.list.useQuery({});
 
@@ -76,7 +100,100 @@ export default function PortalAvailability() {
   const result = checkQuery.data;
 
   return (
-    <div className="flex h-full">
+    <div className="flex flex-col h-full">
+      {/* Tab bar */}
+      <div className="flex border-b border-border bg-background flex-shrink-0">
+        <button
+          onClick={() => setActiveTab("check")}
+          className={`px-5 py-3 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 ${
+            activeTab === "check" ? "border-primary text-foreground" : "border-transparent text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <Search className="w-4 h-4" /> Availability Check
+        </button>
+        <button
+          onClick={() => setActiveTab("blocked")}
+          className={`px-5 py-3 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 ${
+            activeTab === "blocked" ? "border-primary text-foreground" : "border-transparent text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <Ban className="w-4 h-4" /> Blocked Dates
+          {(blockedDatesQuery.data?.length ?? 0) > 0 && (
+            <span className="text-xs bg-muted text-muted-foreground rounded-full px-1.5 py-0.5">{blockedDatesQuery.data?.length}</span>
+          )}
+        </button>
+      </div>
+
+      {/* Blocked Dates Tab */}
+      {activeTab === "blocked" && (
+        <div className="flex h-full overflow-hidden">
+          {/* Add form */}
+          <div className="w-72 flex-shrink-0 border-r border-border flex flex-col">
+            <div className="px-5 py-4 border-b border-border">
+              <h2 className="text-base font-semibold">Block a Date</h2>
+              <p className="text-xs text-muted-foreground mt-0.5">Blocked dates appear on member calendars as unavailable.</p>
+            </div>
+            <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3">
+              <div>
+                <Label className="text-xs font-medium">Date</Label>
+                <Input type="date" className="h-8 text-sm mt-1" value={newBlockedDate} onChange={(e) => setNewBlockedDate(e.target.value)} />
+              </div>
+              <div>
+                <Label className="text-xs font-medium">Reason (optional)</Label>
+                <Input className="h-8 text-sm mt-1" placeholder="e.g. Private event, Maintenance…" value={newBlockedReason} onChange={(e) => setNewBlockedReason(e.target.value)} />
+              </div>
+            </div>
+            <div className="px-5 py-4 border-t border-border">
+              <Button
+                className="w-full"
+                size="sm"
+                disabled={!newBlockedDate || addBlockedDate.isPending}
+                onClick={() => addBlockedDate.mutate({ date: newBlockedDate, reason: newBlockedReason || undefined })}
+              >
+                <Plus className="w-4 h-4 mr-1.5" /> Block Date
+              </Button>
+            </div>
+          </div>
+
+          {/* List */}
+          <div className="flex-1 overflow-y-auto">
+            {blockedDatesQuery.isLoading ? (
+              <div className="p-5 space-y-2">
+                {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
+              </div>
+            ) : (blockedDatesQuery.data?.length ?? 0) === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
+                <Ban className="w-10 h-10 mb-3 opacity-30" />
+                <p className="text-sm font-medium">No blocked dates</p>
+                <p className="text-xs mt-1">All dates are currently available.</p>
+              </div>
+            ) : (
+              <div className="divide-y divide-border">
+                {(blockedDatesQuery.data ?? []).map((bd) => (
+                  <div key={bd.id} className="flex items-center justify-between px-5 py-3">
+                    <div>
+                      <p className="text-sm font-medium">{new Date(bd.date).toLocaleDateString(undefined, { weekday: "short", year: "numeric", month: "short", day: "numeric" })}</p>
+                      {bd.reason && <p className="text-xs text-muted-foreground mt-0.5">{bd.reason}</p>}
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                      onClick={() => removeBlockedDate.mutate({ id: bd.id })}
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Availability Check Tab */}
+      {activeTab === "check" && (
+      <div className="flex flex-1 overflow-hidden">
       {/* Left: Controls */}
       <div className="w-80 flex-shrink-0 border-r border-border flex flex-col">
         <div className="px-6 py-4 border-b border-border">
@@ -256,6 +373,8 @@ export default function PortalAvailability() {
           </div>
         ) : null}
       </div>
+      </div>
+      )}
     </div>
   );
 }

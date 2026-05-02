@@ -343,9 +343,9 @@
 - [x] My Bookings tab — show submitted reservation requests with status badges (new/contacted/confirmed/declined)
 - [x] Booking detail modal — click a booking to see full details and status timeline
 - [x] Refer-a-Member CTA on dashboard — pre-fills contact form with referral context
-- [ ] Blocked dates calendar integration — show estate-wide blocked dates on member calendar
-- [ ] Member notification center — in-portal notification bell with unread count
-- [ ] Seasonal content hub — rich seasonal updates with category filter tabs
+- [x] Blocked dates calendar integration — show estate-wide blocked dates on member calendar (already integrated via trpc.bookings.blockedDates)
+- [x] Member notification center — in-portal notification bell with unread count (already implemented, shows gold dot + dropdown)
+- [x] Seasonal content hub — rich seasonal updates with category filter tabs (All/Hunt/Fish/Estate/Events/Announcements)
 - [x] Member profile page — view membership details, tier, renewal date, notes from lodge
 
 ### Public Site — Conversion & Trust
@@ -359,7 +359,7 @@
 
 ### Booking Flow
 - [x] Multi-step inquiry form with progress indicator (3 steps: Type → Details → Contact)
-- [ ] Inquiry confirmation page /inquiry-confirmed with summary and next steps
+- [x] Inquiry confirmation page — /inquiry-confirmed with next-steps checklist (already implemented with type-specific content)
 - [x] Date availability widget on Weddings and Lodging pages (AvailabilityCalendar on WeddingsLanding and MembershipLanding)
 
 ### SEO & Performance
@@ -371,6 +371,6 @@
 - [x] robots.txt
 
 ### Ops Portal Enhancements
-- [ ] Booking pipeline Kanban board
-- [ ] Blocked dates management UI
-- [ ] Testimonials management — approve/publish from ops portal
+- [x] Booking pipeline Kanban board (List/Pipeline view toggle on PortalBookings)
+- [x] Blocked dates management UI (Blocked Dates tab in PortalAvailability)
+- [x] Testimonials management — approve/publish from ops portal (PortalTestimonials at /ops/testimonials)
