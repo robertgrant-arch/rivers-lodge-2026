@@ -32,7 +32,7 @@ export type InsertUser = typeof users.$inferInsert;
 
 export const inquiries = mysqlTable("inquiries", {
   id: int("id").autoincrement().primaryKey(),
-  type: mysqlEnum("type", ["wedding", "corporate", "tour", "general"]).notNull(),
+  type: mysqlEnum("type", ["wedding", "corporate", "tour", "general", "membership", "lodging", "event"]).notNull(),
   name: varchar("name", { length: 255 }).notNull(),
   email: varchar("email", { length: 320 }).notNull(),
   phone: varchar("phone", { length: 50 }),

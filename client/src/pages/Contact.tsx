@@ -20,7 +20,7 @@ export default function Contact() {
   const params = new URLSearchParams(location.split("?")[1] || "");
   const defaultType = params.get("type") || "general";
 
-  const validTypes = ["general", "wedding", "corporate", "tour"] as const;
+  const validTypes = ["general", "wedding", "corporate", "tour", "membership", "lodging", "event"] as const;
   type InquiryType = typeof validTypes[number];
   const safeType: InquiryType = validTypes.includes(defaultType as InquiryType) ? (defaultType as InquiryType) : "general";
 
@@ -54,10 +54,12 @@ export default function Contact() {
   };
 
   const inquiryTypes: { value: InquiryType; label: string }[] = [
-    { value: "wedding",   label: "Wedding" },
-    { value: "corporate", label: "Corporate Event" },
-    { value: "tour",      label: "Property Tour" },
-    { value: "general",   label: "General Inquiry" },
+    { value: "wedding",    label: "Wedding" },
+    { value: "corporate",  label: "Corporate Event" },
+    { value: "membership", label: "Membership" },
+    { value: "lodging",    label: "Lodging" },
+    { value: "tour",       label: "Property Tour" },
+    { value: "general",    label: "General Inquiry" },
   ];
 
   return (
@@ -133,7 +135,7 @@ export default function Contact() {
                       <input id="phone" type="tel" placeholder="(555) 000-0000"
                         value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} />
                     </div>
-                    {(form.type === "wedding" || form.type === "corporate") && (
+                    {(form.type === "wedding" || form.type === "corporate" || form.type === "event") && (
                       <div className="field">
                         <label htmlFor="eventDate">Event Date (if known)</label>
                         <input id="eventDate" type="date"
@@ -142,7 +144,7 @@ export default function Contact() {
                     )}
                   </div>
 
-                  {(form.type === "wedding" || form.type === "corporate") && (
+                  {(form.type === "wedding" || form.type === "corporate" || form.type === "event") && (
                     <div className="field">
                       <label htmlFor="guestCount">Estimated Guest Count</label>
                       <input id="guestCount" type="number" placeholder="e.g. 150"

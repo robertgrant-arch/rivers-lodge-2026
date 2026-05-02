@@ -123,17 +123,34 @@ export default function PublicNav() {
 
             {/* Weddings & Events dropdown */}
             <div ref={weddingsRef} className="relative">
-              <button
-                onClick={() => { setWeddingsOpen(!weddingsOpen); setMembershipOpen(false); }}
-                className={`flex items-center gap-1.5 px-4 py-2 text-[11px] tracking-[0.13em] uppercase font-sans font-medium transition-colors ${
-                  track === "weddings" ? "text-[oklch(0.70_0.060_50)]" : "text-[oklch(0.94_0.008_78)] hover:text-[oklch(0.70_0.060_50)]"
-                }`}
-              >
-                Weddings &amp; Events
-                <ChevronDown size={12} className={`transition-transform duration-200 ${weddingsOpen ? "rotate-180" : ""}`} />
-              </button>
+              <div className="flex items-center">
+                <Link
+                  href="/events"
+                  className={`px-4 py-2 text-[11px] tracking-[0.13em] uppercase font-sans font-medium transition-colors ${
+                    track === "weddings" ? "text-[oklch(0.70_0.060_50)]" : "text-[oklch(0.94_0.008_78)] hover:text-[oklch(0.70_0.060_50)]"
+                  }`}
+                >
+                  Weddings &amp; Events
+                </Link>
+                <button
+                  onClick={() => { setWeddingsOpen(!weddingsOpen); setMembershipOpen(false); }}
+                  aria-label="Open Weddings & Events menu"
+                  className={`p-1.5 -ml-1 transition-colors ${
+                    track === "weddings" ? "text-[oklch(0.70_0.060_50)]" : "text-[oklch(0.94_0.008_78)] hover:text-[oklch(0.70_0.060_50)]"
+                  }`}
+                >
+                  <ChevronDown size={11} className={`transition-transform duration-200 ${weddingsOpen ? "rotate-180" : ""}`} />
+                </button>
+              </div>
               {weddingsOpen && (
                 <div className="absolute top-full left-0 mt-1 w-64 bg-[oklch(0.115_0.007_64)] border border-[oklch(0.22_0.008_64)] shadow-2xl py-2">
+                  <Link
+                    href="/events"
+                    className="flex flex-col px-5 py-3 hover:bg-[oklch(0.14_0.007_64)] transition-colors group border-b border-[oklch(0.22_0.008_64)]"
+                  >
+                    <span className="text-[11px] tracking-[0.12em] uppercase font-sans font-medium text-[oklch(0.70_0.060_50)] group-hover:text-[oklch(0.82_0.055_50)] transition-colors">Overview</span>
+                    <span className="text-[11px] font-sans text-[oklch(0.55_0.012_70)] mt-0.5 normal-case tracking-normal">Weddings &amp; Events landing</span>
+                  </Link>
                   {weddingsDropdown.map((item) => (
                     <Link
                       key={item.href}
@@ -150,17 +167,34 @@ export default function PublicNav() {
 
             {/* Membership & Outdoors dropdown */}
             <div ref={membershipRef} className="relative">
-              <button
-                onClick={() => { setMembershipOpen(!membershipOpen); setWeddingsOpen(false); }}
-                className={`flex items-center gap-1.5 px-4 py-2 text-[11px] tracking-[0.13em] uppercase font-sans font-medium transition-colors ${
-                  track === "membership" ? "text-[oklch(0.58_0.065_145)]" : "text-[oklch(0.94_0.008_78)] hover:text-[oklch(0.58_0.065_145)]"
-                }`}
-              >
-                Membership &amp; Outdoors
-                <ChevronDown size={12} className={`transition-transform duration-200 ${membershipOpen ? "rotate-180" : ""}`} />
-              </button>
+              <div className="flex items-center">
+                <Link
+                  href="/outdoors"
+                  className={`px-4 py-2 text-[11px] tracking-[0.13em] uppercase font-sans font-medium transition-colors ${
+                    track === "membership" ? "text-[oklch(0.58_0.065_145)]" : "text-[oklch(0.94_0.008_78)] hover:text-[oklch(0.58_0.065_145)]"
+                  }`}
+                >
+                  Membership &amp; Outdoors
+                </Link>
+                <button
+                  onClick={() => { setMembershipOpen(!membershipOpen); setWeddingsOpen(false); }}
+                  aria-label="Open Membership & Outdoors menu"
+                  className={`p-1.5 -ml-1 transition-colors ${
+                    track === "membership" ? "text-[oklch(0.58_0.065_145)]" : "text-[oklch(0.94_0.008_78)] hover:text-[oklch(0.58_0.065_145)]"
+                  }`}
+                >
+                  <ChevronDown size={11} className={`transition-transform duration-200 ${membershipOpen ? "rotate-180" : ""}`} />
+                </button>
+              </div>
               {membershipOpen && (
                 <div className="absolute top-full left-0 mt-1 w-64 bg-[oklch(0.115_0.007_64)] border border-[oklch(0.22_0.008_64)] shadow-2xl py-2">
+                  <Link
+                    href="/outdoors"
+                    className="flex flex-col px-5 py-3 hover:bg-[oklch(0.14_0.007_64)] transition-colors group border-b border-[oklch(0.22_0.008_64)]"
+                  >
+                    <span className="text-[11px] tracking-[0.12em] uppercase font-sans font-medium text-[oklch(0.58_0.065_145)] group-hover:text-[oklch(0.72_0.065_145)] transition-colors">Overview</span>
+                    <span className="text-[11px] font-sans text-[oklch(0.55_0.012_70)] mt-0.5 normal-case tracking-normal">Membership &amp; Outdoors landing</span>
+                  </Link>
                   {membershipDropdown.map((item) => (
                     <Link
                       key={item.href}
@@ -245,15 +279,26 @@ export default function PublicNav() {
 
           {/* Weddings & Events section */}
           <div className="mb-6">
-            <button
-              onClick={() => setMobileWeddingsOpen(!mobileWeddingsOpen)}
-              className="flex items-center justify-between w-full py-3 text-left"
-            >
-              <span className="text-[11px] tracking-[0.18em] uppercase font-sans font-medium text-[oklch(0.60_0.015_72)]">Weddings &amp; Events</span>
-              <ChevronDown size={14} className={`text-[oklch(0.60_0.015_72)] transition-transform duration-200 ${mobileWeddingsOpen ? "rotate-180" : ""}`} />
-            </button>
+            <div className="flex items-center justify-between py-3">
+              <Link
+                href="/events"
+                className="text-[11px] tracking-[0.18em] uppercase font-sans font-medium text-[oklch(0.70_0.060_50)]"
+              >
+                Weddings &amp; Events
+              </Link>
+              <button
+                onClick={() => setMobileWeddingsOpen(!mobileWeddingsOpen)}
+                aria-label="Toggle Weddings & Events"
+                className="p-1 text-[oklch(0.60_0.015_72)]"
+              >
+                <ChevronDown size={14} className={`transition-transform duration-200 ${mobileWeddingsOpen ? "rotate-180" : ""}`} />
+              </button>
+            </div>
             {mobileWeddingsOpen && (
-              <div className="pl-4 mt-2 flex flex-col gap-0 border-l border-[oklch(0.70_0.060_50)/30]">
+              <div className="pl-4 mt-1 flex flex-col gap-0 border-l border-[oklch(0.70_0.060_50)/30]">
+                <Link href="/events" className="py-2.5 text-[oklch(0.70_0.060_50)] font-serif text-lg italic">
+                  Overview
+                </Link>
                 {weddingsDropdown.map((item) => (
                   <Link
                     key={item.href}
@@ -269,15 +314,26 @@ export default function PublicNav() {
 
           {/* Membership & Outdoors section */}
           <div className="mb-6">
-            <button
-              onClick={() => setMobileMembershipOpen(!mobileMembershipOpen)}
-              className="flex items-center justify-between w-full py-3 text-left"
-            >
-              <span className="text-[11px] tracking-[0.18em] uppercase font-sans font-medium text-[oklch(0.60_0.015_72)]">Membership &amp; Outdoors</span>
-              <ChevronDown size={14} className={`text-[oklch(0.60_0.015_72)] transition-transform duration-200 ${mobileMembershipOpen ? "rotate-180" : ""}`} />
-            </button>
+            <div className="flex items-center justify-between py-3">
+              <Link
+                href="/outdoors"
+                className="text-[11px] tracking-[0.18em] uppercase font-sans font-medium text-[oklch(0.58_0.065_145)]"
+              >
+                Membership &amp; Outdoors
+              </Link>
+              <button
+                onClick={() => setMobileMembershipOpen(!mobileMembershipOpen)}
+                aria-label="Toggle Membership & Outdoors"
+                className="p-1 text-[oklch(0.60_0.015_72)]"
+              >
+                <ChevronDown size={14} className={`transition-transform duration-200 ${mobileMembershipOpen ? "rotate-180" : ""}`} />
+              </button>
+            </div>
             {mobileMembershipOpen && (
-              <div className="pl-4 mt-2 flex flex-col gap-0 border-l border-[oklch(0.58_0.065_145)/30]">
+              <div className="pl-4 mt-1 flex flex-col gap-0 border-l border-[oklch(0.58_0.065_145)/30]">
+                <Link href="/outdoors" className="py-2.5 text-[oklch(0.58_0.065_145)] font-serif text-lg italic">
+                  Overview
+                </Link>
                 {membershipDropdown.map((item) => (
                   <Link
                     key={item.href}

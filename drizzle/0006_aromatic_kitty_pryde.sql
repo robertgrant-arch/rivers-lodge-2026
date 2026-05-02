@@ -1,0 +1,1 @@
+ALTER TABLE `inquiries` MODIFY COLUMN `type` enum('wedding','corporate','tour','general','membership','lodging','event') NOT NULL;

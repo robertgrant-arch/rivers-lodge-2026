@@ -43,6 +43,13 @@
       "when": 1777668251816,
       "tag": "0005_skinny_groot",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1777729259686,
+      "tag": "0006_aromatic_kitty_pryde",
+      "breakpoints": true
     }
   ]
 }

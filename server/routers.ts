@@ -31,7 +31,7 @@ const inquiriesRouter = router({
   submit: publicProcedure
     .input(
       z.object({
-        type: z.enum(["wedding", "corporate", "tour", "general"]),
+        type: z.enum(["wedding", "corporate", "tour", "general", "membership", "lodging", "event"]),
         name: z.string().min(1),
         email: z.string().email(),
         phone: z.string().optional(),
@@ -48,6 +48,9 @@ const inquiriesRouter = router({
         corporate: "corporate",
         tour: "other",
         general: "other",
+        membership: "other",
+        lodging: "other",
+        event: "corporate",
       };
       const businessLine = businessLineMap[input.type] ?? "other";
       const database = await getDb();

@@ -37,7 +37,9 @@ import PortalReports from "./pages/portal/PortalReports";
 import PortalBookings from "./pages/portal/PortalBookings";
 import PortalLeads from "./pages/portal/PortalLeads";
 import PortalAvailability from "./pages/portal/PortalAvailability";
+import PortalNotifications from "./pages/portal/PortalNotifications";
 import SignWaiver from "./pages/SignWaiver";
+import Privacy from "./pages/Privacy";
 
 function Router() {
   return (
@@ -59,10 +61,12 @@ function Router() {
 
        {/* Gated */}
       <Route path="/portal" component={MemberPortal} />
+      <Route path="/privacy" component={Privacy} />
       <Route path="/admin" component={AdminDashboard} />
       {/* Operations Portal */}
       <Route path="/ops">{() => <PortalLayout><PortalDashboard /></PortalLayout>}</Route>
       <Route path="/ops/calendar">{() => <PortalLayout><PortalCalendar /></PortalLayout>}</Route>
+      <Route path="/ops/notifications">{() => <PortalLayout><PortalNotifications /></PortalLayout>}</Route>
       <Route path="/ops/weddings/:id">{(p) => <PortalLayout><PortalWeddings /></PortalLayout>}</Route>
       <Route path="/ops/weddings">{() => <PortalLayout><PortalWeddings /></PortalLayout>}</Route>
       <Route path="/ops/corporate/:id">{(p) => <PortalLayout><PortalCorporate /></PortalLayout>}</Route>

@@ -148,7 +148,7 @@ export default function Lodging() {
                   ))}
                 </div>
                 <Link
-                  href="/contact?type=wedding"
+                  href="/contact?type=lodging"
                   className="inline-flex items-center gap-2 text-xs tracking-[0.16em] uppercase font-sans font-medium text-foreground border-b border-foreground/30 pb-0.5 hover:border-foreground transition-colors"
                 >
                   Inquire About Lodging
