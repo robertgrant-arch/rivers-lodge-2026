@@ -1,140 +1,176 @@
+import { useRef, useEffect } from "react";
 import { Link } from "wouter";
 import PublicLayout from "@/components/PublicLayout";
-import { trpc } from "@/lib/trpc";
 
-const HERO = "/manus-storage/Rivers_SEPT2022_-253-1_f15787e1.jpg";
-const MEETING = "/manus-storage/3C0A0304_cb66bc23.jpg";
-const OUTDOOR = "/manus-storage/Rivers_SEPT2022_-134_157d1be5.jpg";
+const HERO     = "/manus-storage/3C0A0304_cb66bc23.jpg";
+const BARN     = "/manus-storage/6M9A3239_d4c999f4.jpg";
+const GROUNDS  = "/manus-storage/6M9A3253_319f3a3b.jpg";
+const AERIAL   = "/manus-storage/DJI_0017_538feef1.jpg";
+const LODGE    = "/manus-storage/974A9398edit_294e71ff.jpg";
+const INTERIOR = "/manus-storage/974A8419edit_f37de96e.jpg";
 
-const packages = [
-  {
-    name: "Executive Retreat",
-    desc: "Full estate buyout for leadership teams. Exclusive access to all lodging, event spaces, and grounds. Curated dining, guided outdoor experiences, and full-service staff.",
-    includes: ["Full estate exclusive access", "All lodging buildings", "Curated dining & bar", "Guided hunt or fish option", "Meeting room setup", "AV equipment"],
-  },
-  {
-    name: "Corporate Outing",
-    desc: "A day or weekend event for teams of any size. Sporting clays, guided fishing, or a full barn dinner — Rivers Lodge provides the setting and the experience.",
-    includes: ["Rivers Barn or Clubhouse", "Outdoor activity options", "Catering packages", "Bar service", "Flexible scheduling", "Up to 256 guests"],
-  },
-  {
-    name: "Team Offsite",
-    desc: "A focused working retreat with breakout sessions, meals, and evening recreation. The perfect balance of productivity and genuine departure from the office.",
-    includes: ["Meeting space", "Breakout areas", "Overnight lodging", "Meals & coffee service", "Evening recreation", "Private grounds"],
-  },
+function useFadeUp(t = 0.12) {
+  const ref = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const el = ref.current; if (!el) return;
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduced) { el.classList.add("visible"); return; }
+    const obs = new IntersectionObserver(([e]) => { if (e.isIntersecting) { el.classList.add("visible"); obs.disconnect(); } }, { threshold: t });
+    obs.observe(el); return () => obs.disconnect();
+  }, [t]);
+  return ref;
+}
+
+const eventTypes = [
+  { title: "Corporate Retreats",    desc: "Multi-day team retreats with lodging, dining, and curated outdoor programming. The Lodge sleeps up to 20; the Barn accommodates 300 for evening events.", img: LODGE },
+  { title: "Executive Meetings",    desc: "Private meeting space in the Clubhouse for boards, leadership teams, and strategy sessions — away from the office, on the land.", img: INTERIOR },
+  { title: "Client Entertainment",  desc: "Hunting days, fishing excursions, sporting clays, and private dinners. The most memorable client entertainment is the kind that can't be replicated.", img: GROUNDS },
+  { title: "Team-Building Days",    desc: "Guided outdoor experiences — from clay shooting to river fishing — that build genuine connection without a single trust fall.", img: AERIAL },
+];
+
+const capacities = [
+  { space: "Rivers Barn",          seated: "256", reception: "300", notes: "Full AV, catering kitchen" },
+  { space: "Clubhouse",            seated: "40",  reception: "60",  notes: "Bar, private dining room" },
+  { space: "River Lawn",           seated: "200", reception: "300", notes: "Outdoor ceremony & dinner" },
+  { space: "The Lodge",            seated: "20",  reception: "20",  notes: "Exclusive overnight lodging" },
+  { space: "Riverhouse Suites",    seated: "—",   reception: "—",   notes: "4 boutique suites" },
 ];
 
 export default function Corporate() {
-  const { data: cmsPackages } = trpc.cms.getPackages.useQuery({ division: "corporate" });
-
-  const corporatePackages = (cmsPackages && cmsPackages.length > 0)
-    ? cmsPackages.map((pkg) => ({
-        name: pkg.name,
-        desc: pkg.description ?? pkg.tagline ?? "",
-        includes: Array.isArray(pkg.includes) ? (pkg.includes as string[]) : [],
-      }))
-    : packages;
+  const typesRef = useFadeUp();
+  const capRef   = useFadeUp();
+  const ctaRef   = useFadeUp();
 
   return (
     <PublicLayout>
+      <div style={{ "--track-accent": "oklch(0.70 0.060 50)" } as React.CSSProperties}>
+
       {/* Hero */}
-      <section className="relative h-[85vh] min-h-[520px] flex items-end pb-20 overflow-hidden">
+      <section className="relative hero-full flex items-end pb-24 overflow-hidden">
         <div className="absolute inset-0">
-          <img src={HERO} alt="Corporate events at Rivers Lodge" className="w-full h-full object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/5 via-black/20 to-black/80" />
+          <img src={HERO} alt="Corporate events at Rivers Lodge" className="w-full h-full object-cover" fetchPriority="high" />
+          <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, transparent 0%, oklch(0 0 0/0.12) 40%, oklch(0 0 0/0.80) 100%)" }} />
         </div>
-        <div className="relative z-10 max-w-[1440px] mx-auto px-5 lg:px-10 w-full">
-          <div className="h-px w-10 mb-6" style={{ backgroundColor: "oklch(0.70 0.060 50)" }} />
-          <p className="eyebrow text-[oklch(0.94_0.008_78)/55] mb-4">Corporate Outings &amp; Events</p>
-          <h1
-            className="font-serif font-light italic text-white leading-tight mb-6"
-            style={{ fontSize: "clamp(2.5rem,6vw,5.5rem)" }}
-          >
-            Elevate your<br />next event.
+        <div className="relative z-10 max-w-[1440px] mx-auto px-5 lg:px-14 w-full">
+          <div className="gold-rule mb-5" />
+          <p className="eyebrow text-white/50 mb-4">Corporate Outings &amp; Events</p>
+          <h1 className="font-serif font-light text-white leading-[0.92] mb-6" style={{ fontSize: "clamp(2.75rem,6.5vw,5.5rem)" }}>
+            Off-site that actually
+            <br /><em className="italic font-light">means something.</em>
           </h1>
-          <p className="text-[oklch(0.94_0.008_78)/75] font-sans text-base max-w-lg mb-10 leading-relaxed">
-            From executive retreats to company outings, Rivers Lodge provides a setting that no hotel ballroom can replicate.
+          <p className="font-sans text-white/65 max-w-lg leading-relaxed mb-10" style={{ fontSize: "0.9375rem" }}>
+            Corporate retreats, executive meetings, client entertainment, and team-building days on a private 300-acre estate. One group at a time.
           </p>
-          <Link href="/contact?type=corporate" className="btn-primary">
-            Request a Proposal
-          </Link>
+          <Link href="/contact?type=corporate" className="btn-primary">Begin Corporate Inquiry</Link>
         </div>
       </section>
 
       {/* Intro */}
       <section className="section bg-background">
-        <div className="max-w-7xl mx-auto px-6 lg:px-10">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+        <div className="max-w-[1440px] mx-auto px-5 lg:px-14">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-28 items-center">
             <div>
-              <p className="text-[10px] tracking-[0.24em] uppercase font-sans text-muted-foreground mb-4">Why Rivers Lodge</p>
-              <h2 className="font-serif text-3xl md:text-4xl text-foreground mb-6 leading-tight">
-                Not a hotel.<br /><span className="italic">A private estate.</span>
+              <div className="gold-rule mb-5" />
+              <p className="eyebrow text-muted-brand mb-4">Why Rivers Lodge</p>
+              <h2 className="font-serif font-light text-warm leading-tight mb-8" style={{ fontSize: "clamp(1.875rem,3.5vw,3rem)" }}>
+                The land changes
+                <br /><em className="italic">the conversation.</em>
               </h2>
-              <p className="text-base font-sans text-muted-foreground leading-relaxed mb-4">
-                Rivers Lodge offers something corporate venues cannot: genuine departure. Your team arrives at a working private estate — 300 acres, a river, five buildings, and a staff that makes the experience seamless.
-              </p>
-              <p className="text-base font-sans text-muted-foreground leading-relaxed mb-8">
-                Meeting spaces, overnight lodging, curated dining experiences, and a full bar. Guided sporting clays, fishing, or hunting for the evening recreation. Everything you need for a successful event — and an experience people will talk about.
-              </p>
-              <Link href="/contact?type=corporate" className="inline-flex items-center gap-2 text-xs tracking-[0.16em] uppercase font-sans font-medium text-foreground border-b border-foreground/30 pb-0.5 hover:border-foreground transition-colors">
-                Request a Proposal
-              </Link>
+              <div className="space-y-5 font-sans text-muted-brand leading-relaxed" style={{ fontSize: "0.9375rem" }}>
+                <p>There is a reason the best corporate decisions get made away from the office. Rivers Lodge provides the kind of environment that strips away distraction and replaces it with clarity — open land, clean air, and the particular focus that comes from being somewhere genuinely different.</p>
+                <p>The estate accommodates groups from 10 to 300. The Lodge sleeps 20 overnight guests. The Rivers Barn seats 256 for formal dinners. The Clubhouse provides private meeting space. And the 300 acres provide the programming.</p>
+              </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="overflow-hidden aspect-[3/4]">
-                <img src={MEETING} alt="Meeting at Rivers Lodge" className="w-full h-full object-cover hover:scale-105 transition-transform duration-700" />
-              </div>
-              <div className="overflow-hidden aspect-[3/4] mt-8">
-                <img src={OUTDOOR} alt="Outdoor experience" className="w-full h-full object-cover hover:scale-105 transition-transform duration-700" />
-              </div>
+            <div className="aspect-[4/3] overflow-hidden">
+              <img src={BARN} alt="Rivers Barn interior" className="w-full h-full object-cover" loading="lazy" />
             </div>
           </div>
         </div>
       </section>
 
-      {/* Packages */}
-      <section className="section bg-[oklch(0.115_0.007_64)]">
-        <div className="max-w-7xl mx-auto px-6 lg:px-10">
-          <div className="mb-12">
-            <p className="text-[10px] tracking-[0.24em] uppercase font-sans text-muted-foreground mb-3">Event Packages</p>
-            <h2 className="font-serif text-3xl md:text-4xl text-foreground">Built around your group</h2>
+      {/* Event Types */}
+      <section ref={typesRef as React.RefObject<HTMLDivElement>} className="fade-up section bg-surface">
+        <div className="max-w-[1440px] mx-auto px-5 lg:px-14">
+          <div className="mb-14">
+            <div className="gold-rule mb-5" />
+            <p className="eyebrow text-muted-brand mb-4">Event Types</p>
+            <h2 className="font-serif font-light text-warm leading-tight" style={{ fontSize: "clamp(1.75rem,3vw,2.5rem)" }}>
+              What we host.
+            </h2>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {corporatePackages.map((pkg) => (
-              <div key={pkg.name} className="bg-card border border-border p-8">
-                <h3 className="font-serif text-2xl text-foreground mb-3">{pkg.name}</h3>
-                <p className="text-sm font-sans text-muted-foreground leading-relaxed mb-6">{pkg.desc}</p>
-                <div className="flex flex-col gap-2 mb-6">
-                  {pkg.includes.map((item) => (
-                    <div key={item} className="flex items-center gap-2 text-xs font-sans text-muted-foreground">
-                      <span className="w-1 h-1 rounded-full bg-muted-foreground flex-shrink-0" />
-                      {item}
-                    </div>
-                  ))}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-border">
+            {eventTypes.map((e) => (
+              <div key={e.title} className="bg-surface overflow-hidden">
+                <div className="aspect-[16/9] overflow-hidden">
+                  <img src={e.img} alt={e.title} className="w-full h-full object-cover" loading="lazy" />
                 </div>
-                <Link href="/contact?type=corporate" className="text-xs tracking-[0.14em] uppercase font-sans font-medium text-foreground border-b border-foreground/30 pb-0.5 hover:border-foreground transition-colors">
-                  Inquire
-                </Link>
+                <div className="p-8">
+                  <div className="h-px w-6 mb-4" style={{ backgroundColor: "oklch(0.70 0.060 50)" }} />
+                  <h3 className="font-serif text-warm text-xl mb-3">{e.title}</h3>
+                  <p className="font-sans text-muted-brand text-sm leading-relaxed">{e.desc}</p>
+                </div>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="section bg-[oklch(0.115_0.007_64)] text-center">
-        <div className="max-w-xl mx-auto px-6">
-          <h2 className="font-serif text-3xl md:text-4xl text-white mb-5 italic font-light">
-            Let's plan your event.
-          </h2>
-          <p className="text-sm font-sans text-white/60 mb-8 leading-relaxed">
-            Tell us about your group, your dates, and what you're imagining. We'll respond within 24 hours with a custom proposal.
-          </p>
-          <Link href="/contact?type=corporate" className="inline-flex items-center justify-center px-10 py-4 bg-white text-[oklch(0.15_0.008_66)] text-xs tracking-[0.18em] uppercase font-sans font-medium hover:bg-white/90 transition-colors">
-            Request a Proposal
-          </Link>
+      {/* Capacity Table */}
+      <section ref={capRef as React.RefObject<HTMLDivElement>} className="fade-up section bg-background">
+        <div className="max-w-[1440px] mx-auto px-5 lg:px-14">
+          <div className="mb-12">
+            <div className="gold-rule mb-5" />
+            <p className="eyebrow text-muted-brand mb-4">Venue Capacities</p>
+            <h2 className="font-serif font-light text-warm leading-tight" style={{ fontSize: "clamp(1.75rem,3vw,2.5rem)" }}>
+              Space for every format.
+            </h2>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full font-sans text-sm">
+              <thead>
+                <tr className="border-b border-border">
+                  <th className="text-left eyebrow text-muted-brand pb-4 pr-8" style={{ fontSize: "10px" }}>Space</th>
+                  <th className="text-left eyebrow text-muted-brand pb-4 pr-8" style={{ fontSize: "10px" }}>Seated Dinner</th>
+                  <th className="text-left eyebrow text-muted-brand pb-4 pr-8" style={{ fontSize: "10px" }}>Reception</th>
+                  <th className="text-left eyebrow text-muted-brand pb-4" style={{ fontSize: "10px" }}>Notes</th>
+                </tr>
+              </thead>
+              <tbody>
+                {capacities.map((row, i) => (
+                  <tr key={row.space} className={`border-b border-border/50 ${i % 2 === 0 ? "" : "bg-surface/30"}`}>
+                    <td className="py-4 pr-8 text-warm font-medium">{row.space}</td>
+                    <td className="py-4 pr-8 text-muted-brand">{row.seated}</td>
+                    <td className="py-4 pr-8 text-muted-brand">{row.reception}</td>
+                    <td className="py-4 text-muted-brand">{row.notes}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </section>
+
+      {/* CTA */}
+      <section ref={ctaRef as React.RefObject<HTMLDivElement>} className="fade-up section bg-surface">
+        <div className="max-w-[1440px] mx-auto px-5 lg:px-14">
+          <div className="max-w-2xl">
+            <div className="gold-rule mb-5" />
+            <p className="eyebrow text-muted-brand mb-4">Plan Your Event</p>
+            <h2 className="font-serif font-light text-warm leading-tight mb-6" style={{ fontSize: "clamp(1.875rem,3.5vw,3rem)" }}>
+              Tell us what you're planning.
+            </h2>
+            <p className="font-sans text-muted-brand leading-relaxed mb-10" style={{ fontSize: "0.9375rem" }}>
+              We work with a limited number of corporate groups each year. Share the basics and we'll respond within 24 hours.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4">
+              <Link href="/contact?type=corporate" className="btn-primary">Begin Inquiry</Link>
+              <Link href="/lodging" className="btn-ghost">View Spaces &amp; Lodging</Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      </div>
     </PublicLayout>
   );
 }

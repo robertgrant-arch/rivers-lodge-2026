@@ -108,7 +108,8 @@ export default function PublicNav() {
 
   return (
     <>
-      <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${navBg}`}>
+      <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${navBg}`}
+        style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}>
         <div className="max-w-[1440px] mx-auto px-5 lg:px-10 flex items-center justify-between h-16 md:h-20">
 
           {/* ── Wordmark ─────────────────────────────────────────────────── */}
@@ -215,7 +216,7 @@ export default function PublicNav() {
 
       {/* ── Mobile Full-Screen Overlay ──────────────────────────────────────── */}
       <div
-        className={`fixed inset-0 z-40 bg-[oklch(0.095_0.006_64)] flex flex-col transition-all duration-400 lg:hidden ${
+        className={`fixed inset-0 z-40 bg-background flex flex-col transition-all duration-400 lg:hidden ${
           mobileOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
         }`}
       >

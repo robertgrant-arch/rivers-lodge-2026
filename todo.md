@@ -322,3 +322,17 @@
 - [x] Register /events and /outdoors routes in App.tsx
 - [x] Write design-system.test.ts (25 tests covering CSS tokens, typography, routes, nav, homepage)
 - [x] All 85 tests passing, 0 TypeScript errors
+
+## Phase 19: Design System Implementation
+
+- [x] Rewrite Home.tsx — corrected dual-track easing (cubic-bezier 0.16,1,0.3,1), no image zoom on hover, animated scroll indicator, scroll-triggered fade-up sections
+- [x] Create useScrollAnimation hook with IntersectionObserver, stagger support, prefers-reduced-motion
+- [x] Update index.css — stagger utilities, bottom-border-only form fields, prefers-reduced-motion, track-accent focus states, pull-quote, 100svh hero
+- [x] Rewrite Hunt.tsx — design system tokens, track-accent sage, fade-up sections, season calendar table
+- [x] Rewrite Fish.tsx — design system tokens, alternating fishery layout, species table
+- [x] Rewrite Contact.tsx — bottom-border form fields, inquiry type selector, trpc.inquiries.submit, split form/info layout
+- [x] Rewrite Membership.tsx — design system tokens, benefits grid, tier cards, pull quote
+- [x] Patch PublicNav.tsx — safe-area inset, bg-background mobile overlay
+- [x] Fix PublicFooter.tsx — duplicate /contact key resolved
+- [x] TypeScript: 0 errors, build clean
+- [x] All 85 tests passing

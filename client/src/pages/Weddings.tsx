@@ -1,216 +1,187 @@
+import { useRef, useEffect } from "react";
 import { Link } from "wouter";
 import PublicLayout from "@/components/PublicLayout";
 import { trpc } from "@/lib/trpc";
 
-const HERO = "/manus-storage/UebeleinWed453_7f9cd26b.jpg";        // couple kissing on ceremony deck
-const BARN = "/manus-storage/IMG_0646_6bb80f84.jpg";              // Rivers Barn exterior at dusk — the actual barn building
-const CEREMONY = "/manus-storage/UebeleinWed335_e6a9084a.jpg";    // outdoor ceremony on deck with water
-const RECEPTION = "/manus-storage/UebeleinWed629_ebea0f99.jpg";   // reception tables inside barn
-const RIVER_LAWN = "/manus-storage/Rivers_SEPT2022_-253-1_f15787e1.jpg"; // aerial sunset showing barn, ceremony area, grounds, pond — perfect for River Lawn card
-const LODGE_ROOM = "/manus-storage/974A8419edit_f37de96e.jpg";    // Lodge living room antler chandelier
+const HERO      = "/manus-storage/UebeleinWed335_e6a9084a.jpg";
+const CEREMONY  = "/manus-storage/UebeleinWed629_ebea0f99.jpg";
+const RECEPTION = "/manus-storage/UebeleinWed557_b0b3b0ff.jpg";
+const BARN_INT  = "/manus-storage/6M9A3239_d4c999f4.jpg";
+const GROUNDS   = "/manus-storage/6M9A3253_319f3a3b.jpg";
+const AERIAL    = "/manus-storage/DJI_0017_538feef1.jpg";
+const RIVER_LWN = "/manus-storage/Rivers_May2023-8_d07307f4.jpg";
+const LODGE     = "/manus-storage/974A9398edit_294e71ff.jpg";
+const INTERIOR  = "/manus-storage/974A8419edit_f37de96e.jpg";
 
-const timeline = [
-  { day: "Friday Evening", title: "Welcome & Rehearsal", desc: "Guests arrive and settle into The Lodge, Riverhouse Suites, or The Annex & Bridal Suite. Rehearsal dinner at The Clubhouse — the estate's intimate gathering space for cocktail hours and pre-wedding celebrations." },
-  { day: "Saturday Morning", title: "Getting Ready", desc: "The bridal party takes over The Annex & Bridal Suite — four bedrooms, three bathrooms, light-filled and steps from the barn." },
-  { day: "Saturday Afternoon", title: "Ceremony", desc: "Exchange vows on the River Lawn with the Marais des Cygnes as your backdrop, or choose the Timber Edge for a ceremony framed by old-growth trees." },
-  { day: "Saturday Evening", title: "Reception", desc: "Dinner in Rivers Barn or under the Pavilion. Two fireplaces, an indoor/outdoor bar, and patios with string lights that carry the celebration into the night." },
-  { day: "Sunday Morning", title: "Farewell Brunch", desc: "Coffee on the lodge balcony, a walk along the Timber Trail, and a slow goodbye. The estate is yours through checkout." },
-];
+function useFadeUp(t = 0.12) {
+  const ref = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const el = ref.current; if (!el) return;
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduced) { el.classList.add("visible"); return; }
+    const obs = new IntersectionObserver(([e]) => { if (e.isIntersecting) { el.classList.add("visible"); obs.disconnect(); } }, { threshold: t });
+    obs.observe(el); return () => obs.disconnect();
+  }, [t]);
+  return ref;
+}
 
 const venues = [
-  { name: "Rivers Barn", capacity: "Up to 256 guests", type: "Indoor / Outdoor", desc: "Designed by a prominent Kansas City architect. Modern farmhouse with two large patios, two fireplaces, air-conditioning, an indoor/outdoor bar, and separate luxury bathrooms.", href: "/venues#rivers-barn", img: BARN },
-  { name: "Clubhouse", capacity: "Intimate events", type: "Indoor / Outdoor", desc: "Often used as a rehearsal dinner space, cocktail hour space, or intimate wedding ceremony location. A warm, character-filled gathering point.", href: "/venues#clubhouse", img: CEREMONY },
-  { name: "River Lawn", capacity: "Up to 200 guests", type: "Outdoor Ceremony", desc: "A level grass expanse overlooking the Marais des Cygnes. Open sky, the river, and nothing competing with the moment.", href: "/venues#river-lawn", img: RIVER_LAWN },
-];
-
-const lodging = [
-  { name: "The Lodge", detail: "4 Bedrooms · 6,000 sq ft", href: "/lodging#the-lodge" },
-  { name: "Riverhouse Suites", detail: "4 Private Suites · Completed 2022", href: "/lodging#riverhouse-suites" },
-  { name: "The Annex & Bridal Suite", detail: "4 Bedrooms · 3 Baths · Remodeled 2021", href: "/lodging#annex-bridal-suite" },
-  { name: "Ohana House", detail: "4 Bedrooms · 20-Acre Lake", href: "/lodging#ohana-house" },
-  { name: "The Farmhouse", detail: "Classic Kansas Character", href: "/lodging#the-farmhouse" },
+  { name: "River Lawn",       desc: "An open lawn between the Lodge and the Marais des Cygnes — the estate's most dramatic outdoor ceremony site. Seats up to 200.", img: RIVER_LWN },
+  { name: "Rivers Barn",      desc: "6,000 sq ft of open timber-frame space. Accommodates up to 300 guests for ceremonies and receptions. Full catering kitchen.", img: BARN_INT },
+  { name: "Timber Edge",      desc: "A ceremony space framed by old-growth timber on the river corridor. Intimate, shaded, and unlike anything else in the region.", img: GROUNDS },
+  { name: "The Lodge",        desc: "The main residence sleeps up to 20 overnight guests. Available exclusively to the wedding party for the full weekend.", img: LODGE },
+  { name: "Riverhouse Suites", desc: "Four boutique suites on the river bank. Private porches, premium finishes, and unobstructed water views for the bridal party.", img: INTERIOR },
 ];
 
 export default function Weddings() {
-  const { data: cmsSpaces } = trpc.cms.getEventSpaces.useQuery({ division: "weddings" });
-  const { data: cmsLodging } = trpc.cms.getLodgingUnits.useQuery({ forWeddings: true });
-
-  const weddingVenues = (cmsSpaces && cmsSpaces.length > 0)
-    ? cmsSpaces.slice(0, 3).map((space) => ({
-        name: space.name,
-        capacity: space.capacitySeated ? `Up to ${space.capacitySeated} guests` : space.capacityReception ? `Up to ${space.capacityReception} guests` : "Flexible capacity",
-        type: space.indoorOutdoor === "indoor" ? "Indoor" : space.indoorOutdoor === "outdoor" ? "Outdoor" : "Indoor / Outdoor",
-        desc: space.shortDescription ?? "",
-        href: `/venues#${space.slug}`,
-        img: space.heroImage ?? BARN,
-      }))
-    : venues;
-
-  const weddingLodging = (cmsLodging && cmsLodging.length > 0)
-    ? cmsLodging.map((unit) => ({
-        name: unit.name,
-        detail: [unit.bedrooms ? `${unit.bedrooms} Bedrooms` : null, unit.squareFootage ? `${unit.squareFootage.toLocaleString()} sq ft` : null].filter(Boolean).join(" · ") || unit.shortDescription || "",
-        href: `/lodging#${unit.slug}`,
-      }))
-    : lodging;
+  const { data: testimonials } = trpc.cms.getTestimonials.useQuery({ division: "weddings", featuredOnly: true });
+  const venuesRef = useFadeUp();
+  const ctaRef    = useFadeUp();
 
   return (
     <PublicLayout>
+      <div style={{ "--track-accent": "oklch(0.70 0.060 50)" } as React.CSSProperties}>
+
       {/* Hero */}
-      <section className="relative h-[90vh] min-h-[520px] flex items-end pb-20 overflow-hidden">
+      <section className="relative hero-full flex items-end pb-24 overflow-hidden">
         <div className="absolute inset-0">
-          <img src={HERO} alt="Weddings at Rivers Lodge" className="w-full h-full object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/5 via-black/20 to-black/80" />
+          <img src={HERO} alt="Wedding at Rivers Lodge" className="w-full h-full object-cover object-top" fetchPriority="high" />
+          <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, transparent 0%, oklch(0 0 0/0.10) 40%, oklch(0 0 0/0.78) 100%)" }} />
         </div>
-        <div className="relative z-10 max-w-[1440px] mx-auto px-5 lg:px-10 w-full">
-          <div className="h-px w-10 mb-6" style={{ backgroundColor: "oklch(0.70 0.060 50)" }} />
-          <p className="eyebrow text-[oklch(0.94_0.008_78)/55] mb-4">Weddings at Rivers Lodge</p>
-          <h1
-            className="font-serif font-light italic text-white leading-tight mb-6"
-            style={{ fontSize: "clamp(2.5rem,6vw,5.5rem)" }}
-          >
-            Your wedding,<br />without compromise.
+        <div className="relative z-10 max-w-[1440px] mx-auto px-5 lg:px-14 w-full">
+          <div style={{ height: "1px", width: "2rem", backgroundColor: "oklch(0.70 0.060 50)", marginBottom: "1.25rem" }} />
+          <p className="eyebrow text-white/50 mb-4">Weddings</p>
+          <h1 className="font-serif font-light text-white leading-[0.92] mb-6" style={{ fontSize: "clamp(2.75rem,6.5vw,5.5rem)" }}>
+            Your wedding weekend.
+            <br /><em className="italic font-light">Entirely private.</em>
           </h1>
-          <p className="text-[oklch(0.94_0.008_78)/75] font-sans text-base max-w-lg mb-10 leading-relaxed">
-            An estate that holds the day as beautifully as you imagined it. A private weekend, not just a wedding day.
+          <p className="font-sans text-white/65 max-w-lg leading-relaxed mb-10" style={{ fontSize: "0.9375rem" }}>
+            From intimate ceremonies on the River Lawn to grand receptions in the Rivers Barn — every wedding at the Lodge is exclusively yours. No other groups, no shared access.
           </p>
           <div className="flex flex-col sm:flex-row gap-4">
-            <Link href="/contact?type=wedding" className="btn-primary">
-              Begin Your Inquiry
+            <Link href="/contact?type=wedding" className="btn-primary" style={{ backgroundColor: "oklch(0.70 0.060 50)", borderColor: "oklch(0.70 0.060 50)", color: "oklch(0.10 0.005 60)" }}>
+              Begin Wedding Inquiry
             </Link>
-            <Link href="/gallery" className="btn-ghost">
-              View Gallery
-            </Link>
+            <Link href="/lodging" className="btn-ghost">View Spaces &amp; Lodging</Link>
           </div>
         </div>
       </section>
 
       {/* Intro */}
       <section className="section bg-background">
-        <div className="max-w-7xl mx-auto px-6 lg:px-10">
-          <div className="max-w-2xl">
-            <p className="text-[10px] tracking-[0.24em] uppercase font-sans text-muted-foreground mb-4">The Experience</p>
-            <h2 className="font-serif text-3xl md:text-4xl text-foreground mb-6 leading-tight">
-              A destination wedding weekend,<br /><span className="italic">one hour from Kansas City.</span>
-            </h2>
-            <p className="text-base font-sans text-muted-foreground leading-relaxed mb-4">
-              A wedding at Rivers Lodge is not a venue rental. It is a private estate experience — one where the property, the grounds, the lodging, and the staff are entirely yours for the weekend. One hour south of Kansas City, and a world apart from everything else.
-            </p>
-            <p className="text-base font-sans text-muted-foreground leading-relaxed mb-4">
-              Rivers Lodge is a distinctive Kansas venue unlike anything in the region. The barn was designed by a prominent Kansas City architect. The grounds hold five separate event spaces. The lodging sleeps 16+ guests on-site. We host a limited number of weddings each year — every couple receives our full attention, from the first inquiry to the farewell brunch.
-            </p>
-            <p className="text-base font-sans text-muted-foreground leading-relaxed">
-              This is warm hospitality at scale. An elevated but natural setting. A weekend your guests will talk about for years.
-            </p>
+        <div className="max-w-[1440px] mx-auto px-5 lg:px-14">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-28 items-center">
+            <div>
+              <div style={{ height: "1px", width: "2rem", backgroundColor: "oklch(0.70 0.060 50)", marginBottom: "1.25rem" }} />
+              <p className="eyebrow text-muted-brand mb-4">The Experience</p>
+              <h2 className="font-serif font-light text-warm leading-tight mb-8" style={{ fontSize: "clamp(1.875rem,3.5vw,3rem)" }}>
+                Not a venue.
+                <br /><em className="italic">A private estate.</em>
+              </h2>
+              <div className="space-y-5 font-sans text-muted-brand leading-relaxed" style={{ fontSize: "0.9375rem" }}>
+                <p>When you book a wedding at Rivers Lodge, you book the entire estate. Your guests are the only guests. The Lodge, the Barn, the Riverhouse Suites, and the grounds are yours for the weekend.</p>
+                <p>We work with a limited number of couples each year to ensure every wedding receives the full attention of our team. The result is a weekend that feels less like an event and more like a private gathering on land that belongs to you — at least for those three days.</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="col-span-2 aspect-[16/9] overflow-hidden">
+                <img src={CEREMONY} alt="Outdoor ceremony" className="w-full h-full object-cover" loading="lazy" />
+              </div>
+              <div className="aspect-square overflow-hidden">
+                <img src={RECEPTION} alt="Reception" className="w-full h-full object-cover" loading="lazy" />
+              </div>
+              <div className="aspect-square overflow-hidden">
+                <img src={AERIAL} alt="Aerial estate view" className="w-full h-full object-cover" loading="lazy" />
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Weekend Timeline */}
-      <section className="section bg-[oklch(0.115_0.007_64)]">
-        <div className="max-w-7xl mx-auto px-6 lg:px-10">
-          <div className="mb-12">
-            <p className="text-[10px] tracking-[0.24em] uppercase font-sans text-muted-foreground mb-3">Your Weekend</p>
-            <h2 className="font-serif text-3xl md:text-4xl text-foreground">A weekend on the estate</h2>
+      {/* Pull Quote */}
+      <section className="section bg-surface">
+        <div className="max-w-[1440px] mx-auto px-5 lg:px-14">
+          <div className="max-w-3xl">
+            <blockquote className="pull-quote" style={{ borderLeftColor: "oklch(0.70 0.060 50)" }}>
+              "Every wedding at Rivers Lodge is exclusive. One couple, one weekend, one estate — entirely theirs."
+            </blockquote>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-0">
-            {timeline.map((step, i) => (
-              <div key={step.day} className="relative flex flex-col md:block">
-                {/* Connector line */}
-                {i < timeline.length - 1 && (
-                  <div className="hidden md:block absolute top-3 left-1/2 right-0 h-px bg-border" />
-                )}
-                <div className="flex md:flex-col items-start md:items-start gap-4 md:gap-0 pb-8 md:pb-0 md:pr-6">
-                  <div className="relative z-10 w-6 h-6 rounded-full bg-foreground flex-shrink-0 mt-0.5 md:mb-5" />
-                  <div>
-                    <p className="text-[9px] tracking-[0.20em] uppercase font-sans text-muted-foreground mb-1">{step.day}</p>
-                    <h3 className="font-serif text-lg text-foreground mb-2">{step.title}</h3>
-                    <p className="text-xs font-sans text-muted-foreground leading-relaxed">{step.desc}</p>
+        </div>
+      </section>
+
+      {/* Venues */}
+      <section ref={venuesRef as React.RefObject<HTMLDivElement>} className="fade-up section bg-background">
+        <div className="max-w-[1440px] mx-auto px-5 lg:px-14">
+          <div className="mb-14">
+            <div style={{ height: "1px", width: "2rem", backgroundColor: "oklch(0.70 0.060 50)", marginBottom: "1.25rem" }} />
+            <p className="eyebrow text-muted-brand mb-4">Ceremony &amp; Reception Spaces</p>
+            <h2 className="font-serif font-light text-warm leading-tight" style={{ fontSize: "clamp(1.75rem,3vw,2.5rem)" }}>
+              Every space is yours.
+            </h2>
+          </div>
+          <div className="space-y-px bg-border">
+            {venues.map((v, i) => (
+              <div key={v.name} className={`grid grid-cols-1 md:grid-cols-2 bg-background ${i % 2 === 1 ? "md:[direction:rtl]" : ""}`}>
+                <div className={`aspect-[4/3] overflow-hidden ${i % 2 === 1 ? "md:[direction:ltr]" : ""}`}>
+                  <img src={v.img} alt={v.name} className="w-full h-full object-cover" loading="lazy" />
+                </div>
+                <div className={`p-10 lg:p-14 flex flex-col justify-center ${i % 2 === 1 ? "md:[direction:ltr]" : ""}`}>
+                  <div style={{ height: "1px", width: "1.5rem", backgroundColor: "oklch(0.70 0.060 50)", marginBottom: "1rem" }} />
+                  <h3 className="font-serif text-warm text-2xl mb-4">{v.name}</h3>
+                  <p className="font-sans text-muted-brand text-sm leading-relaxed">{v.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Testimonials */}
+      {testimonials && testimonials.length > 0 && (
+        <section className="section bg-surface">
+          <div className="max-w-[1440px] mx-auto px-5 lg:px-14">
+            <div className="mb-14">
+              <div style={{ height: "1px", width: "2rem", backgroundColor: "oklch(0.70 0.060 50)", marginBottom: "1.25rem" }} />
+              <p className="eyebrow text-muted-brand">From Our Couples</p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-px bg-border">
+              {testimonials.slice(0, 3).map((t: any) => (
+                <div key={t.id} className="testimonial-card bg-surface p-8 flex flex-col" style={{ borderTopColor: "oklch(0.70 0.060 50)" }}>
+                  <blockquote className="font-serif italic text-warm text-lg leading-relaxed flex-1 mb-6">"{t.quote}"</blockquote>
+                  <div className="border-t border-border pt-4">
+                    <p className="text-warm font-sans text-sm font-medium">{t.authorName}</p>
+                    {t.authorTitle && <p className="eyebrow text-muted-brand mt-1" style={{ fontSize: "10px" }}>{t.authorTitle}</p>}
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Venue Spaces */}
-      <section className="section bg-background">
-        <div className="max-w-7xl mx-auto px-6 lg:px-10">
-          <div className="flex items-end justify-between mb-12">
-            <div>
-              <p className="text-[10px] tracking-[0.24em] uppercase font-sans text-muted-foreground mb-3">Venue Spaces</p>
-              <h2 className="font-serif text-3xl md:text-4xl text-foreground">Spaces that shape the day</h2>
+              ))}
             </div>
-            <Link href="/venues" className="hidden md:inline-flex text-xs tracking-[0.14em] uppercase font-sans text-muted-foreground hover:text-foreground transition-colors border-b border-current pb-0.5">
-              All Venues
-            </Link>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {weddingVenues.map((v) => (
-              <Link key={v.name} href={v.href} className="group block">
-                <div className="overflow-hidden aspect-[4/3] mb-5">
-                  <img src={v.img} alt={v.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
-                </div>
-                <div className="flex items-center gap-3 mb-2">
-                  <span className="text-[9px] tracking-[0.18em] uppercase font-sans text-muted-foreground">{v.type}</span>
-                  <span className="w-1 h-1 rounded-full bg-border" />
-                  <span className="text-[9px] tracking-[0.18em] uppercase font-sans text-muted-foreground">{v.capacity}</span>
-                </div>
-                <h3 className="font-serif text-xl text-foreground mb-2">{v.name}</h3>
-                <p className="text-sm font-sans text-muted-foreground leading-relaxed">{v.desc}</p>
+        </section>
+      )}
+
+      {/* CTA */}
+      <section ref={ctaRef as React.RefObject<HTMLDivElement>} className="fade-up section bg-background">
+        <div className="max-w-[1440px] mx-auto px-5 lg:px-14">
+          <div className="max-w-2xl">
+            <div style={{ height: "1px", width: "2rem", backgroundColor: "oklch(0.70 0.060 50)", marginBottom: "1.25rem" }} />
+            <p className="eyebrow text-muted-brand mb-4">Begin Your Inquiry</p>
+            <h2 className="font-serif font-light text-warm leading-tight mb-6" style={{ fontSize: "clamp(1.875rem,3.5vw,3rem)" }}>
+              We'd love to hear about your wedding.
+            </h2>
+            <p className="font-sans text-muted-brand leading-relaxed mb-10" style={{ fontSize: "0.9375rem" }}>
+              We work with a limited number of couples each year. Share the basics and we'll respond within 24 hours.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4">
+              <Link href="/contact?type=wedding" className="btn-primary" style={{ backgroundColor: "oklch(0.70 0.060 50)", borderColor: "oklch(0.70 0.060 50)", color: "oklch(0.10 0.005 60)" }}>
+                Begin Wedding Inquiry
               </Link>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* On-site Lodging */}
-      <section className="section bg-[oklch(0.115_0.007_64)]">
-        <div className="max-w-7xl mx-auto px-6 lg:px-10">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-            <div>
-              <p className="text-[10px] tracking-[0.24em] uppercase font-sans text-white/40 mb-4">On-Site Lodging</p>
-              <h2 className="font-serif text-3xl md:text-4xl text-white mb-6 leading-tight">
-                Your guests stay<br /><span className="italic font-light">on the estate.</span>
-              </h2>
-              <p className="text-base font-sans text-white/65 leading-relaxed mb-8">
-                Five lodging buildings sleep your wedding party on-site. From the 6,000 sq ft Lodge decorated by a prominent Kansas City designer, to the light-filled Annex & Bridal Suite just steps from the barn — everyone stays together.
-              </p>
-              <div className="flex flex-col gap-3 mb-8">
-                {weddingLodging.map((l) => (
-                  <Link key={l.name} href={l.href} className="flex items-center justify-between py-3 border-b border-white/10 group">
-                    <span className="font-serif text-lg text-white group-hover:opacity-70 transition-opacity">{l.name}</span>
-                    <span className="text-xs font-sans text-white/40">{l.detail}</span>
-                  </Link>
-                ))}
-              </div>
-              <Link href="/lodging" className="inline-flex items-center gap-2 text-xs tracking-[0.16em] uppercase font-sans text-white border-b border-white/40 pb-0.5 hover:border-white transition-colors">
-                Explore All Lodging
-              </Link>
-            </div>
-            <div className="overflow-hidden aspect-[3/4]">
-              <img src={LODGE_ROOM} alt="The Lodge" className="w-full h-full object-cover hover:scale-105 transition-transform duration-700" />
+              <Link href="/estate" className="btn-ghost">Explore the Estate</Link>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Inquiry CTA */}
-      <section className="section bg-background">
-        <div className="max-w-7xl mx-auto px-6 lg:px-10 text-center">
-          <p className="text-[10px] tracking-[0.24em] uppercase font-sans text-muted-foreground mb-4">Ready to Begin?</p>
-          <h2 className="font-serif text-4xl md:text-5xl text-foreground mb-6 italic font-light">
-            Tell us about your day.
-          </h2>
-          <p className="text-base font-sans text-muted-foreground max-w-lg mx-auto mb-10 leading-relaxed">
-            Tell us your preferred dates and a little about what you are imagining. We will respond within 24 hours.
-          </p>
-          <Link href="/contact?type=wedding" className="inline-flex items-center justify-center px-10 py-4 bg-foreground text-background text-xs tracking-[0.18em] uppercase font-sans font-medium hover:opacity-90 transition-opacity">
-            Begin Your Inquiry
-          </Link>
-        </div>
-      </section>
+      </div>
     </PublicLayout>
   );
 }

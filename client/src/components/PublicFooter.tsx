@@ -19,7 +19,7 @@ const membershipLinks = [
 const contactLinks = [
   { label: "Contact Us", href: "/contact" },
   { label: "Member Login", href: "/portal" },
-  { label: "Privacy Policy", href: "/contact" },
+  { label: "Privacy Policy", href: "/privacy" },
 ];
 
 export default function PublicFooter() {

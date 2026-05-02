@@ -1,133 +1,182 @@
+import { useRef, useEffect } from "react";
 import { Link } from "wouter";
 import PublicLayout from "@/components/PublicLayout";
-import { trpc } from "@/lib/trpc";
 
-const HERO = "/manus-storage/Rivers_SEPT2022_-134_157d1be5.jpg";
-const DEER = "/manus-storage/Rivers_SEPT2022_-253-1_f15787e1.jpg";
-const WATERFOWL = "/manus-storage/DJI_0017_538feef1.jpg";
-const TURKEY = "/manus-storage/Rivers_May2023-8_d07307f4.jpg";
+const HERO    = "/manus-storage/Rivers_SEPT2022_-134_157d1be5.jpg";
+const FIELD   = "/manus-storage/Rivers_May2023-8_d07307f4.jpg";
+const TIMBER  = "/manus-storage/Rivers_SEPT2022_-238-1_2bb5d5aa.jpg";
+const AERIAL  = "/manus-storage/DJI_0017_538feef1.jpg";
+const GROUNDS = "/manus-storage/6M9A3253_319f3a3b.jpg";
+const LODGE   = "/manus-storage/974A9398edit_294e71ff.jpg";
 
-const species = [
-  {
-    name: "Whitetail Deer",
-    season: "October – December",
-    desc: "Managed food plots, timber stands, and river-bottom habitat produce quality whitetail deer season after season. The property is managed for mature bucks — not just harvest numbers.",
-    features: ["Managed food plots", "River-bottom timber", "Ladder and box stands", "Archery and rifle seasons", "Harvest data shared with members"],
-    img: DEER,
-  },
-  {
-    name: "Waterfowl",
-    season: "November – January",
-    desc: "The Marais des Cygnes is a natural flyway for ducks and geese. Flooded timber, open water, and managed wetland areas create consistent waterfowl hunting throughout the season.",
-    features: ["Natural flyway location", "Flooded timber", "Managed wetlands", "Duck and goose", "Guided options available"],
-    img: WATERFOWL,
-  },
-  {
-    name: "Turkey",
-    season: "April – May",
-    desc: "Spring turkey hunting in the timber and field edges of the estate. The property holds a healthy turkey population with consistent gobbling activity through the Kansas spring season.",
-    features: ["Spring season", "Timber and field edges", "Consistent gobbler activity", "Archery and shotgun", "Scouting access pre-season"],
-    img: TURKEY,
-  },
+function useFadeUp(t = 0.12) {
+  const ref = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const el = ref.current; if (!el) return;
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduced) { el.classList.add("visible"); return; }
+    const obs = new IntersectionObserver(([e]) => { if (e.isIntersecting) { el.classList.add("visible"); obs.disconnect(); } }, { threshold: t });
+    obs.observe(el); return () => obs.disconnect();
+  }, [t]);
+  return ref;
+}
+
+const pursuits = [
+  { title: "Whitetail Deer",   desc: "Managed trophy whitetail hunting across 300 acres of timber, food plots, and river bottom. Elevated stands and ground blinds positioned throughout the property.", img: FIELD },
+  { title: "Waterfowl",        desc: "Duck and goose hunting on the Marais des Cygnes and managed wetlands. Early season teal through late-season mallards.", img: TIMBER },
+  { title: "Turkey",           desc: "Spring and fall turkey hunting in the timber corridor and open fields. The river bottom holds birds year-round.", img: AERIAL },
+  { title: "Sporting Clays",   desc: "A private sporting clays course on the property. Available to members and event guests for guided instruction or casual rounds.", img: GROUNDS },
+  { title: "Small Game",       desc: "Quail, pheasant, and rabbit hunting in the upland fields and native grass areas. Guided hunts available with trained dogs.", img: LODGE },
+];
+
+const seasons = [
+  { species: "Whitetail Deer", open: "Sept 15",  close: "Jan 15",  notes: "Archery, muzzleloader, rifle" },
+  { species: "Waterfowl",      open: "Oct 1",    close: "Jan 31",  notes: "Duck & goose, split seasons" },
+  { species: "Turkey (Spring)",open: "Apr 1",    close: "May 31",  notes: "Shotgun & archery" },
+  { species: "Turkey (Fall)",  open: "Oct 1",    close: "Nov 30",  notes: "Shotgun & archery" },
+  { species: "Sporting Clays", open: "Year-round", close: "—",     notes: "Members & guests" },
 ];
 
 export default function Hunt() {
-  const huntReports = trpc.cms.getMemberContent.useQuery({ contentType: "hunt_report" });
+  const pursuitsRef = useFadeUp();
+  const seasonRef   = useFadeUp();
+  const ctaRef      = useFadeUp();
+
   return (
     <PublicLayout>
+      <div style={{ "--track-accent": "oklch(0.58 0.065 145)" } as React.CSSProperties}>
+
       {/* Hero */}
-      <section className="relative h-[85vh] min-h-[520px] flex items-end pb-20 overflow-hidden">
+      <section className="relative hero-full flex items-end pb-24 overflow-hidden">
         <div className="absolute inset-0">
-          <img src={HERO} alt="Hunting at Rivers Lodge" className="w-full h-full object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/5 via-black/20 to-black/80" />
+          <img src={HERO} alt="Hunting at Rivers Lodge" className="w-full h-full object-cover" fetchPriority="high" />
+          <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, transparent 0%, oklch(0 0 0/0.12) 40%, oklch(0 0 0/0.82) 100%)" }} />
         </div>
-        <div className="relative z-10 max-w-[1440px] mx-auto px-5 lg:px-10 w-full">
-          <p className="text-[10px] tracking-[0.28em] uppercase font-sans text-white/60 mb-4">Hunt</p>
-          <h1 className="font-serif text-5xl md:text-7xl text-white leading-[0.95] mb-5" style={{ textShadow: "0 2px 30px rgba(0,0,0,0.35)" }}>
-            10,000+ acres.<br /><span className="italic font-light">Private ground.</span>
+        <div className="relative z-10 max-w-[1440px] mx-auto px-5 lg:px-14 w-full">
+          <div style={{ height: "1px", width: "2rem", backgroundColor: "oklch(0.58 0.065 145)", marginBottom: "1.25rem" }} />
+          <p className="eyebrow text-white/50 mb-4">Hunt</p>
+          <h1 className="font-serif font-light text-white leading-[0.92] mb-6" style={{ fontSize: "clamp(2.75rem,6.5vw,5.5rem)" }}>
+            Private hunting on
+            <br /><em className="italic font-light">managed Kansas land.</em>
           </h1>
-          <p className="text-base font-sans text-white/80 max-w-lg mb-8 leading-relaxed">
-            10,000+ acres of managed Kansas hunting ground. Guided whitetail, waterfowl, and turkey hunts on private land managed for conservation, tradition, and the kind of experience that brings members back generation after generation.
+          <p className="font-sans text-white/65 max-w-lg leading-relaxed mb-10" style={{ fontSize: "0.9375rem" }}>
+            Three hundred acres of whitetail timber, managed food plots, waterfowl wetlands, and upland fields. Available exclusively to members.
           </p>
-          <Link href="/membership#apply" className="inline-flex items-center justify-center px-8 py-3.5 bg-white text-[oklch(0.15_0.008_66)] text-xs tracking-[0.16em] uppercase font-sans font-medium hover:bg-white/90 transition-colors">
-            Apply for Membership
+          <Link href="/membership" className="btn-outline" style={{ borderColor: "oklch(0.58 0.065 145)", color: "oklch(0.58 0.065 145)" }}>
+            Explore Membership
           </Link>
         </div>
       </section>
 
-      {/* Species */}
-      {species.map((s, i) => (
-        <section key={s.name} className={`section ${i % 2 === 0 ? "bg-background" : "bg-[oklch(0.115_0.007_64)]"}`}>
-          <div className="max-w-[1440px] mx-auto px-5 lg:px-10">
-            <div className={`grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center ${i % 2 !== 0 ? "lg:grid-flow-dense" : ""}`}>
-              <div className={`overflow-hidden aspect-[4/3] ${i % 2 !== 0 ? "lg:col-start-2" : ""}`}>
-                <img src={s.img} alt={s.name} className="w-full h-full object-cover hover:scale-105 transition-transform duration-700" />
-              </div>
-              <div className={i % 2 !== 0 ? "lg:col-start-1 lg:row-start-1" : ""}>
-                <p className="text-[9px] tracking-[0.22em] uppercase font-sans text-muted-foreground mb-2">{s.season}</p>
-                <h2 className="font-serif text-4xl md:text-5xl text-foreground mb-5">{s.name}</h2>
-                <p className="text-base font-sans text-muted-foreground leading-relaxed mb-6">{s.desc}</p>
-                <div className="grid grid-cols-2 gap-2 mb-8">
-                  {s.features.map((f) => (
-                    <div key={f} className="flex items-center gap-2 text-xs font-sans text-muted-foreground">
-                      <span className="w-1 h-1 rounded-full bg-muted-foreground flex-shrink-0" />
-                      {f}
-                    </div>
-                  ))}
-                </div>
+      {/* Intro */}
+      <section className="section bg-background">
+        <div className="max-w-[1440px] mx-auto px-5 lg:px-14">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-28 items-center">
+            <div>
+              <div style={{ height: "1px", width: "2rem", backgroundColor: "oklch(0.58 0.065 145)", marginBottom: "1.25rem" }} />
+              <p className="eyebrow text-muted-brand mb-4">The Land</p>
+              <h2 className="font-serif font-light text-warm leading-tight mb-8" style={{ fontSize: "clamp(1.875rem,3.5vw,3rem)" }}>
+                Managed with purpose.
+                <br /><em className="italic">Hunted with respect.</em>
+              </h2>
+              <div className="space-y-5 font-sans text-muted-brand leading-relaxed" style={{ fontSize: "0.9375rem" }}>
+                <p>The Rivers Lodge hunting program is built on land management first. Food plots, timber management, and water management are maintained year-round to produce consistent, ethical hunting — not just for one season, but for decades.</p>
+                <p>Members have access to the full 300 acres. Stands and blinds are positioned throughout the property and assigned by the hunt manager. Guided hunts are available for members who want local expertise.</p>
               </div>
             </div>
-          </div>
-        </section>
-      ))}
-
-      {/* Sporting Clays */}
-      <section id="clays" className="py-20 md:py-28 bg-[oklch(0.13_0.008_66)]">
-        <div className="max-w-[1440px] mx-auto px-5 lg:px-10">
-          <div className="max-w-2xl">
-            <p className="text-[10px] tracking-[0.24em] uppercase font-sans text-white/40 mb-4">Year-Round</p>
-            <h2 className="font-serif text-3xl md:text-4xl text-white mb-6">Sporting Clays</h2>
-            <p className="text-base font-sans text-white/65 leading-relaxed mb-8">
-              The Rivers Lodge sporting clays course is available to members year-round. Whether you're keeping your eye sharp for the season or simply enjoying a morning on the course, it's a natural extension of the estate experience.
-            </p>
-            <Link href="/membership#apply" className="inline-flex items-center gap-2 text-xs tracking-[0.16em] uppercase font-sans text-white border-b border-white/40 pb-0.5 hover:border-white transition-colors">
-              Become a Member
-            </Link>
+            <div className="aspect-[4/3] overflow-hidden">
+              <img src={FIELD} alt="Managed food plots" className="w-full h-full object-cover" loading="lazy" />
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Hunt Reports from CMS */}
-      {huntReports.data && huntReports.data.length > 0 && (
-        <section className="py-20 md:py-28 bg-secondary/40">
-          <div className="max-w-[1440px] mx-auto px-5 lg:px-10">
-            <div className="mb-10">
-              <p className="text-[10px] tracking-[0.24em] uppercase font-sans text-muted-foreground mb-3">From the Field</p>
-              <h2 className="font-serif text-3xl md:text-4xl text-foreground">Recent Hunt Reports</h2>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {huntReports.data.slice(0, 3).map((r) => (
-                <div key={r.id} className="bg-card border border-border p-6">
-                  <p className="text-[9px] tracking-[0.16em] uppercase font-sans text-muted-foreground mb-2">{r.contentType.replace(/_/g, " ")}{r.season ? ` · ${r.season}` : ""}</p>
-                  <h3 className="font-serif text-xl text-foreground mb-3">{r.title}</h3>
-                  <p className="text-sm font-sans text-muted-foreground leading-relaxed line-clamp-4">{r.body}</p>
-                </div>
-              ))}
-            </div>
+      {/* Pursuits */}
+      <section ref={pursuitsRef as React.RefObject<HTMLDivElement>} className="fade-up section bg-surface">
+        <div className="max-w-[1440px] mx-auto px-5 lg:px-14">
+          <div className="mb-14">
+            <div style={{ height: "1px", width: "2rem", backgroundColor: "oklch(0.58 0.065 145)", marginBottom: "1.25rem" }} />
+            <p className="eyebrow text-muted-brand mb-4">Pursuits</p>
+            <h2 className="font-serif font-light text-warm leading-tight" style={{ fontSize: "clamp(1.75rem,3vw,2.5rem)" }}>
+              What the land holds.
+            </h2>
           </div>
-        </section>
-      )}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-px bg-border">
+            {pursuits.map((p) => (
+              <div key={p.title} className="bg-surface overflow-hidden">
+                <div className="aspect-[4/3] overflow-hidden">
+                  <img src={p.img} alt={p.title} className="w-full h-full object-cover" loading="lazy" />
+                </div>
+                <div className="p-7">
+                  <div style={{ height: "1px", width: "1.5rem", backgroundColor: "oklch(0.58 0.065 145)", marginBottom: "1rem" }} />
+                  <h3 className="font-serif text-warm text-xl mb-3">{p.title}</h3>
+                  <p className="font-sans text-muted-brand text-sm leading-relaxed">{p.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Season Calendar */}
+      <section ref={seasonRef as React.RefObject<HTMLDivElement>} className="fade-up section bg-background">
+        <div className="max-w-[1440px] mx-auto px-5 lg:px-14">
+          <div className="mb-12">
+            <div style={{ height: "1px", width: "2rem", backgroundColor: "oklch(0.58 0.065 145)", marginBottom: "1.25rem" }} />
+            <p className="eyebrow text-muted-brand mb-4">Season Calendar</p>
+            <h2 className="font-serif font-light text-warm leading-tight" style={{ fontSize: "clamp(1.75rem,3vw,2.5rem)" }}>
+              Kansas hunting seasons.
+            </h2>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full font-sans text-sm">
+              <thead>
+                <tr className="border-b border-border">
+                  <th className="text-left eyebrow text-muted-brand pb-4 pr-8" style={{ fontSize: "10px" }}>Species</th>
+                  <th className="text-left eyebrow text-muted-brand pb-4 pr-8" style={{ fontSize: "10px" }}>Opens</th>
+                  <th className="text-left eyebrow text-muted-brand pb-4 pr-8" style={{ fontSize: "10px" }}>Closes</th>
+                  <th className="text-left eyebrow text-muted-brand pb-4" style={{ fontSize: "10px" }}>Notes</th>
+                </tr>
+              </thead>
+              <tbody>
+                {seasons.map((s, i) => (
+                  <tr key={s.species} className={`border-b border-border/50 ${i % 2 === 0 ? "" : "bg-surface/30"}`}>
+                    <td className="py-4 pr-8 text-warm font-medium">{s.species}</td>
+                    <td className="py-4 pr-8 text-muted-brand">{s.open}</td>
+                    <td className="py-4 pr-8 text-muted-brand">{s.close}</td>
+                    <td className="py-4 text-muted-brand">{s.notes}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p className="font-sans text-muted-brand text-xs mt-4">* Seasons subject to Kansas Wildlife &amp; Parks regulations. Verify current seasons before hunting.</p>
+        </div>
+      </section>
 
       {/* CTA */}
-      <section className="py-20 bg-background text-center">
-        <div className="max-w-xl mx-auto px-6">
-          <h2 className="font-serif text-3xl md:text-4xl text-foreground mb-5 italic font-light">Access starts with membership.</h2>
-          <p className="text-sm font-sans text-muted-foreground mb-8 leading-relaxed">Apply for membership and gain exclusive access to 10,000+ acres of private Kansas hunting ground — and private fisheries on the Marais des Cygnes.</p>
-          <Link href="/membership#apply" className="inline-flex items-center justify-center px-10 py-4 bg-foreground text-background text-xs tracking-[0.18em] uppercase font-sans font-medium hover:opacity-90 transition-opacity">
-            Apply for Membership
-          </Link>
+      <section ref={ctaRef as React.RefObject<HTMLDivElement>} className="fade-up section bg-surface">
+        <div className="max-w-[1440px] mx-auto px-5 lg:px-14">
+          <div className="max-w-2xl">
+            <div style={{ height: "1px", width: "2rem", backgroundColor: "oklch(0.58 0.065 145)", marginBottom: "1.25rem" }} />
+            <p className="eyebrow text-muted-brand mb-4">Membership Required</p>
+            <h2 className="font-serif font-light text-warm leading-tight mb-6" style={{ fontSize: "clamp(1.875rem,3.5vw,3rem)" }}>
+              Hunting access is exclusive to members.
+            </h2>
+            <p className="font-sans text-muted-brand leading-relaxed mb-10" style={{ fontSize: "0.9375rem" }}>
+              A limited number of memberships are available each season. If you're interested in joining, we'd like to hear from you.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4">
+              <Link href="/membership" className="btn-outline" style={{ borderColor: "oklch(0.58 0.065 145)", color: "oklch(0.58 0.065 145)" }}>
+                Explore Membership
+              </Link>
+              <Link href="/fish" className="btn-ghost">View Fishing</Link>
+            </div>
+          </div>
         </div>
       </section>
+
+      </div>
     </PublicLayout>
   );
 }
