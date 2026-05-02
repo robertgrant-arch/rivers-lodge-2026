@@ -1,6 +1,8 @@
 import { useRef, useEffect } from "react";
 import { Link } from "wouter";
 import PublicLayout from "@/components/PublicLayout";
+import SEOHead from "@/components/SEOHead";
+
 
 const HERO    = "/manus-storage/Rivers_SEPT2022_-134_157d1be5.jpg";
 const FIELD   = "/manus-storage/Rivers_SEPT2022_-134_157d1be5.jpg";
@@ -44,6 +46,11 @@ export default function Hunt() {
 
   return (
     <PublicLayout>
+      <SEOHead
+  title="Hunt"
+  description="World-class whitetail deer hunting, waterfowl, and upland bird hunting on 1,800 private acres in La Cygne, Kansas. Exclusive member access."
+  url="/hunt"
+/>
       <div style={{ "--track-accent": "oklch(0.58 0.065 145)" } as React.CSSProperties}>
 
       {/* Hero */}

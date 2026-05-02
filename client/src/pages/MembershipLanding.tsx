@@ -1,6 +1,9 @@
 import { Link } from "wouter";
 import PublicLayout from "@/components/PublicLayout";
 import { trpc } from "@/lib/trpc";
+import SEOHead, { structuredData } from "@/components/SEOHead";
+import AvailabilityCalendar from "@/components/AvailabilityCalendar";
+
 
 /* ── Images ──────────────────────────────────────────────────────────────── */
 const HERO       = "/manus-storage/DJI_0017_538feef1.jpg";
@@ -57,6 +60,12 @@ export default function MembershipLanding() {
 
   return (
     <PublicLayout>
+      <SEOHead
+  title="Membership & Outdoors"
+  description="Exclusive sporting membership at The Rivers Lodge — whitetail deer hunting, waterfowl, bass fishing, and luxury lodge accommodations in Kansas."
+  url="/outdoors"
+  structuredData={structuredData.membershipClub()}
+/>
       <div data-track="membership">
 
         {/* ── Hero ─────────────────────────────────────────────────────── */}
@@ -239,7 +248,29 @@ export default function MembershipLanding() {
           </section>
         )}
 
-        {/* ── Membership Inquiry CTA ────────────────────────────────────── */}
+        {/* ── Availability Calendar ─────────────────────────────────────────────── */}
+        <section className="section bg-background">
+          <div className="max-w-[1440px] mx-auto px-5 lg:px-10">
+            <div className="text-center mb-10">
+              <div className="h-px w-10 mx-auto mb-6" style={{ backgroundColor: SAGE }} />
+              <p className="eyebrow text-[oklch(0.55_0.012_70)] mb-3">Estate Availability</p>
+              <h2 className="font-serif text-[oklch(0.94_0.008_78)] text-3xl md:text-4xl leading-tight">
+                Plan your season.
+              </h2>
+            </div>
+            <div className="max-w-2xl mx-auto">
+              <AvailabilityCalendar showLegend={true} />
+              <p className="text-center mt-6 font-sans text-[oklch(0.55_0.012_70)] text-sm">
+                Members book stays through the member portal. Contact us to discuss availability for your preferred dates.
+              </p>
+              <div className="flex justify-center mt-8">
+                <Link href="/contact?type=membership" className="btn-primary">Discuss Availability</Link>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ── Membership Inquiry CTA ─────────────────────────────────────────────── */}
         <section className="section bg-[oklch(0.115_0.007_64)]">
           <div className="max-w-[1440px] mx-auto px-5 lg:px-10">
             <div className="max-w-xl mx-auto text-center">

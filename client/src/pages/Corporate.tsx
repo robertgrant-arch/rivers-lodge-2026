@@ -1,6 +1,8 @@
 import { useRef, useEffect } from "react";
 import { Link } from "wouter";
 import PublicLayout from "@/components/PublicLayout";
+import SEOHead from "@/components/SEOHead";
+
 
 const HERO     = "/manus-storage/3C0A0304_cb66bc23.jpg";
 const BARN     = "/manus-storage/6M9A3239_d4c999f4.jpg";
@@ -43,6 +45,11 @@ export default function Corporate() {
 
   return (
     <PublicLayout>
+      <SEOHead
+  title="Corporate Outings & Events"
+  description="Private corporate retreats, team-building hunts, and executive events at The Rivers Lodge — a world-class venue in La Cygne, Kansas."
+  url="/corporate"
+/>
       <div style={{ "--track-accent": "oklch(0.70 0.060 50)" } as React.CSSProperties}>
 
       {/* Hero */}

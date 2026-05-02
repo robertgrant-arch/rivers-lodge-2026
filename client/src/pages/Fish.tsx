@@ -1,6 +1,8 @@
 import { useRef, useEffect } from "react";
 import { Link } from "wouter";
 import PublicLayout from "@/components/PublicLayout";
+import SEOHead from "@/components/SEOHead";
+
 
 const HERO   = "/manus-storage/20200515-3M4A7106_ae87fae0.jpg";
 const RIVER  = "/manus-storage/20200515-3M4A7755_40689230.jpg";
@@ -41,6 +43,11 @@ export default function Fish() {
 
   return (
     <PublicLayout>
+      <SEOHead
+  title="Fish"
+  description="Private bass, crappie, and catfish fishing on four exclusive fisheries at The Rivers Lodge in La Cygne, Kansas. Member and guided access."
+  url="/fish"
+/>
       <div style={{ "--track-accent": "oklch(0.58 0.065 145)" } as React.CSSProperties}>
 
       {/* Hero */}

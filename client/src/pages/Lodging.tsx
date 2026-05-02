@@ -1,6 +1,8 @@
 import { Link } from "wouter";
 import PublicLayout from "@/components/PublicLayout";
 import { trpc } from "@/lib/trpc";
+import SEOHead from "@/components/SEOHead";
+
 
 const FALLBACK_LODGING = [
   {
@@ -81,6 +83,11 @@ export default function Lodging() {
 
   return (
     <PublicLayout>
+      <SEOHead
+  title="Lodging & Spaces"
+  description="Stay at The Rivers Lodge — the Main Lodge, Riverhouse Suites, Annex, Farmhouse, and Ohana House. Private, luxurious, and exclusively yours."
+  url="/lodging"
+/>
       {/* Header */}
       <section className="pt-32 pb-16 md:pt-40 md:pb-20 bg-background">
         <div className="max-w-[1440px] mx-auto px-5 lg:px-10">

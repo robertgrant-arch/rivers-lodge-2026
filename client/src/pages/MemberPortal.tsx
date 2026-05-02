@@ -1,14 +1,45 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { getLoginUrl } from "@/const";
 import { toast } from "sonner";
 import PublicLayout from "@/components/PublicLayout";
 
-type Tab = "dashboard" | "calendar" | "request" | "updates" | "messages";
+type Tab = "dashboard" | "bookings" | "calendar" | "request" | "updates" | "messages";
 
-// ─── Calendar helpers ─────────────────────────────────────────────────────────
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
 const MONTH_NAMES = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+
+const STATUS_CONFIG: Record<string, { label: string; color: string; dot: string }> = {
+  new:            { label: "Received",       color: "text-blue-400",   dot: "bg-blue-400" },
+  contacted:      { label: "In Review",      color: "text-yellow-400", dot: "bg-yellow-400" },
+  qualified:      { label: "Qualified",      color: "text-purple-400", dot: "bg-purple-400" },
+  proposal_sent:  { label: "Proposal Sent",  color: "text-orange-400", dot: "bg-orange-400" },
+  converted:      { label: "Confirmed",      color: "text-green-400",  dot: "bg-green-400" },
+  rejected:       { label: "Declined",       color: "text-red-400",    dot: "bg-red-400" },
+  lost:           { label: "Closed",         color: "text-gray-400",   dot: "bg-gray-400" },
+};
+
+const ACTIVITY_LABELS: Record<string, string> = {
+  member_stay:   "Lodging Stay",
+  hunt:          "Hunting",
+  fish:          "Fishing",
+  hunt_and_fish: "Hunt & Fish Package",
+  wedding:       "Wedding",
+  corporate:     "Corporate Event",
+  other:         "Other",
+};
+
+function StatusBadge({ status }: { status: string }) {
+  const cfg = STATUS_CONFIG[status] ?? { label: status, color: "text-muted-foreground", dot: "bg-muted" };
+  return (
+    <span className={`inline-flex items-center gap-1.5 text-[9px] tracking-[0.14em] uppercase font-sans ${cfg.color}`}>
+      <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
+      {cfg.label}
+    </span>
+  );
+}
 
 function MiniCalendar({ blockedDates }: { blockedDates: string[] }) {
   const today = new Date();
@@ -23,56 +54,57 @@ function MiniCalendar({ blockedDates }: { blockedDates: string[] }) {
     const ds = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
     return blockedDates.includes(ds);
   };
-
   const isToday = (day: number) => day === today.getDate() && month === today.getMonth() && year === today.getFullYear();
-
   const prev = () => { if (month === 0) { setMonth(11); setYear(y => y - 1); } else setMonth(m => m - 1); };
   const next = () => { if (month === 11) { setMonth(0); setYear(y => y + 1); } else setMonth(m => m + 1); };
 
   return (
-    <div className="bg-card border border-border p-6">
-      <div className="flex items-center justify-between mb-4">
-        <button onClick={prev} className="text-muted-foreground hover:text-foreground transition-colors text-lg px-2">‹</button>
-        <span className="font-serif text-lg text-foreground">{MONTH_NAMES[month]} {year}</span>
-        <button onClick={next} className="text-muted-foreground hover:text-foreground transition-colors text-lg px-2">›</button>
+    <div className="bg-[oklch(0.13_0.008_66)] border border-white/8 p-6">
+      <div className="flex items-center justify-between mb-5">
+        <button onClick={prev} className="w-8 h-8 flex items-center justify-center text-white/40 hover:text-white transition-colors">‹</button>
+        <span className="font-serif text-lg text-white">{MONTH_NAMES[month]} {year}</span>
+        <button onClick={next} className="w-8 h-8 flex items-center justify-center text-white/40 hover:text-white transition-colors">›</button>
       </div>
       <div className="grid grid-cols-7 gap-1 mb-2">
         {["Su","Mo","Tu","We","Th","Fr","Sa"].map(d => (
-          <div key={d} className="text-center text-[9px] tracking-[0.12em] uppercase font-sans text-muted-foreground py-1">{d}</div>
+          <div key={d} className="text-center text-[9px] tracking-[0.12em] uppercase font-sans text-white/30 py-1">{d}</div>
         ))}
       </div>
       <div className="grid grid-cols-7 gap-1">
         {cells.map((day, i) => (
-          <div key={i} className={`aspect-square flex items-center justify-center text-xs font-sans rounded-sm ${
+          <div key={i} className={`aspect-square flex items-center justify-center text-xs font-sans rounded-sm transition-colors ${
             day === null ? "" :
-            isBlocked(day) ? "bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400 line-through" :
-            isToday(day) ? "bg-foreground text-background font-medium" :
-            "text-foreground hover:bg-secondary transition-colors"
+            isBlocked(day) ? "bg-red-900/40 text-red-400 line-through cursor-not-allowed" :
+            isToday(day) ? "bg-white text-black font-semibold" :
+            "text-white/70 hover:bg-white/10 cursor-pointer"
           }`}>
             {day}
           </div>
         ))}
       </div>
-      <div className="mt-4 flex items-center gap-3 text-[10px] font-sans text-muted-foreground">
-        <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-red-100 dark:bg-red-900/30 border border-red-200 dark:border-red-800" />Unavailable</div>
-        <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-foreground" />Today</div>
+      <div className="mt-4 flex items-center gap-4 text-[10px] font-sans text-white/40">
+        <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-red-900/40 border border-red-800" />Unavailable</div>
+        <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-white" />Today</div>
       </div>
     </div>
   );
 }
 
 // ─── Main Portal ──────────────────────────────────────────────────────────────
+
 export default function MemberPortal() {
   const { user, isAuthenticated, loading } = useAuth();
   const [tab, setTab] = useState<Tab>("dashboard");
   const [msgForm, setMsgForm] = useState({ subject: "", body: "" });
+  const [notifOpen, setNotifOpen] = useState(false);
 
-  const memberStatus = trpc.membership.myStatus.useQuery(undefined, { enabled: isAuthenticated });
-  const blockedDates = trpc.bookings.blockedDates.useQuery();
-  const updates = trpc.updates.list.useQuery();
+  const memberStatus   = trpc.membership.myStatus.useQuery(undefined, { enabled: isAuthenticated });
+  const blockedDates   = trpc.bookings.blockedDates.useQuery();
+  const updates        = trpc.updates.list.useQuery();
   const cmsMemberContent = trpc.cms.getMemberContent.useQuery(undefined, { enabled: isAuthenticated });
   const cmsAnnouncements = trpc.cms.getAnnouncements.useQuery({ audience: "members" });
-  const myMessages = trpc.messages.myMessages.useQuery(undefined, { enabled: isAuthenticated });
+  const myMessages     = trpc.messages.myMessages.useQuery(undefined, { enabled: isAuthenticated });
+  const myRequests     = trpc.booking.requests.myRequests.useQuery(undefined, { enabled: isAuthenticated });
 
   const sendMsg = trpc.messages.send.useMutation({
     onSuccess: () => {
@@ -83,11 +115,22 @@ export default function MemberPortal() {
     onError: () => toast.error("Failed to send message. Please try again."),
   });
 
+  // Close notification panel on outside click
+  useEffect(() => {
+    if (!notifOpen) return;
+    const handler = () => setNotifOpen(false);
+    document.addEventListener("click", handler);
+    return () => document.removeEventListener("click", handler);
+  }, [notifOpen]);
+
   if (loading) {
     return (
       <PublicLayout>
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="text-muted-foreground font-sans text-sm">Loading...</div>
+        <div className="min-h-screen flex items-center justify-center bg-background">
+          <div className="flex flex-col items-center gap-3">
+            <div className="w-8 h-8 border border-white/20 border-t-white/60 rounded-full animate-spin" />
+            <p className="text-white/40 font-sans text-xs tracking-[0.14em] uppercase">Loading</p>
+          </div>
         </div>
       </PublicLayout>
     );
@@ -98,16 +141,17 @@ export default function MemberPortal() {
       <PublicLayout>
         <section className="min-h-screen flex items-center justify-center bg-background">
           <div className="max-w-md w-full mx-auto px-6 text-center">
-            <p className="text-[10px] tracking-[0.24em] uppercase font-sans text-muted-foreground mb-4">Member Portal</p>
-            <h1 className="font-serif text-4xl text-foreground mb-5">Member access only.</h1>
-            <p className="text-base font-sans text-muted-foreground leading-relaxed mb-8">
+            <div className="w-16 h-px bg-white/20 mx-auto mb-8" />
+            <p className="eyebrow text-white/40 mb-4">Member Portal</p>
+            <h1 className="font-serif text-4xl text-white mb-5">Member access only.</h1>
+            <p className="text-base font-sans text-white/50 leading-relaxed mb-8">
               The Rivers Lodge member portal is restricted to active members. Please sign in to continue.
             </p>
-            <a href={getLoginUrl()} className="inline-flex items-center justify-center px-8 py-3.5 bg-foreground text-background text-xs tracking-[0.16em] uppercase font-sans font-medium hover:opacity-90 transition-opacity">
+            <a href={getLoginUrl()} className="btn-primary inline-flex items-center justify-center px-8 py-3.5">
               Sign In
             </a>
             <div className="mt-6">
-              <a href="/membership" className="text-xs font-sans text-muted-foreground hover:text-foreground transition-colors underline underline-offset-2">
+              <a href="/membership" className="text-xs font-sans text-white/40 hover:text-white transition-colors underline underline-offset-2">
                 Not a member? Apply here.
               </a>
             </div>
@@ -120,20 +164,21 @@ export default function MemberPortal() {
   const member = memberStatus.data;
   const isMember = !!member && member.active;
 
-  if (!isMember) {
+  if (!isMember && !memberStatus.isLoading) {
     return (
       <PublicLayout>
         <section className="min-h-screen flex items-center justify-center bg-background">
           <div className="max-w-md w-full mx-auto px-6 text-center">
-            <p className="text-[10px] tracking-[0.24em] uppercase font-sans text-muted-foreground mb-4">Member Portal</p>
-            <h1 className="font-serif text-4xl text-foreground mb-5">Membership required.</h1>
-            <p className="text-base font-sans text-muted-foreground leading-relaxed mb-4">
+            <div className="w-16 h-px bg-white/20 mx-auto mb-8" />
+            <p className="eyebrow text-white/40 mb-4">Member Portal</p>
+            <h1 className="font-serif text-4xl text-white mb-5">Membership required.</h1>
+            <p className="text-base font-sans text-white/50 leading-relaxed mb-4">
               Welcome, {user?.name}. Your account is active but you don't have an active membership yet.
             </p>
-            <p className="text-sm font-sans text-muted-foreground leading-relaxed mb-8">
+            <p className="text-sm font-sans text-white/40 leading-relaxed mb-8">
               If you've recently applied, your application is under review. You'll receive an email when your membership is activated.
             </p>
-            <a href="/membership#apply" className="inline-flex items-center justify-center px-8 py-3.5 bg-foreground text-background text-xs tracking-[0.16em] uppercase font-sans font-medium hover:opacity-90 transition-opacity">
+            <a href="/membership#apply" className="btn-primary inline-flex items-center justify-center px-8 py-3.5">
               Apply for Membership
             </a>
           </div>
@@ -151,9 +196,12 @@ export default function MemberPortal() {
     onSuccess: () => {
       toast.success("Stay request submitted. Our concierge team will follow up within 24 hours.");
       setRequestForm({ businessLine: "member_stay", requestedStart: "", requestedEnd: "", guestCount: "", specialRequests: "" });
+      myRequests.refetch();
+      setTab("bookings");
     },
     onError: (err) => toast.error(err.message),
   });
+
   const [requestForm, setRequestForm] = useState({
     businessLine: "member_stay" as "member_stay" | "hunt" | "fish" | "hunt_and_fish",
     requestedStart: "",
@@ -162,240 +210,399 @@ export default function MemberPortal() {
     specialRequests: "",
   });
 
-  const tabs: { key: Tab; label: string }[] = [
-    { key: "dashboard", label: "Dashboard" },
-    { key: "calendar", label: "Calendar" },
-    { key: "request", label: "Request a Stay" },
-    { key: "updates", label: "Seasonal Updates" },
-    { key: "messages", label: "Concierge" },
+  const tabs: { key: Tab; label: string; badge?: number }[] = [
+    { key: "dashboard",  label: "Dashboard" },
+    { key: "bookings",   label: "My Stays", badge: (myRequests.data ?? []).filter(r => r.status === "new" || r.status === "contacted").length || undefined },
+    { key: "calendar",   label: "Calendar" },
+    { key: "request",    label: "Request a Stay" },
+    { key: "updates",    label: "Seasonal Updates" },
+    { key: "messages",   label: "Concierge", badge: (myMessages.data ?? []).length || undefined },
   ];
+
+  const tierLabel = member?.tier ? member.tier.charAt(0).toUpperCase() + member.tier.slice(1) : "Standard";
+  const pendingRequests = (myRequests.data ?? []).filter(r => !["converted","rejected","lost"].includes(r.status));
+  const announcements = cmsAnnouncements.data ?? [];
 
   return (
     <PublicLayout>
       <div className="min-h-screen bg-background">
-        {/* Portal Header */}
-        <div className="bg-[oklch(0.10_0.010_66)] border-b border-white/8 pt-24 pb-10">
+
+        {/* ── Portal Header ─────────────────────────────────────────────── */}
+        <div className="bg-[oklch(0.10_0.010_66)] border-b border-white/8 pt-24 pb-8">
           <div className="max-w-[1440px] mx-auto px-6 lg:px-16">
-            <p className="eyebrow text-white/40 mb-3">Member Portal</p>
-            <h1 className="font-serif text-3xl md:text-5xl text-white mb-2">Welcome back, {user?.name?.split(" ")[0]}.</h1>
-            <div className="flex items-center gap-3">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 border border-[var(--gold)]/40 text-[var(--gold)] text-[10px] tracking-[0.18em] uppercase font-sans">
-                {member.tier ? member.tier.charAt(0).toUpperCase() + member.tier.slice(1) : "Standard"} Member
-              </span>
-              {member.memberNumber && <span className="text-sm font-sans text-white/40">#{member.memberNumber}</span>}
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="eyebrow text-white/40 mb-2">Member Portal</p>
+                <h1 className="font-serif text-3xl md:text-4xl text-white mb-3">
+                  Welcome back, {user?.name?.split(" ")[0]}.
+                </h1>
+                <div className="flex items-center gap-3 flex-wrap">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 border border-[var(--gold)]/40 text-[var(--gold)] text-[10px] tracking-[0.18em] uppercase font-sans">
+                    {tierLabel} Member
+                  </span>
+                  {member?.memberNumber && (
+                    <span className="text-sm font-sans text-white/30">#{member.memberNumber}</span>
+                  )}
+                  {pendingRequests.length > 0 && (
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-[var(--gold)]/10 text-[var(--gold)] text-[10px] tracking-[0.14em] uppercase font-sans">
+                      {pendingRequests.length} Active {pendingRequests.length === 1 ? "Request" : "Requests"}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Notification Bell */}
+              <div className="relative mt-1" onClick={(e) => e.stopPropagation()}>
+                <button
+                  onClick={() => setNotifOpen(!notifOpen)}
+                  className="relative w-10 h-10 flex items-center justify-center text-white/40 hover:text-white transition-colors border border-white/10 hover:border-white/20"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                  </svg>
+                  {announcements.length > 0 && (
+                    <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[var(--gold)]" />
+                  )}
+                </button>
+                {notifOpen && (
+                  <div className="absolute right-0 top-12 w-80 bg-[oklch(0.13_0.008_66)] border border-white/10 shadow-2xl z-50">
+                    <div className="px-4 py-3 border-b border-white/8">
+                      <p className="text-[10px] tracking-[0.16em] uppercase font-sans text-white/50">Notifications</p>
+                    </div>
+                    {announcements.length === 0 ? (
+                      <div className="px-4 py-6 text-center text-xs font-sans text-white/30">No new notifications</div>
+                    ) : (
+                      <div className="flex flex-col divide-y divide-white/5 max-h-72 overflow-y-auto">
+                        {announcements.map((a) => (
+                          <div key={a.id} className="px-4 py-3">
+                            <p className="text-sm font-sans text-white font-medium mb-0.5">{a.title}</p>
+                            {a.body && <p className="text-xs font-sans text-white/40 leading-relaxed">{a.body}</p>}
+                            {a.ctaLabel && a.ctaUrl && (
+                              <a href={a.ctaUrl} className="text-[10px] font-sans text-[var(--gold)] mt-1 inline-block hover:underline">{a.ctaLabel} →</a>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Tabs */}
-        <div className="border-b border-white/10 bg-[oklch(0.10_0.010_66)] sticky top-0 z-10">
+        {/* ── Tabs ──────────────────────────────────────────────────────── */}
+        <div className="border-b border-white/8 bg-[oklch(0.10_0.010_66)] sticky top-0 z-10">
           <div className="max-w-[1440px] mx-auto px-6 lg:px-16">
-            <div className="flex gap-0 overflow-x-auto">
+            <div className="flex gap-0 overflow-x-auto scrollbar-none">
               {tabs.map((t) => (
                 <button
                   key={t.key}
                   onClick={() => setTab(t.key)}
-                  className={`px-5 py-4 text-[10px] tracking-[0.16em] uppercase font-sans whitespace-nowrap transition-colors border-b-2 ${
+                  className={`relative px-5 py-4 text-[10px] tracking-[0.16em] uppercase font-sans whitespace-nowrap transition-colors border-b-2 ${
                     tab === t.key
-                      ? "border-foreground text-foreground"
-                      : "border-transparent text-muted-foreground hover:text-foreground"
+                      ? "border-[var(--gold)] text-white"
+                      : "border-transparent text-white/40 hover:text-white"
                   }`}
                 >
                   {t.label}
+                  {t.badge ? (
+                    <span className="ml-1.5 inline-flex items-center justify-center w-4 h-4 rounded-full bg-[var(--gold)] text-black text-[8px] font-bold">
+                      {t.badge}
+                    </span>
+                  ) : null}
                 </button>
               ))}
             </div>
           </div>
         </div>
 
-        {/* Content */}
-        <div className="max-w-[1440px] mx-auto px-6 lg:px-16 py-12">
-          {/* Dashboard */}
+        {/* ── Content ───────────────────────────────────────────────────── */}
+        <div className="max-w-[1440px] mx-auto px-6 lg:px-16 py-10">
+
+          {/* ── DASHBOARD ─────────────────────────────────────────────── */}
           {tab === "dashboard" && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <div className="bg-[oklch(0.13_0.008_66)] border border-white/8 p-6">
-                <p className="eyebrow text-white/40 mb-3">Membership</p>
-                <div className="font-serif text-2xl text-foreground mb-1">{member.tier ? member.tier.charAt(0).toUpperCase() + member.tier.slice(1) : "Standard"}</div>
-                <div className="text-sm font-sans text-muted-foreground">Active Member</div>
-                {member.renewalDate && (
-                  <div className="mt-3 text-xs font-sans text-muted-foreground">
-                    Renews: {new Date(member.renewalDate).toLocaleDateString()}
+            <div className="space-y-8">
+              {/* Stats row */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {[
+                  { label: "Membership", value: tierLabel, sub: member?.memberNumber ? `#${member.memberNumber}` : "Active" },
+                  { label: "Current Season", value: "Spring 2026", sub: "Turkey · Fishing · Clays" },
+                  { label: "Stay Requests", value: String((myRequests.data ?? []).length), sub: `${pendingRequests.length} active` },
+                  { label: "Messages", value: String(myMessages.data?.length ?? 0), sub: "with concierge" },
+                ].map((stat) => (
+                  <div key={stat.label} className="bg-[oklch(0.13_0.008_66)] border border-white/8 p-5">
+                    <p className="eyebrow text-white/30 mb-2">{stat.label}</p>
+                    <div className="font-serif text-2xl text-white mb-0.5">{stat.value}</div>
+                    <div className="text-xs font-sans text-white/40">{stat.sub}</div>
                   </div>
-                )}
-              </div>
-              <div className="bg-[oklch(0.13_0.008_66)] border border-white/8 p-6">
-                <p className="eyebrow text-white/40 mb-3">Current Season</p>
-                <div className="font-serif text-2xl text-foreground mb-1">Spring 2026</div>
-                <div className="text-sm font-sans text-muted-foreground">Turkey · Fishing · Clays</div>
-              </div>
-              <div className="bg-[oklch(0.13_0.008_66)] border border-white/8 p-6">
-                <p className="eyebrow text-white/40 mb-3">Messages</p>
-                <div className="font-serif text-2xl text-foreground mb-1">{myMessages.data?.length ?? 0}</div>
-                <div className="text-sm font-sans text-muted-foreground">
-                  <button onClick={() => setTab("messages")} className="text-foreground underline underline-offset-2 hover:no-underline">
-                    View messages
-                  </button>
-                </div>
+                ))}
               </div>
 
-              {/* Recent updates */}
-              <div className="md:col-span-2 lg:col-span-3 bg-[oklch(0.13_0.008_66)] border border-white/8 p-6">
-                <p className="eyebrow text-white/40 mb-4">Latest Updates</p>
-                {updates.data && updates.data.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {updates.data.slice(0, 3).map((u) => (
-                      <div key={u.id} className="border-t border-border pt-4">
-                        <p className="text-[9px] tracking-[0.16em] uppercase font-sans text-muted-foreground mb-1">{u.category}</p>
-                        <h4 className="font-serif text-base text-foreground mb-2">{u.title}</h4>
-                        <p className="text-xs font-sans text-muted-foreground leading-relaxed line-clamp-3">{u.body}</p>
+              {/* Quick actions */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <button
+                  onClick={() => setTab("request")}
+                  className="flex items-center gap-4 bg-[oklch(0.13_0.008_66)] border border-white/8 hover:border-[var(--gold)]/40 p-5 text-left transition-colors group"
+                >
+                  <div className="w-10 h-10 flex items-center justify-center border border-white/10 group-hover:border-[var(--gold)]/40 transition-colors flex-shrink-0">
+                    <svg className="w-4 h-4 text-white/50 group-hover:text-[var(--gold)] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-sm font-sans text-white font-medium">Request a Stay</p>
+                    <p className="text-xs font-sans text-white/40 mt-0.5">Submit dates for your next visit</p>
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => setTab("messages")}
+                  className="flex items-center gap-4 bg-[oklch(0.13_0.008_66)] border border-white/8 hover:border-[var(--gold)]/40 p-5 text-left transition-colors group"
+                >
+                  <div className="w-10 h-10 flex items-center justify-center border border-white/10 group-hover:border-[var(--gold)]/40 transition-colors flex-shrink-0">
+                    <svg className="w-4 h-4 text-white/50 group-hover:text-[var(--gold)] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-sm font-sans text-white font-medium">Contact Concierge</p>
+                    <p className="text-xs font-sans text-white/40 mt-0.5">Message our team directly</p>
+                  </div>
+                </button>
+
+                {/* Refer a Member */}
+                <a
+                  href={`/contact?type=membership&ref=${encodeURIComponent(user?.name ?? "")}&note=${encodeURIComponent("I'd like to refer a friend for membership at The Rivers Lodge.")}`}
+                  className="flex items-center gap-4 bg-[oklch(0.13_0.008_66)] border border-white/8 hover:border-[var(--gold)]/40 p-5 text-left transition-colors group"
+                >
+                  <div className="w-10 h-10 flex items-center justify-center border border-white/10 group-hover:border-[var(--gold)]/40 transition-colors flex-shrink-0">
+                    <svg className="w-4 h-4 text-white/50 group-hover:text-[var(--gold)] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-sm font-sans text-white font-medium">Refer a Member</p>
+                    <p className="text-xs font-sans text-white/40 mt-0.5">Invite someone to apply</p>
+                  </div>
+                </a>
+              </div>
+
+              {/* Recent requests summary */}
+              {(myRequests.data ?? []).length > 0 && (
+                <div className="bg-[oklch(0.13_0.008_66)] border border-white/8 p-6">
+                  <div className="flex items-center justify-between mb-5">
+                    <p className="eyebrow text-white/40">Recent Stay Requests</p>
+                    <button onClick={() => setTab("bookings")} className="text-[10px] font-sans text-[var(--gold)] hover:underline tracking-[0.1em] uppercase">
+                      View All →
+                    </button>
+                  </div>
+                  <div className="flex flex-col divide-y divide-white/5">
+                    {(myRequests.data ?? []).slice(0, 3).map((req) => (
+                      <div key={req.id} className="py-3 flex items-center justify-between gap-4">
+                        <div>
+                          <p className="text-sm font-sans text-white">{ACTIVITY_LABELS[req.businessLine] ?? req.businessLine}</p>
+                          <p className="text-xs font-sans text-white/40 mt-0.5">
+                            {new Date(req.requestedStart).toLocaleDateString()} – {new Date(req.requestedEnd).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <StatusBadge status={req.status} />
                       </div>
                     ))}
                   </div>
-                ) : (
-                  <p className="text-sm font-sans text-muted-foreground">No updates yet. Check back soon.</p>
-                )}
-              </div>
+                </div>
+              )}
+
+              {/* Latest updates */}
+              {(updates.data ?? []).length > 0 && (
+                <div className="bg-[oklch(0.13_0.008_66)] border border-white/8 p-6">
+                  <div className="flex items-center justify-between mb-5">
+                    <p className="eyebrow text-white/40">Latest Updates</p>
+                    <button onClick={() => setTab("updates")} className="text-[10px] font-sans text-[var(--gold)] hover:underline tracking-[0.1em] uppercase">
+                      View All →
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                    {(updates.data ?? []).slice(0, 3).map((u) => (
+                      <div key={u.id} className="border-t border-white/8 pt-4">
+                        <p className="text-[9px] tracking-[0.16em] uppercase font-sans text-white/30 mb-1">{u.category}</p>
+                        <h4 className="font-serif text-base text-white mb-2">{u.title}</h4>
+                        <p className="text-xs font-sans text-white/50 leading-relaxed line-clamp-3">{u.body}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
-          {/* Calendar */}
+          {/* ── MY BOOKINGS ───────────────────────────────────────────── */}
+          {tab === "bookings" && (
+            <div>
+              <div className="flex items-center justify-between mb-8">
+                <div>
+                  <h2 className="font-serif text-3xl text-white mb-1">My Stay Requests</h2>
+                  <p className="text-sm font-sans text-white/40">Track the status of your submitted requests.</p>
+                </div>
+                <button
+                  onClick={() => setTab("request")}
+                  className="btn-primary px-5 py-2.5 text-xs hidden sm:inline-flex"
+                >
+                  + New Request
+                </button>
+              </div>
+
+              {myRequests.isLoading ? (
+                <div className="flex items-center justify-center py-20">
+                  <div className="w-6 h-6 border border-white/20 border-t-white/60 rounded-full animate-spin" />
+                </div>
+              ) : (myRequests.data ?? []).length === 0 ? (
+                <div className="text-center py-20 border border-white/8 bg-[oklch(0.13_0.008_66)]">
+                  <p className="font-serif text-2xl text-white mb-3">No requests yet.</p>
+                  <p className="text-sm font-sans text-white/40 mb-6">Submit your first stay request to get started.</p>
+                  <button onClick={() => setTab("request")} className="btn-primary px-6 py-3">
+                    Request a Stay
+                  </button>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-4">
+                  {(myRequests.data ?? []).map((req) => {
+                    const cfg = STATUS_CONFIG[req.status] ?? STATUS_CONFIG.new;
+                    const statusSteps = ["new","contacted","qualified","proposal_sent","converted"];
+                    const currentStep = statusSteps.indexOf(req.status);
+                    const isTerminal = ["rejected","lost"].includes(req.status);
+                    return (
+                      <div key={req.id} className="bg-[oklch(0.13_0.008_66)] border border-white/8 p-6">
+                        <div className="flex items-start justify-between gap-4 mb-5">
+                          <div>
+                            <h3 className="font-serif text-xl text-white mb-1">
+                              {ACTIVITY_LABELS[req.businessLine] ?? req.businessLine}
+                            </h3>
+                            <p className="text-sm font-sans text-white/40">
+                              {new Date(req.requestedStart).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
+                              {" – "}
+                              {new Date(req.requestedEnd).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
+                              {req.guestCount ? ` · ${req.guestCount} guests` : ""}
+                            </p>
+                          </div>
+                          <StatusBadge status={req.status} />
+                        </div>
+
+                        {/* Status progress bar */}
+                        {!isTerminal && (
+                          <div className="mb-5">
+                            <div className="flex items-center gap-0">
+                              {statusSteps.map((step, i) => {
+                                const done = i <= currentStep;
+                                const active = i === currentStep;
+                                return (
+                                  <div key={step} className="flex items-center flex-1">
+                                    <div className={`w-2 h-2 rounded-full flex-shrink-0 transition-colors ${
+                                      active ? "bg-[var(--gold)] ring-2 ring-[var(--gold)]/30" :
+                                      done ? "bg-white/60" : "bg-white/15"
+                                    }`} />
+                                    {i < statusSteps.length - 1 && (
+                                      <div className={`flex-1 h-px transition-colors ${done && i < currentStep ? "bg-white/30" : "bg-white/10"}`} />
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                            <div className="flex justify-between mt-2">
+                              {statusSteps.map((step) => (
+                                <span key={step} className="text-[8px] tracking-[0.1em] uppercase font-sans text-white/25 text-center" style={{ width: `${100/statusSteps.length}%` }}>
+                                  {STATUS_CONFIG[step]?.label ?? step}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {isTerminal && (
+                          <div className={`text-xs font-sans ${cfg.color} mb-4`}>
+                            This request was {req.status === "rejected" ? "declined" : "closed"}.
+                            {" "}
+                            <button onClick={() => setTab("request")} className="underline underline-offset-2 hover:no-underline">
+                              Submit a new request.
+                            </button>
+                          </div>
+                        )}
+
+                        {req.specialRequests && (
+                          <div className="border-t border-white/8 pt-4">
+                            <p className="text-[9px] tracking-[0.14em] uppercase font-sans text-white/30 mb-1">Notes</p>
+                            <p className="text-xs font-sans text-white/50 leading-relaxed">{req.specialRequests}</p>
+                          </div>
+                        )}
+
+                        <div className="border-t border-white/8 pt-3 mt-4 flex items-center justify-between">
+                          <span className="text-[9px] font-sans text-white/25">
+                            Submitted {new Date(req.createdAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
+                          </span>
+                          {!isTerminal && req.status === "new" && (
+                            <button
+                              onClick={() => setTab("messages")}
+                              className="text-[10px] font-sans text-[var(--gold)] hover:underline tracking-[0.1em] uppercase"
+                            >
+                              Message Concierge →
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ── CALENDAR ──────────────────────────────────────────────── */}
           {tab === "calendar" && (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               <div className="lg:col-span-2">
-                <h2 className="font-serif text-2xl text-foreground mb-6">Estate Calendar</h2>
+                <h2 className="font-serif text-3xl text-white mb-2">Estate Calendar</h2>
+                <p className="text-sm font-sans text-white/40 mb-6">Red dates indicate estate events or private closures. Contact concierge for availability.</p>
                 <MiniCalendar blockedDates={blockedDateStrings} />
-                <p className="text-xs font-sans text-muted-foreground mt-4 leading-relaxed">
-                  Red dates indicate estate events or closures. For booking inquiries, contact concierge.
-                </p>
               </div>
               <div>
-                <h3 className="font-serif text-xl text-foreground mb-4">Season Dates</h3>
+                <h3 className="font-serif text-xl text-white mb-5">Season Dates</h3>
                 <div className="flex flex-col gap-3">
                   {[
-                    { season: "Whitetail", dates: "Oct 1 – Dec 31", icon: "🦌" },
-                    { season: "Waterfowl", dates: "Nov 1 – Jan 31", icon: "🦆" },
-                    { season: "Turkey", dates: "Apr 1 – May 31", icon: "🦃" },
-                    { season: "Fishing", dates: "Year-Round", icon: "🎣" },
-                    { season: "Sporting Clays", dates: "Year-Round", icon: "🎯" },
+                    { season: "Whitetail Deer",   dates: "Oct 1 – Dec 31",  open: false },
+                    { season: "Waterfowl",         dates: "Nov 1 – Jan 31",  open: false },
+                    { season: "Turkey",            dates: "Apr 1 – May 31",  open: true  },
+                    { season: "Fishing",           dates: "Year-Round",      open: true  },
+                    { season: "Sporting Clays",    dates: "Year-Round",      open: true  },
                   ].map((s) => (
-                    <div key={s.season} className="flex items-center gap-3 bg-card border border-border px-4 py-3">
-                      <span className="text-lg">{s.icon}</span>
+                    <div key={s.season} className="flex items-center justify-between bg-[oklch(0.13_0.008_66)] border border-white/8 px-4 py-3">
                       <div>
-                        <div className="text-sm font-sans font-medium text-foreground">{s.season}</div>
-                        <div className="text-xs font-sans text-muted-foreground">{s.dates}</div>
+                        <div className="text-sm font-sans font-medium text-white">{s.season}</div>
+                        <div className="text-xs font-sans text-white/40">{s.dates}</div>
                       </div>
+                      <span className={`text-[9px] tracking-[0.12em] uppercase font-sans px-2 py-0.5 ${
+                        s.open ? "text-green-400 bg-green-400/10" : "text-white/30 bg-white/5"
+                      }`}>
+                        {s.open ? "Open" : "Closed"}
+                      </span>
                     </div>
                   ))}
                 </div>
-              </div>
-            </div>
-          )}
-
-          {/* Updates */}
-          {tab === "updates" && (
-            <div>
-              <h2 className="font-serif text-2xl text-foreground mb-6">Seasonal Updates & Member Content</h2>
-              {/* CMS Announcements for members */}
-              {cmsAnnouncements.data && cmsAnnouncements.data.length > 0 && (
-                <div className="mb-8 flex flex-col gap-3">
-                  {cmsAnnouncements.data.map((a) => (
-                    <div key={a.id} className={`border-l-4 px-5 py-4 ${
-                      a.type === "alert" ? "border-red-500 bg-red-50 dark:bg-red-900/10" : "border-foreground bg-secondary/40"
-                    }`}>
-                      <p className="text-sm font-sans font-medium text-foreground">{a.title}</p>
-                      {a.body && <p className="text-xs font-sans text-muted-foreground mt-1">{a.body}</p>}
-                      {a.ctaLabel && a.ctaUrl && (
-                        <a href={a.ctaUrl} className="text-xs font-sans text-foreground underline mt-2 inline-block">{a.ctaLabel}</a>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-              {/* CMS Member Content */}
-              {cmsMemberContent.data && cmsMemberContent.data.length > 0 && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                  {cmsMemberContent.data.map((c) => (
-                    <div key={c.id} className="bg-card border border-border p-6">
-                      <div className="flex items-center justify-between mb-3">
-                        <span className="text-[9px] tracking-[0.16em] uppercase font-sans text-muted-foreground">{c.contentType.replace(/_/g, " ")}</span>
-                        {c.publishedAt && <span className="text-[9px] font-sans text-muted-foreground">{new Date(c.publishedAt).toLocaleDateString()}</span>}
-                      </div>
-                      <h3 className="font-serif text-xl text-foreground mb-3">{c.title}</h3>
-                      <p className="text-sm font-sans text-muted-foreground leading-relaxed line-clamp-4">{c.body}</p>
-                      {c.season && <p className="text-xs font-sans text-muted-foreground mt-3">Season: {c.season}</p>}
-                    </div>
-                  ))}
-                </div>
-              )}
-              {/* Legacy seasonal updates */}
-              {updates.isLoading ? (
-                <p className="text-sm font-sans text-muted-foreground">Loading updates...</p>
-              ) : updates.data && updates.data.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {updates.data.map((u) => (
-                    <div key={u.id} className="bg-card border border-border p-6">
-                      <div className="flex items-center justify-between mb-3">
-                        <span className="text-[9px] tracking-[0.16em] uppercase font-sans text-muted-foreground">{u.category}</span>
-                        <span className="text-[9px] font-sans text-muted-foreground">{new Date(u.publishedAt).toLocaleDateString()}</span>
-                      </div>
-                      <h3 className="font-serif text-xl text-foreground mb-3">{u.title}</h3>
-                      <p className="text-sm font-sans text-muted-foreground leading-relaxed">{u.body}</p>
-                    </div>
-                  ))}
-                </div>
-              ) : (!cmsMemberContent.data || cmsMemberContent.data.length === 0) ? (
-                <div className="text-center py-16 text-muted-foreground font-sans text-sm">
-                  No updates yet. Check back as the season progresses.
-                </div>
-              ) : null}
-            </div>
-          )}
-
-          {/* Messages */}
-          {tab === "messages" && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-              <div>
-                <h2 className="font-serif text-2xl text-foreground mb-6">Send a Message</h2>
-                <form onSubmit={(e) => { e.preventDefault(); sendMsg.mutate(msgForm); }} className="flex flex-col gap-4">
-                  <div>
-                    <label className="block text-[10px] tracking-[0.18em] uppercase font-sans text-muted-foreground mb-2">Subject</label>
-                    <input value={msgForm.subject} onChange={(e) => setMsgForm({ ...msgForm, subject: e.target.value })} className="w-full border-0 border-b border-white/20 bg-transparent px-0 py-3 text-sm font-sans text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-[var(--gold)] transition-colors" placeholder="e.g. Trip planning for October" />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] tracking-[0.18em] uppercase font-sans text-muted-foreground mb-2">Message *</label>
-                    <textarea required value={msgForm.body} onChange={(e) => setMsgForm({ ...msgForm, body: e.target.value })} rows={6} className="w-full border-0 border-b border-white/20 bg-transparent px-0 py-3 text-sm font-sans text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-[var(--gold)] transition-colors resize-none" placeholder="How can we help?" />
-                  </div>
-                  <button type="submit" disabled={sendMsg.isPending} className="w-full py-3.5 bg-foreground text-background text-xs tracking-[0.16em] uppercase font-sans font-medium hover:opacity-90 transition-opacity disabled:opacity-50">
-                    {sendMsg.isPending ? "Sending..." : "Send Message"}
+                <div className="mt-6 p-4 border border-[var(--gold)]/20 bg-[var(--gold)]/5">
+                  <p className="text-[10px] tracking-[0.14em] uppercase font-sans text-[var(--gold)] mb-1">Plan Your Visit</p>
+                  <p className="text-xs font-sans text-white/50 leading-relaxed mb-3">Ready to book? Submit a stay request and our concierge will confirm availability within 24 hours.</p>
+                  <button onClick={() => setTab("request")} className="text-[10px] font-sans text-[var(--gold)] hover:underline tracking-[0.1em] uppercase">
+                    Request a Stay →
                   </button>
-                </form>
-              </div>
-              <div>
-                <h2 className="font-serif text-2xl text-foreground mb-6">Message History</h2>
-                {myMessages.isLoading ? (
-                  <p className="text-sm font-sans text-muted-foreground">Loading messages...</p>
-                ) : myMessages.data && myMessages.data.length > 0 ? (
-                  <div className="flex flex-col gap-4">
-                    {myMessages.data.map((m) => (
-                      <div key={m.id} className="bg-card border border-border p-5">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-sm font-sans font-medium text-foreground">{m.subject ?? "No subject"}</span>
-                          <span className="text-[9px] font-sans text-muted-foreground">{new Date(m.createdAt).toLocaleDateString()}</span>
-                        </div>
-                        <p className="text-sm font-sans text-muted-foreground leading-relaxed">{m.body}</p>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-10 text-muted-foreground font-sans text-sm">No messages yet.</div>
-                )}
+                </div>
               </div>
             </div>
           )}
+
+          {/* ── REQUEST A STAY ────────────────────────────────────────── */}
           {tab === "request" && (
             <div className="max-w-2xl mx-auto">
-              <h2 className="font-serif text-3xl text-foreground mb-3">Request a Stay</h2>
-              <p className="text-sm font-sans text-muted-foreground mb-8 leading-relaxed">
+              <h2 className="font-serif text-3xl text-white mb-2">Request a Stay</h2>
+              <p className="text-sm font-sans text-white/40 mb-8 leading-relaxed">
                 Submit your preferred dates and activity type. Our concierge team will confirm availability and reach out within 24 hours.
               </p>
               <form
@@ -413,79 +620,225 @@ export default function MemberPortal() {
                     eventType: requestForm.businessLine,
                   });
                 }}
-                className="flex flex-col gap-5"
+                className="flex flex-col gap-6"
               >
                 <div>
-                  <label className="block text-[10px] tracking-[0.18em] uppercase font-sans text-muted-foreground mb-2">Activity Type *</label>
+                  <label className="block text-[10px] tracking-[0.18em] uppercase font-sans text-white/40 mb-2">Activity Type *</label>
                   <select
                     required
                     value={requestForm.businessLine}
                     onChange={(e) => setRequestForm({ ...requestForm, businessLine: e.target.value as typeof requestForm.businessLine })}
-                    className="w-full border-0 border-b border-white/20 bg-transparent px-0 py-3 text-sm font-sans text-foreground focus:outline-none focus:border-[var(--gold)] transition-colors"
+                    className="w-full border-0 border-b border-white/20 bg-transparent px-0 py-3 text-sm font-sans text-white focus:outline-none focus:border-[var(--gold)] transition-colors appearance-none cursor-pointer"
                   >
-                    <option value="member_stay">Lodging Stay</option>
-                    <option value="hunt">Hunting</option>
-                    <option value="fish">Fishing</option>
-                    <option value="hunt_and_fish">Hunt &amp; Fish Package</option>
+                    <option value="member_stay" className="bg-[oklch(0.13_0.008_66)]">Lodging Stay</option>
+                    <option value="hunt" className="bg-[oklch(0.13_0.008_66)]">Hunting</option>
+                    <option value="fish" className="bg-[oklch(0.13_0.008_66)]">Fishing</option>
+                    <option value="hunt_and_fish" className="bg-[oklch(0.13_0.008_66)]">Hunt &amp; Fish Package</option>
                   </select>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   <div>
-                    <label className="block text-[10px] tracking-[0.18em] uppercase font-sans text-muted-foreground mb-2">Arrival Date *</label>
+                    <label className="block text-[10px] tracking-[0.18em] uppercase font-sans text-white/40 mb-2">Arrival Date *</label>
                     <input
                       type="date"
                       required
+                      min={new Date().toISOString().split("T")[0]}
                       value={requestForm.requestedStart}
                       onChange={(e) => setRequestForm({ ...requestForm, requestedStart: e.target.value })}
-                      className="w-full border border-border bg-background px-4 py-3 text-sm font-sans text-foreground focus:outline-none focus:border-foreground transition-colors"
+                      className="w-full border-0 border-b border-white/20 bg-transparent px-0 py-3 text-sm font-sans text-white focus:outline-none focus:border-[var(--gold)] transition-colors [color-scheme:dark]"
                     />
                   </div>
                   <div>
-                    <label className="block text-[10px] tracking-[0.18em] uppercase font-sans text-muted-foreground mb-2">Departure Date *</label>
+                    <label className="block text-[10px] tracking-[0.18em] uppercase font-sans text-white/40 mb-2">Departure Date *</label>
                     <input
                       type="date"
                       required
+                      min={requestForm.requestedStart || new Date().toISOString().split("T")[0]}
                       value={requestForm.requestedEnd}
                       onChange={(e) => setRequestForm({ ...requestForm, requestedEnd: e.target.value })}
-                      className="w-full border border-border bg-background px-4 py-3 text-sm font-sans text-foreground focus:outline-none focus:border-foreground transition-colors"
+                      className="w-full border-0 border-b border-white/20 bg-transparent px-0 py-3 text-sm font-sans text-white focus:outline-none focus:border-[var(--gold)] transition-colors [color-scheme:dark]"
                     />
                   </div>
                 </div>
+
                 <div>
-                  <label className="block text-[10px] tracking-[0.18em] uppercase font-sans text-muted-foreground mb-2">Number of Guests</label>
+                  <label className="block text-[10px] tracking-[0.18em] uppercase font-sans text-white/40 mb-2">Number of Guests</label>
                   <input
                     type="number"
                     min="1"
                     max="30"
                     value={requestForm.guestCount}
                     onChange={(e) => setRequestForm({ ...requestForm, guestCount: e.target.value })}
-                    className="w-full border border-border bg-background px-4 py-3 text-sm font-sans text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground transition-colors"
+                    className="w-full border-0 border-b border-white/20 bg-transparent px-0 py-3 text-sm font-sans text-white placeholder:text-white/25 focus:outline-none focus:border-[var(--gold)] transition-colors"
                     placeholder="e.g. 4"
                   />
                 </div>
+
                 <div>
-                  <label className="block text-[10px] tracking-[0.18em] uppercase font-sans text-muted-foreground mb-2">Special Requests or Notes</label>
+                  <label className="block text-[10px] tracking-[0.18em] uppercase font-sans text-white/40 mb-2">Special Requests or Notes</label>
                   <textarea
                     value={requestForm.specialRequests}
                     onChange={(e) => setRequestForm({ ...requestForm, specialRequests: e.target.value })}
                     rows={4}
-                    className="w-full border border-border bg-background px-4 py-3 text-sm font-sans text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground transition-colors resize-none"
-                    placeholder="Preferred lodging unit, dietary needs, guide preferences..."
+                    className="w-full border-0 border-b border-white/20 bg-transparent px-0 py-3 text-sm font-sans text-white placeholder:text-white/25 focus:outline-none focus:border-[var(--gold)] transition-colors resize-none"
+                    placeholder="Preferred lodging unit, dietary needs, guide preferences, occasion..."
                   />
                 </div>
-                <button
-                  type="submit"
-                  disabled={submitRequest.isPending}
-                  className="w-full py-4 bg-foreground text-background text-xs tracking-[0.18em] uppercase font-sans font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
-                >
-                  {submitRequest.isPending ? "Submitting..." : "Submit Request"}
-                </button>
-                <p className="text-[10px] font-sans text-muted-foreground text-center">
-                  Our concierge team will confirm availability and contact you within 24 hours.
-                </p>
+
+                <div className="pt-2">
+                  <button
+                    type="submit"
+                    disabled={submitRequest.isPending}
+                    className="w-full py-4 bg-white text-black text-xs tracking-[0.18em] uppercase font-sans font-medium hover:bg-white/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {submitRequest.isPending ? "Submitting..." : "Submit Request"}
+                  </button>
+                  <p className="text-[10px] font-sans text-white/30 text-center mt-3">
+                    Our concierge team will confirm availability and contact you within 24 hours.
+                  </p>
+                </div>
               </form>
             </div>
           )}
+
+          {/* ── SEASONAL UPDATES ──────────────────────────────────────── */}
+          {tab === "updates" && (
+            <div>
+              <h2 className="font-serif text-3xl text-white mb-2">Seasonal Updates</h2>
+              <p className="text-sm font-sans text-white/40 mb-8">Member-exclusive news, season reports, and estate updates.</p>
+
+              {/* Announcements */}
+              {announcements.length > 0 && (
+                <div className="mb-8 flex flex-col gap-3">
+                  {announcements.map((a) => (
+                    <div key={a.id} className={`border-l-2 px-5 py-4 ${
+                      a.type === "alert"
+                        ? "border-red-500 bg-red-900/10"
+                        : "border-[var(--gold)] bg-[var(--gold)]/5"
+                    }`}>
+                      <p className="text-sm font-sans font-medium text-white">{a.title}</p>
+                      {a.body && <p className="text-xs font-sans text-white/50 mt-1 leading-relaxed">{a.body}</p>}
+                      {a.ctaLabel && a.ctaUrl && (
+                        <a href={a.ctaUrl} className="text-xs font-sans text-[var(--gold)] underline mt-2 inline-block hover:no-underline">{a.ctaLabel} →</a>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* CMS Member Content */}
+              {cmsMemberContent.data && cmsMemberContent.data.length > 0 && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-8">
+                  {cmsMemberContent.data.map((c) => (
+                    <div key={c.id} className="bg-[oklch(0.13_0.008_66)] border border-white/8 p-6">
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="text-[9px] tracking-[0.16em] uppercase font-sans text-white/30">{c.contentType.replace(/_/g, " ")}</span>
+                        {c.publishedAt && <span className="text-[9px] font-sans text-white/25">{new Date(c.publishedAt).toLocaleDateString()}</span>}
+                      </div>
+                      <h3 className="font-serif text-xl text-white mb-3">{c.title}</h3>
+                      <p className="text-sm font-sans text-white/50 leading-relaxed line-clamp-4">{c.body}</p>
+                      {c.season && <p className="text-xs font-sans text-white/30 mt-3 border-t border-white/8 pt-3">Season: {c.season}</p>}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Seasonal updates */}
+              {updates.isLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <div className="w-6 h-6 border border-white/20 border-t-white/60 rounded-full animate-spin" />
+                </div>
+              ) : (updates.data ?? []).length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  {(updates.data ?? []).map((u) => (
+                    <div key={u.id} className="bg-[oklch(0.13_0.008_66)] border border-white/8 p-6">
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="text-[9px] tracking-[0.16em] uppercase font-sans text-white/30">{u.category}</span>
+                        <span className="text-[9px] font-sans text-white/25">{new Date(u.publishedAt).toLocaleDateString()}</span>
+                      </div>
+                      <h3 className="font-serif text-xl text-white mb-3">{u.title}</h3>
+                      <p className="text-sm font-sans text-white/50 leading-relaxed">{u.body}</p>
+                    </div>
+                  ))}
+                </div>
+              ) : (!cmsMemberContent.data || cmsMemberContent.data.length === 0) ? (
+                <div className="text-center py-16 border border-white/8 bg-[oklch(0.13_0.008_66)]">
+                  <p className="font-serif text-xl text-white mb-2">No updates yet.</p>
+                  <p className="text-sm font-sans text-white/40">Check back as the season progresses.</p>
+                </div>
+              ) : null}
+            </div>
+          )}
+
+          {/* ── CONCIERGE MESSAGES ────────────────────────────────────── */}
+          {tab === "messages" && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+              <div>
+                <h2 className="font-serif text-3xl text-white mb-2">Send a Message</h2>
+                <p className="text-sm font-sans text-white/40 mb-8 leading-relaxed">
+                  Our concierge team is available to assist with trip planning, special requests, and any questions about your membership.
+                </p>
+                <form onSubmit={(e) => { e.preventDefault(); sendMsg.mutate(msgForm); }} className="flex flex-col gap-5">
+                  <div>
+                    <label className="block text-[10px] tracking-[0.18em] uppercase font-sans text-white/40 mb-2">Subject</label>
+                    <input
+                      value={msgForm.subject}
+                      onChange={(e) => setMsgForm({ ...msgForm, subject: e.target.value })}
+                      className="w-full border-0 border-b border-white/20 bg-transparent px-0 py-3 text-sm font-sans text-white placeholder:text-white/25 focus:outline-none focus:border-[var(--gold)] transition-colors"
+                      placeholder="e.g. Trip planning for October"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] tracking-[0.18em] uppercase font-sans text-white/40 mb-2">Message *</label>
+                    <textarea
+                      required
+                      value={msgForm.body}
+                      onChange={(e) => setMsgForm({ ...msgForm, body: e.target.value })}
+                      rows={6}
+                      className="w-full border-0 border-b border-white/20 bg-transparent px-0 py-3 text-sm font-sans text-white placeholder:text-white/25 focus:outline-none focus:border-[var(--gold)] transition-colors resize-none"
+                      placeholder="How can we help?"
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={sendMsg.isPending}
+                    className="w-full py-3.5 bg-white text-black text-xs tracking-[0.16em] uppercase font-sans font-medium hover:bg-white/90 transition-colors disabled:opacity-50"
+                  >
+                    {sendMsg.isPending ? "Sending..." : "Send Message"}
+                  </button>
+                </form>
+              </div>
+
+              <div>
+                <h2 className="font-serif text-3xl text-white mb-2">Message History</h2>
+                <p className="text-sm font-sans text-white/40 mb-8">Your previous conversations with the concierge team.</p>
+                {myMessages.isLoading ? (
+                  <div className="flex items-center justify-center py-12">
+                    <div className="w-6 h-6 border border-white/20 border-t-white/60 rounded-full animate-spin" />
+                  </div>
+                ) : (myMessages.data ?? []).length > 0 ? (
+                  <div className="flex flex-col gap-3">
+                    {(myMessages.data ?? []).map((m) => (
+                      <div key={m.id} className="bg-[oklch(0.13_0.008_66)] border border-white/8 p-5">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm font-sans font-medium text-white">{m.subject ?? "No subject"}</span>
+                          <span className="text-[9px] font-sans text-white/30">{new Date(m.createdAt).toLocaleDateString()}</span>
+                        </div>
+                        <p className="text-sm font-sans text-white/50 leading-relaxed">{m.body}</p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12 border border-white/8 bg-[oklch(0.13_0.008_66)]">
+                    <p className="font-serif text-xl text-white mb-2">No messages yet.</p>
+                    <p className="text-xs font-sans text-white/40">Send your first message to the concierge team.</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
         </div>
       </div>
     </PublicLayout>

@@ -1,153 +1,317 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import PublicLayout from "@/components/PublicLayout";
 import { trpc } from "@/lib/trpc";
+import SEOHead from "@/components/SEOHead";
+
 
 type Category = "all" | "weddings" | "venues" | "lodging" | "grounds" | "outdoors";
 
-const categories: { key: Category; label: string }[] = [
-  { key: "all", label: "All" },
-  { key: "weddings", label: "Weddings" },
-  { key: "venues", label: "Venues & Spaces" },
-  { key: "lodging", label: "Lodging" },
-  { key: "grounds", label: "Grounds" },
-  { key: "outdoors", label: "Outdoors" },
+const categories: { key: Category; label: string; track?: "weddings" | "outdoors" }[] = [
+  { key: "all",      label: "All" },
+  { key: "weddings", label: "Weddings & Events",  track: "weddings" },
+  { key: "venues",   label: "Venues & Spaces",    track: "weddings" },
+  { key: "lodging",  label: "Lodging",            track: "outdoors" },
+  { key: "grounds",  label: "Grounds & Estate",   track: "outdoors" },
+  { key: "outdoors", label: "Hunt & Fish",        track: "outdoors" },
 ];
 
-const photos: { src: string; alt: string; category: Category; span?: "wide" | "tall" }[] = [
-  // Weddings — Uebeleins wedding series + 2020 wedding series
-  { src: "/manus-storage/UebeleinWed453_7f9cd26b.jpg", alt: "Couple kissing during outdoor ceremony at Rivers Lodge", category: "weddings", span: "wide" },
-  { src: "/manus-storage/UebeleinWed335_e6a9084a.jpg", alt: "Outdoor wedding ceremony on the deck with water views", category: "weddings" },
-  { src: "/manus-storage/UebeleinWed337_e4120c44.jpg", alt: "Outdoor ceremony setup on the deck with white chairs", category: "weddings" },
-  { src: "/manus-storage/UebeleinWed405_59f02b8c.jpg", alt: "Ceremony on the deck — bride, groom, and officiant", category: "weddings" },
-  { src: "/manus-storage/UebeleinWed430_40612592.jpg", alt: "Wedding ceremony on the deck with building in background", category: "weddings", span: "wide" },
-  { src: "/manus-storage/UebeleinWed557_b0b3b0ff.jpg", alt: "Newlyweds walking by the lake with string lights", category: "weddings" },
-  { src: "/manus-storage/UebeleinWed560_fdc4432b.jpg", alt: "Bride and groom holding hands by the water", category: "weddings" },
-  { src: "/manus-storage/UebeleinWed589_f26542b0.jpg", alt: "Couple embracing in a field of white flowers", category: "weddings" },
-  { src: "/manus-storage/UebeleinWed613_cd2ce48a.jpg", alt: "Bride and groom in tall grass at Rivers Lodge", category: "weddings" },
-  { src: "/manus-storage/UebeleinWed629_ebea0f99.jpg", alt: "Wedding reception tables inside Rivers Barn", category: "weddings", span: "wide" },
-  { src: "/manus-storage/UebeleinWed652_e0900d60.jpg", alt: "Champagne toast at wedding reception in Rivers Barn", category: "weddings" },
-  { src: "/manus-storage/20200515-3M4A7947_af6607de.jpg", alt: "Newlyweds walking by the pond at Rivers Lodge", category: "weddings" },
-  { src: "/manus-storage/20200515-3M4A7755_40689230.jpg", alt: "Couple on the dock by the lake at sunset", category: "weddings" },
-  { src: "/manus-storage/20200515-3M4A7984_e984f96d.jpg", alt: "Bride and groom kissing outdoors at Rivers Lodge", category: "weddings" },
-  { src: "/manus-storage/IMG_7871_5a238c01.jpg", alt: "Groom kissing bride's forehead in lush greenery", category: "weddings" },
-  // Venues — Rivers Barn and Clubhouse
-  { src: "/manus-storage/6M9A3239_d4c999f4.jpg", alt: "Rivers Barn interior set for a wedding event", category: "venues", span: "wide" },
-  { src: "/manus-storage/20200515-3M4A7081_73fef076.jpg", alt: "Rivers Barn interior during an event", category: "venues" },
-  { src: "/manus-storage/IMG_0646_6bb80f84.jpg", alt: "Rivers Barn event space", category: "venues" },
-  { src: "/manus-storage/3C0A0304_cb66bc23.jpg", alt: "The Clubhouse interior — rehearsal dinner and cocktail hour space", category: "venues", span: "wide" },
-  { src: "/manus-storage/2020JennyShipleySSTheRiverFilm-1_60fc729b.jpg", alt: "The Clubhouse at Rivers Lodge", category: "venues" },
-  // Lodging — The Lodge (exterior + interiors)
-  { src: "/manus-storage/974A9398edit_294e71ff.jpg", alt: "Exterior of The Lodge at Rivers Lodge", category: "lodging", span: "wide" },
-  { src: "/manus-storage/974A8419edit_f37de96e.jpg", alt: "The Lodge living room with antler chandelier", category: "lodging" },
-  { src: "/manus-storage/6M9A3220_f33b7d7f.jpg", alt: "The Lodge living room with brick fireplace", category: "lodging" },
-  { src: "/manus-storage/Rivers_SEPT2022_-107_4293f258.jpg", alt: "The Lodge living room interior", category: "lodging" },
-  { src: "/manus-storage/6M9A3215_8bca8cb9.jpg", alt: "The Lodge kitchen with white subway tile", category: "lodging" },
-  { src: "/manus-storage/Rivers_May2023-3_cbf193ef.jpg", alt: "The Lodge bedroom with dark accent wall", category: "lodging" },
-  { src: "/manus-storage/974A8421edit_b5f9c7f2.jpg", alt: "The Lodge living room with dark sectional sofa", category: "lodging" },
-  { src: "/manus-storage/974A8402edit_edf7618a.jpg", alt: "Rivers Lodge & Hunt Club sign at The Lodge", category: "lodging" },
-  // Lodging — Riverhouse Suites
-  { src: "/manus-storage/Rivers_May2023-28_f44fb1bd.jpg", alt: "Riverhouse Suites exterior — blue Adirondack chairs, green lawn", category: "lodging", span: "wide" },
-  { src: "/manus-storage/Rivers_SEPT2022_-241_9b9f5433.jpg", alt: "Riverhouse Suites exterior — individual room entries", category: "lodging" },
-  { src: "/manus-storage/6M9A3226_ec961447.jpg", alt: "Riverhouse Suites suite detail", category: "lodging" },
-  { src: "/manus-storage/Rivers_May2023-27_33df99ba.jpg", alt: "Annex bedroom — gallery wall, white bedding", category: "lodging" },
-  { src: "/manus-storage/Rivers_May2023-15_616c20aa.jpg", alt: "Riverhouse Suite bedroom — dark olive walls, chandelier", category: "lodging" },
-  { src: "/manus-storage/Rivers_May2023-6_7bd714f8.jpg", alt: "Riverhouse Suites suite", category: "lodging" },
-  // Lodging — The Farmhouse
-  { src: "/manus-storage/6M9A3214-2_bcea97ca.jpg", alt: "The Farmhouse at Rivers Lodge", category: "lodging" },
-  { src: "/manus-storage/6M9A3217_33692de0.jpg", alt: "The Farmhouse exterior", category: "lodging" },
-  // Grounds — Aerial and estate-wide shots
-  { src: "/manus-storage/Rivers_SEPT2022_-134_157d1be5.jpg", alt: "Fire pit and grounds at Rivers Lodge", category: "grounds", span: "wide" },
-  { src: "/manus-storage/DJI_0017_538feef1.jpg", alt: "Drone aerial of the river and estate grounds", category: "grounds" },
-  { src: "/manus-storage/6M9A3253_319f3a3b.jpg", alt: "Estate grounds from above", category: "grounds" },
-  { src: "/manus-storage/Rivers_SEPT2022_-253-1_f15787e1.jpg", alt: "Golden-hour aerial of the full Rivers Lodge estate — barn, pond, and lodge", category: "grounds" },
-  { src: "/manus-storage/6M9A3255_b8f0386f.jpg", alt: "Ohana House dock at sunset", category: "grounds" },
-  // Outdoors — Lodge interiors used as membership/outdoors context
-  { src: "/manus-storage/Rivers_SEPT2022_-112_c0e7fb5f.jpg", alt: "The Lodge interior — fall atmosphere", category: "lodging", span: "wide" },
-  { src: "/manus-storage/Rivers_SEPT2022_-105_85069d29.jpg", alt: "The Lodge interior detail", category: "lodging" },
-  { src: "/manus-storage/Rivers_SEPT2022_-109_c2b5fea5.jpg", alt: "The Lodge interior", category: "lodging" },
-  { src: "/manus-storage/Rivers_SEPT2022_-116_e668dc61.jpg", alt: "Riverhouse Suites interior", category: "lodging" },
-  { src: "/manus-storage/Rivers_SEPT2022_-128_9bced2c9.jpg", alt: "The Lodge interior — warm lighting", category: "lodging" },
-  { src: "/manus-storage/20200515-3M4A7106_ae87fae0.jpg", alt: "Fishing from the dock at Rivers Lodge", category: "outdoors" },
-];
-
-// Map CMS gallery category slugs to our Category type
 const CMS_CATEGORY_MAP: Record<string, Category> = {
   weddings: "weddings",
+  events: "venues",
   venues: "venues",
   lodging: "lodging",
+  grounds: "grounds",
   outdoors: "outdoors",
-  estate: "grounds",
+  hunt: "outdoors",
+  fish: "outdoors",
 };
+
+type Photo = { src: string; alt: string; category: Category };
+const photos: Photo[] = [
+  // Weddings
+  { src: "/manus-storage/UebeleinWed453_7f9cd26b.jpg",       alt: "Couple kissing during outdoor ceremony at Rivers Lodge",       category: "weddings" },
+  { src: "/manus-storage/UebeleinWed335_e6a9084a.jpg",       alt: "Outdoor wedding ceremony on the deck with water views",        category: "weddings" },
+  { src: "/manus-storage/UebeleinWed337_e4120c44.jpg",       alt: "Outdoor ceremony setup on the deck with white chairs",         category: "weddings" },
+  { src: "/manus-storage/UebeleinWed405_59f02b8c.jpg",       alt: "Ceremony on the deck — bride, groom, and officiant",           category: "weddings" },
+  { src: "/manus-storage/UebeleinWed430_40612592.jpg",       alt: "Wedding ceremony on the deck with building in background",     category: "weddings" },
+  { src: "/manus-storage/UebeleinWed557_b0b3b0ff.jpg",       alt: "Newlyweds walking by the lake with string lights",             category: "weddings" },
+  { src: "/manus-storage/UebeleinWed560_fdc4432b.jpg",       alt: "Bride and groom holding hands by the water",                  category: "weddings" },
+  { src: "/manus-storage/UebeleinWed589_f26542b0.jpg",       alt: "Couple embracing in a field of white flowers",                 category: "weddings" },
+  { src: "/manus-storage/UebeleinWed613_cd2ce48a.jpg",       alt: "Bride and groom in tall grass at Rivers Lodge",                category: "weddings" },
+  { src: "/manus-storage/UebeleinWed629_ebea0f99.jpg",       alt: "Wedding reception tables inside Rivers Barn",                  category: "weddings" },
+  { src: "/manus-storage/UebeleinWed652_e0900d60.jpg",       alt: "Champagne toast at wedding reception in Rivers Barn",          category: "weddings" },
+  { src: "/manus-storage/20200515-3M4A7947_af6607de.jpg",    alt: "Newlyweds walking by the pond at Rivers Lodge",                category: "weddings" },
+  { src: "/manus-storage/20200515-3M4A7755_40689230.jpg",    alt: "Couple on the dock by the lake at sunset",                    category: "weddings" },
+  { src: "/manus-storage/20200515-3M4A7984_5c6d0d80.jpg",    alt: "Bride and groom portrait at Rivers Lodge",                    category: "weddings" },
+  { src: "/manus-storage/20200515-3M4A7081_c4a3a4a4.jpg",    alt: "Wedding ceremony at the Rivers Lodge",                        category: "weddings" },
+  { src: "/manus-storage/20200515-3M4A7106_b6f4fca4.jpg",    alt: "Outdoor wedding at Rivers Lodge",                             category: "weddings" },
+  // Venues
+  { src: "/manus-storage/Rivers_May2023-3_4b58c0c3.jpg",     alt: "Rivers Barn interior — ceremony setup",                       category: "venues" },
+  { src: "/manus-storage/Rivers_May2023-6_3f5d6b3a.jpg",     alt: "Rivers Barn interior — reception layout",                     category: "venues" },
+  { src: "/manus-storage/Rivers_May2023-15_b7c2e1f4.jpg",    alt: "Rivers Barn interior — bar and lounge area",                  category: "venues" },
+  { src: "/manus-storage/Rivers_May2023-27_d4e8a2b1.jpg",    alt: "Rivers Barn interior — dining setup",                         category: "venues" },
+  { src: "/manus-storage/Rivers_May2023-28_f44fb1bd.jpg",    alt: "Rivers Barn interior — event space",                          category: "venues" },
+  { src: "/manus-storage/3C0A0304_cb66bc23.jpg",             alt: "Timber Edge Clubhouse — bar and lounge interior",             category: "venues" },
+  { src: "/manus-storage/IMG_0646_c7a8d9e2.jpg",             alt: "Timber Edge Clubhouse — gathering space",                     category: "venues" },
+  // Lodging
+  { src: "/manus-storage/974A8419edit_f37de96e.jpg",         alt: "Lodge interior — living and dining area",                     category: "lodging" },
+  { src: "/manus-storage/974A8402edit_b3c4d5e6.jpg",         alt: "Lodge interior — bedroom suite",                              category: "lodging" },
+  { src: "/manus-storage/974A8421edit_a1b2c3d4.jpg",         alt: "Lodge interior — sitting room",                               category: "lodging" },
+  { src: "/manus-storage/6M9A3214-2_e5f6a7b8.jpg",           alt: "Lodge interior — master bedroom",                             category: "lodging" },
+  { src: "/manus-storage/6M9A3215_c9d0e1f2.jpg",             alt: "Lodge interior — bedroom with natural light",                 category: "lodging" },
+  { src: "/manus-storage/6M9A3217_a3b4c5d6.jpg",             alt: "Lodge interior — bathroom suite",                             category: "lodging" },
+  { src: "/manus-storage/6M9A3220_e7f8a9b0.jpg",             alt: "Lodge interior — hallway and common areas",                   category: "lodging" },
+  { src: "/manus-storage/6M9A3226_c1d2e3f4.jpg",             alt: "Lodge interior — kitchen and dining",                         category: "lodging" },
+  { src: "/manus-storage/6M9A3239_d4c999f4.jpg",             alt: "Lodge interior — great room",                                 category: "lodging" },
+  { src: "/manus-storage/6M9A3255_a5b6c7d8.jpg",             alt: "Ohana House — private lake dock at sunset",                   category: "lodging" },
+  // Grounds
+  { src: "/manus-storage/DJI_0017_538feef1.jpg",             alt: "Aerial view of the Rivers Lodge estate",                      category: "grounds" },
+  { src: "/manus-storage/Rivers_SEPT2022_-253-1_f15787e1.jpg", alt: "Golden-hour aerial of the full Rivers Lodge property",      category: "grounds" },
+  { src: "/manus-storage/974A9398edit_294e71ff.jpg",         alt: "Rivers Lodge exterior — the main Lodge building",             category: "grounds" },
+  { src: "/manus-storage/Rivers_SEPT2022_-134_b2c3d4e5.jpg", alt: "Estate fire pit and Adirondack chairs at sunset",            category: "grounds" },
+  { src: "/manus-storage/Rivers_SEPT2022_-241_9b9f5433.jpg", alt: "Riverhouse Suites exterior — the long dark wood building",   category: "grounds" },
+  { src: "/manus-storage/Rivers_SEPT2022_-105_f6a7b8c9.jpg", alt: "Estate grounds — natural landscape",                         category: "grounds" },
+  { src: "/manus-storage/Rivers_SEPT2022_-107_d0e1f2a3.jpg", alt: "Estate grounds — river and land",                            category: "grounds" },
+  { src: "/manus-storage/Rivers_SEPT2022_-109_b4c5d6e7.jpg", alt: "Estate grounds — wooded areas",                              category: "grounds" },
+  { src: "/manus-storage/Rivers_SEPT2022_-112_f8a9b0c1.jpg", alt: "Estate grounds — open fields",                               category: "grounds" },
+  { src: "/manus-storage/Rivers_SEPT2022_-116_d2e3f4a5.jpg", alt: "Estate grounds — waterfront",                                category: "grounds" },
+  { src: "/manus-storage/Rivers_SEPT2022_-128_b6c7d8e9.jpg", alt: "Estate grounds — evening light",                             category: "grounds" },
+  { src: "/manus-storage/6M9A3253_319f3a3b.jpg",             alt: "Estate grounds — lodge exterior and surroundings",            category: "grounds" },
+  { src: "/manus-storage/IMG_7871_f0a1b2c3.jpg",             alt: "Estate grounds — natural setting",                           category: "grounds" },
+];
+
+// ─── Lightbox ─────────────────────────────────────────────────────────────────
+
+function Lightbox({
+  photos,
+  index,
+  onClose,
+}: {
+  photos: Photo[];
+  index: number;
+  onClose: () => void;
+}) {
+  const [current, setCurrent] = useState(index);
+
+  const prev = useCallback(() => setCurrent((c) => (c - 1 + photos.length) % photos.length), [photos.length]);
+  const next = useCallback(() => setCurrent((c) => (c + 1) % photos.length), [photos.length]);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+      if (e.key === "ArrowLeft") prev();
+      if (e.key === "ArrowRight") next();
+    };
+    document.addEventListener("keydown", handler);
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", handler);
+      document.body.style.overflow = "";
+    };
+  }, [onClose, prev, next]);
+
+  const photo = photos[current];
+
+  return (
+    <div
+      className="fixed inset-0 z-[200] bg-black/95 flex items-center justify-center"
+      onClick={onClose}
+    >
+      {/* Close */}
+      <button
+        className="absolute top-6 right-6 w-10 h-10 flex items-center justify-center text-white/50 hover:text-white transition-colors border border-white/15 hover:border-white/30"
+        onClick={onClose}
+        aria-label="Close lightbox"
+      >
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+
+      {/* Counter */}
+      <div className="absolute top-6 left-6 text-[10px] tracking-[0.16em] uppercase font-sans text-white/40">
+        {current + 1} / {photos.length}
+      </div>
+
+      {/* Prev */}
+      <button
+        className="absolute left-4 md:left-8 w-10 h-10 flex items-center justify-center text-white/40 hover:text-white transition-colors border border-white/10 hover:border-white/30"
+        onClick={(e) => { e.stopPropagation(); prev(); }}
+        aria-label="Previous image"
+      >
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 19l-7-7 7-7" />
+        </svg>
+      </button>
+
+      {/* Image */}
+      <div className="max-w-5xl max-h-[85vh] mx-16 md:mx-24" onClick={(e) => e.stopPropagation()}>
+        <img
+          key={current}
+          src={photo.src}
+          alt={photo.alt}
+          className="max-w-full max-h-[85vh] object-contain"
+        />
+        <p className="text-xs font-sans text-white/30 text-center mt-3">{photo.alt}</p>
+      </div>
+
+      {/* Next */}
+      <button
+        className="absolute right-4 md:right-8 w-10 h-10 flex items-center justify-center text-white/40 hover:text-white transition-colors border border-white/10 hover:border-white/30"
+        onClick={(e) => { e.stopPropagation(); next(); }}
+        aria-label="Next image"
+      >
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5l7 7-7 7" />
+        </svg>
+      </button>
+    </div>
+  );
+}
+
+// ─── Main Gallery ─────────────────────────────────────────────────────────────
 
 export default function Gallery() {
   const [active, setActive] = useState<Category>("all");
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const [visible, setVisible] = useState(false);
+
   const { data: cmsGalleries } = trpc.cms.getAllGalleriesWithImages.useQuery();
 
-  // Build photo list from CMS data if available, otherwise use static fallback
-  const allPhotos: { src: string; alt: string; category: Category }[] = (cmsGalleries && cmsGalleries.length > 0)
+  useEffect(() => {
+    const t = setTimeout(() => setVisible(true), 50);
+    return () => clearTimeout(t);
+  }, []);
+
+  // Reset visible on filter change for re-animation
+  const handleFilter = (cat: Category) => {
+    setVisible(false);
+    setActive(cat);
+    setTimeout(() => setVisible(true), 50);
+  };
+
+  const allPhotos = (cmsGalleries && cmsGalleries.length > 0)
     ? cmsGalleries.flatMap((gallery) => {
         const cat = CMS_CATEGORY_MAP[gallery.category] ?? "grounds";
         return (gallery.images ?? []).map((img) => ({
           src: img.url,
           alt: img.altText ?? gallery.name,
-          category: cat,
+          category: cat as Category,
         }));
       })
     : photos;
 
   const filtered = active === "all" ? allPhotos : allPhotos.filter((p) => p.category === active);
+  const activeCat = categories.find((c) => c.key === active);
+  const trackColor = activeCat?.track === "weddings"
+    ? "var(--blush)"
+    : activeCat?.track === "outdoors"
+    ? "var(--sage)"
+    : "var(--gold)";
 
   return (
     <PublicLayout>
-      {/* Header */}
-      <section className="pt-32 pb-12 md:pt-40 md:pb-16 bg-background">
-        <div className="max-w-7xl mx-auto px-6 lg:px-10">
-          <p className="text-[10px] tracking-[0.24em] uppercase font-sans text-muted-foreground mb-4">Gallery</p>
-          <h1 className="font-serif text-5xl md:text-6xl text-foreground leading-tight mb-8">
+      <SEOHead
+  title="Gallery"
+  description="Photo gallery of The Rivers Lodge & Hunt Club — estate grounds, venue spaces, weddings, hunting, fishing, and luxury lodging."
+  url="/gallery"
+/>
+      {/* ── Hero header ─────────────────────────────────────────────── */}
+      <section className="pt-32 pb-10 md:pt-40 md:pb-14 bg-background">
+        <div className="max-w-[1440px] mx-auto px-6 lg:px-16">
+          <div className="gold-rule mb-6" />
+          <p className="eyebrow text-white/40 mb-4">Gallery</p>
+          <h1 className="font-serif text-5xl md:text-6xl lg:text-7xl text-white leading-[1.05] mb-10">
             The estate in images.
           </h1>
 
-          {/* Filter */}
-          <div className="flex flex-wrap gap-2">
-            {categories.map((cat) => (
-              <button
-                key={cat.key}
-                onClick={() => setActive(cat.key)}
-                className={`px-5 py-2 text-[10px] tracking-[0.18em] uppercase font-sans transition-colors ${
-                  active === cat.key
-                    ? "bg-foreground text-background"
-                    : "border border-border text-muted-foreground hover:text-foreground hover:border-foreground"
-                }`}
-              >
-                {cat.label}
-              </button>
-            ))}
+          {/* Filter tabs */}
+          <div className="flex flex-wrap gap-2 border-b border-white/8 pb-0">
+            {categories.map((cat) => {
+              const isActive = active === cat.key;
+              const color = cat.track === "weddings"
+                ? "var(--blush)"
+                : cat.track === "outdoors"
+                ? "var(--sage)"
+                : "var(--gold)";
+              return (
+                <button
+                  key={cat.key}
+                  onClick={() => handleFilter(cat.key)}
+                  style={isActive ? { borderBottomColor: color, color: "white" } : {}}
+                  className={`px-4 py-3 text-[10px] tracking-[0.18em] uppercase font-sans transition-all duration-200 border-b-2 -mb-px ${
+                    isActive
+                      ? "border-b-2 font-medium"
+                      : "border-transparent text-white/40 hover:text-white/70"
+                  }`}
+                >
+                  {cat.label}
+                </button>
+              );
+            })}
           </div>
         </div>
       </section>
 
-      {/* Grid */}
+      {/* ── Masonry grid ────────────────────────────────────────────── */}
       <section className="pb-24 md:pb-32 bg-background">
-        <div className="max-w-7xl mx-auto px-6 lg:px-10">
-          <div className="columns-1 sm:columns-2 lg:columns-3 gap-4 space-y-4">
-            {filtered.map((photo) => (
-              <div key={photo.src} className="break-inside-avoid overflow-hidden group">
-                <img
-                  src={photo.src}
-                  alt={photo.alt}
-                  className="w-full object-cover transition-transform duration-700 group-hover:scale-105"
-                  loading="lazy"
-                />
-              </div>
-            ))}
-          </div>
-          {filtered.length === 0 && (
-            <div className="text-center py-20 text-muted-foreground font-sans text-sm">
+        <div className="max-w-[1440px] mx-auto px-6 lg:px-16">
+          {filtered.length === 0 ? (
+            <div className="text-center py-24 text-white/30 font-sans text-sm">
               No photos in this category yet.
+            </div>
+          ) : (
+            <div
+              className={`columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-3 transition-opacity duration-300 ${visible ? "opacity-100" : "opacity-0"}`}
+            >
+              {filtered.map((photo, i) => (
+                <div
+                  key={`${photo.src}-${active}`}
+                  className="break-inside-avoid mb-3 overflow-hidden group cursor-pointer relative"
+                  onClick={() => setLightboxIndex(i)}
+                  style={{
+                    transitionDelay: `${Math.min(i * 30, 300)}ms`,
+                  }}
+                >
+                  <img
+                    src={photo.src}
+                    alt={photo.alt}
+                    className="w-full object-cover transition-transform duration-700 group-hover:scale-[1.02]"
+                    loading="lazy"
+                  />
+                  {/* Hover overlay */}
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300 flex items-center justify-center">
+                    <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 w-10 h-10 flex items-center justify-center border border-white/60">
+                      <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Count */}
+          {filtered.length > 0 && (
+            <div className="mt-8 text-center">
+              <p className="text-xs font-sans text-white/25">
+                {filtered.length} {filtered.length === 1 ? "image" : "images"}
+                {active !== "all" && ` in ${activeCat?.label}`}
+              </p>
             </div>
           )}
         </div>
       </section>
+
+      {/* ── Lightbox ────────────────────────────────────────────────── */}
+      {lightboxIndex !== null && (
+        <Lightbox
+          photos={filtered}
+          index={lightboxIndex}
+          onClose={() => setLightboxIndex(null)}
+        />
+      )}
     </PublicLayout>
   );
 }

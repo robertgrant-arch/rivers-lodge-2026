@@ -2,6 +2,8 @@ import { useRef, useEffect } from "react";
 import { Link } from "wouter";
 import PublicLayout from "@/components/PublicLayout";
 import { trpc } from "@/lib/trpc";
+import SEOHead, { structuredData } from "@/components/SEOHead";
+
 
 const HERO      = "/manus-storage/UebeleinWed335_e6a9084a.jpg";
 const CEREMONY  = "/manus-storage/UebeleinWed405_59f02b8c.jpg";
@@ -40,6 +42,12 @@ export default function Weddings() {
 
   return (
     <PublicLayout>
+      <SEOHead
+  title="Weddings"
+  description="Intimate, cinematic weddings on a private Kansas estate. Ceremony lawns, the Rivers Barn, and the Timber Edge Clubhouse — all exclusively yours."
+  url="/weddings"
+  structuredData={structuredData.weddingVenue()}
+/>
       <div style={{ "--track-accent": "oklch(0.70 0.060 50)" } as React.CSSProperties}>
 
       {/* Hero */}

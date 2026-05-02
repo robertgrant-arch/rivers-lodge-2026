@@ -1,6 +1,9 @@
 import { Link } from "wouter";
 import PublicLayout from "@/components/PublicLayout";
 import { trpc } from "@/lib/trpc";
+import SEOHead, { structuredData } from "@/components/SEOHead";
+import AvailabilityCalendar from "@/components/AvailabilityCalendar";
+
 
 /* ── Images ──────────────────────────────────────────────────────────────── */
 const HERO       = "/manus-storage/UebeleinWed557_b0b3b0ff.jpg";
@@ -46,6 +49,12 @@ export default function WeddingsLanding() {
 
   return (
     <PublicLayout>
+      <SEOHead
+  title="Weddings & Events"
+  description="Plan your wedding or private event at The Rivers Lodge — a stunning private estate in Kansas with ceremony lawns, barn, and clubhouse for up to 250 guests."
+  url="/events"
+  structuredData={structuredData.weddingVenue()}
+/>
       <div data-track="weddings">
 
         {/* ── Hero ─────────────────────────────────────────────────────── */}
@@ -223,6 +232,28 @@ export default function WeddingsLanding() {
             </div>
           </section>
         )}
+
+        {/* ── Availability Calendar ──────────────────────────────────────── */}
+        <section className="section bg-background">
+          <div className="max-w-[1440px] mx-auto px-5 lg:px-10">
+            <div className="text-center mb-10">
+              <div className="h-px w-10 mx-auto mb-6" style={{ backgroundColor: BLUSH }} />
+              <p className="eyebrow text-[oklch(0.55_0.012_70)] mb-3">Check Availability</p>
+              <h2 className="font-serif text-[oklch(0.94_0.008_78)] text-3xl md:text-4xl leading-tight">
+                Is your date available?
+              </h2>
+            </div>
+            <div className="max-w-2xl mx-auto">
+              <AvailabilityCalendar showLegend={true} />
+              <p className="text-center mt-6 font-sans text-[oklch(0.55_0.012_70)] text-sm">
+                Dates shown as unavailable are already reserved. Contact us to confirm your date.
+              </p>
+              <div className="flex justify-center mt-8">
+                <Link href="/contact?type=wedding" className="btn-primary">Inquire About Your Date</Link>
+              </div>
+            </div>
+          </div>
+        </section>
 
         {/* ── Inquiry CTA ───────────────────────────────────────────────── */}
         <section className="section bg-[oklch(0.115_0.007_64)]">

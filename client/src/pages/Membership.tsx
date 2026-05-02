@@ -1,6 +1,8 @@
 import { useRef, useEffect } from "react";
 import { Link } from "wouter";
 import PublicLayout from "@/components/PublicLayout";
+import SEOHead, { structuredData } from "@/components/SEOHead";
+
 
 const HERO    = "/manus-storage/Rivers_SEPT2022_-253-1_f15787e1.jpg";
 const AERIAL  = "/manus-storage/DJI_0017_538feef1.jpg";
@@ -60,6 +62,12 @@ export default function Membership() {
 
   return (
     <PublicLayout>
+      <SEOHead
+  title="Membership"
+  description="Apply for an exclusive sporting membership at The Rivers Lodge & Hunt Club — hunting, fishing, lodging, and a private community in Kansas."
+  url="/membership"
+  structuredData={structuredData.membershipClub()}
+/>
       <div style={{ "--track-accent": "oklch(0.58 0.065 145)" } as React.CSSProperties}>
 
       {/* Hero */}

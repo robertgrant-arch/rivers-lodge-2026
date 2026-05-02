@@ -2,6 +2,9 @@ import { useState, useEffect, useRef } from "react";
 import { Link } from "wouter";
 import PublicLayout from "@/components/PublicLayout";
 import { trpc } from "@/lib/trpc";
+import TestimonialsCarousel from "@/components/TestimonialsCarousel";
+import SEOHead, { structuredData } from "@/components/SEOHead";
+
 
 /* ── Image constants ─────────────────────────────────────────────────────── */
 const HERO          = "/manus-storage/DJI_0017_538feef1.jpg";
@@ -262,6 +265,11 @@ export default function Home() {
 
   return (
     <PublicLayout>
+      <SEOHead
+  description="A private estate in La Cygne, Kansas — world-class weddings & events and an exclusive sporting membership with hunting, fishing, and luxury lodging."
+  url="/"
+  structuredData={structuredData.localBusiness()}
+/>
 
       {/* ── 01. Cinematic Hero ─────────────────────────────────────────── */}
       <section className="relative hero-full flex items-end pb-24 overflow-hidden">
@@ -461,40 +469,20 @@ export default function Home() {
       </section>
 
       {/* ── 06. Testimonials ───────────────────────────────────────────── */}
-      {testimonials && testimonials.length > 0 && (
-        <section className="section bg-background">
-          <div className="max-w-[1440px] mx-auto px-5 lg:px-14">
-            <div className="text-center mb-14">
-              <div className="gold-rule mx-auto mb-5" />
-              <p className="eyebrow text-muted-brand">From Our Guests</p>
+      <section className="section bg-[oklch(0.10_0.010_66)]">
+        <div className="max-w-[1440px] mx-auto px-5 lg:px-14">
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_2fr] gap-12 lg:gap-20 items-center">
+            <div>
+              <div className="gold-rule mb-6" />
+              <p className="eyebrow text-white/40 mb-4">From Our Guests</p>
+              <h2 className="font-serif text-3xl md:text-4xl text-white leading-tight">
+                Words from those who know the Lodge best.
+              </h2>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-px bg-border">
-              {testimonials.slice(0, 3).map((t: any) => (
-                <div key={t.id} className="testimonial-card bg-background p-8 lg:p-10 flex flex-col">
-                  <div className="flex gap-1 mb-6">
-                    {Array.from({ length: 5 }).map((_, i) => (
-                      <svg key={i} width="11" height="11" viewBox="0 0 24 24" fill="oklch(0.72 0.095 78)" stroke="none">
-                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-                      </svg>
-                    ))}
-                  </div>
-                  <blockquote className="font-serif italic text-warm text-lg leading-relaxed flex-1 mb-7">
-                    "{t.quote}"
-                  </blockquote>
-                  <div className="border-t border-border pt-5">
-                    <p className="text-warm font-sans text-sm font-medium">{t.author || t.authorName}</p>
-                    {(t.eventType || t.authorTitle) && (
-                      <p className="eyebrow text-muted-brand mt-1" style={{ fontSize: "10px" }}>
-                        {t.eventType || t.authorTitle}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
+            <TestimonialsCarousel featuredOnly={true} autoAdvanceMs={5000} />
           </div>
-        </section>
-      )}
+        </div>
+      </section>
 
       {/* ── 07. Gallery Strip ──────────────────────────────────────────── */}
       <section ref={galleryRef} className="fade-up bg-surface py-10 overflow-hidden">

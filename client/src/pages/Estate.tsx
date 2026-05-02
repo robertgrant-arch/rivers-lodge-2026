@@ -2,6 +2,8 @@ import { useRef, useEffect } from "react";
 import { Link } from "wouter";
 import PublicLayout from "@/components/PublicLayout";
 import { trpc } from "@/lib/trpc";
+import SEOHead from "@/components/SEOHead";
+
 
 const HERO        = "/manus-storage/Rivers_SEPT2022_-253-1_f15787e1.jpg";
 const AERIAL      = "/manus-storage/DJI_0017_538feef1.jpg";
@@ -59,6 +61,11 @@ export default function Estate() {
 
   return (
     <PublicLayout>
+      <SEOHead
+  title="The Estate"
+  description="Explore the Rivers Lodge estate — 1,800 acres of private land, multiple venue spaces, luxury lodging, and a working farm along the Marais des Cygnes River."
+  url="/estate"
+/>
 
       {/* Hero */}
       <section className="relative hero-full flex items-end pb-24 overflow-hidden">

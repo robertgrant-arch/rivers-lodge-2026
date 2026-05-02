@@ -336,3 +336,41 @@
 - [x] Fix PublicFooter.tsx — duplicate /contact key resolved
 - [x] TypeScript: 0 errors, build clean
 - [x] All 85 tests passing
+
+## Phase 20: World-Class Feature Build
+
+### Member Portal Enhancements
+- [ ] My Bookings tab — show submitted reservation requests with status badges (new/contacted/confirmed/declined)
+- [ ] Booking detail modal — click a booking to see full details and status timeline
+- [ ] Refer-a-Member CTA on dashboard — pre-fills contact form with referral context
+- [ ] Blocked dates calendar integration — show estate-wide blocked dates on member calendar
+- [ ] Member notification center — in-portal notification bell with unread count
+- [ ] Seasonal content hub — rich seasonal updates with category filter tabs
+- [ ] Member profile page — edit name, phone, emergency contact, preferences
+
+### Public Site — Conversion & Trust
+- [ ] Live testimonials carousel on homepage — auto-advance, fade transition, sourced from cms_testimonials DB
+- [ ] Gallery page — editorial masonry grid with track-accent filter tabs (All/Weddings/Outdoors/Estate)
+- [ ] FAQ accordion sections on Weddings and Membership pages
+- [ ] Venue capacity and planning process timeline on Weddings page
+- [ ] Season calendar visual on Hunt and Fish pages
+- [ ] Homepage dual-track hover expansion — flex panels expand/contract on hover with correct easing
+- [ ] Sticky inquiry CTA bar on Weddings and Corporate pages
+
+### Booking Flow
+- [ ] Multi-step inquiry form with progress indicator (3 steps: Type → Details → Contact)
+- [ ] Inquiry confirmation page /inquiry-confirmed with summary and next steps
+- [ ] Date availability widget on Weddings and Lodging pages
+
+### SEO & Performance
+- [ ] Meta title and description tags on every page
+- [ ] Open Graph tags for social sharing
+- [ ] Structured data JSON-LD (LocalBusiness, LodgingBusiness)
+- [ ] Image lazy loading on all non-hero images
+- [ ] Skip-to-content accessibility link
+- [ ] robots.txt
+
+### Ops Portal Enhancements
+- [ ] Booking pipeline Kanban board
+- [ ] Blocked dates management UI
+- [ ] Testimonials management — approve/publish from ops portal

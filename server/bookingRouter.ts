@@ -27,7 +27,8 @@ import {
   leads,
   bookingStateTransitions,
 } from "../drizzle/booking-schema";
-import { bookings, users } from "../drizzle/schema";
+import { bookings, users, blockedDates } from "../drizzle/schema";
+import { gte, lte } from "drizzle-orm";
 import {
   checkAvailability,
   checkMultipleResources,
@@ -753,6 +754,48 @@ const requestsRouter = router({
         .where(eq(reservationRequests.id, input.requestId));
       return { success: true };
     }),
+
+  // Member-facing: returns only the current authenticated user's own submitted requests
+  myRequests: protectedProcedure
+    .query(async ({ ctx }) => {
+      const db = await getDb();
+      if (!db) return [];
+      return await db
+        .select()
+        .from(reservationRequests)
+        .where(eq(reservationRequests.contactEmail, ctx.user.email ?? ""))
+        .orderBy(desc(reservationRequests.createdAt));
+    }),
+});
+
+// ─── Public Booking Router ───────────────────────────────────────────────────
+
+const publicBookingRouter = router({
+  getBlockedDates: publicProcedure
+    .input(z.object({
+      year: z.number().min(2020).max(2040),
+      month: z.number().min(1).max(12).optional(),
+    }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) return [];
+      const startDate = input.month
+        ? new Date(input.year, input.month - 1, 1)
+        : new Date(input.year, 0, 1);
+      const endDate = input.month
+        ? new Date(input.year, input.month, 0)
+        : new Date(input.year, 11, 31);
+      const rows = await db
+        .select({ date: blockedDates.date, reason: blockedDates.reason })
+        .from(blockedDates)
+        .where(
+          and(
+            gte(blockedDates.date, startDate),
+            lte(blockedDates.date, endDate)
+          )
+        );
+      return rows;
+    }),
 });
 
 // ─── Root Booking Router ──────────────────────────────────────────────────────
@@ -764,4 +807,5 @@ export const bookingRouter = router({
   payments: paymentsRouter,
   leads: leadsRouter,
   requests: requestsRouter,
+  public: publicBookingRouter,
 });
