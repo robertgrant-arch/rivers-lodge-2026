@@ -374,3 +374,26 @@
 - [x] Booking pipeline Kanban board (List/Pipeline view toggle on PortalBookings)
 - [x] Blocked dates management UI (Blocked Dates tab in PortalAvailability)
 - [x] Testimonials management — approve/publish from ops portal (PortalTestimonials at /ops/testimonials)
+
+### Enterprise Booking & Member Management (Phase 21+)
+
+#### Schema & Backend
+- [x] Extend booking-schema: huntFishSlots table (activity, date, capacity, booked count, season, notes)
+- [x] Extend booking-schema: tripRequests table (userId, slotId, party size, status, payment status, notes, timestamps)
+- [x] Public availability procedure: trpc.trips.publicAvailability — returns open slots by activity and date range
+- [x] Member trip request procedure: trpc.trips.requestTrip — submit, list my trips, cancel
+- [x] Admin trip management: trpc.trips.admin.* — list all, approve/decline, set capacity, manage slots
+- [x] Admin create-member procedure: trpc.portal.membership.createMember with user lookup by email/name
+- [x] Auto-generate member number (RL-YYYY-NNN format)
+
+#### Hunt & Fish Pages
+- [x] Live availability calendar widget on Hunt page — shows open/partial/full/blocked dates
+- [x] Live availability calendar widget on Fish page — shows open/partial/full/blocked dates
+- [x] Smart booking CTA on Hunt page — member path (portal request) vs non-member path (membership inquiry)
+- [x] Smart booking CTA on Fish page — member path (portal request) vs non-member path (membership inquiry)
+- [x] Activity type pre-fill when navigating from Hunt/Fish page to member portal request tab
+
+#### Ops Portal
+- [x] Add Member form in PortalMembership — user search by email/name, tier, join/renewal dates, member number
+- [x] Member detail drawer in PortalMembership — full profile, booking history, trip requests, audit trail
+- [x] Hunt/Fish slot management page — create/edit/delete availability slots with capacity (tripsRouter admin procedures)

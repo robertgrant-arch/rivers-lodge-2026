@@ -308,3 +308,131 @@ export const bookingStateTransitions = mysqlTable("booking_state_transitions", {
 });
 export type BookingStateTransition = typeof bookingStateTransitions.$inferSelect;
 export type InsertBookingStateTransition = typeof bookingStateTransitions.$inferInsert;
+
+// ─── Hunt & Fish Slots ────────────────────────────────────────────────────────
+// Structured availability windows for hunt/fish trips.
+// Staff create slots (e.g. "Duck Hunt – Nov 15, capacity 6") and members book
+// against them. Slots are the source of truth for the public availability calendar.
+
+export const huntFishSlots = mysqlTable("hunt_fish_slots", {
+  id: int("id").autoincrement().primaryKey(),
+
+  // Activity type
+  activity: mysqlEnum("activity", [
+    "duck",
+    "deer",
+    "turkey",
+    "dove",
+    "quail",
+    "hog",
+    "bass",
+    "catfish",
+    "crappie",
+    "general_hunt",
+    "general_fish",
+    "hunt_and_fish",
+  ]).notNull(),
+
+  // Display label (e.g. "Early Teal Season – Opening Weekend")
+  label: varchar("label", { length: 255 }).notNull(),
+
+  // Date window for this slot
+  slotDate: date("slotDate").notNull(),          // primary date (start of multi-day trip)
+  slotEndDate: date("slotEndDate"),              // null = single-day trip
+  checkInTime: time("checkInTime"),              // optional, e.g. 05:30 for duck hunt
+  checkOutTime: time("checkOutTime"),
+
+  // Capacity management
+  totalCapacity: int("totalCapacity").default(6).notNull(),  // max party size across all bookings
+  bookedCount: int("bookedCount").default(0).notNull(),      // denormalized for fast calendar queries
+
+  // Season / regulatory context
+  season: mysqlEnum("season", ["spring", "summer", "fall", "winter", "year_round"]).default("fall").notNull(),
+  regulatoryNotes: text("regulatoryNotes"),      // e.g. "Kansas WP bag limits apply"
+
+  // Pricing (optional — for future Stripe integration)
+  pricePerPerson: decimal("pricePerPerson", { precision: 10, scale: 2 }),
+  currency: varchar("currency", { length: 3 }).default("USD"),
+
+  // Guide / resource linkage
+  resourceId: int("resourceId"),                // FK to resources (hunt_zone or fish_zone)
+  guideNotes: text("guideNotes"),               // internal notes for guides
+
+  // Visibility
+  isPublic: boolean("isPublic").default(true).notNull(),    // show on public calendar
+  isActive: boolean("isActive").default(true).notNull(),    // soft delete / archive
+
+  // Metadata
+  notes: text("notes"),
+  createdByUserId: int("createdByUserId"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type HuntFishSlot = typeof huntFishSlots.$inferSelect;
+export type InsertHuntFishSlot = typeof huntFishSlots.$inferInsert;
+
+// ─── Trip Requests ────────────────────────────────────────────────────────────
+// A member's request to join a specific hunt/fish slot.
+// Lifecycle: pending → confirmed | declined | cancelled | waitlisted
+// When confirmed, bookedCount on the parent slot is incremented.
+
+export const tripRequests = mysqlTable("trip_requests", {
+  id: int("id").autoincrement().primaryKey(),
+
+  // Slot being requested
+  slotId: int("slotId").notNull(),              // FK to hunt_fish_slots
+
+  // Requester identity
+  userId: int("userId").notNull(),              // FK to users
+  memberId: int("memberId"),                    // FK to members (denormalized for quick lookup)
+
+  // Party details
+  partySize: int("partySize").default(1).notNull(),
+  guestNames: json("guestNames"),               // array of strings — names of guests in party
+  hasMinors: boolean("hasMinors").default(false).notNull(),
+
+  // Licensing & compliance
+  huntingLicenseConfirmed: boolean("huntingLicenseConfirmed").default(false).notNull(),
+  fishingLicenseConfirmed: boolean("fishingLicenseConfirmed").default(false).notNull(),
+  waiverSignedAt: timestamp("waiverSignedAt"),
+
+  // Workflow status
+  status: mysqlEnum("status", [
+    "pending",       // submitted, awaiting staff review
+    "confirmed",     // staff approved, slot capacity decremented
+    "declined",      // staff declined
+    "waitlisted",    // slot full, member placed on waitlist
+    "cancelled",     // member or staff cancelled after confirmation
+    "no_show",       // member did not appear
+    "completed",     // trip completed
+  ]).default("pending").notNull(),
+
+  // Staff workflow
+  reviewedByUserId: int("reviewedByUserId"),
+  reviewedAt: timestamp("reviewedAt"),
+  declineReason: text("declineReason"),
+  staffNotes: text("staffNotes"),               // internal notes, not visible to member
+
+  // Member-facing communication
+  memberNotes: text("memberNotes"),             // member's special requests / notes
+  confirmationSentAt: timestamp("confirmationSentAt"),
+
+  // Payment (for future Stripe integration)
+  paymentStatus: mysqlEnum("paymentStatus", [
+    "not_required",
+    "pending",
+    "paid",
+    "refunded",
+    "waived",
+  ]).default("not_required").notNull(),
+  amountDue: decimal("amountDue", { precision: 10, scale: 2 }),
+  amountPaid: decimal("amountPaid", { precision: 10, scale: 2 }),
+
+  // Timestamps
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type TripRequest = typeof tripRequests.$inferSelect;
+export type InsertTripRequest = typeof tripRequests.$inferInsert;

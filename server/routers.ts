@@ -8,6 +8,7 @@ import { notifyOwner } from "./_core/notification";
 import * as db from "./db";
 import { portalRouter } from "./portalRouter";
 import { bookingRouter } from "./bookingRouter";
+import { tripsRouter } from "./tripsRouter";
 import { getDb } from "./db";
 import { leads, reservationRequests } from "../drizzle/booking-schema";
 
@@ -722,6 +723,7 @@ export const appRouter = router({
   cms: cmsRouter,
   portal: portalRouter,
   booking: bookingRouter,
+  trips: tripsRouter,
 });
 
 export type AppRouter = typeof appRouter;

@@ -2,6 +2,7 @@ import { useRef, useEffect } from "react";
 import { Link } from "wouter";
 import PublicLayout from "@/components/PublicLayout";
 import SEOHead from "@/components/SEOHead";
+import HuntFishAvailabilityCalendar from "@/components/HuntFishAvailabilityCalendar";
 
 
 const HERO    = "/manus-storage/Rivers_SEPT2022_-134_157d1be5.jpg";
@@ -208,6 +209,12 @@ export default function Hunt() {
           </div>
         </div>
       </section>
+
+      {/* Live Availability Calendar */}
+      <HuntFishAvailabilityCalendar
+        sectionTitle="Hunt Trip Availability"
+        accentColor="text-amber-700"
+      />
 
       </div>
     </PublicLayout>

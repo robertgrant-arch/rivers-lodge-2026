@@ -997,6 +997,59 @@ const membershipPortalRouter = router({
       });
       return { success: true };
     }),
+
+  // Search users by name or email (for the Add Member form)
+  searchUsers: portalProcedure
+    .input(z.object({ query: z.string().min(1) }))
+    .query(async ({ input }) => {
+      const db = getDb();
+      const q = `%${input.query}%`;
+      return db
+        .select({ id: users.id, name: users.name, email: users.email })
+        .from(users)
+        .where(or(like(users.name, q), like(users.email, q)))
+        .limit(20);
+    }),
+
+  // Create a new member record linked to an existing user
+  createMember: portalProcedure
+    .input(z.object({
+      userId: z.number(),
+      tier: z.enum(["standard", "premier", "founding"]).default("standard"),
+      memberNumber: z.string().optional(),
+      joinDate: z.string().optional(),
+      renewalDate: z.string().optional(),
+      notes: z.string().optional(),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const db = getDb();
+      const [existing] = await db.select({ id: members.id }).from(members).where(eq(members.userId, input.userId)).limit(1);
+      if (existing) throw new TRPCError({ code: "CONFLICT", message: "This user already has a member record" });
+      let memberNumber = input.memberNumber;
+      if (!memberNumber) {
+        const year = new Date().getFullYear();
+        const [{ count }] = await db.select({ count: sql<number>`count(*)` }).from(members);
+        memberNumber = `RL-${year}-${String(Number(count) + 1).padStart(4, "0")}`;
+      }
+      const [newMember] = await db.insert(members).values({
+        userId: input.userId,
+        tier: input.tier,
+        memberNumber,
+        active: true,
+        joinDate: input.joinDate ?? new Date().toISOString().split("T")[0],
+        renewalDate: input.renewalDate ?? null,
+        notes: input.notes ?? null,
+      } as any).$returningId();
+      await logAudit({
+        actingUserId: ctx.user.id,
+        actingUserName: ctx.user.name ?? "Staff",
+        actionType: "create",
+        entityType: "Member",
+        entityId: String(newMember.id),
+        notes: `Created member ${memberNumber} (tier: ${input.tier})`,
+      });
+      return { success: true, memberId: newMember.id, memberNumber };
+    }),
 });
 
 // ─── Audit Log Router ─────────────────────────────────────────────────────────
