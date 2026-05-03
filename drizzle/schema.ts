@@ -146,6 +146,7 @@ export const messages = mysqlTable("messages", {
   subject: varchar("subject", { length: 255 }),
   body: text("body").notNull(),
   read: boolean("read").default(false).notNull(),
+  archived: boolean("archived").default(false).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 

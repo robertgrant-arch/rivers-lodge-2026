@@ -18,7 +18,19 @@ export default function AdminDashboard() {
   const applications = trpc.membership.listApplications.useQuery(undefined, { enabled: isAuthenticated && user?.role === "admin" });
   const waivers = trpc.waivers.list.useQuery(undefined, { enabled: isAuthenticated && user?.role === "admin" });
   const updates = trpc.updates.list.useQuery(undefined, { enabled: isAuthenticated && user?.role === "admin" });
-  const allMessages = trpc.messages.allMessages.useQuery(undefined, { enabled: isAuthenticated && user?.role === "admin" });
+  const [showArchived, setShowArchived] = useState(false);
+  const allMessages = trpc.messages.allMessages.useQuery(
+    { archived: showArchived },
+    { enabled: isAuthenticated && user?.role === "admin" }
+  );
+  const archiveMsg = trpc.messages.archive.useMutation({
+    onSuccess: () => { allMessages.refetch(); toast.success("Message archived"); },
+    onError: () => toast.error("Failed to archive message"),
+  });
+  const unarchiveMsg = trpc.messages.unarchive.useMutation({
+    onSuccess: () => { allMessages.refetch(); toast.success("Message restored to inbox"); },
+    onError: () => toast.error("Failed to restore message"),
+  });
   const allUsers = trpc.admin.users.useQuery(undefined, { enabled: isAuthenticated && user?.role === "admin" });
 
   // ─── CMS State & Queries ─────────────────────────────────────────────────────
@@ -432,20 +444,63 @@ export default function AdminDashboard() {
           {/* Messages */}
           {tab === "messages" && (
             <div>
-              <h2 className="font-serif text-2xl text-foreground mb-6">Concierge Messages</h2>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="font-serif text-2xl text-foreground">Concierge Messages</h2>
+                <div className="flex gap-0 border border-border">
+                  <button
+                    onClick={() => setShowArchived(false)}
+                    className={`px-4 py-2 text-[10px] tracking-[0.14em] uppercase font-sans transition-colors ${
+                      !showArchived ? "bg-foreground text-background" : "bg-transparent text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    Inbox
+                  </button>
+                  <button
+                    onClick={() => setShowArchived(true)}
+                    className={`px-4 py-2 text-[10px] tracking-[0.14em] uppercase font-sans transition-colors ${
+                      showArchived ? "bg-foreground text-background" : "bg-transparent text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    Archived
+                  </button>
+                </div>
+              </div>
               <div className="flex flex-col gap-4">
                 {(allMessages.data ?? []).map((m) => (
                   <div key={m.id} className="bg-card border border-border p-5">
                     <div className="flex items-center justify-between mb-2">
                       <p className="text-sm font-sans font-medium text-foreground">User #{m.fromUserId} {m.toUserId ? `→ User #${m.toUserId}` : "→ Admin"}</p>
-                      <p className="text-[9px] font-sans text-muted-foreground">{new Date(m.createdAt).toLocaleString()}</p>
+                      <div className="flex items-center gap-3">
+                        <p className="text-[9px] font-sans text-muted-foreground">{new Date(m.createdAt).toLocaleString()}</p>
+                        {showArchived ? (
+                          <button
+                            onClick={() => unarchiveMsg.mutate({ id: m.id })}
+                            disabled={unarchiveMsg.isPending}
+                            className="text-[9px] tracking-[0.12em] uppercase font-sans px-2 py-0.5 border border-border text-muted-foreground hover:text-foreground hover:border-foreground transition-colors"
+                          >
+                            Restore
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => archiveMsg.mutate({ id: m.id })}
+                            disabled={archiveMsg.isPending}
+                            className="text-[9px] tracking-[0.12em] uppercase font-sans px-2 py-0.5 border border-border text-muted-foreground hover:text-foreground hover:border-foreground transition-colors"
+                          >
+                            Archive
+                          </button>
+                        )}
+                      </div>
                     </div>
                     {m.subject && <p className="text-xs font-sans text-muted-foreground mb-1">Subject: {m.subject}</p>}
                     <p className="text-sm font-sans text-muted-foreground leading-relaxed">{m.body}</p>
                     {!m.read && <span className="inline-block mt-2 text-[9px] tracking-[0.12em] uppercase font-sans px-2 py-0.5 bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">Unread</span>}
                   </div>
                 ))}
-                {(allMessages.data ?? []).length === 0 && <p className="text-sm font-sans text-muted-foreground py-8 text-center">No messages yet.</p>}
+                {(allMessages.data ?? []).length === 0 && (
+                  <p className="text-sm font-sans text-muted-foreground py-8 text-center">
+                    {showArchived ? "No archived messages." : "No messages yet."}
+                  </p>
+                )}
               </div>
             </div>
           )}

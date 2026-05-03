@@ -497,3 +497,12 @@
 - [x] Fix all Ops Portal flows (properties CRUD, membership, booking management)
 - [x] Fix all public page flows (contact form, events, gallery, outdoors, membership)
 - [x] Run full TypeScript check and test suite
+
+## Phase 31: Admin Message Archive
+- [x] Add `archived` boolean column to `messages` table in schema
+- [x] Run db:push to migrate the schema
+- [x] Add `archiveMessage` and `unarchiveMessage` tRPC procedures (adminProcedure)
+- [x] Update `allMessages` query to support archived/active filter
+- [x] Add Archive button to each message card in AdminDashboard Messages tab
+- [x] Add Archived tab toggle to Messages section to view/restore archived chains
+- [x] Write vitest tests for archive/unarchive procedures

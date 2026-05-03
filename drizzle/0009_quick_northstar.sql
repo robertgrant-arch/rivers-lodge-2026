@@ -1,0 +1,1 @@
+ALTER TABLE `messages` ADD `archived` boolean DEFAULT false NOT NULL;

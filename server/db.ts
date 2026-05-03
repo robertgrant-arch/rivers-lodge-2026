@@ -214,22 +214,32 @@ export async function getMessagesForUser(userId: number) {
     .orderBy(desc(messages.createdAt));
 }
 
-export async function getAllMessages() {
+export async function getAllMessages(archived = false) {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(messages).orderBy(desc(messages.createdAt));
+  return db.select().from(messages)
+    .where(eq(messages.archived, archived))
+    .orderBy(desc(messages.createdAt));
 }
-
 export async function createMessage(data: InsertMessage) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   await db.insert(messages).values(data);
 }
-
 export async function markMessageRead(id: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   await db.update(messages).set({ read: true }).where(eq(messages.id, id));
+}
+export async function archiveMessage(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(messages).set({ archived: true }).where(eq(messages.id, id));
+}
+export async function unarchiveMessage(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(messages).set({ archived: false }).where(eq(messages.id, id));
 }
 
 // ─── Blocked Dates ────────────────────────────────────────────────────────────

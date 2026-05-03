@@ -307,9 +307,23 @@ const messagesRouter = router({
     return db.getMessagesForUser(ctx.user.id);
   }),
 
-  allMessages: adminProcedure.query(async () => {
-    return db.getAllMessages();
-  }),
+  allMessages: adminProcedure
+    .input(z.object({ archived: z.boolean().default(false) }).optional())
+    .query(async ({ input }) => {
+      return db.getAllMessages(input?.archived ?? false);
+    }),
+  archive: adminProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ input }) => {
+      await db.archiveMessage(input.id);
+      return { success: true };
+    }),
+  unarchive: adminProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ input }) => {
+      await db.unarchiveMessage(input.id);
+      return { success: true };
+    }),
 
   send: protectedProcedure
     .input(
