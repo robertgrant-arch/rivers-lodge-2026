@@ -228,14 +228,10 @@ export default function PublicNav() {
               )}
             </div>
 
-            {/* Member Portal — prominent nav item */}
+            {/* Member Portal nav item */}
             <Link
               href={portalNavHref}
-              className={`ml-1 px-4 py-2 text-[11px] tracking-[0.13em] uppercase font-sans font-medium border transition-all duration-200 ${
-                location.startsWith("/portal")
-                  ? "border-[oklch(0.72_0.095_78)] bg-[oklch(0.72_0.095_78)] text-[oklch(0.095_0.006_64)]"
-                  : "border-[oklch(0.72_0.095_78)] text-[oklch(0.72_0.095_78)] hover:bg-[oklch(0.72_0.095_78)] hover:text-[oklch(0.095_0.006_64)]"
-              }`}
+              className="px-4 py-2 text-[11px] tracking-[0.13em] uppercase font-sans font-medium text-[oklch(0.94_0.008_78)] hover:opacity-70 transition-opacity"
             >
               {portalNavLabel}
             </Link>
