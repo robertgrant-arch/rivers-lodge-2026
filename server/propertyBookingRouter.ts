@@ -255,6 +255,35 @@ export const propertyBookingRouter = router({
 
         if (!property) throw new TRPCError({ code: "NOT_FOUND", message: "Property not found." });
 
+        // Get active seasons for this property
+        const seasons = await db
+          .select()
+          .from(propertySeasons)
+          .where(and(
+            eq(propertySeasons.propertyId, input.propertyId),
+            eq(propertySeasons.active, true),
+          ));
+
+        // Build a set of in-season date strings (union of all active seasons)
+        const inSeasonDates = new Set<string>();
+        const seasonByDate = new Map<string, string>(); // date → season name
+        for (const s of seasons) {
+          const sStart = new Date(s.startDate);
+          const sEnd = new Date(s.endDate);
+          // Normalize to UTC midnight to avoid timezone drift
+          sStart.setUTCHours(0, 0, 0, 0);
+          sEnd.setUTCHours(0, 0, 0, 0);
+          let d = new Date(sStart);
+          while (d <= sEnd) {
+            const ds = d.toISOString().split("T")[0];
+            inSeasonDates.add(ds);
+            seasonByDate.set(ds, s.name);
+            d.setUTCDate(d.getUTCDate() + 1);
+          }
+        }
+        // If no seasons defined, all dates are open (no restriction)
+        const hasSeasons = seasons.length > 0;
+
         // Get inventory rows for the date range
         const inventory = await db
           .select()
@@ -301,6 +330,7 @@ export const propertyBookingRouter = router({
           capacity: number;
           bookedCount: number;
           availableSpots: number;
+          seasonName?: string;
         }> = [];
 
         let cursor = new Date(input.startDate);
@@ -310,9 +340,14 @@ export const propertyBookingRouter = router({
           const dateStr = cursor.toISOString().split("T")[0];
           const inv = inventoryMap.get(dateStr);
           const isBlocked = blockedDates.has(dateStr);
+          const isInSeason = !hasSeasons || inSeasonDates.has(dateStr);
+          const seasonName = seasonByDate.get(dateStr);
 
-          if (isBlocked) {
-            result.push({ date: dateStr, status: "blocked", capacity: 0, bookedCount: 0, availableSpots: 0 });
+          if (!isInSeason) {
+            // Out of season — closed, not bookable
+            result.push({ date: dateStr, status: "closed", capacity: 0, bookedCount: 0, availableSpots: 0 });
+          } else if (isBlocked) {
+            result.push({ date: dateStr, status: "blocked", capacity: 0, bookedCount: 0, availableSpots: 0, seasonName });
           } else if (inv) {
             result.push({
               date: dateStr,
@@ -320,6 +355,7 @@ export const propertyBookingRouter = router({
               capacity: inv.capacity,
               bookedCount: inv.bookedCount,
               availableSpots: Math.max(0, inv.capacity - inv.bookedCount),
+              seasonName,
             });
           } else {
             // No inventory row = open at full capacity
@@ -329,6 +365,7 @@ export const propertyBookingRouter = router({
               capacity: property.maxHunters,
               bookedCount: 0,
               availableSpots: property.maxHunters,
+              seasonName,
             });
           }
 

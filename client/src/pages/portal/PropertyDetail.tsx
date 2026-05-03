@@ -38,7 +38,8 @@ const STATUS_COLORS: Record<string, string> = {
   partial: "bg-amber-500 hover:bg-amber-400 cursor-pointer",
   full: "bg-red-700 cursor-not-allowed opacity-60",
   blocked: "bg-stone-700 cursor-not-allowed opacity-50",
-  closed: "bg-stone-700 cursor-not-allowed opacity-50",
+  // closed = out of season: visually distinct from blocked
+  closed: "bg-stone-950 cursor-not-allowed opacity-30 line-through decoration-stone-600",
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -46,7 +47,7 @@ const STATUS_LABELS: Record<string, string> = {
   partial: "Limited spots",
   full: "Fully booked",
   blocked: "Blocked",
-  closed: "Closed",
+  closed: "Out of season",
 };
 
 const ACTIVITY_OPTIONS = [
@@ -189,7 +190,17 @@ function AvailabilityCalendar({
                 key={cell.date}
                 disabled={!canSelect}
                 onClick={() => canSelect && onSelectDate(cell.date!)}
-                title={`${cell.date}: ${STATUS_LABELS[status] ?? status}${avail?.availableSpots ? ` (${avail.availableSpots} spots)` : ""}`}
+                title={
+                  status === "closed" && !isPast
+                    ? `${cell.date}: Out of season`
+                    : (status === "open" || status === "partial")
+                      ? `${cell.date}: ${STATUS_LABELS[status]}${
+                          avail?.availableSpots != null
+                            ? ` (${avail.availableSpots} spot${avail.availableSpots !== 1 ? "s" : ""})`
+                            : ""
+                        }${ avail?.seasonName ? ` — ${avail.seasonName}` : ""}`
+                      : `${cell.date}: ${STATUS_LABELS[status] ?? status}`
+                }
                 className={`
                   relative aspect-square rounded-lg text-xs font-medium flex items-center justify-center
                   transition-all duration-100
@@ -214,6 +225,7 @@ function AvailabilityCalendar({
           { color: "bg-amber-500", label: "Limited" },
           { color: "bg-red-700 opacity-60", label: "Full" },
           { color: "bg-stone-700 opacity-50", label: "Blocked" },
+          { color: "bg-stone-950 opacity-30 border border-stone-700", label: "Out of season" },
         ].map((item) => (
           <span key={item.label} className="flex items-center gap-1 text-xs text-stone-400">
             <span className={`w-3 h-3 rounded ${item.color}`} />

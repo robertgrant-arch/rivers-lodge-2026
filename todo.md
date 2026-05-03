@@ -491,9 +491,9 @@
 - [x] Verify /membership page has a prominent Become a Member CTA for non-members
 
 ## Phase 29: Full Site Review & E2E Fix
-- [ ] Fix property booking error (create booking procedure)
-- [ ] Audit all tRPC router procedures for broken inputs/queries
-- [ ] Fix all Member Portal flows (dashboard, bookings, properties, profile)
-- [ ] Fix all Ops Portal flows (properties CRUD, membership, booking management)
-- [ ] Fix all public page flows (contact form, events, gallery, outdoors, membership)
-- [ ] Run full TypeScript check and test suite
+- [x] Fix property booking error (create booking procedure)
+- [x] Audit all tRPC router procedures for broken inputs/queries
+- [x] Fix all Member Portal flows (dashboard, bookings, properties, profile)
+- [x] Fix all Ops Portal flows (properties CRUD, membership, booking management)
+- [x] Fix all public page flows (contact form, events, gallery, outdoors, membership)
+- [x] Run full TypeScript check and test suite
