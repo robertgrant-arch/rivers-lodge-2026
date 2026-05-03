@@ -2,7 +2,10 @@ import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "wouter";
 import { Menu, X, ChevronDown, LogOut, User } from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
+import { trpc } from "@/lib/trpc";
 import { getLoginUrl } from "@/const";
+
+const STAFF_ROLES = ["admin", "owner", "venue_sales", "events_manager", "membership_manager", "hunt_fish_ops", "hospitality", "staff", "finance"];
 
 type Track = "weddings" | "membership" | null;
 
@@ -64,6 +67,17 @@ export default function PublicNav() {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const { user, isAuthenticated, logout } = useAuth();
+
+  // Determine if the current user has member/staff portal access
+  const memberStatus = trpc.membership.myStatus.useQuery(undefined, {
+    enabled: isAuthenticated,
+    staleTime: 5 * 60 * 1000,
+  });
+  const isStaff = !!user?.role && STAFF_ROLES.includes(user.role as string);
+  const hasPortalAccess = isStaff || (!!memberStatus.data && memberStatus.data.active);
+  // Link target: members/staff → portal, non-members → membership page
+  const portalNavHref = isAuthenticated && hasPortalAccess ? "/portal" : "/membership";
+  const portalNavLabel = isAuthenticated && hasPortalAccess ? "Member Portal" : "Become a Member";
 
   const track = getTrackFromPath(location);
   const isHome = location === "/";
@@ -214,6 +228,18 @@ export default function PublicNav() {
               )}
             </div>
 
+            {/* Member Portal — prominent nav item */}
+            <Link
+              href={portalNavHref}
+              className={`ml-1 px-4 py-2 text-[11px] tracking-[0.13em] uppercase font-sans font-medium border transition-all duration-200 ${
+                location.startsWith("/portal")
+                  ? "border-[oklch(0.72_0.095_78)] bg-[oklch(0.72_0.095_78)] text-[oklch(0.095_0.006_64)]"
+                  : "border-[oklch(0.72_0.095_78)] text-[oklch(0.72_0.095_78)] hover:bg-[oklch(0.72_0.095_78)] hover:text-[oklch(0.095_0.006_64)]"
+              }`}
+            >
+              {portalNavLabel}
+            </Link>
+
             {/* Static links */}
             <Link href="/gallery" className="px-4 py-2 text-[11px] tracking-[0.13em] uppercase font-sans font-medium text-[oklch(0.94_0.008_78)] hover:opacity-70 transition-opacity">
               Gallery
@@ -353,6 +379,22 @@ export default function PublicNav() {
                 ))}
               </div>
             )}
+          </div>
+
+          {/* Member Portal — mobile */}
+          <div className="mb-6">
+            <Link
+              href={portalNavHref}
+              onClick={() => setMobileOpen(false)}
+              className="flex items-center justify-between py-3"
+            >
+              <span className="text-[11px] tracking-[0.18em] uppercase font-sans font-medium text-[oklch(0.72_0.095_78)]">
+                {portalNavLabel}
+              </span>
+              <span className="text-[10px] tracking-[0.14em] uppercase font-sans text-[oklch(0.72_0.095_78)] border border-[oklch(0.72_0.095_78)] px-2 py-0.5">
+                {isAuthenticated && hasPortalAccess ? "Enter" : "Apply"}
+              </span>
+            </Link>
           </div>
 
           {/* Membership & Outdoors section */}

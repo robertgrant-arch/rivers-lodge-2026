@@ -482,3 +482,10 @@
 - [x] Seed season-specific booking rules: whitetail season (Oct 1 - Jan 31), waterfowl (Nov 1 - Jan 31), turkey (Apr 1 - May 31), fishing (Apr 1 - Oct 31), quail (Nov 1 - Feb 28)
 - [x] Seed propertySeasons table rows for each of the 5 demo properties with correct opening/closing dates
 - [x] Auto-create linked member record for owner account (userId=1) with founding tier via ensureMemberForPreview logic in seed script
+
+## Phase 28: Member Portal Nav Item
+- [x] Add "Member Portal" nav item to PublicNav right after "Membership & Outdoors"
+- [x] Nav item links to /portal if user is logged in as member/admin, otherwise to /membership
+- [x] Style the Member Portal nav item to stand out (gold border or filled button style)
+- [x] Ensure mobile nav also has the Member Portal link
+- [x] Verify /membership page has a prominent Become a Member CTA for non-members

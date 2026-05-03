@@ -2,6 +2,10 @@ import { useRef, useEffect } from "react";
 import { Link } from "wouter";
 import PublicLayout from "@/components/PublicLayout";
 import SEOHead, { structuredData } from "@/components/SEOHead";
+import { useAuth } from "@/_core/hooks/useAuth";
+import { trpc } from "@/lib/trpc";
+
+const STAFF_ROLES_M = ["admin", "owner", "venue_sales", "events_manager", "membership_manager", "hunt_fish_ops", "hospitality", "staff", "finance"];
 
 
 const HERO    = "/manus-storage/Rivers_SEPT2022_-253-1_f15787e1.jpg";
@@ -60,6 +64,14 @@ export default function Membership() {
   const tiersRef    = useFadeUp();
   const applyRef    = useFadeUp();
 
+  const { user, isAuthenticated } = useAuth();
+  const memberStatus = trpc.membership.myStatus.useQuery(undefined, {
+    enabled: isAuthenticated,
+    staleTime: 5 * 60 * 1000,
+  });
+  const isStaffM = !!user?.role && STAFF_ROLES_M.includes(user.role as string);
+  const isActiveMember = isStaffM || (!!memberStatus.data && memberStatus.data.active);
+
   return (
     <PublicLayout>
       <SEOHead
@@ -69,6 +81,21 @@ export default function Membership() {
   structuredData={structuredData.membershipClub()}
 />
       <div style={{ "--track-accent": "oklch(0.58 0.065 145)" } as React.CSSProperties}>
+
+      {/* Active member shortcut banner */}
+      {isActiveMember && (
+        <div className="bg-[oklch(0.13_0.007_64)] border-b border-[oklch(0.22_0.008_64)] px-5 lg:px-14 py-3 flex items-center justify-between gap-4">
+          <p className="text-[11px] tracking-[0.14em] uppercase font-sans text-[oklch(0.72_0.095_78)]">
+            You are an active member
+          </p>
+          <Link
+            href="/portal"
+            className="text-[11px] tracking-[0.14em] uppercase font-sans font-medium border border-[oklch(0.72_0.095_78)] text-[oklch(0.72_0.095_78)] px-4 py-1.5 hover:bg-[oklch(0.72_0.095_78)] hover:text-[oklch(0.095_0.006_64)] transition-all duration-200 shrink-0"
+          >
+            Go to Member Portal →
+          </Link>
+        </div>
+      )}
 
       {/* Hero */}
       <section className="relative hero-full flex items-end pb-24 overflow-hidden">
