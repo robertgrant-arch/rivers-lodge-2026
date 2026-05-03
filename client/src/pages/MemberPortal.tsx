@@ -261,6 +261,22 @@ export default function MemberPortal() {
     return () => document.removeEventListener("click", handler);
   }, [notifOpen]);
 
+  const submitRequest = trpc.booking.requests.submit.useMutation({
+    onSuccess: () => {
+      toast.success("Stay request submitted. Our concierge team will follow up within 24 hours.");
+      setRequestForm({ businessLine: "member_stay", requestedStart: "", requestedEnd: "", guestCount: "", specialRequests: "" });
+      myRequests.refetch();
+      setTab("bookings");
+    },
+    onError: (err) => toast.error(err.message),
+  });
+  const [requestForm, setRequestForm] = useState({
+    businessLine: "member_stay" as "member_stay" | "hunt" | "fish" | "hunt_and_fish",
+    requestedStart: "",
+    requestedEnd: "",
+    guestCount: "",
+    specialRequests: "",
+  });
   if (loading) {
     return (
       <PublicLayout>
@@ -331,24 +347,6 @@ export default function MemberPortal() {
   const blockedDateStrings = (blockedDates.data ?? []).map((d) => {
     const date = new Date(d.date);
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
-  });
-
-  const submitRequest = trpc.booking.requests.submit.useMutation({
-    onSuccess: () => {
-      toast.success("Stay request submitted. Our concierge team will follow up within 24 hours.");
-      setRequestForm({ businessLine: "member_stay", requestedStart: "", requestedEnd: "", guestCount: "", specialRequests: "" });
-      myRequests.refetch();
-      setTab("bookings");
-    },
-    onError: (err) => toast.error(err.message),
-  });
-
-  const [requestForm, setRequestForm] = useState({
-    businessLine: "member_stay" as "member_stay" | "hunt" | "fish" | "hunt_and_fish",
-    requestedStart: "",
-    requestedEnd: "",
-    guestCount: "",
-    specialRequests: "",
   });
 
   const tabs: { key: Tab; label: string; badge?: number }[] = [

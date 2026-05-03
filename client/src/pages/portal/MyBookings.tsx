@@ -26,8 +26,16 @@ import { toast } from "sonner";
 
 const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
-function formatDate(d: string) {
-  const [y, m, day] = d.split("-");
+function toDateStr(d: string | Date | null | undefined): string {
+  if (!d) return "";
+  if (d instanceof Date) return d.toISOString().split("T")[0];
+  if (typeof d === "string" && d.includes("T")) return d.split("T")[0];
+  return String(d);
+}
+function formatDate(d: string | Date | null | undefined) {
+  const s = toDateStr(d);
+  if (!s) return "";
+  const [y, m, day] = s.split("-");
   return `${MONTHS[parseInt(m) - 1]} ${parseInt(day)}, ${y}`;
 }
 
@@ -149,7 +157,8 @@ function CancelDialog({
 function BookingCard({ booking, onCancel }: { booking: any; onCancel: () => void }) {
   const statusCfg = STATUS_CONFIG[booking.status] ?? STATUS_CONFIG.pending_approval;
   const today = new Date().toISOString().split("T")[0];
-  const isUpcoming = booking.startDate >= today;
+  const startStr = booking.startDate instanceof Date ? booking.startDate.toISOString().split("T")[0] : String(booking.startDate ?? "");
+  const isUpcoming = startStr >= today;
   const canCancel = isUpcoming && ["pending_approval", "confirmed"].includes(booking.status);
 
   return (
@@ -163,7 +172,7 @@ function BookingCard({ booking, onCancel }: { booking: any; onCancel: () => void
               <div>
                 <Link href={`/portal/properties/${booking.propertyId}`}>
                   <span className="font-semibold text-stone-100 hover:text-amber-400 transition-colors cursor-pointer">
-                    {booking.propertyName}
+                    {booking.property?.name ?? booking.propertyName ?? "Property"}
                   </span>
                 </Link>
                 <div className="text-xs text-stone-500 font-mono mt-0.5">{booking.bookingRef}</div>
@@ -236,8 +245,9 @@ export default function MyBookings() {
   const today = new Date().toISOString().split("T")[0];
 
   const filtered = (data ?? []).filter((b: any) => {
-    if (tab === "upcoming") return b.startDate >= today && b.status !== "cancelled";
-    if (tab === "past") return b.startDate < today || b.status === "completed" || b.status === "cancelled";
+    const bStart = b.startDate instanceof Date ? b.startDate.toISOString().split("T")[0] : String(b.startDate ?? "");
+    if (tab === "upcoming") return bStart >= today && b.status !== "cancelled";
+    if (tab === "past") return bStart < today || b.status === "completed" || b.status === "cancelled";
     return true;
   });
 

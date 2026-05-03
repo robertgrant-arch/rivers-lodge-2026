@@ -65,8 +65,15 @@ const ACTIVITY_OPTIONS = [
   { value: "scouting", label: "Scouting" },
 ];
 
-function formatDate(d: string) {
-  const [y, m, day] = d.split("-");
+/** Normalise a date value (Date object, ISO string, or YYYY-MM-DD string) to a YYYY-MM-DD string */
+function toDateStr(d: string | Date | unknown): string {
+  if (d instanceof Date) return d.toISOString().split("T")[0];
+  if (typeof d === "string") return d.split("T")[0]; // handles ISO strings too
+  return String(d).split("T")[0];
+}
+function formatDate(d: string | Date | unknown) {
+  const s = toDateStr(d);
+  const [y, m, day] = s.split("-");
   return `${MONTHS[parseInt(m) - 1]} ${parseInt(day)}, ${y}`;
 }
 

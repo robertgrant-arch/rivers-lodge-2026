@@ -552,7 +552,8 @@ export const propertyBookingRouter = router({
           updatedAt: now(),
         } as any);
 
-        const bookingId = Number((insertResult as any).insertId);
+        // Drizzle mysql2 insert returns [OkPacket, ...], so insertId is on index 0
+        const bookingId = Number((insertResult as any)[0]?.insertId ?? (insertResult as any).insertId);
 
         // Insert add-ons
         if (input.addOns?.length) {
@@ -886,7 +887,8 @@ export const propertyBookingRouter = router({
             updatedAt: ts,
           } as any);
 
-          const propertyId = Number((result as any).insertId);
+          // Drizzle mysql2 insert returns [OkPacket, ...], so insertId is on index 0
+          const propertyId = Number((result as any)[0]?.insertId ?? (result as any).insertId);
 
           // Create default booking rules
           await db.insert(propertyBookingRules).values({

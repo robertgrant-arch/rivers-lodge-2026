@@ -489,3 +489,11 @@
 - [x] Style the Member Portal nav item to stand out (gold border or filled button style)
 - [x] Ensure mobile nav also has the Member Portal link
 - [x] Verify /membership page has a prominent Become a Member CTA for non-members
+
+## Phase 29: Full Site Review & E2E Fix
+- [ ] Fix property booking error (create booking procedure)
+- [ ] Audit all tRPC router procedures for broken inputs/queries
+- [ ] Fix all Member Portal flows (dashboard, bookings, properties, profile)
+- [ ] Fix all Ops Portal flows (properties CRUD, membership, booking management)
+- [ ] Fix all public page flows (contact form, events, gallery, outdoors, membership)
+- [ ] Run full TypeScript check and test suite
