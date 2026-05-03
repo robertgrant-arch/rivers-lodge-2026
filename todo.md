@@ -506,3 +506,14 @@
 - [x] Add Archive button to each message card in AdminDashboard Messages tab
 - [x] Add Archived tab toggle to Messages section to view/restore archived chains
 - [x] Write vitest tests for archive/unarchive procedures
+
+## Phase 32: Field Reports + Newsletter (Complete)
+- [x] Add field_reports and newsletters tables to schema and run db:push
+- [x] Build reportsRouter.ts with fieldReports CRUD and newsletter AI draft/approve/send procedures
+- [x] Wire reportsRouter into appRouter in routers.ts
+- [x] Build PortalFieldReports.tsx admin page (fishing/hunting/field conditions CRUD)
+- [x] Build PortalNewsletter.tsx admin page (AI draft, preview, approve, send)
+- [x] Add Field Reports and Newsletter nav items to PortalLayout.tsx
+- [x] Add routes to App.tsx for /ops/field-reports and /ops/newsletter
+- [x] Fix all TypeScript errors (sonner toast API)
+- [x] 117 tests passing, 0 TypeScript errors

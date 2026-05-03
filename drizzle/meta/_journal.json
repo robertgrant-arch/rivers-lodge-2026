@@ -71,6 +71,13 @@
       "when": 1777835433160,
       "tag": "0009_quick_northstar",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "5",
+      "when": 1777847446089,
+      "tag": "0010_bent_namor",
+      "breakpoints": true
     }
   ]
 }

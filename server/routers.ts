@@ -10,6 +10,7 @@ import { portalRouter } from "./portalRouter";
 import { bookingRouter } from "./bookingRouter";
 import { tripsRouter } from "./tripsRouter";
 import { propertyBookingRouter } from "./propertyBookingRouter";
+import { reportsRouter } from "./reportsRouter";
 import { getDb } from "./db";
 import { leads, reservationRequests } from "../drizzle/booking-schema";
 
@@ -758,6 +759,7 @@ export const appRouter = router({
   booking: bookingRouter,
   trips: tripsRouter,
   propertyBooking: propertyBookingRouter,
+  reports: reportsRouter,
 });
 
 export type AppRouter = typeof appRouter;

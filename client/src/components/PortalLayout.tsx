@@ -47,6 +47,8 @@ import {
   UserCheck,
   MessageSquare,
   TreePine,
+  FileText,
+  Newspaper,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "wouter";
@@ -79,6 +81,8 @@ const navGroups = [
       { icon: TreePine, label: "Properties", path: "/ops/properties" },
       { icon: Target, label: "Hunt & Fish", path: "/ops/hunt-fish" },
       { icon: BookOpen, label: "Member Bookings", path: "/ops/member-bookings" },
+      { icon: FileText, label: "Field Reports", path: "/ops/field-reports" },
+      { icon: Newspaper, label: "Newsletter", path: "/ops/newsletter" },
     ],
   },
   {

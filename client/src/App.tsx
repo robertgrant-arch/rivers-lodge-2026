@@ -34,6 +34,8 @@ import PortalCustomers from "./pages/portal/PortalCustomers";
 import PortalEmployees from "./pages/portal/PortalEmployees";
 import PortalMembership from "./pages/portal/PortalMembership";
 import PortalReports from "./pages/portal/PortalReports";
+import PortalFieldReports from "./pages/portal/PortalFieldReports";
+import PortalNewsletter from "./pages/portal/PortalNewsletter";
 import PortalBookings from "./pages/portal/PortalBookings";
 import PortalLeads from "./pages/portal/PortalLeads";
 import PortalAvailability from "./pages/portal/PortalAvailability";
@@ -95,6 +97,8 @@ function Router() {
       <Route path="/ops/availability">{() => <PortalLayout><PortalAvailability /></PortalLayout>}</Route>
       <Route path="/ops/testimonials">{() => <PortalLayout><PortalTestimonials /></PortalLayout>}</Route>
       <Route path="/ops/properties">{() => <PortalLayout><PortalProperties /></PortalLayout>}</Route>
+      <Route path="/ops/field-reports">{() => <PortalLayout><PortalFieldReports /></PortalLayout>}</Route>
+      <Route path="/ops/newsletter">{() => <PortalLayout><PortalNewsletter /></PortalLayout>}</Route>
       {/* Public waiver signing */}
       <Route path="/sign-waiver/:token">{(p) => <SignWaiver />}</Route>
       {/* Fallback */}
