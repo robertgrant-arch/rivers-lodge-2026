@@ -7,8 +7,9 @@ import { toast } from "sonner";
 import PublicLayout from "@/components/PublicLayout";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Eye, X } from "lucide-react";
+import PropertyBrowser from "@/pages/portal/PropertyBrowser";
 
-type Tab = "dashboard" | "bookings" | "calendar" | "request" | "updates" | "messages" | "profile";
+type Tab = "dashboard" | "bookings" | "calendar" | "request" | "updates" | "messages" | "profile" | "properties";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -351,13 +352,14 @@ export default function MemberPortal() {
   });
 
   const tabs: { key: Tab; label: string; badge?: number }[] = [
-    { key: "dashboard",  label: "Dashboard" },
-    { key: "bookings",   label: "My Stays", badge: (myRequests.data ?? []).filter(r => r.status === "new" || r.status === "contacted").length || undefined },
-    { key: "calendar",   label: "Calendar" },
-    { key: "request",    label: "Request a Stay" },
-    { key: "updates",    label: "Seasonal Updates" },
-    { key: "messages",   label: "Concierge", badge: (myMessages.data ?? []).length || undefined },
-    { key: "profile",    label: "Profile" },
+    { key: "dashboard",   label: "Dashboard" },
+    { key: "properties",  label: "Properties" },
+    { key: "bookings",    label: "My Stays", badge: (myRequests.data ?? []).filter(r => r.status === "new" || r.status === "contacted").length || undefined },
+    { key: "calendar",    label: "Calendar" },
+    { key: "request",     label: "Request a Stay" },
+    { key: "updates",     label: "Seasonal Updates" },
+    { key: "messages",    label: "Concierge", badge: (myMessages.data ?? []).length || undefined },
+    { key: "profile",     label: "Profile" },
   ];
 
   // For staff/admin users without a member record, show their role as the tier label
@@ -986,6 +988,13 @@ export default function MemberPortal() {
           )}
 
         </div>
+
+        {/* ── Properties Tab ────────────────────────────────────────── */}
+        {tab === "properties" && (
+          <div className="-mx-6 lg:-mx-16">
+            <PropertyBrowser />
+          </div>
+        )}
 
         {/* ── Profile Tab ───────────────────────────────────────────── */}
         {tab === "profile" && (

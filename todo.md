@@ -475,3 +475,10 @@
 - [x] Ensure admins (role=admin/owner) bypass the membership gate entirely
 - [x] Ensure users with an active member record bypass the membership gate
 - [x] Test the fix with the owner account
+
+## Phase 27: Three Next Steps
+- [x] Add "Properties" tab to Member Portal tab bar linking to /portal/properties
+- [x] Embed PropertyBrowser inline in the Member Portal Properties tab (no redirect needed)
+- [x] Seed season-specific booking rules: whitetail season (Oct 1 - Jan 31), waterfowl (Nov 1 - Jan 31), turkey (Apr 1 - May 31), fishing (Apr 1 - Oct 31), quail (Nov 1 - Feb 28)
+- [x] Seed propertySeasons table rows for each of the 5 demo properties with correct opening/closing dates
+- [x] Auto-create linked member record for owner account (userId=1) with founding tier via ensureMemberForPreview logic in seed script
