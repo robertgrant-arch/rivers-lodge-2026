@@ -454,11 +454,11 @@
 
 ## Phase 25: Fix Member Self-Booking Flow
 
-- [ ] Diagnose why admin test member account cannot schedule a booking
-- [ ] Ensure member record exists and is linked to the logged-in user
-- [ ] Seed demo hunting properties and slots in the database
-- [ ] Fix any router/UI errors blocking the booking flow
-- [ ] Add slot auto-generation from PortalProperties ops page
+- [x] Diagnose why admin test member account cannot schedule a booking
+- [x] Ensure member record exists and is linked to the logged-in user
+- [x] Seed demo hunting properties and slots in the database
+- [x] Fix any router/UI errors blocking the booking flow
+- [x] Add slot auto-generation from PortalProperties ops page
 
 ## Phase 25 Completion (Session 3)
 - [x] Diagnose why admin test member account cannot schedule a booking
@@ -469,3 +469,9 @@
 - [x] Add hasElectricity and hasCellService to AMENITY_FIELDS in PortalProperties create/edit forms
 - [x] Add hasElectricity and hasCellService to admin create/update property server input schemas
 - [x] 85 tests passing, 0 TypeScript errors confirmed
+
+## Phase 26: Fix Member Portal Gate for Admin/Member Accounts
+- [x] Fix member portal showing "apply for membership" screen to logged-in admin/member users
+- [x] Ensure admins (role=admin/owner) bypass the membership gate entirely
+- [x] Ensure users with an active member record bypass the membership gate
+- [x] Test the fix with the owner account

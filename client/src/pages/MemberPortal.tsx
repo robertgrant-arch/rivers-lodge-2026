@@ -299,7 +299,10 @@ export default function MemberPortal() {
   }
 
   const member = memberStatus.data;
-  const isMember = !!member && member.active;
+  // Admins, owners, and staff roles always have portal access regardless of member record
+  const STAFF_ROLES = ["admin", "owner", "venue_sales", "events_manager", "membership_manager", "hunt_fish_ops", "hospitality", "staff", "finance"];
+  const isStaff = !!user?.role && STAFF_ROLES.includes(user.role as string);
+  const isMember = isStaff || (!!member && member.active);
 
   if (!isMember && !memberStatus.isLoading) {
     return (
@@ -357,7 +360,12 @@ export default function MemberPortal() {
     { key: "profile",    label: "Profile" },
   ];
 
-  const tierLabel = member?.tier ? member.tier.charAt(0).toUpperCase() + member.tier.slice(1) : "Standard";
+  // For staff/admin users without a member record, show their role as the tier label
+  const tierLabel = member?.tier
+    ? member.tier.charAt(0).toUpperCase() + member.tier.slice(1)
+    : isStaff
+      ? (user?.role === "owner" ? "Owner" : user?.role === "admin" ? "Admin" : "Staff")
+      : "Standard";
   const pendingRequests = (myRequests.data ?? []).filter(r => !["converted","rejected","lost"].includes(r.status));
   const announcements = cmsAnnouncements.data ?? [];
 
@@ -994,7 +1002,7 @@ export default function MemberPortal() {
                     { label: "Email", value: user?.email ?? "—" },
                     { label: "Membership Tier", value: tierLabel },
                     { label: "Member Number", value: member?.memberNumber ? `#${member.memberNumber}` : "—" },
-                    { label: "Status", value: member?.active ? "Active" : "Inactive" },
+                    { label: "Status", value: member?.active ? "Active" : isStaff ? "Staff Access" : "Inactive" },
                     { label: "Member Since", value: member?.joinDate ? new Date(member.joinDate).toLocaleDateString("en-US", { month: "long", year: "numeric" }) : "—" },
                     { label: "Renewal Date", value: member?.renewalDate ? new Date(member.renewalDate).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }) : "—" },
                   ].map((field) => (
