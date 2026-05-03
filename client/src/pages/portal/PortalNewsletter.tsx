@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,7 +10,10 @@ import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { Newspaper, Sparkles, CheckCircle2, Send, Trash2, Edit2, Eye, Clock, RotateCcw, Users } from "lucide-react";
+import {
+  Newspaper, Sparkles, CheckCircle2, Send, Trash2, Edit2, Eye,
+  Clock, RotateCcw, Users, X, Columns2,
+} from "lucide-react";
 
 type NewsletterStatus = "draft" | "pending_approval" | "approved" | "sent" | "cancelled";
 
@@ -22,30 +25,36 @@ const STATUS_CONFIG: Record<NewsletterStatus, { label: string; color: string }> 
   cancelled: { label: "Cancelled", color: "bg-red-100 text-red-700" },
 };
 
+type EditingNewsletter = {
+  id: number;
+  subject: string;
+  body: string;
+  originalStatus: NewsletterStatus;
+};
+
 export default function PortalNewsletter() {
   const [statusFilter, setStatusFilter] = useState<NewsletterStatus | "all">("all");
   const [generateOpen, setGenerateOpen] = useState(false);
-  const [editOpen, setEditOpen] = useState(false);
-  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewNewsletter, setPreviewNewsletter] = useState<{
+    subject: string; finalContent: string; status: NewsletterStatus; sentCount?: number | null;
+  } | null>(null);
   const [sendConfirmId, setSendConfirmId] = useState<number | null>(null);
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [generating, setGenerating] = useState(false);
   const [aiContext, setAiContext] = useState("");
   const [includeReports, setIncludeReports] = useState(true);
-  const [editingNewsletter, setEditingNewsletter] = useState<{
-    id: number; subject: string; finalContent: string;
-  } | null>(null);
-  const [previewNewsletter, setPreviewNewsletter] = useState<{
-    subject: string; finalContent: string; status: NewsletterStatus; sentCount?: number | null;
-  } | null>(null);
+
+  // Full-screen editor state
+  const [editorOpen, setEditorOpen] = useState(false);
+  const [editingNewsletter, setEditingNewsletter] = useState<EditingNewsletter | null>(null);
+  const [showPreviewPane, setShowPreviewPane] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [savingAndApproving, setSavingAndApproving] = useState(false);
   const [sending, setSending] = useState(false);
 
   const utils = trpc.useUtils();
 
-  const newslettersQuery = trpc.reports.newsletters.list.useQuery({
-    status: statusFilter,
-  });
+  const newslettersQuery = trpc.reports.newsletters.list.useQuery({ status: statusFilter });
 
   const generateDraftMutation = trpc.reports.newsletters.generateDraft.useMutation({
     onSuccess: (data) => {
@@ -60,17 +69,14 @@ export default function PortalNewsletter() {
   const updateMutation = trpc.reports.newsletters.update.useMutation({
     onSuccess: () => {
       utils.reports.newsletters.list.invalidate();
-      setEditOpen(false);
-      setEditingNewsletter(null);
-      toast.success("Newsletter updated");
     },
-    onError: (e) => toast.error("Error: " + e.message),
+    onError: (e) => toast.error("Error saving: " + e.message),
   });
 
   const approveMutation = trpc.reports.newsletters.approve.useMutation({
     onSuccess: () => {
       utils.reports.newsletters.list.invalidate();
-      toast.success("Newsletter approved: Ready to send to members.");
+      toast.success("Newsletter approved — ready to send to members.");
     },
     onError: (e) => toast.error("Error: " + e.message),
   });
@@ -105,17 +111,52 @@ export default function PortalNewsletter() {
     }
   };
 
-  const handleSaveEdit = async () => {
+  const openEditor = (nl: {
+    id: number; subject: string; finalContent: string | null; draftContent: string | null; status: string;
+  }) => {
+    setEditingNewsletter({
+      id: nl.id,
+      subject: nl.subject,
+      body: nl.finalContent ?? nl.draftContent ?? "",
+      originalStatus: nl.status as NewsletterStatus,
+    });
+    setEditorOpen(true);
+  };
+
+  const closeEditor = () => {
+    setEditorOpen(false);
+    setEditingNewsletter(null);
+  };
+
+  const handleSave = async () => {
     if (!editingNewsletter) return;
     setSaving(true);
     try {
       await updateMutation.mutateAsync({
         id: editingNewsletter.id,
         subject: editingNewsletter.subject,
-        finalContent: editingNewsletter.finalContent,
+        finalContent: editingNewsletter.body,
       });
+      toast.success("Newsletter saved.");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleSaveAndApprove = async () => {
+    if (!editingNewsletter) return;
+    setSavingAndApproving(true);
+    try {
+      await updateMutation.mutateAsync({
+        id: editingNewsletter.id,
+        subject: editingNewsletter.subject,
+        finalContent: editingNewsletter.body,
+      });
+      await approveMutation.mutateAsync({ id: editingNewsletter.id });
+      toast.success("Newsletter saved and approved — ready to send!");
+      closeEditor();
+    } finally {
+      setSavingAndApproving(false);
     }
   };
 
@@ -189,6 +230,7 @@ export default function PortalNewsletter() {
           {newsletters.map((nl) => {
             const status = nl.status as NewsletterStatus;
             const cfg = STATUS_CONFIG[status];
+            const canEdit = status !== "sent" && status !== "cancelled";
             return (
               <Card key={nl.id} className="hover:shadow-sm transition-shadow">
                 <CardContent className="p-4">
@@ -239,27 +281,23 @@ export default function PortalNewsletter() {
                       >
                         <Eye className="w-4 h-4" />
                       </Button>
-                      {/* Edit (not sent) */}
-                      {status !== "sent" && status !== "cancelled" && (
+
+                      {/* Edit — opens full-screen editor */}
+                      {canEdit && (
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="h-8 w-8 p-0"
-                          title="Edit"
-                          onClick={() => {
-                            setEditingNewsletter({
-                              id: nl.id,
-                              subject: nl.subject,
-                              finalContent: nl.finalContent ?? nl.draftContent ?? "",
-                            });
-                            setEditOpen(true);
-                          }}
+                          className="h-8 gap-1 px-2"
+                          title="Edit content"
+                          onClick={() => openEditor(nl)}
                         >
                           <Edit2 className="w-4 h-4" />
+                          <span className="text-xs">Edit</span>
                         </Button>
                       )}
-                      {/* Approve (pending_approval) */}
-                      {status === "pending_approval" && (
+
+                      {/* Approve (pending_approval or draft) */}
+                      {(status === "pending_approval" || status === "draft") && (
                         <Button
                           variant="ghost"
                           size="sm"
@@ -270,6 +308,7 @@ export default function PortalNewsletter() {
                           Approve
                         </Button>
                       )}
+
                       {/* Send (approved) */}
                       {status === "approved" && (
                         <Button
@@ -281,18 +320,7 @@ export default function PortalNewsletter() {
                           Send
                         </Button>
                       )}
-                      {/* Re-approve if draft */}
-                      {status === "draft" && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 gap-1 text-blue-700 hover:text-blue-700 hover:bg-blue-50"
-                          onClick={() => approveMutation.mutate({ id: nl.id })}
-                        >
-                          <CheckCircle2 className="w-4 h-4" />
-                          Approve
-                        </Button>
-                      )}
+
                       {/* Delete (not sent) */}
                       {status !== "sent" && (
                         <Button
@@ -313,7 +341,116 @@ export default function PortalNewsletter() {
         </div>
       )}
 
-      {/* Generate AI Draft Dialog */}
+      {/* ── Full-Screen Editor ─────────────────────────────────────────── */}
+      {editorOpen && editingNewsletter && (
+        <div className="fixed inset-0 z-50 bg-background flex flex-col">
+          {/* Editor toolbar */}
+          <div className="flex items-center justify-between px-4 py-3 border-b bg-card shrink-0">
+            <div className="flex items-center gap-3">
+              <Edit2 className="w-5 h-5 text-amber-600" />
+              <span className="font-semibold text-foreground">Edit Newsletter</span>
+              <Badge className={`text-xs ${STATUS_CONFIG[editingNewsletter.originalStatus].color}`}>
+                {STATUS_CONFIG[editingNewsletter.originalStatus].label}
+              </Badge>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="gap-1.5 text-xs"
+                onClick={() => setShowPreviewPane((v) => !v)}
+                title={showPreviewPane ? "Hide preview" : "Show preview"}
+              >
+                <Columns2 className="w-4 h-4" />
+                {showPreviewPane ? "Hide Preview" : "Show Preview"}
+              </Button>
+              <Button variant="outline" size="sm" onClick={closeEditor}>
+                <X className="w-4 h-4 mr-1" />
+                Cancel
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleSave}
+                disabled={saving || savingAndApproving}
+              >
+                {saving ? "Saving…" : "Save Draft"}
+              </Button>
+              {editingNewsletter.originalStatus !== "approved" && (
+                <Button
+                  size="sm"
+                  className="gap-1.5 bg-emerald-700 hover:bg-emerald-800 text-white"
+                  onClick={handleSaveAndApprove}
+                  disabled={saving || savingAndApproving}
+                >
+                  {savingAndApproving ? (
+                    <>
+                      <RotateCcw className="w-4 h-4 animate-spin" />
+                      Saving…
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle2 className="w-4 h-4" />
+                      Save &amp; Approve
+                    </>
+                  )}
+                </Button>
+              )}
+            </div>
+          </div>
+
+          {/* Subject line */}
+          <div className="px-4 py-3 border-b bg-card shrink-0">
+            <div className="flex items-center gap-3 max-w-3xl">
+              <Label className="text-xs text-muted-foreground whitespace-nowrap w-16 shrink-0">Subject</Label>
+              <Input
+                value={editingNewsletter.subject}
+                onChange={(e) =>
+                  setEditingNewsletter((n) => n ? { ...n, subject: e.target.value } : n)
+                }
+                className="text-sm font-medium"
+                placeholder="Newsletter subject line…"
+              />
+            </div>
+          </div>
+
+          {/* Split pane: editor | preview */}
+          <div className={`flex-1 flex overflow-hidden ${showPreviewPane ? "divide-x" : ""}`}>
+            {/* Left: raw editor */}
+            <div className={`flex flex-col ${showPreviewPane ? "w-1/2" : "w-full"} overflow-hidden`}>
+              <div className="px-3 py-2 border-b bg-muted/40 shrink-0">
+                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">HTML Source</span>
+              </div>
+              <Textarea
+                value={editingNewsletter.body}
+                onChange={(e) =>
+                  setEditingNewsletter((n) => n ? { ...n, body: e.target.value } : n)
+                }
+                className="flex-1 resize-none rounded-none border-0 font-mono text-xs leading-relaxed focus-visible:ring-0 h-full"
+                placeholder="Newsletter HTML content…"
+                spellCheck={false}
+              />
+            </div>
+
+            {/* Right: live rendered preview */}
+            {showPreviewPane && (
+              <div className="w-1/2 flex flex-col overflow-hidden">
+                <div className="px-3 py-2 border-b bg-muted/40 shrink-0">
+                  <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Live Preview</span>
+                </div>
+                <div className="flex-1 overflow-y-auto p-6">
+                  <div
+                    className="prose prose-sm max-w-none bg-white text-gray-900 rounded-lg p-6 shadow-sm border"
+                    dangerouslySetInnerHTML={{ __html: editingNewsletter.body }}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ── Generate AI Draft Dialog ───────────────────────────────────── */}
       <Dialog open={generateOpen} onOpenChange={setGenerateOpen}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
@@ -324,7 +461,7 @@ export default function PortalNewsletter() {
           </DialogHeader>
           <div className="space-y-4 py-2">
             <p className="text-sm text-muted-foreground">
-              The AI will write a warm, seasonal member newsletter in the voice of The Rivers Lodge & Hunt Club. 
+              The AI will write a warm, seasonal member newsletter in the voice of The Rivers Lodge &amp; Hunt Club.
               It will automatically reference recent published field reports for context.
             </p>
             <div className="space-y-1.5">
@@ -369,46 +506,11 @@ export default function PortalNewsletter() {
         </DialogContent>
       </Dialog>
 
-      {/* Edit Dialog */}
-      <Dialog open={editOpen} onOpenChange={setEditOpen}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Edit Newsletter</DialogTitle>
-          </DialogHeader>
-          {editingNewsletter && (
-            <div className="space-y-4 py-2">
-              <div className="space-y-1.5">
-                <Label>Subject Line</Label>
-                <Input
-                  value={editingNewsletter.subject}
-                  onChange={(e) => setEditingNewsletter((n) => n ? { ...n, subject: e.target.value } : n)}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label>Content (HTML)</Label>
-                <Textarea
-                  value={editingNewsletter.finalContent}
-                  onChange={(e) => setEditingNewsletter((n) => n ? { ...n, finalContent: e.target.value } : n)}
-                  rows={20}
-                  className="font-mono text-xs"
-                />
-                <p className="text-xs text-muted-foreground">
-                  Edit the HTML content directly. Use &lt;h2&gt;, &lt;p&gt;, and &lt;em&gt; tags.
-                </p>
-              </div>
-            </div>
-          )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setEditOpen(false)}>Cancel</Button>
-            <Button onClick={handleSaveEdit} disabled={saving}>
-              {saving ? "Saving…" : "Save Changes"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Preview Dialog */}
-      <Dialog open={previewOpen || previewNewsletter !== null} onOpenChange={(o) => !o && setPreviewNewsletter(null)}>
+      {/* ── Preview Dialog ─────────────────────────────────────────────── */}
+      <Dialog
+        open={previewNewsletter !== null}
+        onOpenChange={(o) => !o && setPreviewNewsletter(null)}
+      >
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -441,7 +543,7 @@ export default function PortalNewsletter() {
         </DialogContent>
       </Dialog>
 
-      {/* Send Confirmation */}
+      {/* ── Send Confirmation ──────────────────────────────────────────── */}
       <AlertDialog open={sendConfirmId !== null} onOpenChange={(o) => !o && setSendConfirmId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -463,7 +565,7 @@ export default function PortalNewsletter() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Delete Confirmation */}
+      {/* ── Delete Confirmation ────────────────────────────────────────── */}
       <AlertDialog open={deleteId !== null} onOpenChange={(o) => !o && setDeleteId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>

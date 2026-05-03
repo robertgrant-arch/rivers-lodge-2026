@@ -517,3 +517,9 @@
 - [x] Add routes to App.tsx for /ops/field-reports and /ops/newsletter
 - [x] Fix all TypeScript errors (sonner toast API)
 - [x] 117 tests passing, 0 TypeScript errors
+
+## Phase 33: Newsletter Content Editing
+- [x] Upgrade Edit dialog to rich split-pane editor: editable subject + body textarea on left, live rendered HTML preview on right
+- [x] Add "Save & Approve" shortcut button so Elliot can edit and approve in one step
+- [x] Ensure edit works for draft, pending_approval, and approved statuses (not sent/cancelled)
+- [x] Run pnpm test and npx tsc --noEmit, save checkpoint
