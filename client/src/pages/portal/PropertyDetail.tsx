@@ -26,7 +26,7 @@ import {
   Loader2, ChevronLeft, ChevronRight, Clock, Info,
 } from "lucide-react";
 import { toast } from "sonner";
-import { nanoid } from "nanoid";
+// idempotencyKey uses native crypto.randomUUID (produces a valid UUID v4)
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -286,7 +286,7 @@ function BookingDialog({
       huntingLicenseConfirmed: huntingLicense,
       fishingLicenseConfirmed: fishingLicense,
       memberNotes: notes || undefined,
-      idempotencyKey: nanoid(),
+      idempotencyKey: crypto.randomUUID(),
     });
   };
 

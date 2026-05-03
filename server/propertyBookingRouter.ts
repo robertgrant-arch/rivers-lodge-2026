@@ -848,6 +848,8 @@ export const propertyBookingRouter = router({
           hasHeatedBlind: z.boolean().optional(),
           hasAtvAccess: z.boolean().optional(),
           hasWaterAccess: z.boolean().optional(),
+          hasElectricity: z.boolean().optional(),
+          hasCellService: z.boolean().optional(),
           gpsLat: z.number().optional(),
           gpsLng: z.number().optional(),
           locationNotes: z.string().max(300).optional(),
@@ -878,8 +880,8 @@ export const propertyBookingRouter = router({
             hasHeatedBlind: input.hasHeatedBlind ?? false,
             hasAtvAccess: input.hasAtvAccess ?? false,
             hasWaterAccess: input.hasWaterAccess ?? false,
-            hasElectricity: false,
-            hasCellService: true,
+            hasElectricity: input.hasElectricity ?? false,
+            hasCellService: input.hasCellService ?? true,
             createdAt: ts,
             updatedAt: ts,
           } as any);
@@ -929,6 +931,8 @@ export const propertyBookingRouter = router({
           hasHeatedBlind: z.boolean().optional(),
           hasAtvAccess: z.boolean().optional(),
           hasWaterAccess: z.boolean().optional(),
+          hasElectricity: z.boolean().optional(),
+          hasCellService: z.boolean().optional(),
         }))
         .mutation(async ({ ctx, input }: { ctx: any; input: any }) => {
           requireAdmin(ctx.user.role);

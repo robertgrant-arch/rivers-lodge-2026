@@ -451,3 +451,21 @@
 ### Ops Portal UI
 - [x] PortalProperties page at /ops/properties — property CRUD (create/edit/delete), slot management, booking pipeline per property
 - [x] Properties nav item in PortalLayout sidebar (Outdoor Operations section)
+
+## Phase 25: Fix Member Self-Booking Flow
+
+- [ ] Diagnose why admin test member account cannot schedule a booking
+- [ ] Ensure member record exists and is linked to the logged-in user
+- [ ] Seed demo hunting properties and slots in the database
+- [ ] Fix any router/UI errors blocking the booking flow
+- [ ] Add slot auto-generation from PortalProperties ops page
+
+## Phase 25 Completion (Session 3)
+- [x] Diagnose why admin test member account cannot schedule a booking
+- [x] Ensure member record exists and is linked to the logged-in user (userId=1, RL-2026-0001)
+- [x] Seed 5 demo hunting properties into the database (North Timber Stand, South Duck Blind, River Bass Pond, East Pasture Turkey Field, Lodge Quail Preserve)
+- [x] Fix idempotencyKey bug: PropertyDetail used nanoid() which produces non-UUID strings; server validates z.string().uuid() — replaced with crypto.randomUUID()
+- [x] Verify availability API returns all dates as "open" for seeded properties (no inventory rows = full capacity, confirmed via API test)
+- [x] Add hasElectricity and hasCellService to AMENITY_FIELDS in PortalProperties create/edit forms
+- [x] Add hasElectricity and hasCellService to admin create/update property server input schemas
+- [x] 85 tests passing, 0 TypeScript errors confirmed
