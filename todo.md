@@ -523,3 +523,28 @@
 - [x] Add "Save & Approve" shortcut button so Elliot can edit and approve in one step
 - [x] Ensure edit works for draft, pending_approval, and approved statuses (not sent/cancelled)
 - [x] Run pnpm test and npx tsc --noEmit, save checkpoint
+
+## Phase 34: Definitive Image Audit & Fix
+- [ ] Crawl theriverslodge.com page by page, screenshot each section, document which image belongs where
+- [ ] Inventory all CDN image filenames used in codebase
+- [ ] Fix Home.tsx image assignments
+- [ ] Fix Weddings.tsx image assignments
+- [ ] Fix Lodging.tsx image assignments
+- [ ] Fix Venues.tsx image assignments
+- [ ] Fix Corporate.tsx image assignments
+- [ ] Fix Hunt.tsx image assignments
+- [ ] Fix Fish.tsx image assignments
+- [ ] Fix Estate.tsx image assignments
+- [ ] Fix Gallery.tsx image assignments
+- [ ] Fix Membership.tsx image assignments
+- [ ] Run pnpm test and npx tsc --noEmit, save checkpoint
+
+## Phase 35: Full QA + Image Remediation
+- [ ] Crawl original site, visually identify every image per section
+- [ ] Inventory and visually identify all manus-storage images
+- [ ] Build definitive original→manus-storage mapping table
+- [ ] QA all public routes: /, /estate, /events, /weddings, /corporate, /lodging, /outdoors, /gallery, /contact, /membership
+- [ ] QA auth, member portal, admin/ops, booking flow, mobile nav
+- [ ] Apply all image fixes
+- [ ] Apply all non-image bug fixes
+- [ ] TypeScript + tests + final browser verification + checkpoint

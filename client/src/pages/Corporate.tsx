@@ -6,7 +6,7 @@ import StickyInquiryCTA from "@/components/StickyInquiryCTA";
 
 
 const HERO     = "/manus-storage/3C0A0304_cb66bc23.jpg";
-const BARN     = "/manus-storage/6M9A3239_d4c999f4.jpg";
+const BARN     = "/manus-storage/IMG_0646_6bb80f84.jpg";
 const GROUNDS  = "/manus-storage/6M9A3253_319f3a3b.jpg";
 const AERIAL   = "/manus-storage/DJI_0017_538feef1.jpg";
 const LODGE    = "/manus-storage/974A9398edit_294e71ff.jpg";
@@ -90,7 +90,7 @@ export default function Corporate() {
               </div>
             </div>
             <div className="aspect-[4/3] overflow-hidden">
-              <img src={BARN} alt="Rivers Barn interior" className="w-full h-full object-cover" loading="lazy" />
+              <img src={BARN} alt="Rivers Barn exterior at dusk" className="w-full h-full object-cover" loading="lazy" />
             </div>
           </div>
         </div>

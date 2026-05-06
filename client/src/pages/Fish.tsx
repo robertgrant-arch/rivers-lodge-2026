@@ -5,10 +5,10 @@ import SEOHead from "@/components/SEOHead";
 import HuntFishAvailabilityCalendar from "@/components/HuntFishAvailabilityCalendar";
 
 
-const HERO   = "/manus-storage/20200515-3M4A7106_ae87fae0.jpg";
-const RIVER  = "/manus-storage/20200515-3M4A7755_40689230.jpg";
+const HERO   = "/manus-storage/6M9A3255_b8f0386f.jpg";
+const RIVER  = "/manus-storage/Rivers_SEPT2022_-253-1_f15787e1.jpg";
 const AERIAL = "/manus-storage/DJI_0017_538feef1.jpg";
-const FIELD  = "/manus-storage/6M9A3255_b8f0386f.jpg";
+const FIELD  = "/manus-storage/20200515-3M4A7755_40689230.jpg";
 
 function useFadeUp(t = 0.12) {
   const ref = useRef<HTMLElement>(null);

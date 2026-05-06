@@ -12,7 +12,7 @@ interface SEOHeadProps {
 const SITE_NAME = "The Rivers Lodge & Hunt Club";
 const DEFAULT_DESCRIPTION =
   "A private estate in La Cygne, Kansas — offering world-class weddings & events and an exclusive sporting membership with hunting, fishing, and luxury lodging.";
-const DEFAULT_IMAGE = "/manus-storage/DJI_0017_d07307f4.jpg";
+const DEFAULT_IMAGE = "/manus-storage/DJI_0017_538feef1.jpg";
 const BASE_URL = "https://theriverslodge.com";
 
 export default function SEOHead({

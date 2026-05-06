@@ -37,7 +37,7 @@ const FALLBACK_VENUES = [
     capacity: { ceremony: 120, reception: null },
     desc: "Where the open field meets the old-growth timber line along the river. Timber Edge offers a naturally framed ceremony space with dappled light and a sense of enclosure that no constructed venue can replicate. The raw materials of the land — mature trees, native grasses, and the river — do all the work.",
     details: ["Old-growth timber backdrop", "Natural framing", "Dappled light", "Intimate atmosphere", "Along the river", "Up to 120 ceremony guests"],
-    img: "/manus-storage/UebeleinWed589_f26542b0.jpg",
+    img: "/manus-storage/6M9A3253_319f3a3b.jpg",
   },
   {
     slug: "pavilion",
@@ -46,7 +46,7 @@ const FALLBACK_VENUES = [
     capacity: { ceremony: null, reception: 200 },
     desc: "A covered outdoor structure on the north side of Rivers Barn, featuring a ceiling of string lighting perfect for an ancillary bar cart and dance floor under the stars. The Pavilion extends the event footprint of Rivers Barn and is ideal for cocktail receptions, outdoor dancing, and overflow entertaining.",
     details: ["String-light ceiling", "North side of Rivers Barn", "Dance floor under the stars", "Bar cart setup", "Cocktail reception space", "Up to 200 guests"],
-    img: "/manus-storage/UebeleinWed652_e0900d60.jpg",
+    img: "/manus-storage/UebeleinWed629_ebea0f99.jpg",
   },
 ];
 
