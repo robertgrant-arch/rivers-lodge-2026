@@ -187,7 +187,7 @@ export default function Estate() {
               <img src={AERIAL} alt="Aerial view of the Rivers Lodge estate" className="w-full h-full object-cover" loading="lazy" />
               {[
                 { label: "The Lodge",   top: "78%", left: "68%" },
-                { label: "Rivers Barn", top: "60%", left: "85%" },
+                { label: "Rivers Barn", top: "55%", left: "75%" },
                 { label: "River",       top: "22%", left: "62%" },
                 { label: "Clubhouse",   top: "46%", left: "21%" },
               ].map((pt) => (
