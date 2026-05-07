@@ -186,10 +186,10 @@ export default function Estate() {
             <div className="relative aspect-[4/3] overflow-hidden">
               <img src={AERIAL} alt="Aerial view of the Rivers Lodge estate" className="w-full h-full object-cover" loading="lazy" />
               {[
-                { label: "The Lodge",   top: "28%", left: "42%" },
-                { label: "Rivers Barn", top: "52%", left: "60%" },
-                { label: "River",       top: "74%", left: "28%" },
-                { label: "Clubhouse",   top: "38%", left: "20%" },
+                { label: "The Lodge",   top: "78%", left: "68%" },
+                { label: "Rivers Barn", top: "60%", left: "85%" },
+                { label: "River",       top: "22%", left: "62%" },
+                { label: "Clubhouse",   top: "46%", left: "21%" },
               ].map((pt) => (
                 <div key={pt.label} className="absolute flex items-center gap-2"
                   style={{ top: pt.top, left: pt.left, transform: "translate(-50%,-50%)" }}>
