@@ -36,6 +36,8 @@ async function startServer() {
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
   registerStorageProxy(app);
   registerOAuthRoutes(app);
+  // Health check for Render (and other load balancers)
+  app.get("/api/health", (_req, res) => res.json({ ok: true }));
   // tRPC API
   app.use(
     "/api/trpc",
