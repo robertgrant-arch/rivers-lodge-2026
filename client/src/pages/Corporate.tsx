@@ -5,12 +5,12 @@ import SEOHead from "@/components/SEOHead";
 import StickyInquiryCTA from "@/components/StickyInquiryCTA";
 
 
-const HERO     = "/manus-storage/3C0A0304_cb66bc23.jpg";
-const BARN     = "/manus-storage/IMG_0646_6bb80f84.jpg";
-const GROUNDS  = "/manus-storage/6M9A3253_319f3a3b.jpg";
-const AERIAL   = "/manus-storage/DJI_0017_538feef1.jpg";
-const LODGE    = "/manus-storage/974A9398edit_294e71ff.jpg";
-const INTERIOR = "/manus-storage/974A8419edit_f37de96e.jpg";
+const HERO     = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/ydbhfuDouoqRGsqW.jpg";
+const BARN     = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/GEBYbBimoPflfefP.jpg";
+const GROUNDS  = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/RNvGygATwGRMluZa.jpg";
+const AERIAL   = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/jPtEuiXynfNedkpV.jpg";
+const LODGE    = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/TdlSWCLWjUxbkCAY.jpg";
+const INTERIOR = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/JcuUUmANmAAHItUn.jpg";
 
 function useFadeUp(t = 0.12) {
   const ref = useRef<HTMLElement>(null);

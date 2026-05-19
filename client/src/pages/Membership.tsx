@@ -8,11 +8,11 @@ import { trpc } from "@/lib/trpc";
 const STAFF_ROLES_M = ["admin", "owner", "venue_sales", "events_manager", "membership_manager", "hunt_fish_ops", "hospitality", "staff", "finance"];
 
 
-const HERO    = "/manus-storage/Rivers_SEPT2022_-253-1_f15787e1.jpg";
-const AERIAL  = "/manus-storage/DJI_0017_538feef1.jpg";
-const RIVER   = "/manus-storage/6M9A3255_b8f0386f.jpg";
-const GROUNDS = "/manus-storage/6M9A3253_319f3a3b.jpg";
-const LODGE   = "/manus-storage/974A9398edit_294e71ff.jpg";
+const HERO    = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/xZXSDWkpiCXfqsiU.jpg";
+const AERIAL  = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/jPtEuiXynfNedkpV.jpg";
+const RIVER   = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/aLRhjpmRWbewKvgx.jpg";
+const GROUNDS = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/RNvGygATwGRMluZa.jpg";
+const LODGE   = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/TdlSWCLWjUxbkCAY.jpg";
 
 function useFadeUp(t = 0.12) {
   const ref = useRef<HTMLElement>(null);

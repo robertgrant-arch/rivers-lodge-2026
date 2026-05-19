@@ -5,12 +5,12 @@ import SEOHead from "@/components/SEOHead";
 import HuntFishAvailabilityCalendar from "@/components/HuntFishAvailabilityCalendar";
 
 
-const HERO    = "/manus-storage/Rivers_SEPT2022_-134_157d1be5.jpg";
-const FIELD   = "/manus-storage/6M9A3255_b8f0386f.jpg";
-const TIMBER  = "/manus-storage/3C0A0304_cb66bc23.jpg";
-const AERIAL  = "/manus-storage/DJI_0017_538feef1.jpg";
-const GROUNDS = "/manus-storage/6M9A3253_319f3a3b.jpg";
-const LODGE   = "/manus-storage/974A9398edit_294e71ff.jpg";
+const HERO    = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/ueUiZmGhmnLKziOQ.jpg";
+const FIELD   = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/aLRhjpmRWbewKvgx.jpg";
+const TIMBER  = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/ydbhfuDouoqRGsqW.jpg";
+const AERIAL  = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/jPtEuiXynfNedkpV.jpg";
+const GROUNDS = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/RNvGygATwGRMluZa.jpg";
+const LODGE   = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/TdlSWCLWjUxbkCAY.jpg";
 
 function useFadeUp(t = 0.12) {
   const ref = useRef<HTMLElement>(null);

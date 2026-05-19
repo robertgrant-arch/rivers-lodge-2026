@@ -13,8 +13,8 @@ const FALLBACK_LODGING = [
     bedrooms: 4,
     desc: "Our 6,000 square foot lodge has 4 bedrooms decorated by a prominent Kansas City designer and incorporates many aspects of history and outdoor pursuits from the area. The lodge has a full kitchen, large balcony, heated floors, heating/AC, and a large recreation room.",
     features: ["4 bedrooms", "6,000 sq ft", "Full kitchen", "Large balcony", "Heated floors", "Recreation room", "Kansas City designer interiors"],
-    img: "/manus-storage/974A9398edit_294e71ff.jpg",
-    img2: "/manus-storage/6M9A3239_d4c999f4.jpg",
+    img: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/TdlSWCLWjUxbkCAY.jpg",
+    img2: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/ooPGTJSHasHosVDF.jpg",
   },
   {
     slug: "riverhouse-suites",
@@ -24,8 +24,8 @@ const FALLBACK_LODGING = [
     bedrooms: 4,
     desc: "The Riverhouse Suites were completed in 2022 and designed with luxury in mind. Each room is uniquely decorated and all rooms have their own bathrooms and individual heating/AC units.",
     features: ["4 private suites", "Private bath per suite", "Individual heating/AC", "Uniquely decorated rooms", "Luxury finishes", "Completed 2022"],
-    img: "/manus-storage/Rivers_May2023-28_f44fb1bd.jpg",
-    img2: "/manus-storage/Rivers_SEPT2022_-241_9b9f5433.jpg",
+    img: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/oyCUCsQLeEsyBufo.jpg",
+    img2: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/wswsJSxuUMvPOXez.jpg",
   },
   {
     slug: "annex-bridal-suite",
@@ -35,8 +35,8 @@ const FALLBACK_LODGING = [
     bedrooms: 4,
     desc: "The Annex & Bridal Suite was completely remodeled in 2021. It has a modern farmhouse feel with a light and airy design. Just steps away from Rivers Barn, it is the perfect spot to spend the day getting ready for your big day. The Annex & Bridal Suite has 4 bedrooms and 3 bathrooms.",
     features: ["4 bedrooms", "3 bathrooms", "Steps from Rivers Barn", "Remodeled 2021", "Modern farmhouse feel", "Light and airy design"],
-    img: "/manus-storage/Rivers_May2023-27_33df99ba.jpg",
-    img2: "/manus-storage/Rivers_SEPT2022_-116_e668dc61.jpg",
+    img: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/iIofWjQRmWLcfkoI.jpg",
+    img2: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/pNgYcBDkkMZrjPdg.jpg",
   },
   {
     slug: "ohana-house",
@@ -46,8 +46,8 @@ const FALLBACK_LODGING = [
     bedrooms: 4,
     desc: "The Ohana House is located approximately 15 minutes from the main lodge. It has 4 bedrooms and bathrooms, a 20-acre lake, a gorgeous fire pit, and miles of nature trails. Enjoy fishing, canoeing, paddle boarding, hiking, or just laying on a hammock. The Ohana House can be rented as part of a corporate or wedding package, or is a perfect place for just a family getaway.",
     features: ["4 bedrooms & bathrooms", "20-acre private lake", "Gorgeous fire pit", "Miles of nature trails", "Fishing, canoeing, paddleboarding", "15 min from main lodge"],
-    img: "/manus-storage/6M9A3255_b8f0386f.jpg",
-    img2: "/manus-storage/DJI_0017_538feef1.jpg",
+    img: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/aLRhjpmRWbewKvgx.jpg",
+    img2: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/jPtEuiXynfNedkpV.jpg",
   },
   {
     slug: "the-farmhouse",
@@ -57,8 +57,8 @@ const FALLBACK_LODGING = [
     bedrooms: null,
     desc: "A classic Kansas farmhouse on the estate grounds. Comfortable, private, and full of character — ideal for overflow lodging, family groups, or guests who prefer a quieter corner of the property.",
     features: ["Private setting", "Classic farmhouse character", "Estate grounds", "Ideal for overflow", "Quiet and secluded", "Full amenities"],
-    img: "/manus-storage/6M9A3214-2_bcea97ca.jpg",
-    img2: "/manus-storage/6M9A3217_33692de0.jpg",
+    img: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/FBhBBcKGLLMcZCZH.jpg",
+    img2: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/CWqFSDNCUymmKhkq.jpg",
   },
 ];
 

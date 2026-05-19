@@ -6,15 +6,15 @@ import SEOHead, { structuredData } from "@/components/SEOHead";
 import StickyInquiryCTA from "@/components/StickyInquiryCTA";
 
 
-const HERO      = "/manus-storage/UebeleinWed335_e6a9084a.jpg";
-const CEREMONY  = "/manus-storage/UebeleinWed405_59f02b8c.jpg";
-const RECEPTION = "/manus-storage/UebeleinWed557_b0b3b0ff.jpg";
-const BARN_INT  = "/manus-storage/UebeleinWed629_ebea0f99.jpg";
-const GROUNDS   = "/manus-storage/6M9A3253_319f3a3b.jpg";
-const AERIAL    = "/manus-storage/Rivers_SEPT2022_-253-1_f15787e1.jpg";
-const RIVER_LWN = "/manus-storage/20200515-3M4A7947_af6607de.jpg";
-const LODGE     = "/manus-storage/974A9398edit_294e71ff.jpg";
-const INTERIOR  = "/manus-storage/974A8419edit_f37de96e.jpg";
+const HERO      = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/NuVfykZEURKLacpv.jpg";
+const CEREMONY  = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/qYCdMEPFXPqLETpW.jpg";
+const RECEPTION = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/gWfYLmNXrOoFKvTt.jpg";
+const BARN_INT  = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/SSdcPuhkHXDvzhtk.jpg";
+const GROUNDS   = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/RNvGygATwGRMluZa.jpg";
+const AERIAL    = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/xZXSDWkpiCXfqsiU.jpg";
+const RIVER_LWN = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/JbMIltWvczRWbDaw.jpg";
+const LODGE     = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/TdlSWCLWjUxbkCAY.jpg";
+const INTERIOR  = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/JcuUUmANmAAHItUn.jpg";
 
 function useFadeUp(t = 0.12) {
   const ref = useRef<HTMLElement>(null);

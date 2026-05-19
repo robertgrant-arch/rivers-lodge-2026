@@ -7,13 +7,13 @@ import FAQAccordion from "@/components/FAQAccordion";
 
 
 /* ── Images ──────────────────────────────────────────────────────────────── */
-const HERO       = "/manus-storage/UebeleinWed557_b0b3b0ff.jpg";
-const BARN_INT   = "/manus-storage/6M9A3239_d4c999f4.jpg";
-const CEREMONY   = "/manus-storage/UebeleinWed335_e6a9084a.jpg";
-const RECEPTION  = "/manus-storage/UebeleinWed629_ebea0f99.jpg";
-const LODGE_EXT  = "/manus-storage/974A9398edit_294e71ff.jpg";
-const INTERIOR   = "/manus-storage/974A8419edit_f37de96e.jpg";
-const GROUNDS    = "/manus-storage/20200515-3M4A7947_af6607de.jpg";
+const HERO       = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/gWfYLmNXrOoFKvTt.jpg";
+const BARN_INT   = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/ooPGTJSHasHosVDF.jpg";
+const CEREMONY   = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/NuVfykZEURKLacpv.jpg";
+const RECEPTION  = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/SSdcPuhkHXDvzhtk.jpg";
+const LODGE_EXT  = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/TdlSWCLWjUxbkCAY.jpg";
+const INTERIOR   = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/JcuUUmANmAAHItUn.jpg";
+const GROUNDS    = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/JbMIltWvczRWbDaw.jpg";
 
 const BLUSH = "oklch(0.70 0.060 50)";
 
