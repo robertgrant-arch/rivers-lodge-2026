@@ -17,11 +17,18 @@
     "types": ["node", "vite/client"],
     "paths": {
       "@/_core/*": ["./features/_core/client/*"],
+      "@/components/ui": ["./features/_shared/ui"],
+      "@/components/ui/*": ["./features/_shared/ui/*"],
+      "@/hooks/*": ["./features/_shared/hooks/*"],
+      "@/hooks": ["./features/_shared/hooks"],
       "@/lib/*": ["./features/_core/client/lib/*"],
+      "@/lib": ["./features/_core/client/lib"],
       "@/const": ["./features/_core/client/const"],
+      "@/const/*": ["./features/_core/client/const/*"],
       "@/contexts/*": ["./features/_core/client/contexts/*"],
       "@/*": ["./client/src/*"],
-      "@shared/*": ["./features/_core/shared/*"]
+      "@shared/*": ["./features/_core/shared/*"],
+      "@shared": ["./features/_core/shared"]
     }
   }
 }

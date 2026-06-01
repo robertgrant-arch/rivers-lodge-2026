@@ -4,4 +4,4 @@
  */
 
 export type * from "../db/schema";
-export * from "./_core/errors";
+export * from "./errors";
