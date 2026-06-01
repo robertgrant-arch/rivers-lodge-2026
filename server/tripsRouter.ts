@@ -10,11 +10,11 @@
 
 import { z } from "zod";
 import { and, desc, eq, sql } from "drizzle-orm";
-import { getDb } from "./db";
-import { router, publicProcedure, protectedProcedure } from "./_core/trpc";
+import { getDb } from "../features/_core/server/db";
+import { router, publicProcedure, protectedProcedure } from "../features/_core/server/trpc";
 import { TRPCError } from "@trpc/server";
-import { huntFishSlots, tripRequests } from "../drizzle/booking-schema";
-import { members, users } from "../drizzle/schema";
+import { huntFishSlots, tripRequests } from '@/features/_core/db/booking-schema';
+import { members, users } from '@/features/_core/db/schema';
 
 // ─── Role helpers ─────────────────────────────────────────────────────────────
 

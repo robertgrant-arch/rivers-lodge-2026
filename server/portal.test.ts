@@ -4,8 +4,8 @@
  */
 import { describe, it, expect } from "vitest";
 import { appRouter } from "./routers";
-import type { TrpcContext } from "./_core/context";
-import type { AuthenticatedUser } from "./_core/auth";
+import type { TrpcContext } from "../features/_core/server/context";
+import type { AuthenticatedUser } from "../features/_core/server/auth";
 
 // ─── Context helpers ──────────────────────────────────────────────────────────
 

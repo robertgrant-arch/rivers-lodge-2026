@@ -13,8 +13,8 @@
 
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { router, publicProcedure, protectedProcedure } from "./_core/trpc";
-import { getDb } from "./db";
+import { router, publicProcedure, protectedProcedure } from "../features/_core/server/trpc";
+import { getDb } from "../features/_core/server/db";
 import {
   huntingProperties,
   propertySeasons,
@@ -30,8 +30,8 @@ import {
   bookingWaitlist,
   propertyImages,
   propertyAmenities,
-} from "../drizzle/property-booking-schema";
-import { members } from "../drizzle/schema";
+} from '@/features/_core/db/property-booking-schema';
+import { members } from '@/features/_core/db/schema';
 import { eq, and, gte, lte, sql, desc, asc, or, isNull, ne } from "drizzle-orm";
 import { nanoid } from "nanoid";
 

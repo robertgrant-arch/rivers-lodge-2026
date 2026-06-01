@@ -19,8 +19,8 @@ import {
   InsertMessage,
   blockedDates,
   InsertBlockedDate,
-} from "../drizzle/schema";
-import { ENV } from "./_core/env";
+} from "../db/schema";
+import { ENV } from "./env";
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
@@ -284,7 +284,7 @@ import {
   InsertCmsAnnouncement,
   InsertCmsSingleton,
   InsertCmsMemberContent,
-} from "../drizzle/schema";
+} from "../db/schema";
 
 export async function getCmsAmenities() {
   const db = await getDb();

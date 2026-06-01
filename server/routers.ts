@@ -1,18 +1,18 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { COOKIE_NAME } from "@shared/const";
-import { getSessionCookieOptions } from "./_core/cookies";
-import { systemRouter } from "./_core/systemRouter";
-import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
-import { notifyOwner } from "./_core/notification";
-import * as db from "./db";
+import { getSessionCookieOptions } from "../features/_core/server/cookies";
+import { systemRouter } from "../features/_core/server/systemRouter";
+import { publicProcedure, protectedProcedure, router } from "../features/_core/server/trpc";
+import { notifyOwner } from "../features/_core/server/notification";
+import * as db from "../features/_core/server/db";
 import { portalRouter } from "./portalRouter";
 import { bookingRouter } from "./bookingRouter";
 import { tripsRouter } from "./tripsRouter";
 import { propertyBookingRouter } from "./propertyBookingRouter";
 import { reportsRouter } from "./reportsRouter";
-import { getDb } from "./db";
-import { leads, reservationRequests } from "../drizzle/booking-schema";
+import { getDb } from "../features/_core/server/db";
+import { leads, reservationRequests } from '@/features/_core/db/booking-schema';
 
 // ─── Admin guard ──────────────────────────────────────────────────────────────
 const adminProcedure = protectedProcedure.use(({ ctx, next }) => {

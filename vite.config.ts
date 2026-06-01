@@ -156,8 +156,14 @@ export default defineConfig({
   plugins,
   resolve: {
     alias: {
+      "@/_core": path.resolve(import.meta.dirname, "features/_core/client"),
+      "@/lib": path.resolve(import.meta.dirname, "features/_core/client/lib"),
+      "@/const": path.resolve(import.meta.dirname, "features/_core/client/const"),
+      "@/contexts": path.resolve(import.meta.dirname, "features/_core/client/contexts"),
+      "@/components/ui": path.resolve(import.meta.dirname, "features/_shared/ui"),
+      "@/hooks": path.resolve(import.meta.dirname, "features/_shared/hooks"),
       "@": path.resolve(import.meta.dirname, "client", "src"),
-      "@shared": path.resolve(import.meta.dirname, "shared"),
+      "@shared": path.resolve(import.meta.dirname, "features/_core/shared"),
       "@assets": path.resolve(import.meta.dirname, "attached_assets"),
     },
   },

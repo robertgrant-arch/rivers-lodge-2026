@@ -3,7 +3,7 @@
  * Returns the storage key and URL for the generated PDF.
  */
 import PDFDocument from "pdfkit";
-import { storagePut } from "./storage";
+import { storagePut } from "../features/_core/server/storage";
 
 export interface WaiverPdfData {
   waiverTitle: string;

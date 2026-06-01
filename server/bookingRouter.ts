@@ -10,11 +10,11 @@
  *   - requests.*        Reservation request management
  */
 
-import { router, publicProcedure, protectedProcedure } from "./_core/trpc";
+import { router, publicProcedure, protectedProcedure } from "../features/_core/server/trpc";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { eq, desc, and, ne, sql, inArray, like, lt, gt } from "drizzle-orm";
-import { getDb } from "./db";
+import { getDb } from "../features/_core/server/db";
 import {
   resources,
   resourceGroups,
@@ -26,8 +26,8 @@ import {
   reservationRequests,
   leads,
   bookingStateTransitions,
-} from "../drizzle/booking-schema";
-import { bookings, users, blockedDates } from "../drizzle/schema";
+} from '@/features/_core/db/booking-schema';
+import { bookings, users, blockedDates } from '@/features/_core/db/schema';
 import { gte, lte } from "drizzle-orm";
 import {
   checkAvailability,

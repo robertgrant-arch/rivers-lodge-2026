@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { generateAndStoreWaiverPdf } from "./waiverPdf";
-import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
+import { publicProcedure, protectedProcedure, router } from "../features/_core/server/trpc";
 import { drizzle } from "drizzle-orm/mysql2";
 import { eq, desc, and, gte, lte, sql, or, like } from "drizzle-orm";
 import {
@@ -19,8 +19,8 @@ import {
   portalNotifications,
   portalTasks,
   portalNotes,
-} from "../drizzle/portal-schema";
-import { users, members, membershipApplications, inquiries, bookings } from "../drizzle/schema";
+} from '@/features/_core/db/portal-schema';
+import { users, members, membershipApplications, inquiries, bookings } from '@/features/_core/db/schema';
 import { randomBytes } from "crypto";
 
 function getDb() {
