@@ -6,11 +6,12 @@ import { systemRouter } from "../features/_core/server/systemRouter";
 import { publicProcedure, protectedProcedure, router } from "../features/_core/server/trpc";
 import { notifyOwner } from "../features/_core/server/notification";
 import * as db from "../features/_core/server/db";
-import { portalRouter } from "./portalRouter";
-import { bookingRouter } from "./bookingRouter";
-import { tripsRouter } from "./tripsRouter";
+import { portalRouter } from "../features/admin-portal/public";
+import { bookingRouter } from "../features/booking-engine/public";
+// TODO(batch-3): trips extracted to features/trips/server/router.ts
+import { tripsRouter } from "../features/trips/public";
 import { propertyBookingRouter } from "./propertyBookingRouter";
-import { reportsRouter } from "./reportsRouter";
+import { reportsRouter, updatesRouter } from "../features/reports/public";
 import { getDb } from "../features/_core/server/db";
 import { leads, reservationRequests } from '@/features/_core/db/booking-schema';
 
@@ -30,6 +31,8 @@ const memberProcedure = protectedProcedure.use(async ({ ctx, next }) => {
 });
 
 // ─── Inquiries ────────────────────────────────────────────────────────────────
+// TODO(batch-4): EXTRACTED to features/inquiries/server/router.ts — import via features/inquiries/public
+// Remove this inline router and import inquiriesRouter from "../features/inquiries/public" once callers are migrated.
 const inquiriesRouter = router({
   submit: publicProcedure
     .input(
@@ -108,6 +111,9 @@ const inquiriesRouter = router({
 });
 
 // ─── Membership Applications ──────────────────────────────────────────────────
+// TODO(membership-extraction): EXTRACTED to features/membership/server/router.ts
+// Replace this inline membershipRouter with the import below once callers are migrated:
+//   import { membershipRouter } from '../features/membership/public';
 const membershipRouter = router({
   submitApplication: publicProcedure
     .input(
@@ -204,6 +210,9 @@ const membershipRouter = router({
 });
 
 // ─── Bookings ─────────────────────────────────────────────────────────────────
+// TODO(batch-4): Legacy bookings router — candidate for extraction to
+// features/bookings/server/legacyRouter.ts once the new booking-engine feature
+// covers the same surface area.
 const bookingsRouter = router({
   list: adminProcedure.query(async () => {
     return db.getAllBookings();
@@ -276,33 +285,11 @@ const bookingsRouter = router({
 });
 
 // ─── Seasonal Updates ─────────────────────────────────────────────────────────
-const updatesRouter = router({
-  list: publicProcedure.query(async () => {
-    return db.getAllSeasonalUpdates();
-  }),
-
-  create: adminProcedure
-    .input(
-      z.object({
-        title: z.string().min(1),
-        body: z.string().min(1),
-        category: z.enum(["whitetail", "waterfowl", "turkey", "fishing", "general"]),
-      })
-    )
-    .mutation(async ({ input }) => {
-      await db.createSeasonalUpdate(input);
-      return { success: true };
-    }),
-
-  delete: adminProcedure
-    .input(z.object({ id: z.number() }))
-    .mutation(async ({ input }) => {
-      await db.deleteSeasonalUpdate(input.id);
-      return { success: true };
-    }),
-});
+// Extracted to features/reports/server/updatesRouter.ts — imported via features/reports/public
 
 // ─── Messages (Concierge) ─────────────────────────────────────────────────────
+// TODO(batch-4): EXTRACTED to features/messages/server/router.ts (messagesRouter)
+// Replace inline router + import from '../features/messages/public' once callers migrated.
 const messagesRouter = router({
   myMessages: protectedProcedure.query(async ({ ctx }) => {
     return db.getMessagesForUser(ctx.user.id);
@@ -373,6 +360,9 @@ const messagesRouter = router({
 });
 
 // ─── Waivers ──────────────────────────────────────────────────────────────────
+// TODO(batch-4): EXTRACTED to features/waivers/server/legacyRouter.ts (legacyWaiversRouter)
+// Combined router at features/waivers/server/router.ts (waiversRouter).
+// Replace inline router + import from '../features/waivers/public' once callers migrated.
 const waiversRouter = router({
   list: adminProcedure.query(async () => {
     return db.getAllWaivers();
@@ -730,6 +720,8 @@ const cmsRouter = router({
 });
 
 // ─── Admin: Users ─────────────────────────────────────────────────────────────
+// TODO: EXTRACTED to features/auth/server/adminRouter.ts (authAdminRouter)
+// Remove this router and wire up authAdminRouter once callers are migrated.
 const adminRouter = router({
   users: adminProcedure.query(async () => {
     return db.getAllUsers();
@@ -739,6 +731,8 @@ const adminRouter = router({
 // ─── App Router ───────────────────────────────────────────────────────────────
 export const appRouter = router({
   system: systemRouter,
+  // TODO: EXTRACTED to features/auth/server/router.ts (authRouter)
+  // Replace this inline auth router with authRouter once callers are migrated.
   auth: router({
     me: publicProcedure.query((opts) => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {

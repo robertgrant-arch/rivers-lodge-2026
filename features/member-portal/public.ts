@@ -1,0 +1,6 @@
+// pages imported directly by App.tsx router
+export { default as MemberPortal } from "./client/pages/MemberPortal";
+export { default as MyBookings } from "./client/pages/MyBookings";
+export { default as PropertyBrowser } from "./client/pages/PropertyBrowser";
+export { default as PropertyDetail } from "./client/pages/PropertyDetail";
+export { default as PortalAvailability } from "./client/pages/PortalAvailability";

@@ -13,8 +13,8 @@
 
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { router, publicProcedure, protectedProcedure } from "../features/_core/server/trpc";
-import { getDb } from "../features/_core/server/db";
+import { router, publicProcedure, protectedProcedure } from "../../_core/server/trpc";
+import { getDb } from "../../_core/server/db";
 import {
   huntingProperties,
   propertySeasons,

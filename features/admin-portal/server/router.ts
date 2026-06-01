@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { generateAndStoreWaiverPdf } from "./waiverPdf";
-import { publicProcedure, protectedProcedure, router } from "../features/_core/server/trpc";
+import { generateAndStoreWaiverPdf } from "../../waivers/server/waiverPdf";
+import { publicProcedure, protectedProcedure, router } from "../../_core/server/trpc";
 import { drizzle } from "drizzle-orm/mysql2";
 import { eq, desc, and, gte, lte, sql, or, like } from "drizzle-orm";
 import {
@@ -19,8 +19,8 @@ import {
   portalNotifications,
   portalTasks,
   portalNotes,
-} from '@/features/_core/db/portal-schema';
-import { users, members, membershipApplications, inquiries, bookings } from '@/features/_core/db/schema';
+} from '../../_core/db/portal-schema';
+import { users, members, membershipApplications, inquiries, bookings } from '../../_core/db/schema';
 import { randomBytes } from "crypto";
 
 function getDb() {
@@ -913,6 +913,9 @@ const employeesPortalRouter = router({
 });
 
 // ─── Membership Portal Router ─────────────────────────────────────────────────
+// TODO(membership-extraction): EXTRACTED to features/membership/server/router.ts
+// These procedures have been merged into membershipRouter in the feature module.
+// Remove this sub-router and update the portalRouter assembly below once callers are migrated.
 const membershipPortalRouter = router({
   applications: portalProcedure
     .input(z.object({ status: z.string().optional() }))
@@ -1073,8 +1076,8 @@ const auditLogRouter = router({
     }),
 });
 
-// ─── Reports Router ───────────────────────────────────────────────────────────
-const reportsRouter = router({
+// ─── Analytics Router ─────────────────────────────────────────────────────────
+const analyticsRouter = router({
   pipeline: portalProcedure.query(async () => {
     const db = getDb();
     const weddingPipeline = await db.select({
@@ -1173,5 +1176,5 @@ export const portalRouter = router({
   employees: employeesPortalRouter,
   membership: membershipPortalRouter,
   auditLog: auditLogRouter,
-  reports: reportsRouter,
+  analytics: analyticsRouter,
 });

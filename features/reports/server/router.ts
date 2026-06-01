@@ -1,11 +1,11 @@
 import { z } from "zod";
-import { router, protectedProcedure, adminProcedure } from "../features/_core/server/trpc";
+import { router, protectedProcedure, adminProcedure } from "../../_core/server/trpc";
 import { TRPCError } from "@trpc/server";
-import { getDb } from "../features/_core/server/db";
+import { getDb } from "../../_core/server/db";
 import { fieldReports, newsletters, users, members } from '@/features/_core/db/schema';
 import { eq, desc, and } from "drizzle-orm";
-import { invokeLLM } from "../features/_core/server/llm";
-import { notifyOwner } from "../features/_core/server/notification";
+import { invokeLLM } from "../../_core/server/llm";
+import { notifyOwner } from "../../_core/server/notification";
 
 // ─── Field Reports Router ─────────────────────────────────────────────────────
 

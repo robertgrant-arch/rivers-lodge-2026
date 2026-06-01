@@ -98,6 +98,9 @@ export async function updateInquiryStatus(id: number, status: "new" | "contacted
 }
 
 // ─── Membership Applications ──────────────────────────────────────────────────
+// TODO(membership-extraction): These helpers have been copied to
+// features/membership/server/dal.ts. Remove them here once all callers import
+// from the feature module instead.
 
 export async function createMembershipApplication(data: InsertMembershipApplication) {
   const db = await getDb();
@@ -118,6 +121,9 @@ export async function updateApplicationStatus(id: number, status: "pending" | "a
 }
 
 // ─── Members ──────────────────────────────────────────────────────────────────
+// TODO(membership-extraction): These helpers have been copied to
+// features/membership/server/dal.ts. Remove them here once all callers import
+// from the feature module instead.
 
 export async function getAllMembers() {
   const db = await getDb();
