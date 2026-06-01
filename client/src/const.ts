@@ -10,10 +10,10 @@ export const getLoginUrl = () => {
   if (!oauthPortalUrl || !appId) {
     if (typeof console !== "undefined") {
       console.warn(
-        "[getLoginUrl] Missing VITE_OAUTH_PORTAL_URL or VITE_APP_ID; login disabled."
+        "[getLoginUrl] Missing VITE_OAUTH_PORTAL_URL or VITE_APP_ID; falling back to /portal."
       );
     }
-    return "";
+    return "/portal";
   }
 
   try {
