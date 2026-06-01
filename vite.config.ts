@@ -156,14 +156,21 @@ export default defineConfig({
   plugins,
   resolve: {
     alias: {
+      // New vertical-slice aliases (targets populated as files migrate)
+      "@core": path.resolve(import.meta.dirname, "_core"),
+      "@features": path.resolve(import.meta.dirname, "features"),
+      // @shared → current location until _shared/ is populated
+      "@shared": path.resolve(import.meta.dirname, "features/_core/shared"),
+      // Legacy @/ aliases kept for compatibility during migration
       "@/_core": path.resolve(import.meta.dirname, "features/_core/client"),
+      "@/_shared": path.resolve(import.meta.dirname, "features/_shared"),
       "@/lib": path.resolve(import.meta.dirname, "features/_core/client/lib"),
       "@/const": path.resolve(import.meta.dirname, "features/_core/client/const"),
       "@/contexts": path.resolve(import.meta.dirname, "features/_core/client/contexts"),
       "@/components/ui": path.resolve(import.meta.dirname, "features/_shared/ui"),
+      "@/components": path.resolve(import.meta.dirname, "features/_shared/components"),
       "@/hooks": path.resolve(import.meta.dirname, "features/_shared/hooks"),
       "@": path.resolve(import.meta.dirname, "client", "src"),
-      "@shared": path.resolve(import.meta.dirname, "features/_core/shared"),
       "@assets": path.resolve(import.meta.dirname, "attached_assets"),
     },
   },

@@ -101,7 +101,7 @@ describe("Route registration", () => {
 });
 
 describe("Navigation — PublicNav", () => {
-  const nav = readFile("client/src/components/PublicNav.tsx");
+  const nav = readFile("features/public-pages/components/PublicNav.tsx");
 
   it("has transparent-to-solid scroll behaviour", () => {
     expect(nav).toContain("scrolled");
@@ -126,7 +126,7 @@ describe("Navigation — PublicNav", () => {
 });
 
 describe("Homepage — dual-track split", () => {
-  const home = readFile("client/src/pages/Home.tsx");
+  const home = readFile("features/public-pages/pages/Home.tsx");
 
   it("has Weddings & Events CTA", () => {
     expect(home).toContain("Weddings");

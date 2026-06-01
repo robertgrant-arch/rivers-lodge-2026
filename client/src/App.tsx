@@ -2,8 +2,8 @@ import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "../../features/public-pages/pages/NotFound";
 import { Route, Switch } from "wouter";
-import ErrorBoundary from "./components/ErrorBoundary";
-import { ThemeProvider } from "./contexts/ThemeContext";
+import ErrorBoundary from "../../features/_shared/components/ErrorBoundary";
+import { ThemeProvider } from "../../features/_core/client/contexts/ThemeContext";
 // Public pages
 import Home from "../../features/public-pages/pages/Home";
 import WeddingsLanding from "../../features/public-pages/pages/WeddingsLanding";

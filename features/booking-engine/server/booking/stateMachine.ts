@@ -17,9 +17,9 @@
  *   → completed:        check-out timestamp exists
  */
 
-import { getDb } from "../../_core/server/db";
-import { bookingStateTransitions } from "../../_core/db/booking-schema";
-import { bookings } from "../../_core/db/schema";
+import { getDb } from "@features/_core/server/db";
+import { bookingStateTransitions } from "@features/_core/db/booking-schema";
+import { bookings } from "@features/_core/db/schema";
 import { eq } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 

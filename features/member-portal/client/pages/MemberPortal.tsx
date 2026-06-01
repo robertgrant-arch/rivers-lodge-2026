@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import PublicLayout from "@/components/PublicLayout";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Eye, X } from "lucide-react";
-import PropertyBrowser from "@/features/member-portal/client/pages/PropertyBrowser";
+import PropertyBrowser from "@features/member-portal/client/pages/PropertyBrowser";
 
 type Tab = "dashboard" | "bookings" | "calendar" | "request" | "updates" | "messages" | "profile" | "properties";
 

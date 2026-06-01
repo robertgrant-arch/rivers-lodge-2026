@@ -3,7 +3,7 @@ import { TRPCError } from "@trpc/server";
 import { publicProcedure, protectedProcedure, router } from "../../_core/server/trpc";
 import { notifyOwner } from "../../_core/server/notification";
 import { getDb } from "../../_core/server/db";
-import { leads, reservationRequests } from "@/features/_core/db/booking-schema";
+import { leads, reservationRequests } from "@features/_core/db/booking-schema";
 import * as dal from "./dal";
 
 // ─── Admin guard ──────────────────────────────────────────────────────────────

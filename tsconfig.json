@@ -16,9 +16,15 @@
     "baseUrl": ".",
     "types": ["node", "vite/client"],
     "paths": {
+      "@core/*": ["./_core/*", "./features/_core/*"],
+      "@shared/*": ["./_shared/*", "./features/_core/shared/*"],
+      "@features/*": ["./features/*"],
       "@/_core/*": ["./features/_core/client/*"],
+      "@/_shared/*": ["./features/_shared/*"],
       "@/components/ui": ["./features/_shared/ui"],
       "@/components/ui/*": ["./features/_shared/ui/*"],
+      "@/components/*": ["./features/_shared/components/*"],
+      "@/components": ["./features/_shared/components"],
       "@/hooks/*": ["./features/_shared/hooks/*"],
       "@/hooks": ["./features/_shared/hooks"],
       "@/lib/*": ["./features/_core/client/lib/*"],
@@ -26,9 +32,7 @@
       "@/const": ["./features/_core/client/const"],
       "@/const/*": ["./features/_core/client/const/*"],
       "@/contexts/*": ["./features/_core/client/contexts/*"],
-      "@/*": ["./client/src/*"],
-      "@shared/*": ["./features/_core/shared/*"],
-      "@shared": ["./features/_core/shared"]
+      "@/*": ["./client/src/*"]
     }
   }
 }

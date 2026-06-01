@@ -12,7 +12,7 @@ import {
   getStatusLabel,
   getStatusColor,
   type BookingStatus,
-} from "./booking/stateMachine";
+} from "../features/booking-engine/server/booking/stateMachine";
 
 // ─── State Machine Tests ──────────────────────────────────────────────────────
 
