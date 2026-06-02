@@ -28,6 +28,11 @@ vi.mock("./dal", () => ({
   createInquiry: vi.fn().mockResolvedValue(undefined),
 }));
 
+// verifyCaptcha resolves by default in these tests (captcha logic tested separately).
+vi.mock("@core/server/captcha", () => ({
+  verifyCaptcha: vi.fn().mockResolvedValue(undefined),
+}));
+
 // ─── Import AFTER mocks are registered ───────────────────────────────────────
 
 import { appRouter } from "../../../_core/server/router";
@@ -52,6 +57,7 @@ const BASE_INPUT = {
   email: "jane@example.com",
   phone: "555-0100",
   message: "Interested in visiting the lodge.",
+  captchaToken: "mock-token", // verifyCaptcha is mocked to resolve in this file
 } satisfies Parameters<ReturnType<typeof appRouter.createCaller>["inquiries"]["submit"]>[0];
 
 /** Wedding input (triggers the reservationRequests insert). */
@@ -62,6 +68,7 @@ const WEDDING_INPUT = {
   eventDate: "2027-06-15",
   guestCount: 150,
   message: "Looking to book the barn.",
+  captchaToken: "mock-token",
 } satisfies Parameters<ReturnType<typeof appRouter.createCaller>["inquiries"]["submit"]>[0];
 
 // ─── Mock db factory ──────────────────────────────────────────────────────────
@@ -156,6 +163,7 @@ describe("inquiries.submit", () => {
       type: "wedding",
       name: "Jane Smith",
       email: "jane@example.com",
+      captchaToken: "mock-token",
       // no eventDate
     });
 

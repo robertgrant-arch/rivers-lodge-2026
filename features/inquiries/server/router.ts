@@ -3,6 +3,7 @@ import { TRPCError } from "@trpc/server";
 import { publicProcedure, protectedProcedure, router } from "../../_core/server/trpc";
 import { notifyOwner } from "../../_core/server/notification";
 import { getDb } from "../../_core/server/db";
+import { verifyCaptcha } from "@core/server/captcha";
 import { leads, reservationRequests } from '@core/db/booking-schema';
 import * as dal from "./dal";
 
@@ -24,9 +25,11 @@ export const inquiriesRouter = router({
         eventDate: z.string().optional(),
         guestCount: z.number().int().positive().optional(),
         message: z.string().optional(),
+        captchaToken: z.string(),
       })
     )
     .mutation(async ({ input }) => {
+      await verifyCaptcha(input.captchaToken);
       await dal.createInquiry(input);
 
       // Map inquiry type to booking system business line

@@ -15,6 +15,7 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { eq, desc, and, ne, sql, inArray, like, lt, gt } from "drizzle-orm";
 import { getDb } from "../../_core/server/db";
+import { verifyCaptcha } from "@core/server/captcha";
 import {
   resources,
   resourceGroups,
@@ -723,8 +724,10 @@ const requestsRouter = router({
       specialRequests: z.string().optional(),
       budgetRange: z.string().optional(),
       hearAboutUs: z.string().optional(),
+      captchaToken: z.string(),
     }))
     .mutation(async ({ input }) => {
+      await verifyCaptcha(input.captchaToken);
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
       await db.insert(reservationRequests).values({

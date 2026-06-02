@@ -10,6 +10,7 @@ import { eq, desc, and, or, like, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import { publicProcedure, protectedProcedure, router } from "../../_core/server/trpc";
 import { notifyOwner } from "../../_core/server/notification";
+import { verifyCaptcha } from "@core/server/captcha";
 import * as dal from "./dal";
 import { members, users, membershipApplications } from '@core/db/schema';
 
@@ -84,9 +85,11 @@ export const membershipRouter = router({
         interests: z.string().optional(),
         referral: z.string().optional(),
         message: z.string().optional(),
+        captchaToken: z.string(),
       })
     )
     .mutation(async ({ input }) => {
+      await verifyCaptcha(input.captchaToken);
       await dal.createMembershipApplication(input);
       await notifyOwner({
         title: `New membership application from ${input.name}`,

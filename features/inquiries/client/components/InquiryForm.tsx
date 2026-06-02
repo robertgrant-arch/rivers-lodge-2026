@@ -1,7 +1,12 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useLocation } from "wouter";
+import { Turnstile } from "@marsidev/react-turnstile";
+import type { TurnstileInstance } from "@marsidev/react-turnstile";
 import { trpc } from '@shared/lib/trpc';
 import AvailabilityCalendar from "../../../booking-engine/client/components/AvailabilityCalendar";
+
+// Read at module init — env var is baked in at build time by Vite.
+const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined;
 
 type InquiryType = "wedding" | "corporate" | "membership" | "lodging" | "tour" | "event" | "general";
 
@@ -28,6 +33,8 @@ export default function InquiryForm({ defaultType = "general", track, onSuccess,
   const [, navigate] = useLocation();
   const [step, setStep] = useState(0);
   const [submitted, setSubmitted] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string>("");
+  const turnstileRef = useRef<TurnstileInstance>(null);
   const [form, setForm] = useState({
     type: defaultType as InquiryType,
     eventDate: "",
@@ -44,6 +51,11 @@ export default function InquiryForm({ defaultType = "general", track, onSuccess,
       onSuccess?.();
       const encodedName = encodeURIComponent(form.name);
       navigate(`/inquiry-confirmed?type=${form.type}&name=${encodedName}`);
+    },
+    onError: () => {
+      // Reset the widget so the user can get a fresh token on retry.
+      turnstileRef.current?.reset();
+      setCaptchaToken("");
     },
   });
 
@@ -68,6 +80,10 @@ export default function InquiryForm({ defaultType = "general", track, onSuccess,
       name: form.name,
       email: form.email,
       phone: form.phone || undefined,
+      // In dev (no TURNSTILE_SITE_KEY), the server bypasses verification so
+      // an empty string is accepted.  In production, the widget always provides
+      // a non-empty token before the Submit button becomes clickable.
+      captchaToken,
     });
   };
 
@@ -278,6 +294,22 @@ export default function InquiryForm({ defaultType = "general", track, onSuccess,
         </div>
       )}
 
+      {/* Turnstile widget — only shown on the final step, only when a site key is configured.
+          In development (no VITE_TURNSTILE_SITE_KEY), the widget is omitted and the server
+          bypasses verification automatically so local dev keeps working. */}
+      {step === STEPS.length - 1 && TURNSTILE_SITE_KEY && (
+        <div className="mt-6">
+          <Turnstile
+            ref={turnstileRef}
+            siteKey={TURNSTILE_SITE_KEY}
+            onSuccess={setCaptchaToken}
+            onExpire={() => setCaptchaToken("")}
+            onError={() => setCaptchaToken("")}
+            options={{ theme: "dark", size: "normal" }}
+          />
+        </div>
+      )}
+
       {/* Navigation */}
       <div className="flex items-center justify-between mt-8 pt-6 border-t border-white/8">
         {step > 0 ? (
@@ -303,7 +335,13 @@ export default function InquiryForm({ defaultType = "general", track, onSuccess,
         ) : (
           <button
             onClick={handleSubmit}
-            disabled={!canAdvance() || submit.isPending}
+            disabled={
+              !canAdvance() ||
+              submit.isPending ||
+              // In production, block submit until the Turnstile token is ready.
+              // In dev (no site key), captchaToken is "" and that's acceptable.
+              (!!TURNSTILE_SITE_KEY && !captchaToken)
+            }
             className="btn-primary text-sm disabled:opacity-30 disabled:cursor-not-allowed"
             style={{ "--btn-accent": accentColor } as React.CSSProperties}
           >
