@@ -52,6 +52,45 @@ async function startServer() {
   registerStorageProxy(app);
   registerOAuthRoutes(app);
 
+  // XML sitemap — minimal static set of public marketing pages.
+  // A richer dynamic sitemap (property listings, blog posts, etc.) is a
+  // later prompt; this ensures search engines can discover the core pages.
+  app.get("/sitemap.xml", (_req, res) => {
+    const base = "https://theriverslodge.com";
+    const now = new Date().toISOString().split("T")[0];
+    const urls = [
+      { loc: "/",           priority: "1.0", changefreq: "weekly" },
+      { loc: "/weddings",   priority: "0.9", changefreq: "monthly" },
+      { loc: "/hunt",       priority: "0.9", changefreq: "monthly" },
+      { loc: "/fish",       priority: "0.8", changefreq: "monthly" },
+      { loc: "/lodging",    priority: "0.8", changefreq: "monthly" },
+      { loc: "/corporate",  priority: "0.7", changefreq: "monthly" },
+      { loc: "/membership", priority: "0.8", changefreq: "monthly" },
+      { loc: "/contact",    priority: "0.6", changefreq: "yearly"  },
+      { loc: "/gallery",    priority: "0.5", changefreq: "monthly" },
+    ];
+
+    const xml = [
+      '<?xml version="1.0" encoding="UTF-8"?>',
+      '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+      ...urls.map(({ loc, priority, changefreq }) =>
+        [
+          "  <url>",
+          `    <loc>${base}${loc}</loc>`,
+          `    <lastmod>${now}</lastmod>`,
+          `    <changefreq>${changefreq}</changefreq>`,
+          `    <priority>${priority}</priority>`,
+          "  </url>",
+        ].join("\n"),
+      ),
+      "</urlset>",
+    ].join("\n");
+
+    res.setHeader("Content-Type", "application/xml; charset=utf-8");
+    res.setHeader("Cache-Control", "public, max-age=86400"); // 24 h
+    res.send(xml);
+  });
+
   // Health check for Render (and other load balancers).
   // Verifies DB connectivity with SELECT 1 / 2-second timeout so that a
   // crashed pool removes the instance from rotation instead of silently

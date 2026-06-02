@@ -150,7 +150,51 @@ function vitePluginManusDebugCollector(): Plugin {
   };
 }
 
-const plugins = [react(), tailwindcss(), jsxLocPlugin(), vitePluginManusRuntime(), vitePluginManusDebugCollector()];
+/**
+ * Vite plugin — substitute or remove analytics %VITE_*% placeholders in
+ * index.html at build time.
+ *
+ * Vite *does* support %VITE_VAR% substitution in index.html, but only when
+ * the variable is present in the build environment.  When the env vars are
+ * absent (local dev without a .env, CI without secrets, etc.) the raw
+ * %VITE_...% strings survive into dist/index.html, producing a broken <script>
+ * tag that browsers load as-is — fetching a URL that literally contains "%".
+ *
+ * This plugin makes the behaviour explicit and safe:
+ *   - Vars set → substitute them (Umami loads correctly)
+ *   - Vars absent → strip the entire <script> tag (no broken request)
+ */
+function vitePluginAnalyticsSubstitute(): Plugin {
+  return {
+    name: "analytics-substitute",
+    // transformIndexHtml runs after Vite's own env substitution, so we only
+    // see un-substituted placeholders when the vars were absent.
+    transformIndexHtml(html: string) {
+      const endpoint = process.env.VITE_ANALYTICS_ENDPOINT;
+      const websiteId = process.env.VITE_ANALYTICS_WEBSITE_ID;
+
+      // Both vars present — substitute them (idempotent if Vite already did it).
+      if (endpoint && websiteId) {
+        return html
+          .replace(/%VITE_ANALYTICS_ENDPOINT%/g, endpoint)
+          .replace(/%VITE_ANALYTICS_WEBSITE_ID%/g, websiteId);
+      }
+
+      // Vars absent — remove the analytics script tag entirely so the build
+      // doesn't ship a src="...%VITE_...%/umami" request to browsers.
+      return html.replace(
+        /<script[^>]*%VITE_ANALYTICS[^"]*%[^>]*>[^<]*<\/script>|<script[^>]*>[^<]*<\/script>(?=[^<]*%VITE_ANALYTICS)/g,
+        "",
+      ).replace(
+        // Also catch the self-closing / defer form that spans multiple attrs
+        /<script[\s\S]*?%VITE_ANALYTICS(?:_ENDPOINT|_WEBSITE_ID)%[\s\S]*?<\/script>/g,
+        "",
+      );
+    },
+  };
+}
+
+const plugins = [react(), tailwindcss(), jsxLocPlugin(), vitePluginManusRuntime(), vitePluginManusDebugCollector(), vitePluginAnalyticsSubstitute()];
 
 export default defineConfig({
   plugins,

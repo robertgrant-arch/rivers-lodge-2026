@@ -94,7 +94,8 @@ export const structuredData = {
     name: SITE_NAME,
     description: DEFAULT_DESCRIPTION,
     url: BASE_URL,
-    telephone: "+1-555-555-5555",
+    // telephone intentionally omitted — no verified number yet.
+    // Google penalizes fake structured data; add back once confirmed.
     address: {
       "@type": "PostalAddress",
       streetAddress: "18103 E 2300 Ln",

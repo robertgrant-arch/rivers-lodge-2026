@@ -11,4 +11,4 @@ Disallow: /portal/
 Disallow: /api/
 
 # Sitemap
-Sitemap: https://riverslodge-4jorgt96.manus.space/sitemap.xml
+Sitemap: https://theriverslodge.com/sitemap.xml
