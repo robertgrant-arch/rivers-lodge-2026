@@ -292,6 +292,15 @@ export const propertyDateInventory = mysqlTable("property_date_inventory", {
 
   updatedAt: bigint("updatedAt", { mode: "number" }).notNull(),
 }, (t) => ({
+  // DB-LEVEL DEFENSE — this UNIQUE constraint is the primary protection against
+  // concurrent inserts for the same property+date.  updateInventory() uses
+  // "INSERT ... WHERE NOT EXISTS" followed by "UPDATE ... WHERE propertyId = ?
+  // AND date = ?", both within the booking transaction.  If two concurrent
+  // transactions somehow both reach the INSERT branch simultaneously, the
+  // UNIQUE violation on (propertyId, date) will cause one of them to fail at
+  // the DB level, preventing a phantom row.  The FOR UPDATE lock on the
+  // inventory SELECT in bookings.create is the first line of defense; this
+  // constraint is the second.
   propertyDateIdx: uniqueIndex("pdi_property_date_idx").on(t.propertyId, t.date),
   statusIdx: index("pdi_status_idx").on(t.status),
   dateIdx: index("pdi_date_idx").on(t.date),

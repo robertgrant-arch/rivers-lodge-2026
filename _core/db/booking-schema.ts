@@ -11,6 +11,7 @@ import {
   date,
   decimal,
   int,
+  index,
   json,
   mysqlEnum,
   mysqlTable,
@@ -101,22 +102,68 @@ export type AvailabilityRule = typeof availabilityRules.$inferSelect;
 export type InsertAvailabilityRule = typeof availabilityRules.$inferInsert;
 
 // ─── Booking Resource Allocations ─────────────────────────────────────────────
-// Links a booking to specific resources for specific date/time windows
+// Links a booking to specific resources for specific date/time windows.
+//
+// DB-LEVEL DEFENSE AGAINST DOUBLE-BOOKING — TRADEOFF NOTE:
+//
+// PostgreSQL supports exclusion constraints (EXCLUDE USING gist) that can
+// enforce non-overlapping ranges at the DB level.  MySQL has no equivalent.
+//
+// What we DO enforce at the DB level:
+//   - The composite index below makes the conflict SELECT fast and targeted,
+//     ensuring the FOR UPDATE row-level lock set is as tight as possible.
+//
+// What we CANNOT enforce at the DB level (MySQL limitation):
+//   - "No two non-cancelled rows for the same resourceId may have overlapping
+//     (allocationStart, allocationEnd) ranges."
+//   - This constraint is enforced at the application level by:
+//     a) `getConflictingAllocations` with `.for("update")` — serialises
+//        concurrent transactions at the row-set level.
+//     b) `checkAvailability` called inside `db.transaction()` in every
+//        booking mutation — the check and insert are atomic.
+//
+// If this database is ever migrated to PostgreSQL, replace the FOR UPDATE
+// lock with:
+//   CREATE EXTENSION IF NOT EXISTS btree_gist;
+//   ALTER TABLE booking_resource_allocations
+//     ADD CONSTRAINT no_overlap EXCLUDE USING gist (
+//       resource_id WITH =,
+//       tsrange(allocation_start, allocation_end) WITH &&
+//     ) WHERE (status != 'cancelled');
+// That would make overlapping inserts fail at the DB level regardless of
+// isolation level, providing a true defense-in-depth second layer.
 
-export const bookingResourceAllocations = mysqlTable("booking_resource_allocations", {
-  id: int("id").autoincrement().primaryKey(),
-  bookingId: int("bookingId").notNull(),
-  resourceId: int("resourceId").notNull(),
-  allocationStart: timestamp("allocationStart").notNull(),
-  allocationEnd: timestamp("allocationEnd").notNull(),
-  // Includes holdback windows (setup/breakdown/cleaning time)
-  holdbackStart: timestamp("holdbackStart"), // allocationStart - holdbackHoursBefore
-  holdbackEnd: timestamp("holdbackEnd"),     // allocationEnd + holdbackHoursAfter
-  status: mysqlEnum("status", ["tentative", "confirmed", "cancelled"]).default("tentative").notNull(),
-  notes: text("notes"),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
+export const bookingResourceAllocations = mysqlTable(
+  "booking_resource_allocations",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    bookingId: int("bookingId").notNull(),
+    resourceId: int("resourceId").notNull(),
+    allocationStart: timestamp("allocationStart").notNull(),
+    allocationEnd: timestamp("allocationEnd").notNull(),
+    // Includes holdback windows (setup/breakdown/cleaning time)
+    holdbackStart: timestamp("holdbackStart"), // allocationStart - holdbackHoursBefore
+    holdbackEnd: timestamp("holdbackEnd"),     // allocationEnd + holdbackHoursAfter
+    status: mysqlEnum("status", ["tentative", "confirmed", "cancelled"]).default("tentative").notNull(),
+    notes: text("notes"),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  },
+  (t) => ({
+    // Composite index used by getConflictingAllocations.
+    // Covers: WHERE resourceId = ? AND status != 'cancelled'
+    //           AND allocationStart < ? AND allocationEnd > ?
+    // This keeps the FOR UPDATE lock set tight and the range scan efficient
+    // even as the table grows to hundreds of thousands of rows.
+    resourceDateIdx: index("bra_resource_date_idx").on(
+      t.resourceId,
+      t.status,
+      t.allocationStart,
+      t.allocationEnd,
+    ),
+    bookingIdx: index("bra_booking_idx").on(t.bookingId),
+  }),
+);
 export type BookingResourceAllocation = typeof bookingResourceAllocations.$inferSelect;
 export type InsertBookingResourceAllocation = typeof bookingResourceAllocations.$inferInsert;
 
