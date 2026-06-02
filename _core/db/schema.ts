@@ -142,3 +142,4 @@ export type InsertBlockedDate = typeof blockedDates.$inferInsert;
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export * from "@features/cms/schema";
+export * from "@features/reports/schema";
