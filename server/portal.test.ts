@@ -3,7 +3,7 @@
  * Covers: auth guards, role enforcement, and input validation for portal procedures.
  */
 import { describe, it, expect } from "vitest";
-import { appRouter } from "./routers";
+import { appRouter } from "../_core/server/router";
 import type { TrpcContext } from '@core/server/context';
 import type { AuthenticatedUser } from "../features/_core/server/auth";
 

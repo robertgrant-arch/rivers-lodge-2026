@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { appRouter } from "../../../server/routers";
+import { appRouter } from "@core/server/router";
 import { COOKIE_NAME } from "../../_core/shared/const";
 import type { TrpcContext } from '@core/server/context';
 
