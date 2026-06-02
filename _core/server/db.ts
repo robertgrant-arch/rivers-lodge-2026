@@ -1,5 +1,6 @@
 import { eq, desc, and } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
+import mysql from "mysql2/promise";
 import {
   InsertUser,
   users,
@@ -22,18 +23,68 @@ import {
 } from "../db/schema";
 import { ENV } from "./env";
 
-let _db: ReturnType<typeof drizzle> | null = null;
+type DrizzleDb = ReturnType<typeof drizzle>;
 
-export async function getDb() {
-  if (!_db && process.env.DATABASE_URL) {
-    try {
-      _db = drizzle(process.env.DATABASE_URL);
-    } catch (error) {
-      console.warn("[Database] Failed to connect:", error);
-      _db = null;
-    }
+// ─── Connection pool ──────────────────────────────────────────────────────────
+//
+// We keep a module-level pool reference so checkDbHealth() can run SELECT 1
+// without going through Drizzle.  The pool is created exactly once: even if
+// two callers race to getDb() simultaneously, _dbPromise is set synchronously
+// on the first call, so the second caller reuses the same promise and never
+// creates a second pool.
+
+let _pool: mysql.Pool | null = null;
+
+function createDb(): Promise<DrizzleDb | null> {
+  const url = process.env.DATABASE_URL ?? ENV.databaseUrl;
+  if (!url) {
+    console.warn("[Database] DATABASE_URL is not set — DB disabled.");
+    return Promise.resolve(null);
   }
-  return _db;
+  try {
+    _pool = mysql.createPool({
+      uri: url,
+      connectionLimit: 10,
+      waitForConnections: true,
+      queueLimit: 0, // unlimited queue; rely on connection timeout instead
+    });
+    return Promise.resolve(drizzle(_pool));
+  } catch (error) {
+    console.warn("[Database] Failed to create connection pool:", error);
+    return Promise.resolve(null);
+  }
+}
+
+// Cache the promise, not the resolved value.  Two concurrent callers both see
+// a non-null _dbPromise after the first synchronous assignment, so only one
+// pool is ever created.
+let _dbPromise: Promise<DrizzleDb | null> | null = null;
+
+export function getDb(): Promise<DrizzleDb | null> {
+  if (!_dbPromise) _dbPromise = createDb();
+  return _dbPromise;
+}
+
+/**
+ * Check DB connectivity for the /api/health endpoint.
+ * Runs SELECT 1 with a 2-second timeout.
+ * Returns true if the pool responds, false on any error or timeout.
+ */
+export async function checkDbHealth(): Promise<boolean> {
+  // Ensure pool is initialised (no-op if already done).
+  await getDb();
+  if (!_pool) return false;
+  try {
+    await Promise.race([
+      _pool.query("SELECT 1"),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("DB health check timed out")), 2000),
+      ),
+    ]);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 // ─── Users ────────────────────────────────────────────────────────────────────
