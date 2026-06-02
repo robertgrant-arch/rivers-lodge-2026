@@ -109,20 +109,6 @@ export const waivers = mysqlTable("waivers", {
 export type Waiver = typeof waivers.$inferSelect;
 export type InsertWaiver = typeof waivers.$inferInsert;
 
-// ─── Seasonal Updates ─────────────────────────────────────────────────────────
-
-export const seasonalUpdates = mysqlTable("seasonal_updates", {
-  id: int("id").autoincrement().primaryKey(),
-  title: varchar("title", { length: 255 }).notNull(),
-  body: text("body").notNull(),
-  category: mysqlEnum("category", ["whitetail", "waterfowl", "turkey", "fishing", "general"]).default("general").notNull(),
-  publishedAt: timestamp("publishedAt").defaultNow().notNull(),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-});
-
-export type SeasonalUpdate = typeof seasonalUpdates.$inferSelect;
-export type InsertSeasonalUpdate = typeof seasonalUpdates.$inferInsert;
-
 export * from "@features/messages/schema";
 
 // ─── Blocked Dates ────────────────────────────────────────────────────────────
