@@ -1,6 +1,3 @@
-// pages imported directly by App.tsx router
-export { default as MemberPortal } from "./client/pages/MemberPortal";
-export { default as MyBookings } from "./client/pages/MyBookings";
-export { default as PropertyBrowser } from "./client/pages/PropertyBrowser";
-export { default as PropertyDetail } from "./client/pages/PropertyDetail";
-export { default as PortalAvailability } from "./client/pages/PortalAvailability";
+// Compatibility shim — member-portal has been renamed to portal.
+// Import from @features/portal instead.
+export { MemberPortal, MyBookings, PropertyBrowser, PropertyDetail, PortalAvailability } from "@features/portal/public";

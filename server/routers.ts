@@ -11,6 +11,7 @@ import { propertyBookingRouter } from 'features/property-booking/server/router';
 import { reportsRouter } from 'features/reports/server/router';
 import { portalRouter } from 'features/admin-portal/server/router';
 import { updatesRouter } from 'features/updates/server/router';
+import { memberPortalRouter } from 'features/portal/server/router';
 
 export const appRouter = router({
   auth: authRouter,
@@ -25,6 +26,7 @@ export const appRouter = router({
   reports: reportsRouter,
   portal: portalRouter,
   updates: updatesRouter,
+  memberPortal: memberPortalRouter,
 });
 
 export type AppRouter = typeof appRouter;

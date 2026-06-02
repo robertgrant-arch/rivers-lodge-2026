@@ -26,11 +26,11 @@ import Membership from "../../membership/client/pages/Membership";
 import SignWaiver from "../../waivers/client/pages/SignWaiver";
 import PortalWaivers from "../../waivers/client/pages/PortalWaivers";
 // Gated pages
-import MemberPortal from "../../member-portal/client/pages/MemberPortal";
-import MyBookings from "../../member-portal/client/pages/MyBookings";
-import PropertyBrowser from "../../member-portal/client/pages/PropertyBrowser";
-import PropertyDetail from "../../member-portal/client/pages/PropertyDetail";
-import PortalAvailability from "../../member-portal/client/pages/PortalAvailability";
+import MemberPortal from "../../portal/client/pages/MemberPortal";
+import MyBookings from "../../portal/client/pages/MyBookings";
+import PropertyBrowser from "../../portal/client/pages/PropertyBrowser";
+import PropertyDetail from "../../portal/client/pages/PropertyDetail";
+import PortalAvailability from "../../portal/client/pages/PortalAvailability";
 // Admin portal
 import AdminDashboard from "../../admin-portal/client/pages/AdminDashboard";
 import PortalLayout from "../../admin-portal/client/components/PortalLayout";
