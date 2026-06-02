@@ -1,15 +1,15 @@
 import { Toaster } from '@shared/ui/sonner';
 import { TooltipProvider } from '@shared/ui/tooltip';
-import NotFound from "../../public-pages/pages/NotFound";
+import NotFound from "../../marketing/client/pages/NotFound";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "../../_shared/components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 // Public pages
 import Home from "../../public-pages/pages/Home";
-import WeddingsLanding from "../../public-pages/pages/WeddingsLanding";
+import WeddingsLanding from "../../weddings/client/pages/WeddingsLanding";
 import MembershipLanding from "../../public-pages/pages/MembershipLanding";
-import Weddings from "../../public-pages/pages/Weddings";
-import Venues from "../../public-pages/pages/Venues";
+import Weddings from "../../weddings/client/pages/Weddings";
+import Venues from "../../weddings/client/pages/Venues";
 import Lodging from "../../public-pages/pages/Lodging";
 import Corporate from "../../public-pages/pages/Corporate";
 import Estate from "../../public-pages/pages/Estate";
