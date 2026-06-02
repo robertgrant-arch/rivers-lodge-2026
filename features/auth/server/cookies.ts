@@ -1,4 +1,5 @@
 import type { CookieOptions, Request } from "express";
+import { ENV } from "@core/server/env";
 
 const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "::1"]);
 
@@ -39,10 +40,27 @@ export function getSessionCookieOptions(
   //       ? hostname
   //       : undefined;
 
+  // SameSite=None requires Secure=true — browsers silently reject SameSite=None
+  // cookies served over plain HTTP (RFC 6265bis §5.3.7).  We default to "lax",
+  // which is correct for same-origin / redirect-based OAuth flows and works on
+  // both HTTP (local dev) and HTTPS.
+  //
+  // Set COOKIE_CROSS_SITE=true only when the API and frontend are on different
+  // origins AND every deployment is HTTPS.  In that case we force Secure=true
+  // regardless of the incoming request so the cookie is never silently dropped.
+  if (ENV.cookieCrossSite) {
+    return {
+      httpOnly: true,
+      path: "/",
+      sameSite: "none",
+      secure: true, // mandatory with SameSite=None
+    };
+  }
+
   return {
     httpOnly: true,
     path: "/",
-    sameSite: "none",
+    sameSite: "lax",
     secure: isSecureRequest(req),
   };
 }
