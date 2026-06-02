@@ -3,7 +3,7 @@ import { authRouter } from 'features/auth/server/router';
 import { inquiriesRouter } from 'features/inquiries/server/router';
 import { membershipRouter } from 'features/membership/server/router';
 import { messagesRouter } from 'features/messages/server/router';
-import { waiversRouter } from 'features/waivers/server/router';
+import { waiversRouter } from 'features/waivers/public';
 import { cmsRouter } from 'features/cms/server/router';
 import { bookingRouter } from 'features/booking-engine/server/router';
 import { tripsRouter } from 'features/trips/server/router';

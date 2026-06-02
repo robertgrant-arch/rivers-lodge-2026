@@ -1,2 +1,2 @@
-export { waiversRouter } from './server/router';
-export { legacyWaiversRouter } from './server/legacyRouter';
+export { waiversRouter } from "./server/router";
+export type { Waiver, WaiverTemplate } from "./schema";
