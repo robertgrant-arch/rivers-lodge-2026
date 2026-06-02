@@ -5,7 +5,7 @@
  *
  * These are thin wrappers that aggregate member-relevant data from
  * the shared DB schema. Staff/admin-facing operations live in
- * features/admin-portal/server/router.ts.
+ * features/admin/server/router.ts.
  */
 
 import { z } from "zod";

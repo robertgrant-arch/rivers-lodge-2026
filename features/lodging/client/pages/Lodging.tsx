@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import PublicLayout from "../components/PublicLayout";
+import PublicLayout from "../../../_shared/components/PublicLayout";
 import { trpc } from '@shared/lib/trpc';
 import SEOHead from '@shared/components/SEOHead';
 
