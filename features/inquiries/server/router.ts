@@ -1,10 +1,12 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
+import { and, desc, lt } from "drizzle-orm";
 import { publicProcedure, protectedProcedure, router } from "../../_core/server/trpc";
 import { notifyOwner } from "../../_core/server/notification";
 import { getDb } from "../../_core/server/db";
 import { verifyCaptcha } from "@core/server/captcha";
 import { leads, reservationRequests } from '@core/db/booking-schema';
+import { inquiries } from '@core/db/schema';
 import * as dal from "./dal";
 
 // ─── Admin guard ──────────────────────────────────────────────────────────────
@@ -115,8 +117,40 @@ export const inquiriesRouter = router({
       return { success: true, leadId, reservationRequestId };
     }),
 
-  list: adminProcedure.query(async () => {
-    return dal.getAllInquiries();
+  list: adminProcedure
+    .input(
+      z.object({
+        limit: z.number().int().min(1).max(100).default(25),
+        cursor: z.number().int().optional(),
+      })
+    )
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) return { items: [], nextCursor: null };
+      const limit = input.limit;
+      const conditions = [];
+      if (input.cursor !== undefined) {
+        conditions.push(lt(inquiries.id, input.cursor));
+      }
+      const rows = await db
+        .select()
+        .from(inquiries)
+        .where(conditions.length ? and(...conditions) : undefined)
+        .orderBy(desc(inquiries.id))
+        .limit(limit + 1);
+      const items = rows.slice(0, limit);
+      const nextCursor = rows.length > limit ? (items[items.length - 1]?.id ?? null) : null;
+      return { items, nextCursor };
+    }),
+
+  // for CSV
+  export: adminProcedure.query(async () => {
+    const db = await getDb();
+    if (!db) return [];
+    return db
+      .select()
+      .from(inquiries)
+      .orderBy(desc(inquiries.id));
   }),
 
   updateStatus: adminProcedure

@@ -1,7 +1,9 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
+import { and, desc, eq, lt } from "drizzle-orm";
 import { router, protectedProcedure } from "../../_core/server/trpc";
 import { notifyOwner } from "../../_core/server/notification";
+import { getDb, messages } from "../../_core/server/db";
 import * as dal from "./dal";
 
 // ─── Admin guard ──────────────────────────────────────────────────────────────
@@ -17,9 +19,33 @@ export const messagesRouter = router({
   }),
 
   allMessages: adminProcedure
-    .input(z.object({ archived: z.boolean().default(false) }).optional())
+    .input(
+      z
+        .object({
+          archived: z.boolean().default(false),
+          limit: z.number().int().min(1).max(100).default(25),
+          cursor: z.number().int().optional(),
+        })
+        .optional()
+    )
     .query(async ({ input }) => {
-      return dal.getAllMessages(input?.archived ?? false);
+      const db = await getDb();
+      if (!db) return { items: [], nextCursor: null };
+      const limit = input?.limit ?? 25;
+      const conditions = [eq(messages.archived, input?.archived ?? false)];
+      if (input?.cursor !== undefined) {
+        conditions.push(lt(messages.id, input.cursor));
+      }
+      const rows = await db
+        .select()
+        .from(messages)
+        .where(and(...conditions))
+        .orderBy(desc(messages.id))
+        .limit(limit + 1);
+      const items = rows.slice(0, limit);
+      const nextCursor =
+        rows.length > limit ? (items[items.length - 1]?.id ?? null) : null;
+      return { items, nextCursor };
     }),
 
   archive: adminProcedure

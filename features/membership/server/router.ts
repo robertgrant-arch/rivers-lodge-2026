@@ -6,7 +6,7 @@
 
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { eq, desc, and, or, like, sql } from "drizzle-orm";
+import { eq, desc, and, or, like, sql, lt } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import { publicProcedure, protectedProcedure, router } from "../../_core/server/trpc";
 import { notifyOwner } from "../../_core/server/notification";
@@ -106,9 +106,28 @@ export const membershipRouter = router({
 
   // ── Admin: application management (from server/routers.ts → membershipRouter) ──
 
-  listApplications: adminProcedure.query(async () => {
-    return dal.getAllMembershipApplications();
-  }),
+  listApplications: adminProcedure
+    .input(z.object({
+      limit: z.number().int().min(1).max(100).default(25),
+      cursor: z.number().int().optional(),
+    }))
+    .query(async ({ input }) => {
+      const db = getPortalDb();
+      const limit = input.limit;
+      const conditions = [];
+      if (input.cursor !== undefined) {
+        conditions.push(lt(membershipApplications.id, input.cursor));
+      }
+      const rows = await db
+        .select()
+        .from(membershipApplications)
+        .where(conditions.length ? and(...conditions) : undefined)
+        .orderBy(desc(membershipApplications.id))
+        .limit(limit + 1);
+      const items = rows.slice(0, limit);
+      const nextCursor = rows.length > limit ? (items[items.length - 1]?.id ?? null) : null;
+      return { items, nextCursor };
+    }),
 
   // NOTE: updateApplicationStatus exists in both sources with slightly different
   // guards (adminProcedure in routers.ts vs portalProcedure in portalRouter.ts).
@@ -137,9 +156,28 @@ export const membershipRouter = router({
       return { success: true };
     }),
 
-  listMembers: adminProcedure.query(async () => {
-    return dal.getAllMembers();
-  }),
+  listMembers: adminProcedure
+    .input(z.object({
+      limit: z.number().int().min(1).max(100).default(25),
+      cursor: z.number().int().optional(),
+    }))
+    .query(async ({ input }) => {
+      const db = getPortalDb();
+      const limit = input.limit;
+      const conditions = [];
+      if (input.cursor !== undefined) {
+        conditions.push(lt(members.id, input.cursor));
+      }
+      const rows = await db
+        .select()
+        .from(members)
+        .where(conditions.length ? and(...conditions) : undefined)
+        .orderBy(desc(members.id))
+        .limit(limit + 1);
+      const items = rows.slice(0, limit);
+      const nextCursor = rows.length > limit ? (items[items.length - 1]?.id ?? null) : null;
+      return { items, nextCursor };
+    }),
 
   // NOTE: createMember exists in both sources. The portalProcedure version
   // (membershipPortalRouter) is richer: conflict check, auto-generated member

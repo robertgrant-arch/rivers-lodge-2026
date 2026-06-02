@@ -169,13 +169,16 @@ export default function PortalCorporate() {
   const [form, setForm] = useState({ companyName: "", contactName: "", contactEmail: "", contactPhone: "", eventType: "team_retreat" as const, arrivalDate: "", departureDate: "", attendeeCount: "", notes: "" });
   const utils = trpc.useUtils();
 
-  const listQuery = trpc.portal.corporate.list.useQuery({ status: statusFilter === "all" ? undefined : statusFilter, search: search || undefined });
+  const listQuery = trpc.portal.corporate.list.useInfiniteQuery(
+    { status: statusFilter === "all" ? undefined : statusFilter, search: search || undefined, limit: 25 },
+    { getNextPageParam: (lastPage) => lastPage.nextCursor }
+  );
   const createMutation = trpc.portal.corporate.create.useMutation({
     onSuccess: () => { setShowCreate(false); utils.portal.corporate.list.invalidate(); toast.success("Corporate booking created"); },
     onError: (e) => toast.error(e.message),
   });
 
-  const bookings = listQuery.data ?? [];
+  const bookings = listQuery.data?.pages.flatMap(p => p.items) ?? [];
   const pipelineCounts = STATUSES.slice(0, 5).map(s => ({ ...s, count: bookings.filter(b => b.status === s.value).length }));
 
   return (
@@ -249,6 +252,12 @@ export default function PortalCorporate() {
           </div>
         </CardContent>
       </Card>
+      {listQuery.hasNextPage && (
+        <button onClick={() => listQuery.fetchNextPage()} disabled={listQuery.isFetchingNextPage}
+          className="mt-6 w-full py-2.5 border border-border text-[10px] tracking-[0.14em] uppercase font-sans text-muted-foreground hover:text-foreground transition-colors disabled:opacity-40">
+          {listQuery.isFetchingNextPage ? "Loading…" : "Load more"}
+        </button>
+      )}
 
       <Dialog open={showCreate} onOpenChange={setShowCreate}>
         <DialogContent>

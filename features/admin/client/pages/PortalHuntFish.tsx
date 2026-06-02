@@ -70,10 +70,10 @@ export default function PortalHuntFish() {
   const weekStart = new Date(today); weekStart.setDate(today.getDate() - today.getDay());
   const weekEnd = new Date(weekStart); weekEnd.setDate(weekStart.getDate() + 6);
 
-  const listQuery = trpc.portal.huntFish.list.useQuery({
-    bookingType: typeFilter === "all" ? undefined : typeFilter as any,
-    status: statusFilter === "all" ? undefined : statusFilter as any,
-  });
+  const listQuery = trpc.portal.huntFish.list.useInfiniteQuery(
+    { bookingType: typeFilter === "all" ? undefined : typeFilter as any, status: statusFilter === "all" ? undefined : statusFilter as any, limit: 25 },
+    { getNextPageParam: (lastPage) => lastPage.nextCursor }
+  );
 
   const guideQuery = trpc.portal.huntFish.guideSchedule.useQuery({
     startDate: weekStart.toISOString().slice(0, 10),
@@ -97,7 +97,7 @@ export default function PortalHuntFish() {
     onError: (e) => toast.error(e.message),
   });
 
-  const bookings = listQuery.data ?? [];
+  const bookings = listQuery.data?.pages.flatMap(p => p.items) ?? [];
 
   return (
     <div className="p-6 space-y-6 max-w-7xl mx-auto">
@@ -207,6 +207,12 @@ export default function PortalHuntFish() {
               </div>
             </CardContent>
           </Card>
+          {listQuery.hasNextPage && (
+            <button onClick={() => listQuery.fetchNextPage()} disabled={listQuery.isFetchingNextPage}
+              className="mt-6 w-full py-2.5 border border-border text-[10px] tracking-[0.14em] uppercase font-sans text-muted-foreground hover:text-foreground transition-colors disabled:opacity-40">
+              {listQuery.isFetchingNextPage ? "Loading…" : "Load more"}
+            </button>
+          )}
         </TabsContent>
 
         {/* ── Guide Schedule Tab ── */}

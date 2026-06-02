@@ -275,10 +275,10 @@ export default function PortalWeddings() {
   const [createForm, setCreateForm] = useState({ coupleName: "", contactEmail: "", contactPhone: "", weddingDate: "", source: "website" as const, notes: "" });
   const utils = trpc.useUtils();
 
-  const listQuery = trpc.portal.weddings.list.useQuery({
-    status: statusFilter === "all" ? undefined : statusFilter,
-    search: search || undefined,
-  });
+  const listQuery = trpc.portal.weddings.list.useInfiniteQuery(
+    { status: statusFilter === "all" ? undefined : statusFilter, search: search || undefined, limit: 25 },
+    { getNextPageParam: (lastPage) => lastPage.nextCursor }
+  );
 
   const createMutation = trpc.portal.weddings.create.useMutation({
     onSuccess: (data) => {
@@ -290,7 +290,7 @@ export default function PortalWeddings() {
     onError: (e) => toast.error(e.message),
   });
 
-  const bookings = listQuery.data ?? [];
+  const bookings = listQuery.data?.pages.flatMap(p => p.items) ?? [];
 
   // Pipeline counts
   const pipelineCounts = STATUSES.slice(0, 6).map(s => ({
@@ -386,6 +386,12 @@ export default function PortalWeddings() {
           </div>
         </CardContent>
       </Card>
+      {listQuery.hasNextPage && (
+        <button onClick={() => listQuery.fetchNextPage()} disabled={listQuery.isFetchingNextPage}
+          className="mt-6 w-full py-2.5 border border-border text-[10px] tracking-[0.14em] uppercase font-sans text-muted-foreground hover:text-foreground transition-colors disabled:opacity-40">
+          {listQuery.isFetchingNextPage ? "Loading…" : "Load more"}
+        </button>
+      )}
 
       {/* Create Dialog */}
       <Dialog open={showCreate} onOpenChange={setShowCreate}>

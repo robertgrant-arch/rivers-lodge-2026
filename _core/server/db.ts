@@ -21,6 +21,9 @@ import {
   blockedDates,
   InsertBlockedDate,
 } from "../db/schema";
+
+// Re-export table references consumed by feature routers
+export { messages };
 import { ENV } from "./env";
 
 type DrizzleDb = ReturnType<typeof drizzle>;

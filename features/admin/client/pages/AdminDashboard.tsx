@@ -24,10 +24,11 @@ export default function AdminDashboard() {
 
   // messages.allMessages is kept separate — parameterized by the `archived` toggle.
   const [showArchived, setShowArchived] = useState(false);
-  const allMessages = trpc.messages.allMessages.useQuery(
-    { archived: showArchived },
-    { enabled: isAdmin, staleTime: 30_000 }
+  const allMessages = trpc.messages.allMessages.useInfiniteQuery(
+    { archived: showArchived, limit: 25 },
+    { getNextPageParam: (p) => p.nextCursor ?? undefined, enabled: isAdmin, staleTime: 30_000 }
   );
+  const messagesFlat = allMessages.data?.pages.flatMap(p => p.items) ?? [];
 
   // cmsTab is lazy: enabled only when the user clicks the CMS tab, so it
   // never fires on initial dashboard load.
@@ -486,7 +487,7 @@ export default function AdminDashboard() {
                 </div>
               </div>
               <div className="flex flex-col gap-4">
-                {(allMessages.data ?? []).map((m) => (
+                {messagesFlat.map((m) => (
                   <div key={m.id} className="bg-card border border-border p-5">
                     <div className="flex items-center justify-between mb-2">
                       <p className="text-sm font-sans font-medium text-foreground">User #{m.fromUserId} {m.toUserId ? `→ User #${m.toUserId}` : "→ Admin"}</p>
@@ -516,12 +517,18 @@ export default function AdminDashboard() {
                     {!m.read && <span className="inline-block mt-2 text-[9px] tracking-[0.12em] uppercase font-sans px-2 py-0.5 bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">Unread</span>}
                   </div>
                 ))}
-                {(allMessages.data ?? []).length === 0 && (
+                {messagesFlat.length === 0 && (
                   <p className="text-sm font-sans text-muted-foreground py-8 text-center">
                     {showArchived ? "No archived messages." : "No messages yet."}
                   </p>
                 )}
               </div>
+              {allMessages.hasNextPage && (
+                <button onClick={() => allMessages.fetchNextPage()} disabled={allMessages.isFetchingNextPage}
+                  className="mt-4 w-full py-2.5 border border-border text-[10px] tracking-[0.14em] uppercase font-sans text-muted-foreground hover:text-foreground transition-colors disabled:opacity-40">
+                  {allMessages.isFetchingNextPage ? "Loading…" : "Load more messages"}
+                </button>
+              )}
             </div>
           )}
 

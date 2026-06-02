@@ -14,11 +14,12 @@ export default function PortalCustomers() {
   const [search, setSearch] = useState("");
 
   // customers.list returns users[] — only fields on the users table are available
-  const customersQuery = trpc.portal.customers.list.useQuery({
-    search: search || undefined,
-  });
+  const customersQuery = trpc.portal.customers.list.useInfiniteQuery(
+    { search: search || undefined, limit: 25 },
+    { getNextPageParam: (lastPage) => lastPage.nextCursor }
+  );
 
-  const customers = customersQuery.data ?? [];
+  const customers = customersQuery.data?.pages.flatMap(p => p.items) ?? [];
 
   return (
     <div className="p-6 space-y-6 max-w-7xl mx-auto">
@@ -95,6 +96,12 @@ export default function PortalCustomers() {
           </div>
         </CardContent>
       </Card>
+      {customersQuery.hasNextPage && (
+        <button onClick={() => customersQuery.fetchNextPage()} disabled={customersQuery.isFetchingNextPage}
+          className="mt-6 w-full py-2.5 border border-border text-[10px] tracking-[0.14em] uppercase font-sans text-muted-foreground hover:text-foreground transition-colors disabled:opacity-40">
+          {customersQuery.isFetchingNextPage ? "Loading…" : "Load more"}
+        </button>
+      )}
     </div>
   );
 }

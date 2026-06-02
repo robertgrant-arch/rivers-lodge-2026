@@ -302,18 +302,26 @@ export default function PortalMembership() {
   const [selectedRow, setSelectedRow] = useState<MemberRow | null>(null);
   const utils = trpc.useUtils();
 
-  const membersQuery = trpc.portal.membership.members.useQuery({ active: activeFilter, tier: tierFilter });
+  const membersQuery = trpc.portal.membership.members.useInfiniteQuery(
+    { active: activeFilter, tier: tierFilter, limit: 25 },
+    { getNextPageParam: (p) => p.nextCursor ?? undefined, staleTime: 30_000 }
+  );
   const statsQuery = trpc.portal.membership.stats.useQuery();
-  const applicationsQuery = trpc.portal.membership.applications.useQuery({});
+  const applicationsQuery = trpc.portal.membership.applications.useInfiniteQuery(
+    { limit: 25 },
+    { getNextPageParam: (p) => p.nextCursor ?? undefined, staleTime: 30_000 }
+  );
 
   const updateApplicationMutation = trpc.portal.membership.updateApplicationStatus.useMutation({
     onSuccess: () => { utils.portal.membership.applications.invalidate(); toast.success("Application updated"); },
     onError: (e) => toast.error(e.message),
   });
 
-  const rows = membersQuery.data ?? [];
+  const membersFlat = membersQuery.data?.pages.flatMap(p => p.items) ?? [];
+  const rows = membersFlat;
   const stats = statsQuery.data;
-  const applications = applicationsQuery.data ?? [];
+  const applicationsFlat = applicationsQuery.data?.pages.flatMap(p => p.items) ?? [];
+  const applications = applicationsFlat;
 
   return (
     <div className="p-6 space-y-6 max-w-7xl mx-auto">
@@ -450,6 +458,13 @@ export default function PortalMembership() {
               </div>
             </CardContent>
           </Card>
+          {membersQuery.hasNextPage && (
+            <div className="flex justify-center pt-2">
+              <Button variant="outline" size="sm" onClick={() => membersQuery.fetchNextPage()} disabled={membersQuery.isFetchingNextPage}>
+                {membersQuery.isFetchingNextPage ? "Loading…" : "Load more members"}
+              </Button>
+            </div>
+          )}
         </TabsContent>
 
         {/* ── Applications Tab ── */}
@@ -506,6 +521,13 @@ export default function PortalMembership() {
               </div>
             </CardContent>
           </Card>
+          {applicationsQuery.hasNextPage && (
+            <div className="flex justify-center pt-2">
+              <Button variant="outline" size="sm" onClick={() => applicationsQuery.fetchNextPage()} disabled={applicationsQuery.isFetchingNextPage}>
+                {applicationsQuery.isFetchingNextPage ? "Loading…" : "Load more applications"}
+              </Button>
+            </div>
+          )}
         </TabsContent>
       </Tabs>
 

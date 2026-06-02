@@ -3,7 +3,7 @@ import { TRPCError } from "@trpc/server";
 import { generateAndStoreWaiverPdf } from "@features/waivers/public";
 import { publicProcedure, protectedProcedure, router } from "../../_core/server/trpc";
 import { drizzle } from "drizzle-orm/mysql2";
-import { eq, desc, and, gte, lte, sql, or, like } from "drizzle-orm";
+import { eq, desc, and, gte, lte, sql, or, like, lt } from "drizzle-orm";
 import {
   weddingBookings,
   corporateBookings,
@@ -305,11 +305,12 @@ const weddingsPortalRouter = router({
     .input(z.object({
       status: z.string().optional(),
       search: z.string().optional(),
-      limit: z.number().default(50),
-      offset: z.number().default(0),
+      limit: z.number().int().min(1).max(100).default(25),
+      cursor: z.number().int().optional(),
     }))
     .query(async ({ input }) => {
       const db = getDb();
+      const limit = input.limit;
       const conditions = [];
       if (input.status) conditions.push(eq(weddingBookings.status, input.status as any));
       if (input.search) conditions.push(
@@ -319,10 +320,14 @@ const weddingsPortalRouter = router({
           like(weddingBookings.coordinatorName, `%${input.search}%`)
         )
       );
-      const query = conditions.length > 0
-        ? db.select().from(weddingBookings).where(and(...conditions))
-        : db.select().from(weddingBookings);
-      return query.orderBy(desc(weddingBookings.createdAt)).limit(input.limit).offset(input.offset);
+      if (input.cursor !== undefined) conditions.push(lt(weddingBookings.id, input.cursor));
+      const rows = await db.select().from(weddingBookings)
+        .where(conditions.length ? and(...conditions) : undefined)
+        .orderBy(desc(weddingBookings.id))
+        .limit(limit + 1);
+      const items = rows.slice(0, limit);
+      const nextCursor = rows.length > limit ? (items[items.length - 1]?.id ?? null) : null;
+      return { items, nextCursor };
     }),
 
   get: portalProcedure
@@ -469,11 +474,12 @@ const corporatePortalRouter = router({
     .input(z.object({
       status: z.string().optional(),
       search: z.string().optional(),
-      limit: z.number().default(50),
-      offset: z.number().default(0),
+      limit: z.number().int().min(1).max(100).default(25),
+      cursor: z.number().int().optional(),
     }))
     .query(async ({ input }) => {
       const db = getDb();
+      const limit = input.limit;
       const conditions = [];
       if (input.status) conditions.push(eq(corporateBookings.status, input.status as any));
       if (input.search) conditions.push(
@@ -483,10 +489,14 @@ const corporatePortalRouter = router({
           like(corporateBookings.contactEmail, `%${input.search}%`)
         )
       );
-      const query = conditions.length > 0
-        ? db.select().from(corporateBookings).where(and(...conditions))
-        : db.select().from(corporateBookings);
-      return query.orderBy(desc(corporateBookings.createdAt)).limit(input.limit).offset(input.offset);
+      if (input.cursor !== undefined) conditions.push(lt(corporateBookings.id, input.cursor));
+      const rows = await db.select().from(corporateBookings)
+        .where(conditions.length ? and(...conditions) : undefined)
+        .orderBy(desc(corporateBookings.id))
+        .limit(limit + 1);
+      const items = rows.slice(0, limit);
+      const nextCursor = rows.length > limit ? (items[items.length - 1]?.id ?? null) : null;
+      return { items, nextCursor };
     }),
 
   get: portalProcedure
@@ -626,20 +636,26 @@ const huntFishPortalRouter = router({
       guideUserId: z.number().optional(),
       startDate: z.string().optional(),
       endDate: z.string().optional(),
-      limit: z.number().default(50),
+      limit: z.number().int().min(1).max(100).default(25),
+      cursor: z.number().int().optional(),
     }))
     .query(async ({ input }) => {
       const db = getDb();
+      const limit = input.limit;
       const conditions = [];
       if (input.status) conditions.push(eq(huntFishBookings.status, input.status as any));
       if (input.bookingType) conditions.push(eq(huntFishBookings.bookingType, input.bookingType as any));
       if (input.guideUserId) conditions.push(eq(huntFishBookings.guideUserId, input.guideUserId));
       if (input.startDate) conditions.push(sql`${huntFishBookings.bookingDate} >= ${input.startDate}`);
       if (input.endDate) conditions.push(sql`${huntFishBookings.bookingDate} <= ${input.endDate}`);
-      const query = conditions.length > 0
-        ? db.select().from(huntFishBookings).where(and(...conditions))
-        : db.select().from(huntFishBookings);
-      return query.orderBy(huntFishBookings.bookingDate).limit(input.limit);
+      if (input.cursor !== undefined) conditions.push(lt(huntFishBookings.id, input.cursor));
+      const rows = await db.select().from(huntFishBookings)
+        .where(conditions.length ? and(...conditions) : undefined)
+        .orderBy(desc(huntFishBookings.id))
+        .limit(limit + 1);
+      const items = rows.slice(0, limit);
+      const nextCursor = rows.length > limit ? (items[items.length - 1]?.id ?? null) : null;
+      return { items, nextCursor };
     }),
 
   get: portalProcedure
@@ -917,18 +933,27 @@ const waiversPortalRouter = router({
 // ─── Customers Router ─────────────────────────────────────────────────────────
 const customersPortalRouter = router({
   list: portalProcedure
-    .input(z.object({ search: z.string().optional(), limit: z.number().default(50) }))
+    .input(z.object({
+      search: z.string().optional(),
+      limit: z.number().int().min(1).max(100).default(25),
+      cursor: z.number().int().optional(),
+    }))
     .query(async ({ input }) => {
       const db = getDb();
-      if (input.search) {
-        return db.select().from(users)
-          .where(or(
-            like(users.name, `%${input.search}%`),
-            like(users.email, `%${input.search}%`)
-          ))
-          .limit(input.limit);
-      }
-      return db.select().from(users).orderBy(desc(users.createdAt)).limit(input.limit);
+      const limit = input.limit;
+      const conditions = [];
+      if (input.search) conditions.push(or(
+        like(users.name, `%${input.search}%`),
+        like(users.email, `%${input.search}%`)
+      ));
+      if (input.cursor !== undefined) conditions.push(lt(users.id, input.cursor));
+      const rows = await db.select().from(users)
+        .where(conditions.length ? and(...conditions) : undefined)
+        .orderBy(desc(users.id))
+        .limit(limit + 1);
+      const items = rows.slice(0, limit);
+      const nextCursor = rows.length > limit ? (items[items.length - 1]?.id ?? null) : null;
+      return { items, nextCursor };
     }),
 
   get: portalProcedure
@@ -983,15 +1008,24 @@ const employeesPortalRouter = router({
 // Remove this sub-router and update the adminRouter assembly below once callers are migrated.
 const membershipPortalRouter = router({
   applications: portalProcedure
-    .input(z.object({ status: z.string().optional() }))
+    .input(z.object({
+      status: z.string().optional(),
+      limit: z.number().int().min(1).max(100).default(25),
+      cursor: z.number().int().optional(),
+    }))
     .query(async ({ input }) => {
       const db = getDb();
-      if (input.status) {
-        return db.select().from(membershipApplications)
-          .where(eq(membershipApplications.status, input.status as any))
-          .orderBy(desc(membershipApplications.createdAt));
-      }
-      return db.select().from(membershipApplications).orderBy(desc(membershipApplications.createdAt));
+      const limit = input.limit;
+      const conditions = [];
+      if (input.status) conditions.push(eq(membershipApplications.status, input.status as any));
+      if (input.cursor !== undefined) conditions.push(lt(membershipApplications.id, input.cursor));
+      const rows = await db.select().from(membershipApplications)
+        .where(conditions.length ? and(...conditions) : undefined)
+        .orderBy(desc(membershipApplications.id))
+        .limit(limit + 1);
+      const items = rows.slice(0, limit);
+      const nextCursor = rows.length > limit ? (items[items.length - 1]?.id ?? null) : null;
+      return { items, nextCursor };
     }),
 
   updateApplicationStatus: portalProcedure
@@ -1029,19 +1063,27 @@ const membershipPortalRouter = router({
   }),
 
   members: portalProcedure
-    .input(z.object({ active: z.boolean().optional(), tier: z.string().optional() }))
+    .input(z.object({
+      active: z.boolean().optional(),
+      tier: z.string().optional(),
+      limit: z.number().int().min(1).max(100).default(25),
+      cursor: z.number().int().optional(),
+    }))
     .query(async ({ input }) => {
       const db = getDb();
+      const limit = input.limit;
       const conditions = [];
       if (input.active !== undefined) conditions.push(eq(members.active, input.active));
       if (input.tier) conditions.push(eq(members.tier, input.tier as any));
-      const query = conditions.length > 0
-        ? db.select({ member: members, user: users }).from(members)
-            .leftJoin(users, eq(members.userId, users.id))
-            .where(and(...conditions))
-        : db.select({ member: members, user: users }).from(members)
-            .leftJoin(users, eq(members.userId, users.id));
-      return query.orderBy(desc(members.createdAt));
+      if (input.cursor !== undefined) conditions.push(lt(members.id, input.cursor));
+      const rows = await db.select({ member: members, user: users }).from(members)
+        .leftJoin(users, eq(members.userId, users.id))
+        .where(conditions.length ? and(...conditions) : undefined)
+        .orderBy(desc(members.id))
+        .limit(limit + 1);
+      const items = rows.slice(0, limit);
+      const nextCursor = rows.length > limit ? (items[items.length - 1]?.member.id ?? null) : null;
+      return { items, nextCursor };
     }),
 
   updateMember: portalProcedure
@@ -1196,13 +1238,23 @@ const memberBookingsRouter = router({
     .input(z.object({
       status: z.string().optional(),
       search: z.string().optional(),
+      limit: z.number().int().min(1).max(100).default(25),
+      cursor: z.number().int().optional(),
     }))
     .query(async ({ input }) => {
       const db = getDb();
-      const conditions: ReturnType<typeof eq>[] = [eq(bookings.type, "member_stay")];
+      const limit = input.limit;
+      const conditions: any[] = [eq(bookings.type, "member_stay")];
       if (input.status) conditions.push(eq(bookings.status, input.status as any));
-      if (input.search) conditions.push(like(bookings.clientName, `%${input.search}%`) as any);
-      return db.select().from(bookings).where(and(...conditions)).orderBy(desc(bookings.startDate)).limit(100);
+      if (input.search) conditions.push(like(bookings.clientName, `%${input.search}%`));
+      if (input.cursor !== undefined) conditions.push(lt(bookings.id, input.cursor));
+      const rows = await db.select().from(bookings)
+        .where(and(...conditions))
+        .orderBy(desc(bookings.id))
+        .limit(limit + 1);
+      const items = rows.slice(0, limit);
+      const nextCursor = rows.length > limit ? (items[items.length - 1]?.id ?? null) : null;
+      return { items, nextCursor };
     }),
   updateStatus: portalProcedure
     .input(z.object({

@@ -49,10 +49,10 @@ export default function PortalMemberBookings() {
   const [statusNote, setStatusNote] = useState("");
   const utils = trpc.useUtils();
 
-  const listQuery = trpc.portal.memberBookings.list.useQuery({
-    status: statusFilter === "all" ? undefined : statusFilter as any,
-    search: search || undefined,
-  });
+  const listQuery = trpc.portal.memberBookings.list.useInfiniteQuery(
+    { status: statusFilter === "all" ? undefined : statusFilter as any, search: search || undefined, limit: 25 },
+    { getNextPageParam: (lastPage) => lastPage.nextCursor }
+  );
 
   const updateStatusMutation = trpc.portal.memberBookings.updateStatus.useMutation({
     onSuccess: () => {
@@ -65,7 +65,7 @@ export default function PortalMemberBookings() {
     onError: (e) => toast.error(e.message),
   });
 
-  const bookings = listQuery.data ?? [];
+  const bookings = listQuery.data?.pages.flatMap(p => p.items) ?? [];
 
   const pipelineCounts = STATUSES.map(s => ({ ...s, count: bookings.filter(b => b.status === s.value).length }));
 
@@ -152,6 +152,12 @@ export default function PortalMemberBookings() {
           </div>
         </CardContent>
       </Card>
+      {listQuery.hasNextPage && (
+        <button onClick={() => listQuery.fetchNextPage()} disabled={listQuery.isFetchingNextPage}
+          className="mt-6 w-full py-2.5 border border-border text-[10px] tracking-[0.14em] uppercase font-sans text-muted-foreground hover:text-foreground transition-colors disabled:opacity-40">
+          {listQuery.isFetchingNextPage ? "Loading…" : "Load more"}
+        </button>
+      )}
 
       {/* Status Update Dialog */}
       <Dialog open={showStatusDialog !== null} onOpenChange={() => setShowStatusDialog(null)}>
