@@ -9,7 +9,7 @@ import { bookingRouter } from 'features/booking-engine/server/router';
 import { tripsRouter } from 'features/trips/server/router';
 import { propertyBookingRouter } from 'features/property-booking/server/router';
 import { reportsRouter } from 'features/reports/server/router';
-import { portalRouter } from 'features/admin-portal/server/router';
+import { adminRouter as portalRouter } from 'features/admin/server/router';
 import { updatesRouter } from 'features/updates/server/router';
 import { memberPortalRouter } from 'features/portal/server/router';
 

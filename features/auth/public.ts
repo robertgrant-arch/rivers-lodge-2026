@@ -7,3 +7,5 @@ export { LoginButton } from "./client/LoginButton";
 export { authRouter } from "./server/router";
 
 // Note: schema (users table) is re-exported via @core/db/schema for DB-layer consumers
+// DB table refs — for admin feature consumption only
+export { users } from '@core/db/schema';

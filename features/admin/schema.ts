@@ -1,0 +1,49 @@
+// ─── Admin Feature Schema ─────────────────────────────────────────────────────
+// Re-exports all admin/ops-portal-owned tables from the core DB schema file.
+// Consumers within the admin feature should import from here.
+// Other features must NOT import from here — use their own public.ts barrels.
+
+export {
+  // Event bookings managed by ops staff
+  weddingBookings,
+  corporateBookings,
+  huntFishBookings,
+  harvestRecords,
+  seasonConfigs,
+  // Calendar / availability management
+  portalBlockedDates,
+  // Staff coordination
+  portalStaffAssignments,
+  portalDocuments,
+  // Waiver management (templates + portal waivers)
+  waiverTemplates,
+  portalWaivers,
+  // Ops infrastructure
+  portalAuditLog,
+  portalNotifications,
+  portalTasks,
+  portalNotes,
+} from "@core/db/portal-schema";
+
+export type {
+  WeddingBooking,
+  InsertWeddingBooking,
+  CorporateBooking,
+  InsertCorporateBooking,
+  HuntFishBooking,
+  InsertHuntFishBooking,
+  HarvestRecord,
+  InsertHarvestRecord,
+  SeasonConfig,
+  InsertSeasonConfig,
+  PortalBlockedDate,
+  InsertPortalBlockedDate,
+  PortalStaffAssignment,
+  PortalDocument,
+  WaiverTemplate,
+  PortalWaiver,
+  PortalAuditLog,
+  PortalNotification,
+  PortalTask,
+  PortalNote,
+} from "@core/db/portal-schema";

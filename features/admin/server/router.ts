@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { generateAndStoreWaiverPdf } from "../../waivers/server/waiverPdf";
+import { generateAndStoreWaiverPdf } from "@features/waivers/public";
 import { publicProcedure, protectedProcedure, router } from "../../_core/server/trpc";
 import { drizzle } from "drizzle-orm/mysql2";
 import { eq, desc, and, gte, lte, sql, or, like } from "drizzle-orm";
@@ -19,8 +19,12 @@ import {
   portalNotifications,
   portalTasks,
   portalNotes,
-} from '@core/db/portal-schema';
-import { users, members, membershipApplications, inquiries, bookings } from '@core/db/schema';
+} from "../schema";
+// Cross-feature table refs — imported only via public.ts barrels
+import { users } from "@features/auth/public";
+import { members, membershipApplications } from "@features/membership/public";
+import { inquiries } from "@features/inquiries/public";
+import { bookings } from "@features/booking-engine/public";
 import { randomBytes } from "crypto";
 
 function getDb() {
@@ -816,13 +820,11 @@ const waiversPortalRouter = router({
       if (!waiver) throw new TRPCError({ code: "NOT_FOUND" });
       if (waiver.status === "signed") throw new TRPCError({ code: "BAD_REQUEST", message: "Already signed" });
       const signedAt = new Date();
-      // Fetch template content for PDF generation
       const [template] = waiver.templateId
         ? await db.select().from(waiverTemplates).where(eq(waiverTemplates.id, waiver.templateId))
         : [null];
       const waiverTitle = template?.templateName ?? "Liability Waiver & Release";
       const waiverContent = template?.bodyText ?? "By signing this document, you acknowledge and agree to the terms and conditions set forth by Rivers Lodge & Hunt Club. You understand and accept all risks associated with the activities at the property, including but not limited to hunting, fishing, equestrian activities, and use of all facilities. You release Rivers Lodge & Hunt Club, its owners, employees, and agents from any liability for injury, loss, or damage arising from your participation in any activities on the property.";
-      // Generate and store signed PDF (non-blocking — signing succeeds even if PDF fails)
       let signedPdfKey: string | null = null;
       try {
         const { key } = await generateAndStoreWaiverPdf({
@@ -915,7 +917,7 @@ const employeesPortalRouter = router({
 // ─── Membership Portal Router ─────────────────────────────────────────────────
 // TODO(membership-extraction): EXTRACTED to features/membership/server/router.ts
 // These procedures have been merged into membershipRouter in the feature module.
-// Remove this sub-router and update the portalRouter assembly below once callers are migrated.
+// Remove this sub-router and update the adminRouter assembly below once callers are migrated.
 const membershipPortalRouter = router({
   applications: portalProcedure
     .input(z.object({ status: z.string().optional() }))
@@ -962,6 +964,7 @@ const membershipPortalRouter = router({
       .where(sql`active = true AND renewalDate IS NOT NULL AND renewalDate <= DATE_ADD(${today}, INTERVAL 30 DAY)`);
     return { total: total.count, active: active.count, inactive: inactive.count, pendingRenewal: pendingRenewal.count, expired: inactive.count };
   }),
+
   members: portalProcedure
     .input(z.object({ active: z.boolean().optional(), tier: z.string().optional() }))
     .query(async ({ input }) => {
@@ -1001,7 +1004,6 @@ const membershipPortalRouter = router({
       return { success: true };
     }),
 
-  // Search users by name or email (for the Add Member form)
   searchUsers: portalProcedure
     .input(z.object({ query: z.string().min(1) }))
     .query(async ({ input }) => {
@@ -1014,7 +1016,6 @@ const membershipPortalRouter = router({
         .limit(20);
     }),
 
-  // Create a new member record linked to an existing user
   createMember: portalProcedure
     .input(z.object({
       userId: z.number(),
@@ -1163,8 +1164,8 @@ const memberBookingsRouter = router({
     }),
 });
 
-// ─── Portal App Router ────────────────────────────────────────────────────────
-export const portalRouter = router({
+// ─── Admin App Router ─────────────────────────────────────────────────────────
+export const adminRouter = router({
   dashboard: dashboardRouter,
   calendar: calendarRouter,
   weddings: weddingsPortalRouter,
@@ -1178,3 +1179,6 @@ export const portalRouter = router({
   auditLog: auditLogRouter,
   analytics: analyticsRouter,
 });
+
+// Backward-compat alias — consumed by server/routers.ts as `portalRouter`
+export { adminRouter as portalRouter };
