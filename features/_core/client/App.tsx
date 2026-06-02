@@ -1,114 +1,140 @@
+import { Suspense, lazy } from "react";
 import { Toaster } from '@shared/ui/sonner';
 import { TooltipProvider } from '@shared/ui/tooltip';
-import NotFound from "../../marketing/client/pages/NotFound";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "../../_shared/components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
-// Public pages
-import Home from "../../marketing/client/pages/Home";
-import WeddingsLanding from "../../weddings/client/pages/WeddingsLanding";
-import MembershipLanding from "../../marketing/client/pages/MembershipLanding";
-import Weddings from "../../weddings/client/pages/Weddings";
-import Venues from "../../weddings/client/pages/Venues";
-import Lodging from "../../public-pages/pages/Lodging";
-import Corporate from "../../public-pages/pages/Corporate";
-import Estate from "../../public-pages/pages/Estate";
-import Gallery from "../../marketing/client/pages/Gallery";
-import Contact from "../../marketing/client/pages/Contact";
-import Hunt from "../../public-pages/pages/Hunt";
-import Fish from "../../public-pages/pages/Fish";
-import Privacy from "../../marketing/client/pages/Privacy";
-// Inquiries
-import InquiryConfirmed from "../../inquiries/client/pages/InquiryConfirmed";
-// Membership
-import Membership from "../../membership/client/pages/Membership";
-// Waivers
-import SignWaiver from "../../waivers/client/pages/SignWaiver";
-import PortalWaivers from "../../waivers/client/pages/PortalWaivers";
-// Gated pages
-import MemberPortal from "../../portal/client/pages/MemberPortal";
-import MyBookings from "../../portal/client/pages/MyBookings";
-import PropertyBrowser from "../../portal/client/pages/PropertyBrowser";
-import PropertyDetail from "../../portal/client/pages/PropertyDetail";
-import PortalAvailability from "../../portal/client/pages/PortalAvailability";
-// Admin portal
-import AdminDashboard from "../../admin/client/pages/AdminDashboard";
+// Layout components — must be sync
 import PortalLayout from "../../admin/client/components/PortalLayout";
-import PortalDashboard from "../../admin/client/pages/PortalDashboard";
-import PortalCalendar from "../../admin/client/pages/PortalCalendar";
-import PortalWeddings from "../../admin/client/pages/PortalWeddings";
-import PortalCorporate from "../../admin/client/pages/PortalCorporate";
-import PortalHuntFish from "../../admin/client/pages/PortalHuntFish";
-import PortalMemberBookings from "../../admin/client/pages/PortalMemberBookings";
-import PortalCustomers from "../../admin/client/pages/PortalCustomers";
-import PortalEmployees from "../../admin/client/pages/PortalEmployees";
-import PortalMembership from "../../admin/client/pages/PortalMembership";
-import PortalReports from "../../admin/client/pages/PortalReports";
-import PortalBookings from "../../admin/client/pages/PortalBookings";
-import PortalLeads from "../../admin/client/pages/PortalLeads";
-import PortalNotifications from "../../admin/client/pages/PortalNotifications";
-import PortalTestimonials from "../../admin/client/pages/PortalTestimonials";
-import PortalProperties from "../../admin/client/pages/PortalProperties";
-// Reports
-import PortalFieldReports from "../../reports/client/pages/PortalFieldReports";
-import PortalNewsletter from "../../reports/client/pages/PortalNewsletter";
+
+// Public / marketing pages
+const Home = lazy(() => import("@features/marketing/client/pages/Home"));
+const MembershipLanding = lazy(() => import("@features/marketing/client/pages/MembershipLanding"));
+const Gallery = lazy(() => import("@features/marketing/client/pages/Gallery"));
+const Contact = lazy(() => import("@features/marketing/client/pages/Contact"));
+const Privacy = lazy(() => import("@features/marketing/client/pages/Privacy"));
+const NotFound = lazy(() => import("@features/marketing/client/pages/NotFound"));
+
+// Weddings pages
+const WeddingsLanding = lazy(() => import("@features/weddings/client/pages/WeddingsLanding"));
+const Weddings = lazy(() => import("@features/weddings/client/pages/Weddings"));
+const Venues = lazy(() => import("@features/weddings/client/pages/Venues"));
+
+// Hunt & Fish pages
+const Hunt = lazy(() => import("@features/hunt-fish/client/pages/Hunt"));
+const Fish = lazy(() => import("@features/hunt-fish/client/pages/Fish"));
+
+// Lodging pages
+const Lodging = lazy(() => import("@features/lodging/client/pages/Lodging"));
+const Estate = lazy(() => import("@features/lodging/client/pages/Estate"));
+
+// Corporate pages
+const Corporate = lazy(() => import("@features/corporate/client/pages/Corporate"));
+
+// Membership pages
+const Membership = lazy(() => import("@features/membership/client/pages/Membership"));
+
+// Inquiries
+const InquiryConfirmed = lazy(() => import("@features/inquiries/client/pages/InquiryConfirmed"));
+
+// Waivers
+const SignWaiver = lazy(() => import("@features/waivers/client/pages/SignWaiver"));
+const PortalWaivers = lazy(() => import("@features/waivers/client/pages/PortalWaivers"));
+
+// Gated portal pages
+const MemberPortal = lazy(() => import("@features/portal/client/pages/MemberPortal"));
+const MyBookings = lazy(() => import("@features/portal/client/pages/MyBookings"));
+const PropertyBrowser = lazy(() => import("@features/portal/client/pages/PropertyBrowser"));
+const PropertyDetail = lazy(() => import("@features/portal/client/pages/PropertyDetail"));
+const PortalAvailability = lazy(() => import("@features/portal/client/pages/PortalAvailability"));
+
+// Admin portal pages
+const AdminDashboard = lazy(() => import("@features/admin/client/pages/AdminDashboard"));
+const PortalDashboard = lazy(() => import("@features/admin/client/pages/PortalDashboard"));
+const PortalCalendar = lazy(() => import("@features/admin/client/pages/PortalCalendar"));
+const PortalWeddings = lazy(() => import("@features/admin/client/pages/PortalWeddings"));
+const PortalCorporate = lazy(() => import("@features/admin/client/pages/PortalCorporate"));
+const PortalHuntFish = lazy(() => import("@features/admin/client/pages/PortalHuntFish"));
+const PortalMemberBookings = lazy(() => import("@features/admin/client/pages/PortalMemberBookings"));
+const PortalCustomers = lazy(() => import("@features/admin/client/pages/PortalCustomers"));
+const PortalEmployees = lazy(() => import("@features/admin/client/pages/PortalEmployees"));
+const PortalMembership = lazy(() => import("@features/admin/client/pages/PortalMembership"));
+const PortalReports = lazy(() => import("@features/admin/client/pages/PortalReports"));
+const PortalBookings = lazy(() => import("@features/admin/client/pages/PortalBookings"));
+const PortalLeads = lazy(() => import("@features/admin/client/pages/PortalLeads"));
+const PortalNotifications = lazy(() => import("@features/admin/client/pages/PortalNotifications"));
+const PortalTestimonials = lazy(() => import("@features/admin/client/pages/PortalTestimonials"));
+const PortalProperties = lazy(() => import("@features/admin/client/pages/PortalProperties"));
+
+// Reports pages
+const PortalFieldReports = lazy(() => import("@features/reports/client/pages/PortalFieldReports"));
+const PortalNewsletter = lazy(() => import("@features/reports/client/pages/PortalNewsletter"));
+
+// Loading fallback — minimal, matches the site's dark theme
+const PageLoader = () => (
+  <div className="min-h-screen bg-background flex items-center justify-center">
+    <div className="w-8 h-8 border-2 border-[oklch(0.72_0.095_78)] border-t-transparent rounded-full animate-spin" />
+  </div>
+);
 
 function Router() {
   return (
-    <Switch>
-      {/* Public */}
-      <Route path="/" component={Home} />
-      <Route path="/events" component={WeddingsLanding} />
-      <Route path="/outdoors" component={MembershipLanding} />
-      <Route path="/weddings" component={Weddings} />
-      <Route path="/venues" component={Venues} />
-      <Route path="/lodging" component={Lodging} />
-      <Route path="/corporate" component={Corporate} />
-      <Route path="/estate" component={Estate} />
-      <Route path="/gallery" component={Gallery} />
-      <Route path="/contact" component={Contact} />
-      <Route path="/membership" component={Membership} />
-      <Route path="/hunt" component={Hunt} />
-      <Route path="/fish" component={Fish} />
+    <Suspense fallback={<PageLoader />}>
+      <Switch>
+        {/* Public */}
+        <Route path="/" component={Home} />
+        <Route path="/events" component={WeddingsLanding} />
+        <Route path="/outdoors" component={MembershipLanding} />
+        <Route path="/weddings" component={Weddings} />
+        <Route path="/venues" component={Venues} />
+        <Route path="/lodging" component={Lodging} />
+        <Route path="/corporate" component={Corporate} />
+        <Route path="/estate" component={Estate} />
+        <Route path="/gallery" component={Gallery} />
+        <Route path="/contact" component={Contact} />
+        <Route path="/membership" component={Membership} />
+        <Route path="/hunt" component={Hunt} />
+        <Route path="/fish" component={Fish} />
 
-       {/* Gated */}
-      <Route path="/portal" component={MemberPortal} />
-      <Route path="/portal/properties" component={PropertyBrowser} />
-      <Route path="/portal/properties/:id" component={PropertyDetail} />
-      <Route path="/portal/my-bookings" component={MyBookings} />
-          <Route path="/privacy" component={Privacy} />
-          <Route path="/inquiry-confirmed" component={InquiryConfirmed} />
-      <Route path="/admin" component={AdminDashboard} />
-      {/* Operations Portal */}
-      <Route path="/ops">{() => <PortalLayout><PortalDashboard /></PortalLayout>}</Route>
-      <Route path="/ops/calendar">{() => <PortalLayout><PortalCalendar /></PortalLayout>}</Route>
-      <Route path="/ops/notifications">{() => <PortalLayout><PortalNotifications /></PortalLayout>}</Route>
-      <Route path="/ops/weddings/:id">{(p) => <PortalLayout><PortalWeddings /></PortalLayout>}</Route>
-      <Route path="/ops/weddings">{() => <PortalLayout><PortalWeddings /></PortalLayout>}</Route>
-      <Route path="/ops/corporate/:id">{(p) => <PortalLayout><PortalCorporate /></PortalLayout>}</Route>
-      <Route path="/ops/corporate">{() => <PortalLayout><PortalCorporate /></PortalLayout>}</Route>
-      <Route path="/ops/hunt-fish/:id">{(p) => <PortalLayout><PortalHuntFish /></PortalLayout>}</Route>
-      <Route path="/ops/hunt-fish">{() => <PortalLayout><PortalHuntFish /></PortalLayout>}</Route>
-      <Route path="/ops/member-bookings">{() => <PortalLayout><PortalMemberBookings /></PortalLayout>}</Route>
-      <Route path="/ops/waivers">{() => <PortalLayout><PortalWaivers /></PortalLayout>}</Route>
-      <Route path="/ops/customers">{() => <PortalLayout><PortalCustomers /></PortalLayout>}</Route>
-      <Route path="/ops/employees">{() => <PortalLayout><PortalEmployees /></PortalLayout>}</Route>
-      <Route path="/ops/membership">{() => <PortalLayout><PortalMembership /></PortalLayout>}</Route>
-      <Route path="/ops/reports">{() => <PortalLayout><PortalReports /></PortalLayout>}</Route>
-      <Route path="/ops/bookings/:id">{() => <PortalLayout><PortalBookings /></PortalLayout>}</Route>
-      <Route path="/ops/bookings">{() => <PortalLayout><PortalBookings /></PortalLayout>}</Route>
-      <Route path="/ops/leads">{() => <PortalLayout><PortalLeads /></PortalLayout>}</Route>
-      <Route path="/ops/availability">{() => <PortalLayout><PortalAvailability /></PortalLayout>}</Route>
-      <Route path="/ops/testimonials">{() => <PortalLayout><PortalTestimonials /></PortalLayout>}</Route>
-      <Route path="/ops/properties">{() => <PortalLayout><PortalProperties /></PortalLayout>}</Route>
-      <Route path="/ops/field-reports">{() => <PortalLayout><PortalFieldReports /></PortalLayout>}</Route>
-      <Route path="/ops/newsletter">{() => <PortalLayout><PortalNewsletter /></PortalLayout>}</Route>
-      {/* Public waiver signing */}
-      <Route path="/sign-waiver/:token">{(p) => <SignWaiver />}</Route>
-      {/* Fallback */}
-      <Route path="/404" component={NotFound} />
-      <Route component={NotFound} />
-    </Switch>
+        {/* Gated */}
+        <Route path="/portal" component={MemberPortal} />
+        <Route path="/portal/properties" component={PropertyBrowser} />
+        <Route path="/portal/properties/:id" component={PropertyDetail} />
+        <Route path="/portal/my-bookings" component={MyBookings} />
+        <Route path="/privacy" component={Privacy} />
+        <Route path="/inquiry-confirmed" component={InquiryConfirmed} />
+        <Route path="/admin" component={AdminDashboard} />
+        {/* Operations Portal */}
+        <Route path="/ops">{() => <PortalLayout><PortalDashboard /></PortalLayout>}</Route>
+        <Route path="/ops/calendar">{() => <PortalLayout><PortalCalendar /></PortalLayout>}</Route>
+        <Route path="/ops/notifications">{() => <PortalLayout><PortalNotifications /></PortalLayout>}</Route>
+        <Route path="/ops/weddings/:id">{(p) => <PortalLayout><PortalWeddings /></PortalLayout>}</Route>
+        <Route path="/ops/weddings">{() => <PortalLayout><PortalWeddings /></PortalLayout>}</Route>
+        <Route path="/ops/corporate/:id">{(p) => <PortalLayout><PortalCorporate /></PortalLayout>}</Route>
+        <Route path="/ops/corporate">{() => <PortalLayout><PortalCorporate /></PortalLayout>}</Route>
+        <Route path="/ops/hunt-fish/:id">{(p) => <PortalLayout><PortalHuntFish /></PortalLayout>}</Route>
+        <Route path="/ops/hunt-fish">{() => <PortalLayout><PortalHuntFish /></PortalLayout>}</Route>
+        <Route path="/ops/member-bookings">{() => <PortalLayout><PortalMemberBookings /></PortalLayout>}</Route>
+        <Route path="/ops/waivers">{() => <PortalLayout><PortalWaivers /></PortalLayout>}</Route>
+        <Route path="/ops/customers">{() => <PortalLayout><PortalCustomers /></PortalLayout>}</Route>
+        <Route path="/ops/employees">{() => <PortalLayout><PortalEmployees /></PortalLayout>}</Route>
+        <Route path="/ops/membership">{() => <PortalLayout><PortalMembership /></PortalLayout>}</Route>
+        <Route path="/ops/reports">{() => <PortalLayout><PortalReports /></PortalLayout>}</Route>
+        <Route path="/ops/bookings/:id">{() => <PortalLayout><PortalBookings /></PortalLayout>}</Route>
+        <Route path="/ops/bookings">{() => <PortalLayout><PortalBookings /></PortalLayout>}</Route>
+        <Route path="/ops/leads">{() => <PortalLayout><PortalLeads /></PortalLayout>}</Route>
+        <Route path="/ops/availability">{() => <PortalLayout><PortalAvailability /></PortalLayout>}</Route>
+        <Route path="/ops/testimonials">{() => <PortalLayout><PortalTestimonials /></PortalLayout>}</Route>
+        <Route path="/ops/properties">{() => <PortalLayout><PortalProperties /></PortalLayout>}</Route>
+        <Route path="/ops/field-reports">{() => <PortalLayout><PortalFieldReports /></PortalLayout>}</Route>
+        <Route path="/ops/newsletter">{() => <PortalLayout><PortalNewsletter /></PortalLayout>}</Route>
+        {/* Public waiver signing */}
+        <Route path="/sign-waiver/:token">{(p) => <SignWaiver />}</Route>
+        {/* Fallback */}
+        <Route path="/404" component={NotFound} />
+        <Route component={NotFound} />
+      </Switch>
+    </Suspense>
   );
 }
 
