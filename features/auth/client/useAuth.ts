@@ -1,7 +1,7 @@
 import { getLoginUrl } from '@shared/constants';
 import { trpc } from '@shared/lib/trpc';
 import { TRPCClientError } from "@trpc/client";
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 
 type UseAuthOptions = {
   redirectOnUnauthenticated?: boolean;
@@ -41,11 +41,8 @@ export function useAuth(options?: UseAuthOptions) {
     }
   }, [logoutMutation, utils]);
 
+  // Pure derivation — no side effects.
   const state = useMemo(() => {
-    localStorage.setItem(
-      "manus-runtime-user-info",
-      JSON.stringify(meQuery.data)
-    );
     return {
       user: meQuery.data ?? null,
       loading: meQuery.isLoading || logoutMutation.isPending,
@@ -59,6 +56,17 @@ export function useAuth(options?: UseAuthOptions) {
     logoutMutation.error,
     logoutMutation.isPending,
   ]);
+
+  // Track the previous serialised value so we only call setItem when the
+  // user data actually changes, not on every re-render.
+  const prevUserJson = useRef<string | undefined>(undefined);
+
+  useEffect(() => {
+    const next = JSON.stringify(meQuery.data ?? null);
+    if (next === prevUserJson.current) return;
+    prevUserJson.current = next;
+    localStorage.setItem("manus-runtime-user-info", next);
+  }, [meQuery.data]);
 
   useEffect(() => {
     if (!redirectOnUnauthenticated) return;
