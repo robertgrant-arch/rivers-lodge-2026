@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from "react";
 import { Link } from "wouter";
 import PublicLayout from "../components/PublicLayout";
-import { trpc } from "@/lib/trpc";
+import { trpc } from '@shared/lib/trpc';
 import TestimonialsCarousel from "@/components/TestimonialsCarousel";
-import SEOHead, { structuredData } from "@/components/SEOHead";
+import SEOHead, { structuredData } from '@shared/components/SEOHead';
 
 
 /* ── Image constants ─────────────────────────────────────────────────────── */

@@ -1,7 +1,7 @@
 import { useRef, useEffect } from "react";
 import { Link } from "wouter";
 import PublicLayout from "../components/PublicLayout";
-import SEOHead from "@/components/SEOHead";
+import SEOHead from '@shared/components/SEOHead';
 import { HuntFishAvailabilityCalendar } from "../../trips/client/public";
 
 

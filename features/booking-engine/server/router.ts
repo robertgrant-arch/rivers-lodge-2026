@@ -26,8 +26,8 @@ import {
   reservationRequests,
   leads,
   bookingStateTransitions,
-} from '../../_core/db/booking-schema';
-import { bookings, users, blockedDates } from '../../_core/db/schema';
+} from '@core/db/booking-schema';
+import { bookings, users, blockedDates } from '@core/db/schema';
 import { gte, lte } from "drizzle-orm";
 import {
   checkAvailability,

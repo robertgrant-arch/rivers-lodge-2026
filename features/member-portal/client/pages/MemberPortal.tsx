@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
-import { trpc } from "@/lib/trpc";
-import { getLoginUrl } from "@/const";
+import { trpc } from '@shared/lib/trpc';
+import { getLoginUrl } from '@shared/constants';
 import { toast } from "sonner";
 import PublicLayout from "@/components/PublicLayout";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@shared/ui/dialog';
 import { Eye, X } from "lucide-react";
 import PropertyBrowser from "@features/member-portal/client/pages/PropertyBrowser";
 

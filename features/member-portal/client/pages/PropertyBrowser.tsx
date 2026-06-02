@@ -7,15 +7,15 @@
 
 import { useState, useMemo } from "react";
 import { Link } from "wouter";
-import { trpc } from "@/lib/trpc";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { trpc } from '@shared/lib/trpc';
+import { Button } from '@shared/ui/button';
+import { Badge } from '@shared/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@shared/ui/card';
 import {
   MapPin, Users, TreePine, Waves, Zap, Wifi, Truck, Thermometer,
   Calendar, ChevronRight, Filter, Search, AlertCircle, Loader2,
 } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { Input } from '@shared/ui/input';
 
 // ─── Activity config ─────────────────────────────────────────────────────────
 

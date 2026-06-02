@@ -1,13 +1,13 @@
 import { useState, useMemo } from "react";
-import { trpc } from "@/lib/trpc";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { Skeleton } from "@/components/ui/skeleton";
+import { trpc } from '@shared/lib/trpc';
+import { Badge } from '@shared/ui/badge';
+import { Button } from '@shared/ui/button';
+import { Input } from '@shared/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@shared/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@shared/ui/dialog';
+import { Textarea } from '@shared/ui/textarea';
+import { Label } from '@shared/ui/label';
+import { Skeleton } from '@shared/ui/skeleton';
 import { toast } from "sonner";
 import { Search, Plus, ChevronRight, Calendar, Users, DollarSign, ArrowRight, Clock, AlertTriangle, LayoutList, Columns } from "lucide-react";
 

@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { useParams } from "wouter";
-import { trpc } from "@/lib/trpc";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { trpc } from '@shared/lib/trpc';
+import { Button } from '@shared/ui/button';
+import { Input } from '@shared/ui/input';
+import { Label } from '@shared/ui/label';
+import { Card, CardContent, CardHeader, CardTitle } from '@shared/ui/card';
 import { CheckCircle, AlertCircle, FileText, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 

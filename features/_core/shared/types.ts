@@ -3,5 +3,5 @@
  * Import shared types from this single entry point.
  */
 
-export type * from "../db/schema";
+export type * from "@core/db/schema";
 export * from "./errors";

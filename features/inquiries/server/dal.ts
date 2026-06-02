@@ -1,5 +1,5 @@
 import { eq, desc } from "drizzle-orm";
-import { inquiries, InsertInquiry } from "../../_core/db/schema";
+import { inquiries, InsertInquiry } from '@core/db/schema';
 import { getDb } from "../../_core/server/db";
 
 // ─── Inquiries DAL ────────────────────────────────────────────────────────────

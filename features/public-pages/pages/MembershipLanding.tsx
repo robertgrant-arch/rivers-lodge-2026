@@ -1,7 +1,7 @@
 import { Link } from "wouter";
 import PublicLayout from "../components/PublicLayout";
-import { trpc } from "@/lib/trpc";
-import SEOHead, { structuredData } from "@/components/SEOHead";
+import { trpc } from '@shared/lib/trpc';
+import SEOHead, { structuredData } from '@shared/components/SEOHead';
 import AvailabilityCalendar from "@/components/AvailabilityCalendar";
 import FAQAccordion from "@/components/FAQAccordion";
 

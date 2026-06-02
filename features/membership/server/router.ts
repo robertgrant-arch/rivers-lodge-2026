@@ -11,7 +11,7 @@ import { drizzle } from "drizzle-orm/mysql2";
 import { publicProcedure, protectedProcedure, router } from "../../_core/server/trpc";
 import { notifyOwner } from "../../_core/server/notification";
 import * as dal from "./dal";
-import { members, users, membershipApplications } from "../../_core/db/schema";
+import { members, users, membershipApplications } from '@core/db/schema';
 
 // ─── Role Guards ──────────────────────────────────────────────────────────────
 
@@ -44,7 +44,7 @@ function getPortalDb() {
 // ─── Audit Log (portalRouter-local helper) ────────────────────────────────────
 // TODO(membership-extraction): Extract this shared helper once portalRouter is
 // decomposed; for now we inline it to avoid circular imports.
-import { portalAuditLog } from "../../_core/db/portal-schema";
+import { portalAuditLog } from '@core/db/portal-schema';
 
 async function logAudit(params: {
   actingUserId: number;

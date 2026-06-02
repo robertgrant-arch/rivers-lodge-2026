@@ -1,24 +1,24 @@
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Button } from '@shared/ui/button';
+import { Card, CardContent } from '@shared/ui/card';
 import {
   Dialog,
   DialogContent,
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+} from '@shared/ui/dialog';
+import { Input } from '@shared/ui/input';
+import { Label } from '@shared/ui/label';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Textarea } from "@/components/ui/textarea";
-import { trpc } from "@/lib/trpc";
+} from '@shared/ui/select';
+import { Skeleton } from '@shared/ui/skeleton';
+import { Textarea } from '@shared/ui/textarea';
+import { trpc } from '@shared/lib/trpc';
 import { Building2, ChevronRight, DollarSign, Mail, MessageSquare, Phone, Plus, Search, Users, ArrowRight } from "lucide-react";
 import { useState } from "react";
 import { Link, useParams } from "wouter";

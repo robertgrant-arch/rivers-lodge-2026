@@ -19,8 +19,8 @@ import {
   portalNotifications,
   portalTasks,
   portalNotes,
-} from '../../_core/db/portal-schema';
-import { users, members, membershipApplications, inquiries, bookings } from '../../_core/db/schema';
+} from '@core/db/portal-schema';
+import { users, members, membershipApplications, inquiries, bookings } from '@core/db/schema';
 import { randomBytes } from "crypto";
 
 function getDb() {

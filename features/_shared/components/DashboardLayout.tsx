@@ -1,11 +1,11 @@
 import { useAuth } from "@/_core/hooks/useAuth";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from '@shared/ui/avatar';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from '@shared/ui/dropdown-menu';
 import {
   Sidebar,
   SidebarContent,
@@ -18,14 +18,14 @@ import {
   SidebarProvider,
   SidebarTrigger,
   useSidebar,
-} from "@/components/ui/sidebar";
-import { getLoginUrl } from "@/const";
-import { useIsMobile } from "@/hooks/useMobile";
+} from '@shared/ui/sidebar';
+import { getLoginUrl } from '@shared/constants';
+import { useIsMobile } from '@shared/hooks/useMobile';
 import { LayoutDashboard, LogOut, PanelLeft, Users } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
-import { Button } from "@/components/ui/button";
+import { Button } from '@shared/ui/button';
 
 const menuItems = [
   { icon: LayoutDashboard, label: "Page 1", path: "/" },

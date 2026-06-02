@@ -2,7 +2,7 @@ import { useRef, useEffect } from "react";
 import { useLocation } from "wouter";
 import PublicLayout from "../components/PublicLayout";
 import InquiryForm from "@/components/InquiryForm";
-import SEOHead from "@/components/SEOHead";
+import SEOHead from '@shared/components/SEOHead';
 
 
 function useFadeUp(t = 0.12) {

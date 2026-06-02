@@ -3,7 +3,7 @@
 // features/_core/server/db.ts — once consumers are migrated, remove them from there.
 
 import { eq, desc } from "drizzle-orm";
-import { InsertUser, users } from "../../_core/db/schema";
+import { InsertUser, users } from '@core/db/schema';
 import { getDb } from "../../_core/server/db";
 import { ENV } from "../../_core/server/env";
 

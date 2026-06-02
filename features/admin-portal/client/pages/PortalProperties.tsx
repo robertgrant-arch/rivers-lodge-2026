@@ -7,20 +7,20 @@
  */
 
 import { useState } from "react";
-import { trpc } from "@/lib/trpc";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { trpc } from '@shared/lib/trpc';
+import { Button } from '@shared/ui/button';
+import { Badge } from '@shared/ui/badge';
+import { Input } from '@shared/ui/input';
+import { Label } from '@shared/ui/label';
+import { Textarea } from '@shared/ui/textarea';
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
+} from '@shared/ui/select';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
-} from "@/components/ui/dialog";
-import { Switch } from "@/components/ui/switch";
-import { Checkbox } from "@/components/ui/checkbox";
+} from '@shared/ui/dialog';
+import { Switch } from '@shared/ui/switch';
+import { Checkbox } from '@shared/ui/checkbox';
 import {
   TreePine, Plus, Pencil, Loader2, AlertCircle, Users,
   ChevronDown, ChevronUp, Thermometer, Truck, Waves, Zap, Wifi,

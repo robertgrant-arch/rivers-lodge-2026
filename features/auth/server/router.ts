@@ -1,7 +1,7 @@
 // Extracted from server/routers.ts — auth.me and auth.logout procedures
 // TODO: Remove the inline auth router from server/routers.ts once this is wired up.
 
-import { COOKIE_NAME } from "@shared/const";
+import { COOKIE_NAME } from '@shared/constants';
 import { getSessionCookieOptions } from "../../_core/server/cookies";
 import { publicProcedure, router } from "../../_core/server/trpc";
 

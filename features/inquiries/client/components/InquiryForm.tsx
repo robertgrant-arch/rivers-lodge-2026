@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
-import { trpc } from "@/lib/trpc";
+import { trpc } from '@shared/lib/trpc';
 import AvailabilityCalendar from "../../../booking-engine/client/components/AvailabilityCalendar";
 
 type InquiryType = "wedding" | "corporate" | "membership" | "lodging" | "tour" | "event" | "general";

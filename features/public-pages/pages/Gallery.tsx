@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import PublicLayout from "../components/PublicLayout";
-import { trpc } from "@/lib/trpc";
-import SEOHead from "@/components/SEOHead";
+import { trpc } from '@shared/lib/trpc';
+import SEOHead from '@shared/components/SEOHead';
 
 
 type Category = "all" | "weddings" | "venues" | "lodging" | "grounds" | "outdoors";

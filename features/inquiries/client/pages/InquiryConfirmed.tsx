@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { Link, useSearch } from "wouter";
 import PublicLayout from "@/components/PublicLayout";
-import SEOHead from "@/components/SEOHead";
+import SEOHead from '@shared/components/SEOHead';
 
 const GOLD = "oklch(0.72 0.12 72)";
 

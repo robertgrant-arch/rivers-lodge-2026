@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
-import { trpc } from "@/lib/trpc";
+import { trpc } from '@shared/lib/trpc';
 import { toast } from "sonner";
 import PublicLayout from "@/components/PublicLayout";
 

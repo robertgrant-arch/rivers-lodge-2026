@@ -15,8 +15,8 @@
  *     }]
  *   });
  */
-import { storagePut } from "./storage";
-import { ENV } from "./env";
+import { storagePut } from "@core/server/storage";
+import { ENV } from "@core/server/env";
 
 export type GenerateImageOptions = {
   prompt: string;

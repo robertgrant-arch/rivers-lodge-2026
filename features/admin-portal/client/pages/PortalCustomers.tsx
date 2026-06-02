@@ -1,7 +1,7 @@
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
-import { trpc } from "@/lib/trpc";
+import { Card, CardContent } from '@shared/ui/card';
+import { Input } from '@shared/ui/input';
+import { Skeleton } from '@shared/ui/skeleton';
+import { trpc } from '@shared/lib/trpc';
 import { Mail, Search, Users } from "lucide-react";
 import { useState } from "react";
 

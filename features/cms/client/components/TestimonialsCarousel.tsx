@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { trpc } from "@/lib/trpc";
+import { trpc } from '@shared/lib/trpc';
 
 type Division = "weddings" | "membership" | "corporate" | "general";
 

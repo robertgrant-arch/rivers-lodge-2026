@@ -14,12 +14,12 @@
  */
 
 import { useState, useMemo } from "react";
-import { trpc } from "@/lib/trpc";
+import { trpc } from '@shared/lib/trpc';
 import { useAuth } from "@/_core/hooks/useAuth";
-import { getLoginUrl } from "@/const";
+import { getLoginUrl } from '@shared/constants';
 import { Link } from "wouter";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { Button } from '@shared/ui/button';
+import { Badge } from '@shared/ui/badge';
 import {
   Dialog,
   DialogContent,
@@ -27,11 +27,11 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
+} from '@shared/ui/dialog';
+import { Label } from '@shared/ui/label';
+import { Input } from '@shared/ui/input';
+import { Textarea } from '@shared/ui/textarea';
+import { Checkbox } from '@shared/ui/checkbox';
 import { toast } from "sonner";
 import { ChevronLeft, ChevronRight, Users, CalendarDays, Clock, Leaf, Lock } from "lucide-react";
 

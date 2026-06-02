@@ -7,19 +7,19 @@
 
 import { useState, useMemo } from "react";
 import { useRoute, Link, useLocation } from "wouter";
-import { trpc } from "@/lib/trpc";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { trpc } from '@shared/lib/trpc';
+import { Button } from '@shared/ui/button';
+import { Badge } from '@shared/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@shared/ui/card';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+} from '@shared/ui/dialog';
+import { Input } from '@shared/ui/input';
+import { Label } from '@shared/ui/label';
+import { Textarea } from '@shared/ui/textarea';
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
+} from '@shared/ui/select';
 import {
   ArrowLeft, Users, MapPin, TreePine, Waves, Zap, Wifi, Truck,
   Thermometer, Calendar, CheckCircle2, XCircle, AlertCircle,

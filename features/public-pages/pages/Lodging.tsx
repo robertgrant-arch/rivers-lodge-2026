@@ -1,7 +1,7 @@
 import { Link } from "wouter";
 import PublicLayout from "../components/PublicLayout";
-import { trpc } from "@/lib/trpc";
-import SEOHead from "@/components/SEOHead";
+import { trpc } from '@shared/lib/trpc';
+import SEOHead from '@shared/components/SEOHead';
 
 
 const FALLBACK_LODGING = [

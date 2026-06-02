@@ -1,14 +1,14 @@
 import { useAuth } from "@/_core/hooks/useAuth";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback } from '@shared/ui/avatar';
+import { Badge } from '@shared/ui/badge';
+import { Button } from '@shared/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from '@shared/ui/dropdown-menu';
 import {
   Sidebar,
   SidebarContent,
@@ -22,9 +22,9 @@ import {
   SidebarMenuItem,
   SidebarProvider,
   SidebarTrigger,
-} from "@/components/ui/sidebar";
-import { getLoginUrl } from "@/const";
-import { trpc } from "@/lib/trpc";
+} from '@shared/ui/sidebar';
+import { getLoginUrl } from '@shared/constants';
+import { trpc } from '@shared/lib/trpc';
 import {
   BarChart3,
   Bell,

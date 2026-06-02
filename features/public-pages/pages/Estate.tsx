@@ -1,8 +1,8 @@
 import { useRef, useEffect } from "react";
 import { Link } from "wouter";
 import PublicLayout from "../components/PublicLayout";
-import { trpc } from "@/lib/trpc";
-import SEOHead from "@/components/SEOHead";
+import { trpc } from '@shared/lib/trpc';
+import SEOHead from '@shared/components/SEOHead';
 
 
 const HERO        = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/xZXSDWkpiCXfqsiU.jpg";

@@ -23,14 +23,14 @@
  *   SC-06: Hunt zone blocked by weather (BlockedDate with reason=weather)
  */
 
-import { getDb } from "@features/_core/server/db";
+import { getDb } from '@core/server/db';
 import {
   bookingResourceAllocations,
   resources,
   resourceGroups,
-} from "@features/_core/db/booking-schema";
-import { portalBlockedDates } from "@features/_core/db/portal-schema";
-import type { PortalBlockedDate } from "@features/_core/db/portal-schema";
+} from '@core/db/booking-schema';
+import { portalBlockedDates } from '@core/db/portal-schema';
+import type { PortalBlockedDate } from '@core/db/portal-schema';
 import { and, eq, lt, gt, ne, sql, inArray } from "drizzle-orm";
 
 // ─── Types ────────────────────────────────────────────────────────────────────

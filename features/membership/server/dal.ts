@@ -8,7 +8,7 @@ import {
   InsertMembershipApplication,
   members,
   InsertMember,
-} from "../../_core/db/schema";
+} from '@core/db/schema';
 import { getDb } from "../../_core/server/db";
 
 // ─── Membership Applications ──────────────────────────────────────────────────

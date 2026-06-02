@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { trpc } from "@/lib/trpc";
+import { trpc } from '@shared/lib/trpc';
 
 interface Props {
   onDateSelect?: (date: string) => void;

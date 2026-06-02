@@ -19,7 +19,7 @@ import {
   InsertCmsAnnouncement,
   InsertCmsSingleton,
   InsertCmsMemberContent,
-} from "../../_core/db/schema";
+} from '@core/db/schema';
 
 function getDb() {
   if (!process.env.DATABASE_URL) throw new Error("DATABASE_URL not set");

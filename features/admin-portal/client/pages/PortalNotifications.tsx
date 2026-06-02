@@ -1,8 +1,8 @@
-import { trpc } from "@/lib/trpc";
+import { trpc } from '@shared/lib/trpc';
 import { Bell, CheckCheck } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
+import { Button } from '@shared/ui/button';
+import { Badge } from '@shared/ui/badge';
+import { Card, CardContent } from '@shared/ui/card';
 
 export default function PortalNotifications() {
   const utils = trpc.useUtils();

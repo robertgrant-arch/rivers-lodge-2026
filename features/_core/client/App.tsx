@@ -1,57 +1,57 @@
-import { Toaster } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import NotFound from "../../features/public-pages/pages/NotFound";
+import { Toaster } from '@shared/ui/sonner';
+import { TooltipProvider } from '@shared/ui/tooltip';
+import NotFound from "../../public-pages/pages/NotFound";
 import { Route, Switch } from "wouter";
-import ErrorBoundary from "../../features/_shared/components/ErrorBoundary";
-import { ThemeProvider } from "../../features/_core/client/contexts/ThemeContext";
+import ErrorBoundary from "../../_shared/components/ErrorBoundary";
+import { ThemeProvider } from "./contexts/ThemeContext";
 // Public pages
-import Home from "../../features/public-pages/pages/Home";
-import WeddingsLanding from "../../features/public-pages/pages/WeddingsLanding";
-import MembershipLanding from "../../features/public-pages/pages/MembershipLanding";
-import Weddings from "../../features/public-pages/pages/Weddings";
-import Venues from "../../features/public-pages/pages/Venues";
-import Lodging from "../../features/public-pages/pages/Lodging";
-import Corporate from "../../features/public-pages/pages/Corporate";
-import Estate from "../../features/public-pages/pages/Estate";
-import Gallery from "../../features/public-pages/pages/Gallery";
-import Contact from "../../features/public-pages/pages/Contact";
-import Hunt from "../../features/public-pages/pages/Hunt";
-import Fish from "../../features/public-pages/pages/Fish";
-import Privacy from "../../features/public-pages/pages/Privacy";
+import Home from "../../public-pages/pages/Home";
+import WeddingsLanding from "../../public-pages/pages/WeddingsLanding";
+import MembershipLanding from "../../public-pages/pages/MembershipLanding";
+import Weddings from "../../public-pages/pages/Weddings";
+import Venues from "../../public-pages/pages/Venues";
+import Lodging from "../../public-pages/pages/Lodging";
+import Corporate from "../../public-pages/pages/Corporate";
+import Estate from "../../public-pages/pages/Estate";
+import Gallery from "../../public-pages/pages/Gallery";
+import Contact from "../../public-pages/pages/Contact";
+import Hunt from "../../public-pages/pages/Hunt";
+import Fish from "../../public-pages/pages/Fish";
+import Privacy from "../../public-pages/pages/Privacy";
 // Inquiries
-import InquiryConfirmed from "../../features/inquiries/client/pages/InquiryConfirmed";
+import InquiryConfirmed from "../../inquiries/client/pages/InquiryConfirmed";
 // Membership
-import Membership from "../../features/membership/client/pages/Membership";
+import Membership from "../../membership/client/pages/Membership";
 // Waivers
-import SignWaiver from "../../features/waivers/client/pages/SignWaiver";
-import PortalWaivers from "../../features/waivers/client/pages/PortalWaivers";
+import SignWaiver from "../../waivers/client/pages/SignWaiver";
+import PortalWaivers from "../../waivers/client/pages/PortalWaivers";
 // Gated pages
-import MemberPortal from "../../features/member-portal/client/pages/MemberPortal";
-import MyBookings from "../../features/member-portal/client/pages/MyBookings";
-import PropertyBrowser from "../../features/member-portal/client/pages/PropertyBrowser";
-import PropertyDetail from "../../features/member-portal/client/pages/PropertyDetail";
-import PortalAvailability from "../../features/member-portal/client/pages/PortalAvailability";
+import MemberPortal from "../../member-portal/client/pages/MemberPortal";
+import MyBookings from "../../member-portal/client/pages/MyBookings";
+import PropertyBrowser from "../../member-portal/client/pages/PropertyBrowser";
+import PropertyDetail from "../../member-portal/client/pages/PropertyDetail";
+import PortalAvailability from "../../member-portal/client/pages/PortalAvailability";
 // Admin portal
-import AdminDashboard from "../../features/admin-portal/client/pages/AdminDashboard";
-import PortalLayout from "../../features/admin-portal/client/components/PortalLayout";
-import PortalDashboard from "../../features/admin-portal/client/pages/PortalDashboard";
-import PortalCalendar from "../../features/admin-portal/client/pages/PortalCalendar";
-import PortalWeddings from "../../features/admin-portal/client/pages/PortalWeddings";
-import PortalCorporate from "../../features/admin-portal/client/pages/PortalCorporate";
-import PortalHuntFish from "../../features/admin-portal/client/pages/PortalHuntFish";
-import PortalMemberBookings from "../../features/admin-portal/client/pages/PortalMemberBookings";
-import PortalCustomers from "../../features/admin-portal/client/pages/PortalCustomers";
-import PortalEmployees from "../../features/admin-portal/client/pages/PortalEmployees";
-import PortalMembership from "../../features/admin-portal/client/pages/PortalMembership";
-import PortalReports from "../../features/admin-portal/client/pages/PortalReports";
-import PortalBookings from "../../features/admin-portal/client/pages/PortalBookings";
-import PortalLeads from "../../features/admin-portal/client/pages/PortalLeads";
-import PortalNotifications from "../../features/admin-portal/client/pages/PortalNotifications";
-import PortalTestimonials from "../../features/admin-portal/client/pages/PortalTestimonials";
-import PortalProperties from "../../features/admin-portal/client/pages/PortalProperties";
+import AdminDashboard from "../../admin-portal/client/pages/AdminDashboard";
+import PortalLayout from "../../admin-portal/client/components/PortalLayout";
+import PortalDashboard from "../../admin-portal/client/pages/PortalDashboard";
+import PortalCalendar from "../../admin-portal/client/pages/PortalCalendar";
+import PortalWeddings from "../../admin-portal/client/pages/PortalWeddings";
+import PortalCorporate from "../../admin-portal/client/pages/PortalCorporate";
+import PortalHuntFish from "../../admin-portal/client/pages/PortalHuntFish";
+import PortalMemberBookings from "../../admin-portal/client/pages/PortalMemberBookings";
+import PortalCustomers from "../../admin-portal/client/pages/PortalCustomers";
+import PortalEmployees from "../../admin-portal/client/pages/PortalEmployees";
+import PortalMembership from "../../admin-portal/client/pages/PortalMembership";
+import PortalReports from "../../admin-portal/client/pages/PortalReports";
+import PortalBookings from "../../admin-portal/client/pages/PortalBookings";
+import PortalLeads from "../../admin-portal/client/pages/PortalLeads";
+import PortalNotifications from "../../admin-portal/client/pages/PortalNotifications";
+import PortalTestimonials from "../../admin-portal/client/pages/PortalTestimonials";
+import PortalProperties from "../../admin-portal/client/pages/PortalProperties";
 // Reports
-import PortalFieldReports from "../../features/reports/client/pages/PortalFieldReports";
-import PortalNewsletter from "../../features/reports/client/pages/PortalNewsletter";
+import PortalFieldReports from "../../reports/client/pages/PortalFieldReports";
+import PortalNewsletter from "../../reports/client/pages/PortalNewsletter";
 
 function Router() {
   return (

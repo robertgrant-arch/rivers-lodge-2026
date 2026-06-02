@@ -1,6 +1,6 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import { trpc } from "@/lib/trpc";
+import { Card, CardContent, CardHeader, CardTitle } from '@shared/ui/card';
+import { Skeleton } from '@shared/ui/skeleton';
+import { trpc } from '@shared/lib/trpc';
 import { BarChart3, Building2, DollarSign, Heart, Target, TrendingUp, Users } from "lucide-react";
 
 function formatCurrency(v: string | number | null | undefined) {

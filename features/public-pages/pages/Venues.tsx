@@ -1,6 +1,6 @@
 import { Link } from "wouter";
 import PublicLayout from "../components/PublicLayout";
-import { trpc } from "@/lib/trpc";
+import { trpc } from '@shared/lib/trpc';
 
 const FALLBACK_VENUES = [
   {

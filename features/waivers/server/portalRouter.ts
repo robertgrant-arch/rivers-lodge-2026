@@ -8,7 +8,7 @@ import { publicProcedure, protectedProcedure, router } from "../../_core/server/
 import {
   waiverTemplates,
   portalWaivers,
-} from "../../_core/db/portal-schema";
+} from '@core/db/portal-schema';
 import { randomBytes } from "crypto";
 import { generateAndStoreWaiverPdf } from "./waiverPdf";
 
