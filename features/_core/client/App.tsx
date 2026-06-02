@@ -4,8 +4,16 @@ import { TooltipProvider } from '@shared/ui/tooltip';
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "../../_shared/components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
-// Layout components — must be sync
+// Layout components — must be sync (used by every /ops page simultaneously)
 import PortalLayout from "../../admin/client/components/PortalLayout";
+
+// ComponentShowcase is dev-only.  import.meta.env.DEV is a compile-time
+// constant that Vite replaces with `false` in production builds, so the
+// dynamic import() call is never evaluated and the chunk is never emitted.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const ComponentShowcase: React.LazyExoticComponent<any> | null = import.meta.env.DEV
+  ? lazy(() => import("@features/_shared/pages/ComponentShowcase"))
+  : null;
 
 // Public / marketing pages
 const Home = lazy(() => import("@features/marketing/client/pages/Home"));
@@ -70,16 +78,28 @@ const PortalProperties = lazy(() => import("@features/admin/client/pages/PortalP
 const PortalFieldReports = lazy(() => import("@features/reports/client/pages/PortalFieldReports"));
 const PortalNewsletter = lazy(() => import("@features/reports/client/pages/PortalNewsletter"));
 
-// Loading fallback — minimal, matches the site's dark theme
-const PageLoader = () => (
-  <div className="min-h-screen bg-background flex items-center justify-center">
-    <div className="w-8 h-8 border-2 border-[oklch(0.72_0.095_78)] border-t-transparent rounded-full animate-spin" />
-  </div>
-);
+/**
+ * RouteLoader — shown by <Suspense> while a lazy page chunk is loading.
+ *
+ * Intentionally minimal to avoid layout shift: full-viewport dark background
+ * matching the site theme + a single gold spinner.  No text — avoids the
+ * "Loading…" flash for fast connections where the chunk arrives in < 100 ms.
+ */
+function RouteLoader() {
+  return (
+    <div
+      className="min-h-screen bg-background flex items-center justify-center"
+      role="status"
+      aria-label="Loading page"
+    >
+      <div className="w-8 h-8 border-2 border-[oklch(0.72_0.095_78)] border-t-transparent rounded-full animate-spin" />
+    </div>
+  );
+}
 
 function Router() {
   return (
-    <Suspense fallback={<PageLoader />}>
+    <Suspense fallback={<RouteLoader />}>
       <Switch>
         {/* Public */}
         <Route path="/" component={Home} />
@@ -130,6 +150,10 @@ function Router() {
         <Route path="/ops/newsletter">{() => <PortalLayout><PortalNewsletter /></PortalLayout>}</Route>
         {/* Public waiver signing */}
         <Route path="/sign-waiver/:token">{(p) => <SignWaiver />}</Route>
+        {/* Dev-only: component showcase — tree-shaken from production builds */}
+        {import.meta.env.DEV && ComponentShowcase && (
+          <Route path="/showcase" component={ComponentShowcase} />
+        )}
         {/* Fallback */}
         <Route path="/404" component={NotFound} />
         <Route component={NotFound} />
