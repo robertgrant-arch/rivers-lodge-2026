@@ -1,12 +1,10 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { publicProcedure, protectedProcedure, router } from "../../_core/server/trpc";
-import * as db from "../../_core/server/db";
+import { publicProcedure, protectedProcedure, router } from "@features/_core/server/trpc";
+import * as db from "@features/_core/server/db";
 
 // ─── Seasonal Updates Router ──────────────────────────────────────────────────
-// Extracted from server/routers.ts (updatesRouter inline code)
 
-// Re-use adminProcedure pattern inline — gate via role check
 const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
   if (ctx.user.role !== "admin" && ctx.user.role !== "owner") {
     throw new TRPCError({ code: "FORBIDDEN" });
