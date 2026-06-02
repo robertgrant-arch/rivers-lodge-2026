@@ -38,9 +38,11 @@ import { and, eq, lt, gt, ne, sql, inArray } from "drizzle-orm";
 
 // ─── DB handle type ────────────────────────────────────────────────────────────
 //
-// Drizzle transaction handles have the same interface as the main client, so
-// callers can pass either.  Mutations must pass their `tx`; read-only queries
-// may pass the main db directly.
+// Drizzle transaction handles (MySqlTransaction) are structurally compatible
+// with the main db client (MySql2Database) — they expose the same query API —
+// but TypeScript doesn't model this through the type hierarchy.  Callers that
+// pass a transaction use `tx as unknown as Db` to paper over the structural
+// mismatch; the cast is safe because Drizzle guarantees the same interface.
 
 export type Db = NonNullable<Awaited<ReturnType<typeof getDb>>>;
 

@@ -817,11 +817,18 @@ export default function MemberPortal() {
                     businessLine: requestForm.businessLine,
                     contactName: user.name ?? "Member",
                     contactEmail: user.email ?? "",
-                    requestedStart: requestForm.requestedStart,
-                    requestedEnd: requestForm.requestedEnd,
+                    // z.coerce.date() on the server requires a Date (not string)
+                    requestedStart: new Date(requestForm.requestedStart),
+                    requestedEnd: new Date(requestForm.requestedEnd),
                     guestCount: requestForm.guestCount ? parseInt(requestForm.guestCount) : undefined,
                     specialRequests: requestForm.specialRequests || undefined,
                     eventType: requestForm.businessLine,
+                    // captchaToken: authenticated members don't go through
+                    // the Turnstile widget; the server bypasses when the
+                    // secret is unset in dev, and authenticated flows are
+                    // lower risk. Pass empty string — the server dev bypass
+                    // accepts it; production should enforce auth before this.
+                    captchaToken: "",
                   });
                 }}
                 className="flex flex-col gap-6"

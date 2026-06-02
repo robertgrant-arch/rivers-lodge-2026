@@ -34,6 +34,7 @@ import {
   checkAvailability,
   checkMultipleResources,
   getCalendarAvailability,
+  type Db,
 } from "./availability/engine";
 import {
   transitionBookingStatus,
@@ -131,8 +132,8 @@ const availabilityRouter = router({
   check: protectedProcedure
     .input(z.object({
       resourceId: z.number(),
-      allocationStart: z.string(),
-      allocationEnd: z.string(),
+      allocationStart: z.coerce.date(),
+      allocationEnd: z.coerce.date(),
       excludeBookingId: z.number().optional(),
     }))
     .query(async ({ ctx, input }) => {
@@ -143,8 +144,8 @@ const availabilityRouter = router({
       return await checkAvailability(
         {
           resourceId: input.resourceId,
-          allocationStart: new Date(input.allocationStart),
-          allocationEnd: new Date(input.allocationEnd),
+          allocationStart: input.allocationStart,
+          allocationEnd: input.allocationEnd,
           excludeBookingId: input.excludeBookingId,
         },
         db,
@@ -155,8 +156,8 @@ const availabilityRouter = router({
     .input(z.object({
       resources: z.array(z.object({
         resourceId: z.number(),
-        allocationStart: z.string(),
-        allocationEnd: z.string(),
+        allocationStart: z.coerce.date(),
+        allocationEnd: z.coerce.date(),
       })),
       excludeBookingId: z.number().optional(),
     }))
@@ -167,8 +168,8 @@ const availabilityRouter = router({
       return await checkMultipleResources(
         input.resources.map((r) => ({
           resourceId: r.resourceId,
-          allocationStart: new Date(r.allocationStart),
-          allocationEnd: new Date(r.allocationEnd),
+          allocationStart: r.allocationStart,
+          allocationEnd: r.allocationEnd,
           excludeBookingId: input.excludeBookingId,
         })),
         db,
@@ -176,13 +177,10 @@ const availabilityRouter = router({
     }),
 
   calendar: protectedProcedure
-    .input(z.object({ startDate: z.string(), endDate: z.string() }))
+    .input(z.object({ startDate: z.coerce.date(), endDate: z.coerce.date() }))
     .query(async ({ ctx, input }) => {
       requirePortalRole(ctx);
-      return await getCalendarAvailability(
-        new Date(input.startDate),
-        new Date(input.endDate)
-      );
+      return await getCalendarAvailability(input.startDate, input.endDate);
     }),
 });
 
@@ -209,13 +207,25 @@ const bookingsRouter = router({
           sql`(${bookings.clientName} LIKE ${`%${input.search}%`} OR ${bookings.clientEmail} LIKE ${`%${input.search}%`})`
         );
       }
-      const items = await db
-        .select()
-        .from(bookings)
-        .where(conditions.length ? and(...conditions) : undefined)
-        .orderBy(desc(bookings.createdAt))
-        .limit(input?.limit ?? 50)
-        .offset(input?.offset ?? 0);
+      const where = conditions.length ? and(...conditions) : undefined;
+
+      // Run the count and the page fetch in parallel.
+      // COUNT(*) must use the same WHERE clause as the items query so that
+      // total reflects the full matching set, not just the current page.
+      const [countResult, items] = await Promise.all([
+        db
+          .select({ count: sql<string>`count(*)` })
+          .from(bookings)
+          .where(where),
+        db
+          .select()
+          .from(bookings)
+          .where(where)
+          .orderBy(desc(bookings.createdAt))
+          .limit(input?.limit ?? 50)
+          .offset(input?.offset ?? 0),
+      ]);
+      const total = Number(countResult[0]?.count ?? 0);
 
       // Enrich with state machine info
       return {
@@ -225,7 +235,7 @@ const bookingsRouter = router({
           statusLabel: getStatusLabel(b.status as BookingStatus),
           statusColor: getStatusColor(b.status as BookingStatus),
         })),
-        total: items.length,
+        total,
       };
     }),
 
@@ -289,8 +299,8 @@ const bookingsRouter = router({
       clientName: z.string().min(1),
       clientEmail: z.string().email().optional(),
       clientPhone: z.string().optional(),
-      startDate: z.string(),
-      endDate: z.string(),
+      startDate: z.coerce.date(),
+      endDate: z.coerce.date(),
       guestCount: z.number().optional(),
       totalRevenue: z.string().optional(),
       notes: z.string().optional(),
@@ -298,8 +308,8 @@ const bookingsRouter = router({
       // Resource allocations to create with this booking
       resourceAllocations: z.array(z.object({
         resourceId: z.number(),
-        allocationStart: z.string(),
-        allocationEnd: z.string(),
+        allocationStart: z.coerce.date(),
+        allocationEnd: z.coerce.date(),
       })).optional(),
       // Whether to bypass soft conflict warnings (requires acknowledgment)
       acknowledgeSoftConflicts: z.boolean().default(false),
@@ -318,10 +328,12 @@ const bookingsRouter = router({
           const availResult = await checkMultipleResources(
             input.resourceAllocations.map((r) => ({
               resourceId: r.resourceId,
-              allocationStart: new Date(r.allocationStart),
-              allocationEnd: new Date(r.allocationEnd),
+              allocationStart: r.allocationStart,
+              allocationEnd: r.allocationEnd,
             })),
-            tx,
+            // tx (MySqlTransaction) is structurally compatible with Db but
+            // the TypeScript types don't model this; cast is safe.
+            tx as unknown as Db,
           );
 
           if (!availResult.available) {
@@ -345,8 +357,8 @@ const bookingsRouter = router({
           clientName: input.clientName,
           clientEmail: input.clientEmail ?? null,
           clientPhone: input.clientPhone ?? null,
-          startDate: input.startDate as unknown as Date,
-          endDate: input.endDate as unknown as Date,
+          startDate: input.startDate,
+          endDate: input.endDate,
           guestCount: input.guestCount ?? null,
           totalRevenue: input.totalRevenue ?? null,
           depositPaid: false,
@@ -363,8 +375,8 @@ const bookingsRouter = router({
             await tx.insert(bookingResourceAllocations).values({
               bookingId,
               resourceId: alloc.resourceId,
-              allocationStart: new Date(alloc.allocationStart),
-              allocationEnd: new Date(alloc.allocationEnd),
+              allocationStart: alloc.allocationStart,
+              allocationEnd: alloc.allocationEnd,
               status: "tentative",
             });
           }
@@ -390,8 +402,8 @@ const bookingsRouter = router({
       clientName: z.string().optional(),
       clientEmail: z.string().optional(),
       clientPhone: z.string().optional(),
-      startDate: z.string().optional(),
-      endDate: z.string().optional(),
+      startDate: z.coerce.date().optional(),
+      endDate: z.coerce.date().optional(),
       guestCount: z.number().optional(),
       totalRevenue: z.string().optional(),
       depositPaid: z.boolean().optional(),
@@ -402,7 +414,9 @@ const bookingsRouter = router({
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
       const { id, startDate, endDate, ...rest } = input;
-      const updates: Record<string, string | number | boolean | null | undefined> = { ...rest as Record<string, string | number | boolean | null | undefined> };
+      const updates: Record<string, string | number | boolean | Date | null | undefined> = {
+        ...rest as Record<string, string | number | boolean | null | undefined>,
+      };
       if (startDate) updates.startDate = startDate;
       if (endDate) updates.endDate = endDate;
       await db.update(bookings).set(updates).where(eq(bookings.id, id));
@@ -461,8 +475,8 @@ const bookingsRouter = router({
     .input(z.object({
       bookingId: z.number(),
       resourceId: z.number(),
-      allocationStart: z.string(),
-      allocationEnd: z.string(),
+      allocationStart: z.coerce.date(),
+      allocationEnd: z.coerce.date(),
       acknowledgeSoftConflicts: z.boolean().default(false),
     }))
     .mutation(async ({ ctx, input }) => {
@@ -474,11 +488,11 @@ const bookingsRouter = router({
         const availResult = await checkAvailability(
           {
             resourceId: input.resourceId,
-            allocationStart: new Date(input.allocationStart),
-            allocationEnd: new Date(input.allocationEnd),
+            allocationStart: input.allocationStart,
+            allocationEnd: input.allocationEnd,
             excludeBookingId: input.bookingId,
           },
-          tx,
+          tx as unknown as Db,
         );
 
         if (!availResult.available) {
@@ -629,8 +643,8 @@ const leadsRouter = router({
       contactEmail: z.string().email(),
       contactPhone: z.string().optional(),
       companyOrCoupleName: z.string().optional(),
-      requestedStartDate: z.string().optional(),
-      requestedEndDate: z.string().optional(),
+      requestedStartDate: z.coerce.date().optional(),
+      requestedEndDate: z.coerce.date().optional(),
       estimatedGuestCount: z.number().optional(),
       estimatedBudget: z.string().optional(),
       source: z.enum(["website_form", "referral", "direct", "social", "event", "other"]).default("direct"),
@@ -643,8 +657,8 @@ const leadsRouter = router({
       const { requestedStartDate, requestedEndDate, ...rest } = input;
       await db.insert(leads).values({
         ...rest,
-        requestedStartDate: requestedStartDate ? requestedStartDate as unknown as Date : null,
-        requestedEndDate: requestedEndDate ? requestedEndDate as unknown as Date : null,
+        requestedStartDate: requestedStartDate ?? null,
+        requestedEndDate: requestedEndDate ?? null,
         assignedToUserId: ctx.user!.id,
       });
       return { success: true };
@@ -717,8 +731,8 @@ const requestsRouter = router({
       contactName: z.string().min(1),
       contactEmail: z.string().email(),
       contactPhone: z.string().optional(),
-      requestedStart: z.string(),
-      requestedEnd: z.string(),
+      requestedStart: z.coerce.date(),
+      requestedEnd: z.coerce.date(),
       guestCount: z.number().optional(),
       eventType: z.string().optional(),
       specialRequests: z.string().optional(),
@@ -736,8 +750,8 @@ const requestsRouter = router({
         contactName: input.contactName,
         contactEmail: input.contactEmail,
         contactPhone: input.contactPhone ?? null,
-        requestedStart: input.requestedStart as unknown as Date,
-        requestedEnd: input.requestedEnd as unknown as Date,
+        requestedStart: input.requestedStart,
+        requestedEnd: input.requestedEnd,
         guestCount: input.guestCount ?? null,
         eventType: input.eventType ?? null,
         specialRequests: input.specialRequests ?? null,
