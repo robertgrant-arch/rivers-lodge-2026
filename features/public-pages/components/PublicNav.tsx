@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "wouter";
 import { Menu, X, ChevronDown, LogOut, User } from "lucide-react";
-import { useAuth } from "@/_core/hooks/useAuth";
+import { useAuth } from '@features/auth/client/useAuth';
 import { trpc } from '@shared/lib/trpc';
 import { getLoginUrl } from '@shared/constants';
 

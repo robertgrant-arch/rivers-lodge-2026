@@ -2,7 +2,7 @@
 // TODO: Remove the inline auth router from server/routers.ts once this is wired up.
 
 import { COOKIE_NAME } from '@shared/constants';
-import { getSessionCookieOptions } from "../../_core/server/cookies";
+import { getSessionCookieOptions } from "./cookies";
 import { publicProcedure, router } from "../../_core/server/trpc";
 
 export const authRouter = router({

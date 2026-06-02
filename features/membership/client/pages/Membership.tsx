@@ -2,7 +2,7 @@ import { useRef, useEffect } from "react";
 import { Link } from "wouter";
 import PublicLayout from "@/components/PublicLayout";
 import SEOHead, { structuredData } from '@shared/components/SEOHead';
-import { useAuth } from "@/_core/hooks/useAuth";
+import { useAuth } from '@features/auth/client/useAuth';
 import { trpc } from '@shared/lib/trpc';
 
 const STAFF_ROLES_M = ["admin", "owner", "venue_sales", "events_manager", "membership_manager", "hunt_fish_ops", "hospitality", "staff", "finance"];

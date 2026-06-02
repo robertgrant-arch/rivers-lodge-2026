@@ -1,3 +1,4 @@
+export * from '@features/auth/schema';
 export * from './schema';
 export * from './portal-schema';
 export * from './booking-schema';

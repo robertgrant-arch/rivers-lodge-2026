@@ -3,7 +3,7 @@ import express from "express";
 import { createServer } from "http";
 import net from "net";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
-import { registerOAuthRoutes } from "../../features/_core/server/oauth";
+import { registerOAuthRoutes } from '@features/auth/server/oauth';
 import { registerStorageProxy } from "./storageProxy";
 import { appRouter } from "../../server/routers";
 import { createContext } from "./context";

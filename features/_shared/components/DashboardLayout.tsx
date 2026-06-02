@@ -1,4 +1,4 @@
-import { useAuth } from "@/_core/hooks/useAuth";
+import { useAuth } from '@features/auth/client/useAuth';
 import { Avatar, AvatarFallback } from '@shared/ui/avatar';
 import {
   DropdownMenu,
