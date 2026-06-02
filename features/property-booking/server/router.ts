@@ -439,188 +439,199 @@ export const propertyBookingRouter = router({
         const db = await getDb();
         if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
 
+        // requireMember is an auth/authorization check — run outside the
+        // transaction so a missing membership throws early without consuming
+        // a connection from the pool.
         const member = await requireMember(db, ctx.user.id);
 
-        // Idempotency check
-        const existing = await db
-          .select({ id: propertyBookings.id, bookingRef: propertyBookings.bookingRef })
-          .from(propertyBookings)
-          .where(eq(propertyBookings.idempotencyKey, input.idempotencyKey))
-          .limit(1);
-        if (existing[0]) return { bookingId: existing[0].id, bookingRef: existing[0].bookingRef, alreadyExisted: true };
-
-        // Load property and rules
-        const [property] = await db
-          .select()
-          .from(huntingProperties)
-          .where(and(eq(huntingProperties.id, input.propertyId), eq(huntingProperties.active, true)))
-          .limit(1);
-        if (!property) throw new TRPCError({ code: "NOT_FOUND", message: "Property not found or inactive." });
-
-        const [rules] = await db
-          .select()
-          .from(propertyBookingRules)
-          .where(eq(propertyBookingRules.propertyId, input.propertyId))
-          .limit(1);
-
-        // Check tier access
-        if (rules?.tierAccess) {
-          const tierAccess = rules.tierAccess as Record<string, boolean>;
-          const memberTier = (member as any).tier ?? "standard";
-          if (tierAccess[memberTier] === false) {
-            throw new TRPCError({
-              code: "FORBIDDEN",
-              message: `Your membership tier (${memberTier}) does not have access to this property.`,
-            });
+        return await db.transaction(async (tx) => {
+          // ── Idempotency (inside tx so the re-check is serialised) ──────────
+          const existing = await tx
+            .select({ id: propertyBookings.id, bookingRef: propertyBookings.bookingRef })
+            .from(propertyBookings)
+            .where(eq(propertyBookings.idempotencyKey, input.idempotencyKey))
+            .limit(1);
+          if (existing[0]) {
+            return { bookingId: existing[0].id, bookingRef: existing[0].bookingRef, alreadyExisted: true };
           }
-        }
 
-        // Check party size
-        if (input.partySize > property.maxHunters) {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: `This property allows a maximum of ${property.maxHunters} hunters.`,
-          });
-        }
+          // ── Load property and rules ────────────────────────────────────────
+          const [property] = await tx
+            .select()
+            .from(huntingProperties)
+            .where(and(eq(huntingProperties.id, input.propertyId), eq(huntingProperties.active, true)))
+            .limit(1);
+          if (!property) throw new TRPCError({ code: "NOT_FOUND", message: "Property not found or inactive." });
 
-        // Check for blocked dates
-        const blockedCheck = await db
-          .select()
-          .from(propertyBlockedDates)
-          .where(and(
-            or(
-              eq(propertyBlockedDates.propertyId, input.propertyId),
-              isNull(propertyBlockedDates.propertyId),
-            ),
-            lte(propertyBlockedDates.startDate, input.endDate as any),
-            gte(propertyBlockedDates.endDate, input.startDate as any),
-          ))
-          .limit(1);
-        if (blockedCheck[0]) {
-          throw new TRPCError({
-            code: "CONFLICT",
-            message: "One or more of the requested dates are blocked. Please choose different dates.",
-          });
-        }
-
-        // Check availability for each date in the range
-        let cursor = new Date(input.startDate);
-        const endDate = new Date(input.endDate);
-        while (cursor <= endDate) {
-          const dateStr = cursor.toISOString().split("T")[0];
-          const [inv] = await db
-            .select({ status: propertyDateInventory.status, capacity: propertyDateInventory.capacity, bookedCount: propertyDateInventory.bookedCount })
-            .from(propertyDateInventory)
-            .where(and(
-              eq(propertyDateInventory.propertyId, input.propertyId),
-              eq(propertyDateInventory.date, dateStr as any),
-            ))
+          const [rules] = await tx
+            .select()
+            .from(propertyBookingRules)
+            .where(eq(propertyBookingRules.propertyId, input.propertyId))
             .limit(1);
 
-          if (inv && inv.status === "full") {
+          // ── Tier access ───────────────────────────────────────────────────
+          if (rules?.tierAccess) {
+            const tierAccess = rules.tierAccess as Record<string, boolean>;
+            const memberTier = (member as any).tier ?? "standard";
+            if (tierAccess[memberTier] === false) {
+              throw new TRPCError({
+                code: "FORBIDDEN",
+                message: `Your membership tier (${memberTier}) does not have access to this property.`,
+              });
+            }
+          }
+
+          // ── Party size ────────────────────────────────────────────────────
+          if (input.partySize > property.maxHunters) {
             throw new TRPCError({
-              code: "CONFLICT",
-              message: `${dateStr} is fully booked. Please choose different dates or join the waitlist.`,
+              code: "BAD_REQUEST",
+              message: `This property allows a maximum of ${property.maxHunters} hunters.`,
             });
           }
-          if (inv && inv.status === "blocked") {
+
+          // ── Blocked dates ─────────────────────────────────────────────────
+          const blockedCheck = await tx
+            .select()
+            .from(propertyBlockedDates)
+            .where(and(
+              or(
+                eq(propertyBlockedDates.propertyId, input.propertyId),
+                isNull(propertyBlockedDates.propertyId),
+              ),
+              lte(propertyBlockedDates.startDate, input.endDate as any),
+              gte(propertyBlockedDates.endDate, input.startDate as any),
+            ))
+            .limit(1);
+          if (blockedCheck[0]) {
             throw new TRPCError({
               code: "CONFLICT",
-              message: `${dateStr} is not available for booking.`,
+              message: "One or more of the requested dates are blocked. Please choose different dates.",
             });
           }
-          cursor.setDate(cursor.getDate() + 1);
-        }
 
-        // Check for double-booking (member already has a confirmed booking on any of these dates)
-        const conflictCheck = await db
-          .select({ id: propertyBookings.id, bookingRef: propertyBookings.bookingRef })
-          .from(propertyBookings)
-          .where(and(
-            eq(propertyBookings.memberId, member.id),
-            sql`${propertyBookings.status} NOT IN ('cancelled', 'declined', 'no_show')`,
-            lte(propertyBookings.startDate, input.endDate as any),
-            gte(propertyBookings.endDate, input.startDate as any),
-          ))
-          .limit(1);
-        if (conflictCheck[0]) {
-          throw new TRPCError({
-            code: "CONFLICT",
-            message: `You already have a booking (${conflictCheck[0].bookingRef}) overlapping these dates.`,
-          });
-        }
+          // ── Per-date inventory check — FOR UPDATE ─────────────────────────
+          // Locking inventory rows prevents two concurrent bookings from both
+          // reading "open" and both proceeding to insert.  The second
+          // transaction blocks on FOR UPDATE until the first commits.
+          let cursor = new Date(input.startDate);
+          const endDate = new Date(input.endDate);
+          while (cursor <= endDate) {
+            const dateStr = cursor.toISOString().split("T")[0];
+            const [inv] = await tx
+              .select({
+                status: propertyDateInventory.status,
+                capacity: propertyDateInventory.capacity,
+                bookedCount: propertyDateInventory.bookedCount,
+              })
+              .from(propertyDateInventory)
+              .where(and(
+                eq(propertyDateInventory.propertyId, input.propertyId),
+                eq(propertyDateInventory.date, dateStr as any),
+              ))
+              .for("update")
+              .limit(1);
 
-        // Calculate total days
-        const start = new Date(input.startDate);
-        const end = new Date(input.endDate);
-        const totalDays = Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-
-        // Determine status
-        const requiresApproval = rules?.requiresApproval ?? false;
-        const status = requiresApproval ? "pending_approval" : "confirmed";
-
-        // Generate booking ref
-        const bookingRef = await generateBookingRef(db as any);
-
-        // Insert booking
-        const insertResult = await db.insert(propertyBookings).values({
-          bookingRef,
-          idempotencyKey: input.idempotencyKey,
-          memberId: member.id,
-          userId: ctx.user.id,
-          propertyId: input.propertyId,
-          startDate: input.startDate as any,
-          endDate: input.endDate as any,
-          totalDays,
-          partySize: input.partySize,
-          guestNames: input.guestNames ?? null,
-          hasMinors: input.hasMinors ?? false,
-          activity: input.activity,
-          huntingLicenseConfirmed: input.huntingLicenseConfirmed ?? false,
-          fishingLicenseConfirmed: input.fishingLicenseConfirmed ?? false,
-          status,
-          requiresApproval,
-          totalAmount: "0",
-          depositAmount: "0",
-          depositPaid: "0",
-          balanceDue: "0",
-          memberNotes: input.memberNotes ?? null,
-          createdAt: now(),
-          updatedAt: now(),
-        } as any);
-
-        // Drizzle mysql2 insert returns [OkPacket, ...], so insertId is on index 0
-        const bookingId = Number((insertResult as any)[0]?.insertId ?? (insertResult as any).insertId);
-
-        // Insert add-ons
-        if (input.addOns?.length) {
-          await db.insert(bookingAddOns).values(
-            input.addOns.map((ao: any) => ({
-              bookingId,
-              type: ao.type,
-              description: ao.description ?? null,
-              quantity: ao.quantity,
-              unitPrice: "0",
-              totalPrice: "0",
-              createdAt: now(),
-            } as any))
-          );
-        }
-
-        // Update inventory for each date in the range (only if confirmed)
-        if (status === "confirmed") {
-          let d = new Date(input.startDate);
-          const e = new Date(input.endDate);
-          while (d <= e) {
-            await updateInventory(db, input.propertyId, d.toISOString().split("T")[0], 1);
-            d.setDate(d.getDate() + 1);
+            if (inv && inv.status === "full") {
+              throw new TRPCError({
+                code: "CONFLICT",
+                message: `${dateStr} is fully booked. Please choose different dates or join the waitlist.`,
+              });
+            }
+            if (inv && inv.status === "blocked") {
+              throw new TRPCError({
+                code: "CONFLICT",
+                message: `${dateStr} is not available for booking.`,
+              });
+            }
+            cursor.setDate(cursor.getDate() + 1);
           }
-        }
 
-        // Audit log
-        await auditLog(db, bookingId, "booking_created", ctx.user.id, null, { status, bookingRef });
+          // ── Member double-booking check — FOR UPDATE ───────────────────────
+          // Lock the member's existing booking rows so a concurrent submission
+          // can't slip past this check before either commit.
+          const conflictCheck = await tx
+            .select({ id: propertyBookings.id, bookingRef: propertyBookings.bookingRef })
+            .from(propertyBookings)
+            .where(and(
+              eq(propertyBookings.memberId, member.id),
+              sql`${propertyBookings.status} NOT IN ('cancelled', 'declined', 'no_show')`,
+              lte(propertyBookings.startDate, input.endDate as any),
+              gte(propertyBookings.endDate, input.startDate as any),
+            ))
+            .for("update")
+            .limit(1);
+          if (conflictCheck[0]) {
+            throw new TRPCError({
+              code: "CONFLICT",
+              message: `You already have a booking (${conflictCheck[0].bookingRef}) overlapping these dates.`,
+            });
+          }
 
-        return { bookingId, bookingRef, status, alreadyExisted: false };
+          // ── All checks passed — write ──────────────────────────────────────
+          const start = new Date(input.startDate);
+          const end = new Date(input.endDate);
+          const totalDays = Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+
+          const requiresApproval = rules?.requiresApproval ?? false;
+          const status = requiresApproval ? "pending_approval" : "confirmed";
+
+          const bookingRef = await generateBookingRef(tx as any);
+
+          const insertResult = await tx.insert(propertyBookings).values({
+            bookingRef,
+            idempotencyKey: input.idempotencyKey,
+            memberId: member.id,
+            userId: ctx.user.id,
+            propertyId: input.propertyId,
+            startDate: input.startDate as any,
+            endDate: input.endDate as any,
+            totalDays,
+            partySize: input.partySize,
+            guestNames: input.guestNames ?? null,
+            hasMinors: input.hasMinors ?? false,
+            activity: input.activity,
+            huntingLicenseConfirmed: input.huntingLicenseConfirmed ?? false,
+            fishingLicenseConfirmed: input.fishingLicenseConfirmed ?? false,
+            status,
+            requiresApproval,
+            totalAmount: "0",
+            depositAmount: "0",
+            depositPaid: "0",
+            balanceDue: "0",
+            memberNotes: input.memberNotes ?? null,
+            createdAt: now(),
+            updatedAt: now(),
+          } as any);
+
+          const bookingId = Number((insertResult as any)[0]?.insertId ?? (insertResult as any).insertId);
+
+          if (input.addOns?.length) {
+            await tx.insert(bookingAddOns).values(
+              input.addOns.map((ao: any) => ({
+                bookingId,
+                type: ao.type,
+                description: ao.description ?? null,
+                quantity: ao.quantity,
+                unitPrice: "0",
+                totalPrice: "0",
+                createdAt: now(),
+              } as any)),
+            );
+          }
+
+          if (status === "confirmed") {
+            let d = new Date(input.startDate);
+            const e = new Date(input.endDate);
+            while (d <= e) {
+              await updateInventory(tx, input.propertyId, d.toISOString().split("T")[0], 1);
+              d.setDate(d.getDate() + 1);
+            }
+          }
+
+          await auditLog(tx, bookingId, "booking_created", ctx.user.id, null, { status, bookingRef });
+
+          return { bookingId, bookingRef, status, alreadyExisted: false };
+        });
       }),
 
     /** List the current member's bookings */

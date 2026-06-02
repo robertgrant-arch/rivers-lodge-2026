@@ -2,7 +2,10 @@
  * Availability Engine — Rivers Lodge & Hunt Club
  *
  * Pure conflict detection module. No side effects — reads only.
- * All checks run within the caller's transaction context.
+ * All public functions require the caller to supply a db handle (or
+ * transaction handle `tx`).  Mutations MUST call these within an open
+ * db.transaction() so that the FOR UPDATE locks serialise concurrent
+ * requests.
  *
  * Hard Conflict Rules (HC): block the allocation entirely
  *   HC-01: Resource already allocated for overlapping dates
@@ -32,6 +35,14 @@ import {
 import { portalBlockedDates } from '@core/db/portal-schema';
 import type { PortalBlockedDate } from '@core/db/portal-schema';
 import { and, eq, lt, gt, ne, sql, inArray } from "drizzle-orm";
+
+// ─── DB handle type ────────────────────────────────────────────────────────────
+//
+// Drizzle transaction handles have the same interface as the main client, so
+// callers can pass either.  Mutations must pass their `tx`; read-only queries
+// may pass the main db directly.
+
+export type Db = NonNullable<Awaited<ReturnType<typeof getDb>>>;
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -82,11 +93,10 @@ function dateRangesOverlap(start1: Date, end1: Date, start2: Date, end2: Date): 
 }
 
 /**
- * Fetch a resource with its group info
+ * Fetch a resource with its group info.
+ * Uses the caller-supplied db/tx — no internal getDb() call.
  */
-async function getResourceWithGroup(resourceId: number) {
-  const db = await getDb();
-  if (!db) return null;
+async function getResourceWithGroup(db: Db, resourceId: number) {
   const result = await db
     .select({
       id: resources.id,
@@ -109,16 +119,19 @@ async function getResourceWithGroup(resourceId: number) {
 }
 
 /**
- * Fetch all active allocations for a resource within a date range
+ * Fetch all active allocations for a resource within a date range.
+ *
+ * Appends FOR UPDATE so that, when called within a transaction, concurrent
+ * transactions block on this row-set instead of racing past it.  This is the
+ * primary serialisation point that prevents double-booking.
  */
 async function getConflictingAllocations(
+  db: Db,
   resourceId: number,
   start: Date,
   end: Date,
-  excludeBookingId?: number
+  excludeBookingId?: number,
 ) {
-  const db = await getDb();
-  if (!db) return [];
   const conditions = [
     eq(bookingResourceAllocations.resourceId, resourceId),
     ne(bookingResourceAllocations.status, "cancelled"),
@@ -131,42 +144,52 @@ async function getConflictingAllocations(
   return await db
     .select()
     .from(bookingResourceAllocations)
-    .where(and(...conditions));
+    .where(and(...conditions))
+    // FOR UPDATE: locks matching rows so concurrent transactions serialise
+    // here rather than both seeing 0 conflicts and both proceeding to insert.
+    .for("update");
 }
 
 /**
- * Fetch all blocked dates that overlap a resource and date range
+ * Fetch all blocked dates that overlap a resource and date range.
+ * Uses the caller-supplied db/tx.
  */
-async function getBlockedDates(_resourceId: number, start: Date, end: Date) {
-  // Check entire-property blocks (scopeTarget matching or entire_property scope)
+async function getBlockedDates(db: Db, _resourceId: number, start: Date, end: Date) {
   const startStr = start.toISOString().split("T")[0];
   const endStr = end.toISOString().split("T")[0];
 
-  const db = await getDb();
-  if (!db) return [];
   const rows = await db
     .select()
     .from(portalBlockedDates)
     .where(
       and(
         sql`${portalBlockedDates.startDate} <= ${endStr}`,
-        sql`${portalBlockedDates.endDate} >= ${startStr}`
-      )
+        sql`${portalBlockedDates.endDate} >= ${startStr}`,
+      ),
     );
   return rows;
 }
 
 // ─── Single Resource Check ────────────────────────────────────────────────────
 
+/**
+ * Check availability for a single resource.
+ *
+ * @param input  - The resource and date range to check.
+ * @param db     - A Drizzle db client or transaction handle.
+ *                 Mutations MUST pass their open `tx` so the FOR UPDATE lock
+ *                 inside `getConflictingAllocations` is part of their transaction.
+ */
 export async function checkAvailability(
-  input: AvailabilityCheckInput
+  input: AvailabilityCheckInput,
+  db: Db,
 ): Promise<AvailabilityCheckResult> {
   const { resourceId, allocationStart, allocationEnd, excludeBookingId } = input;
   const hardConflicts: HardConflict[] = [];
   const softConflicts: SoftConflict[] = [];
 
   // Load resource info
-  const resource = await getResourceWithGroup(resourceId);
+  const resource = await getResourceWithGroup(db, resourceId);
   if (!resource) {
     return {
       available: false,
@@ -176,9 +199,7 @@ export async function checkAvailability(
   }
 
   // ── HC-07: Blocked Date ────────────────────────────────────────────────────
-  const blocks = await getBlockedDates(resourceId, allocationStart, allocationEnd);
-  // All portal blocked dates are hard blocks (no weather enum in portal schema)
-  // Weather disruptions are handled via reasonNotes
+  const blocks = await getBlockedDates(db, resourceId, allocationStart, allocationEnd);
   const hardBlocks = blocks as PortalBlockedDate[];
   const weatherBlocks: PortalBlockedDate[] = [];
 
@@ -193,20 +214,19 @@ export async function checkAvailability(
     return { available: false, hardConflicts, softConflicts };
   }
 
-  // ── SC-06: Weather Block ───────────────────────────────────────────────────
-  // SC-06 weather blocks are tracked via reasonNotes in the portal UI
   void weatherBlocks;
 
   // ── HC-01: Existing Allocation Conflict ───────────────────────────────────
+  // FOR UPDATE lock acquired here — see getConflictingAllocations.
   const existingAllocations = await getConflictingAllocations(
+    db,
     resourceId,
     allocationStart,
     allocationEnd,
-    excludeBookingId
+    excludeBookingId,
   );
 
   if (resource.capacity === 1 && existingAllocations.length > 0) {
-    // Exclusive resource — any overlap is a hard conflict
     hardConflicts.push({
       ruleId: "HC-01",
       resourceId,
@@ -218,11 +238,9 @@ export async function checkAvailability(
   }
 
   if (resource.capacity > 1) {
-    // Capacity-based resource (fish zones, sporting clays, culinary, etc.)
     const currentLoad = existingAllocations.length;
 
     if (currentLoad >= resource.capacity) {
-      // HC-05 / HC-06: At capacity
       const ruleId = resource.type === "culinary" ? "HC-06" : "HC-05";
       hardConflicts.push({
         ruleId,
@@ -234,7 +252,6 @@ export async function checkAvailability(
     }
 
     if (currentLoad >= resource.capacity - 1 && resource.type === "culinary") {
-      // SC-04: Culinary near capacity
       softConflicts.push({
         ruleId: "SC-04",
         resourceId,
@@ -247,24 +264,22 @@ export async function checkAvailability(
 
   // ── HC-08: Holdback Window Conflict ───────────────────────────────────────
   if (resource.holdbackHoursBefore > 0 || resource.holdbackHoursAfter > 0) {
-    // Check if this allocation falls within the holdback window of an adjacent booking
     const holdbackStart = new Date(allocationStart);
-    holdbackStart.setHours(holdbackStart.getHours() - resource.holdbackHoursAfter); // previous booking's holdback-after
+    holdbackStart.setHours(holdbackStart.getHours() - resource.holdbackHoursAfter);
     const holdbackEnd = new Date(allocationEnd);
-    holdbackEnd.setHours(holdbackEnd.getHours() + resource.holdbackHoursBefore); // next booking's holdback-before
+    holdbackEnd.setHours(holdbackEnd.getHours() + resource.holdbackHoursBefore);
 
     const holdbackConflicts = await getConflictingAllocations(
+      db,
       resourceId,
       holdbackStart,
       holdbackEnd,
-      excludeBookingId
+      excludeBookingId,
     );
 
-    // Filter to only those that are within holdback (not the main overlap already caught)
-    const trueHoldbackConflicts = holdbackConflicts.filter((a: typeof holdbackConflicts[0]) => {
+    const trueHoldbackConflicts = holdbackConflicts.filter((a) => {
       const aStart = new Date(a.allocationStart);
       const aEnd = new Date(a.allocationEnd);
-      // Only flag if the overlap is ONLY in the holdback zone, not the main window
       return !dateRangesOverlap(allocationStart, allocationEnd, aStart, aEnd);
     });
 
@@ -282,7 +297,6 @@ export async function checkAvailability(
 
   // ── SC-02: Lodging Turnover Window ────────────────────────────────────────
   if (resource.type === "lodging_unit" && existingAllocations.length > 0) {
-    // There's an adjacent allocation (caught by holdback above if strict, but surface as soft if not)
     softConflicts.push({
       ruleId: "SC-02",
       resourceId,
@@ -293,10 +307,8 @@ export async function checkAvailability(
   }
 
   // ── SC-03: Multiple Parties on Property ───────────────────────────────────
-  // Check if any other lodging or event space is booked for these dates
   if (resource.type === "lodging_unit" || resource.type === "event_space") {
-    const db2 = await getDb();
-    const otherLodgingAllocations = db2 ? await db2
+    const otherLodgingAllocations = await db
       .select({
         bookingId: bookingResourceAllocations.bookingId,
         resourceId: bookingResourceAllocations.resourceId,
@@ -311,10 +323,10 @@ export async function checkAvailability(
           gt(bookingResourceAllocations.allocationEnd, allocationStart),
           excludeBookingId
             ? ne(bookingResourceAllocations.bookingId, excludeBookingId)
-            : sql`1=1`
-        )
+            : sql`1=1`,
+        ),
       )
-      .limit(1) : [];
+      .limit(1);
 
     if (otherLodgingAllocations.length > 0) {
       softConflicts.push({
@@ -330,9 +342,7 @@ export async function checkAvailability(
 
   // ── HC-02: Exclusive Event Space Conflict ─────────────────────────────────
   if (resource.exclusiveUse) {
-    // If this resource requires exclusive use, check for ANY other event space bookings
-    const db3 = await getDb();
-    const otherEventAllocations = db3 ? await db3
+    const otherEventAllocations = await db
       .select({ bookingId: bookingResourceAllocations.bookingId })
       .from(bookingResourceAllocations)
       .innerJoin(resources, eq(bookingResourceAllocations.resourceId, resources.id))
@@ -345,10 +355,10 @@ export async function checkAvailability(
           gt(bookingResourceAllocations.allocationEnd, allocationStart),
           excludeBookingId
             ? ne(bookingResourceAllocations.bookingId, excludeBookingId)
-            : sql`1=1`
-        )
+            : sql`1=1`,
+        ),
       )
-      .limit(1) : [];
+      .limit(1);
 
     if (otherEventAllocations.length > 0) {
       hardConflicts.push({
@@ -363,9 +373,12 @@ export async function checkAvailability(
   }
 
   // ── SC-01: Ceremony Lawn Overlap ──────────────────────────────────────────
-  if (resource.slug === "ceremony-lawn" || resource.slug === "river-lawn" || resource.slug === "timber-edge") {
-    const db4 = await getDb();
-    const otherOutdoorAllocations = db4 ? await db4
+  if (
+    resource.slug === "ceremony-lawn" ||
+    resource.slug === "river-lawn" ||
+    resource.slug === "timber-edge"
+  ) {
+    const otherOutdoorAllocations = await db
       .select({ bookingId: bookingResourceAllocations.bookingId })
       .from(bookingResourceAllocations)
       .innerJoin(resources, eq(bookingResourceAllocations.resourceId, resources.id))
@@ -378,10 +391,10 @@ export async function checkAvailability(
           gt(bookingResourceAllocations.allocationEnd, allocationStart),
           excludeBookingId
             ? ne(bookingResourceAllocations.bookingId, excludeBookingId)
-            : sql`1=1`
-        )
+            : sql`1=1`,
+        ),
       )
-      .limit(1) : [];
+      .limit(1);
 
     if (otherOutdoorAllocations.length > 0) {
       softConflicts.push({
@@ -412,22 +425,28 @@ export async function checkAvailability(
 
 // ─── Multi-Resource Check ─────────────────────────────────────────────────────
 
+/**
+ * Check availability for multiple resources in sequence.
+ * Sequential (not parallel) so all checks share the same FOR UPDATE lock set.
+ *
+ * @param inputs - Array of resource + date-range inputs.
+ * @param db     - Drizzle db client or transaction handle.
+ */
 export async function checkMultipleResources(
-  inputs: AvailabilityCheckInput[]
+  inputs: AvailabilityCheckInput[],
+  db: Db,
 ): Promise<MultiResourceCheckResult> {
   const allHardConflicts: HardConflict[] = [];
   const allSoftConflicts: SoftConflict[] = [];
   const resourceResults: Record<number, AvailabilityCheckResult> = {};
 
-  // Run all checks (could be parallelized but sequential is safer for transaction context)
   for (const input of inputs) {
-    const result = await checkAvailability(input);
+    const result = await checkAvailability(input, db);
     resourceResults[input.resourceId] = result;
     allHardConflicts.push(...result.hardConflicts);
     allSoftConflicts.push(...result.softConflicts);
   }
 
-  // Deduplicate soft conflicts by ruleId + resourceId
   const seenSoft = new Set<string>();
   const dedupedSoft = allSoftConflicts.filter((sc) => {
     const key = `${sc.ruleId}-${sc.resourceId}`;
@@ -445,17 +464,17 @@ export async function checkMultipleResources(
 }
 
 // ─── Calendar Availability Query ──────────────────────────────────────────────
-// Returns all allocations and blocks for a date range (for calendar rendering)
+// Read-only — no transaction needed. Accepts db for consistency with other exports.
 
-export async function getCalendarAvailability(startDate: Date, endDate: Date) {
+export async function getCalendarAvailability(startDate: Date, endDate: Date, db?: Db) {
   const startStr = startDate.toISOString().split("T")[0];
   const endStr = endDate.toISOString().split("T")[0];
 
-  const db = await getDb();
-  if (!db) return { allocations: [], blocks: [] };
+  const resolvedDb = db ?? (await getDb());
+  if (!resolvedDb) return { allocations: [], blocks: [] };
 
   const [allocations, blocks] = await Promise.all([
-    db
+    resolvedDb
       .select({
         id: bookingResourceAllocations.id,
         bookingId: bookingResourceAllocations.bookingId,
@@ -472,17 +491,17 @@ export async function getCalendarAvailability(startDate: Date, endDate: Date) {
         and(
           ne(bookingResourceAllocations.status, "cancelled"),
           lt(bookingResourceAllocations.allocationStart, endDate),
-          gt(bookingResourceAllocations.allocationEnd, startDate)
-        )
+          gt(bookingResourceAllocations.allocationEnd, startDate),
+        ),
       ),
-    db
+    resolvedDb
       .select()
       .from(portalBlockedDates)
       .where(
         and(
           sql`${portalBlockedDates.startDate} <= ${endStr}`,
-          sql`${portalBlockedDates.endDate} >= ${startStr}`
-        )
+          sql`${portalBlockedDates.endDate} >= ${startStr}`,
+        ),
       ),
   ]);
 

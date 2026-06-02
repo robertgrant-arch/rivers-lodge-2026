@@ -136,12 +136,18 @@ const availabilityRouter = router({
     }))
     .query(async ({ ctx, input }) => {
       requirePortalRole(ctx);
-      return await checkAvailability({
-        resourceId: input.resourceId,
-        allocationStart: new Date(input.allocationStart),
-        allocationEnd: new Date(input.allocationEnd),
-        excludeBookingId: input.excludeBookingId,
-      });
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      // Read-only query — no transaction needed, pass db directly.
+      return await checkAvailability(
+        {
+          resourceId: input.resourceId,
+          allocationStart: new Date(input.allocationStart),
+          allocationEnd: new Date(input.allocationEnd),
+          excludeBookingId: input.excludeBookingId,
+        },
+        db,
+      );
     }),
 
   checkMultiple: protectedProcedure
@@ -155,13 +161,16 @@ const availabilityRouter = router({
     }))
     .query(async ({ ctx, input }) => {
       requirePortalRole(ctx);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
       return await checkMultipleResources(
         input.resources.map((r) => ({
           resourceId: r.resourceId,
           allocationStart: new Date(r.allocationStart),
           allocationEnd: new Date(r.allocationEnd),
           excludeBookingId: input.excludeBookingId,
-        }))
+        })),
+        db,
       );
     }),
 
@@ -299,73 +308,79 @@ const bookingsRouter = router({
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
-      // Run availability check on all requested resources
-      if (input.resourceAllocations && input.resourceAllocations.length > 0) {
-        const availResult = await checkMultipleResources(
-          input.resourceAllocations.map((r) => ({
-            resourceId: r.resourceId,
-            allocationStart: new Date(r.allocationStart),
-            allocationEnd: new Date(r.allocationEnd),
-          }))
-        );
+      return await db.transaction(async (tx) => {
+        // Availability check + insert happen inside a single transaction.
+        // getConflictingAllocations acquires FOR UPDATE locks, so a concurrent
+        // transaction that has already passed the check but not yet committed
+        // will block here until it commits — preventing double-booking.
+        if (input.resourceAllocations && input.resourceAllocations.length > 0) {
+          const availResult = await checkMultipleResources(
+            input.resourceAllocations.map((r) => ({
+              resourceId: r.resourceId,
+              allocationStart: new Date(r.allocationStart),
+              allocationEnd: new Date(r.allocationEnd),
+            })),
+            tx,
+          );
 
-        if (!availResult.available) {
-          throw new TRPCError({
-            code: "CONFLICT",
-            message: `Resource conflict detected: ${availResult.hardConflicts.map((c) => c.message).join("; ")}`,
-          });
+          if (!availResult.available) {
+            throw new TRPCError({
+              code: "CONFLICT",
+              message: `Resource conflict detected: ${availResult.hardConflicts.map((c) => c.message).join("; ")}`,
+            });
+          }
+
+          if (availResult.softConflicts.length > 0 && !input.acknowledgeSoftConflicts) {
+            throw new TRPCError({
+              code: "PRECONDITION_FAILED",
+              message: `Soft conflicts require acknowledgment: ${availResult.softConflicts.map((c) => c.message).join("; ")}`,
+            });
+          }
         }
 
-        if (availResult.softConflicts.length > 0 && !input.acknowledgeSoftConflicts) {
-          throw new TRPCError({
-            code: "PRECONDITION_FAILED",
-            message: `Soft conflicts require acknowledgment: ${availResult.softConflicts.map((c) => c.message).join("; ")}`,
-          });
-        }
-      }
+        // Create the booking
+        const insertResult = await tx.insert(bookings).values({
+          type: input.type,
+          clientName: input.clientName,
+          clientEmail: input.clientEmail ?? null,
+          clientPhone: input.clientPhone ?? null,
+          startDate: input.startDate as unknown as Date,
+          endDate: input.endDate as unknown as Date,
+          guestCount: input.guestCount ?? null,
+          totalRevenue: input.totalRevenue ?? null,
+          depositPaid: false,
+          status: "inquiry",
+          notes: input.notes ?? null,
+          userId: input.userId ?? null,
+        });
 
-      // Create the booking
-      const insertResult = await db.insert(bookings).values({
-        type: input.type,
-        clientName: input.clientName,
-        clientEmail: input.clientEmail ?? null,
-        clientPhone: input.clientPhone ?? null,
-        startDate: input.startDate as unknown as Date,
-        endDate: input.endDate as unknown as Date,
-        guestCount: input.guestCount ?? null,
-        totalRevenue: input.totalRevenue ?? null,
-        depositPaid: false,
-        status: "inquiry",
-        notes: input.notes ?? null,
-        userId: input.userId ?? null,
+        const bookingId = Number((insertResult as { insertId?: number }).insertId ?? 0);
+
+        // Create resource allocations
+        if (input.resourceAllocations && input.resourceAllocations.length > 0) {
+          for (const alloc of input.resourceAllocations) {
+            await tx.insert(bookingResourceAllocations).values({
+              bookingId,
+              resourceId: alloc.resourceId,
+              allocationStart: new Date(alloc.allocationStart),
+              allocationEnd: new Date(alloc.allocationEnd),
+              status: "tentative",
+            });
+          }
+        }
+
+        // Log initial state
+        await tx.insert(bookingStateTransitions).values({
+          bookingId,
+          fromStatus: null,
+          toStatus: "inquiry",
+          triggeredByUserId: ctx.user!.id,
+          notes: "Booking created",
+          gateChecks: JSON.stringify({}),
+        });
+
+        return { success: true, bookingId };
       });
-
-      const bookingId = Number((insertResult as { insertId?: number }).insertId ?? 0);
-
-      // Create resource allocations
-      if (input.resourceAllocations && input.resourceAllocations.length > 0) {
-        for (const alloc of input.resourceAllocations) {
-          await db.insert(bookingResourceAllocations).values({
-            bookingId,
-            resourceId: alloc.resourceId,
-            allocationStart: new Date(alloc.allocationStart),
-            allocationEnd: new Date(alloc.allocationEnd),
-            status: "tentative",
-          });
-        }
-      }
-
-      // Log initial state
-      await db.insert(bookingStateTransitions).values({
-        bookingId,
-        fromStatus: null,
-        toStatus: "inquiry",
-        triggeredByUserId: ctx.user!.id,
-        notes: "Booking created",
-        gateChecks: JSON.stringify({}),
-      });
-
-      return { success: true, bookingId };
     }),
 
   update: protectedProcedure
@@ -454,36 +469,41 @@ const bookingsRouter = router({
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
-      const availResult = await checkAvailability({
-        resourceId: input.resourceId,
-        allocationStart: new Date(input.allocationStart),
-        allocationEnd: new Date(input.allocationEnd),
-        excludeBookingId: input.bookingId,
-      });
+      return await db.transaction(async (tx) => {
+        const availResult = await checkAvailability(
+          {
+            resourceId: input.resourceId,
+            allocationStart: new Date(input.allocationStart),
+            allocationEnd: new Date(input.allocationEnd),
+            excludeBookingId: input.bookingId,
+          },
+          tx,
+        );
 
-      if (!availResult.available) {
-        throw new TRPCError({
-          code: "CONFLICT",
-          message: availResult.hardConflicts.map((c) => c.message).join("; "),
+        if (!availResult.available) {
+          throw new TRPCError({
+            code: "CONFLICT",
+            message: availResult.hardConflicts.map((c) => c.message).join("; "),
+          });
+        }
+
+        if (availResult.softConflicts.length > 0 && !input.acknowledgeSoftConflicts) {
+          throw new TRPCError({
+            code: "PRECONDITION_FAILED",
+            message: `Soft conflicts: ${availResult.softConflicts.map((c) => c.message).join("; ")}`,
+          });
+        }
+
+        await tx.insert(bookingResourceAllocations).values({
+          bookingId: input.bookingId,
+          resourceId: input.resourceId,
+          allocationStart: new Date(input.allocationStart),
+          allocationEnd: new Date(input.allocationEnd),
+          status: "tentative",
         });
-      }
 
-      if (availResult.softConflicts.length > 0 && !input.acknowledgeSoftConflicts) {
-        throw new TRPCError({
-          code: "PRECONDITION_FAILED",
-          message: `Soft conflicts: ${availResult.softConflicts.map((c) => c.message).join("; ")}`,
-        });
-      }
-
-      await db.insert(bookingResourceAllocations).values({
-        bookingId: input.bookingId,
-        resourceId: input.resourceId,
-        allocationStart: new Date(input.allocationStart),
-        allocationEnd: new Date(input.allocationEnd),
-        status: "tentative",
+        return { success: true };
       });
-
-      return { success: true };
     }),
 
   removeAllocation: protectedProcedure
