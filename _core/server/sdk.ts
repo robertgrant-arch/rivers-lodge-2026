@@ -38,20 +38,18 @@ class OAuthService {
     }
   }
 
-  private decodeState(state: string): string {
-    const redirectUri = atob(state);
-    return redirectUri;
-  }
-
+  // State decoding was previously done here (atob). The OAuth state is now
+  // validated in features/auth/server/oauth.ts before the code exchange, and
+  // the already-decoded callbackUri is passed directly — no decoding needed.
   async getTokenByCode(
     code: string,
-    state: string
+    redirectUri: string,
   ): Promise<ExchangeTokenResponse> {
     const payload: ExchangeTokenRequest = {
       clientId: ENV.appId,
       grantType: "authorization_code",
       code,
-      redirectUri: this.decodeState(state),
+      redirectUri,
     };
 
     const { data } = await this.client.post<ExchangeTokenResponse>(
@@ -114,15 +112,16 @@ class SDKServer {
   }
 
   /**
-   * Exchange OAuth authorization code for access token
-   * @example
-   * const tokenResponse = await sdk.exchangeCodeForToken(code, state);
+   * Exchange OAuth authorization code for access token.
+   * @param code - Authorization code from the OAuth provider.
+   * @param redirectUri - The callback URI used in the initial auth request
+   *   (validated and extracted by the oauth.ts callback handler).
    */
   async exchangeCodeForToken(
     code: string,
-    state: string
+    redirectUri: string,
   ): Promise<ExchangeTokenResponse> {
-    return this.oauthService.getTokenByCode(code, state);
+    return this.oauthService.getTokenByCode(code, redirectUri);
   }
 
   /**

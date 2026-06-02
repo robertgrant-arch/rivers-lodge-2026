@@ -1,34 +1,18 @@
 export { COOKIE_NAME, ONE_YEAR_MS, AXIOS_TIMEOUT_MS, UNAUTHED_ERR_MSG, NOT_ADMIN_ERR_MSG } from '../_core/shared/const';
 
-// Generate login URL at runtime so redirect URI reflects the current origin.
-// Returns "" if VITE_OAUTH_PORTAL_URL / VITE_APP_ID are not configured, so the
-// public site still renders when auth isn't wired up in the deploy env.
-export const getLoginUrl = () => {
-  const oauthPortalUrl = import.meta.env.VITE_OAUTH_PORTAL_URL;
-  const appId = import.meta.env.VITE_APP_ID;
-
-  if (!oauthPortalUrl || !appId) {
-    if (typeof console !== "undefined") {
-      console.warn(
-        "[getLoginUrl] Missing VITE_OAUTH_PORTAL_URL or VITE_APP_ID; falling back to /portal."
-      );
-    }
-    return "/portal";
-  }
-
-  try {
-    const redirectUri = `${window.location.origin}/api/oauth/callback`;
-    const state = btoa(redirectUri);
-
-    const url = new URL(`${oauthPortalUrl}/app-auth`);
-    url.searchParams.set("appId", appId);
-    url.searchParams.set("redirectUri", redirectUri);
-    url.searchParams.set("state", state);
-    url.searchParams.set("type", "signIn");
-
-    return url.toString();
-  } catch (err) {
-    console.warn("[getLoginUrl] Invalid OAuth portal URL:", oauthPortalUrl, err);
-    return "";
-  }
+/**
+ * Returns the URL for the server-side OAuth start endpoint.
+ *
+ * The start endpoint generates a cryptographic nonce, stores it in an
+ * httpOnly cookie, embeds it in the OAuth state parameter, and redirects
+ * to the OAuth provider.  This makes the login flow CSRF-safe — no client-
+ * side state construction, no replayable btoa(redirectUri) encoding.
+ *
+ * Falls back to "/portal" in environments where the server is unreachable
+ * (e.g. static preview builds) so the public site still renders.
+ */
+export const getLoginUrl = (postLoginUri = "/"): string => {
+  if (typeof window === "undefined") return "/api/oauth/start";
+  const params = new URLSearchParams({ redirectUri: postLoginUri });
+  return `/api/oauth/start?${params}`;
 };

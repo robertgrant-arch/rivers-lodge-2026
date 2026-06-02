@@ -8,6 +8,8 @@ export default defineConfig({
   resolve: {
     alias: {
       "@core": path.resolve(templateRoot, "_core"),
+      // @shared/errors lives in _core/shared, not _shared/ — explicit alias wins.
+      "@shared/errors": path.resolve(templateRoot, "features/_core/shared/errors"),
       "@shared": path.resolve(templateRoot, "features/_shared"),
       "@features": path.resolve(templateRoot, "features"),
       "@": path.resolve(templateRoot, "client", "src"),
