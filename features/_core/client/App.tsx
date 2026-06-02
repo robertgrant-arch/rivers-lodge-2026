@@ -5,19 +5,19 @@ import { Route, Switch } from "wouter";
 import ErrorBoundary from "../../_shared/components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 // Public pages
-import Home from "../../public-pages/pages/Home";
+import Home from "../../marketing/client/pages/Home";
 import WeddingsLanding from "../../weddings/client/pages/WeddingsLanding";
-import MembershipLanding from "../../public-pages/pages/MembershipLanding";
+import MembershipLanding from "../../marketing/client/pages/MembershipLanding";
 import Weddings from "../../weddings/client/pages/Weddings";
 import Venues from "../../weddings/client/pages/Venues";
 import Lodging from "../../public-pages/pages/Lodging";
 import Corporate from "../../public-pages/pages/Corporate";
 import Estate from "../../public-pages/pages/Estate";
-import Gallery from "../../public-pages/pages/Gallery";
-import Contact from "../../public-pages/pages/Contact";
+import Gallery from "../../marketing/client/pages/Gallery";
+import Contact from "../../marketing/client/pages/Contact";
 import Hunt from "../../public-pages/pages/Hunt";
 import Fish from "../../public-pages/pages/Fish";
-import Privacy from "../../public-pages/pages/Privacy";
+import Privacy from "../../marketing/client/pages/Privacy";
 // Inquiries
 import InquiryConfirmed from "../../inquiries/client/pages/InquiryConfirmed";
 // Membership
