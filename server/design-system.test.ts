@@ -13,7 +13,7 @@ function readFile(rel: string) {
 }
 
 describe("Design system — CSS tokens", () => {
-  const css = readFile("client/src/index.css");
+  const css = readFile("features/_core/client/index.css");
 
   it("defines brand gold token", () => {
     expect(css).toContain("--gold:");
@@ -45,7 +45,7 @@ describe("Design system — CSS tokens", () => {
 
   it("uses dark theme as default", () => {
     // ThemeProvider should default to dark
-    const app = readFile("client/src/App.tsx");
+    const app = readFile("features/_core/client/App.tsx");
     expect(app).toContain('defaultTheme="dark"');
   });
 });
@@ -63,7 +63,7 @@ describe("Design system — Typography", () => {
 });
 
 describe("Route registration", () => {
-  const app = readFile("client/src/App.tsx");
+  const app = readFile("features/_core/client/App.tsx");
 
   it("registers /events route for WeddingsLanding", () => {
     expect(app).toContain('path="/events"');
