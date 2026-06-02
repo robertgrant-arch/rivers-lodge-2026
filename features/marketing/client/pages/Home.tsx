@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Link } from "wouter";
-import PublicLayout from "../components/PublicLayout";
+import PublicLayout from "@shared/components/PublicLayout";
 import { trpc } from '@shared/lib/trpc';
 import TestimonialsCarousel from "@/components/TestimonialsCarousel";
 import SEOHead, { structuredData } from '@shared/components/SEOHead';

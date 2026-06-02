@@ -1,6 +1,6 @@
 import { useRef, useEffect } from "react";
 import { useLocation } from "wouter";
-import PublicLayout from "../components/PublicLayout";
+import PublicLayout from "@shared/components/PublicLayout";
 import InquiryForm from "@/components/InquiryForm";
 import SEOHead from '@shared/components/SEOHead';
 

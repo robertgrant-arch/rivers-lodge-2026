@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import PublicLayout from "../components/PublicLayout";
+import PublicLayout from "@shared/components/PublicLayout";
 import { trpc } from '@shared/lib/trpc';
 import SEOHead from '@shared/components/SEOHead';
 

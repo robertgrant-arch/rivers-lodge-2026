@@ -126,7 +126,7 @@ describe("Navigation — PublicNav", () => {
 });
 
 describe("Homepage — dual-track split", () => {
-  const home = readFile("features/public-pages/pages/Home.tsx");
+  const home = readFile("features/marketing/client/pages/Home.tsx");
 
   it("has Weddings & Events CTA", () => {
     expect(home).toContain("Weddings");
