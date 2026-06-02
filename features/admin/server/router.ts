@@ -25,6 +25,14 @@ import { users } from "@features/auth/public";
 import { members, membershipApplications } from "@features/membership/public";
 import { inquiries } from "@features/inquiries/public";
 import { bookings } from "@features/booking-engine/public";
+import { waivers } from "@features/waivers/schema";
+import { seasonalUpdates } from "@features/updates/schema";
+import {
+  cmsTestimonials,
+  cmsFaqs,
+  cmsAnnouncements,
+  cmsMemberContent,
+} from "@features/cms/schema";
 import { randomBytes } from "crypto";
 
 function getDb() {
@@ -148,6 +156,61 @@ const dashboardRouter = router({
       .set({ read: true })
       .where(eq(portalNotifications.recipientUserId, ctx.user.id));
     return { success: true };
+  }),
+
+  /**
+   * dashboardSummary — single endpoint that fans out 6 queries in parallel
+   * and returns one combined payload.
+   *
+   * Replaces the 12 independent tRPC calls the AdminDashboard previously fired
+   * on mount.  The client caches this for 30 s (staleTime) so tab-switches
+   * don't trigger re-fetches.
+   *
+   * Not included here (separate endpoints):
+   *   - messages.allMessages  — parameterized by `archived` toggle
+   *   - portal.dashboard.cmsTab — heavy CMS collections, lazy-loaded on demand
+   */
+  dashboardSummary: portalProcedure.query(async () => {
+    const db = getDb();
+    const [
+      allBookings,
+      allInquiries,
+      allMembers,
+      allApplications,
+      allWaivers,
+      allUpdates,
+    ] = await Promise.all([
+      db.select().from(bookings).orderBy(desc(bookings.createdAt)),
+      db.select().from(inquiries).orderBy(desc(inquiries.createdAt)),
+      db.select().from(members).orderBy(desc(members.createdAt)),
+      db.select().from(membershipApplications).orderBy(desc(membershipApplications.createdAt)),
+      db.select().from(waivers).orderBy(desc(waivers.signedAt)),
+      db.select().from(seasonalUpdates).orderBy(desc(seasonalUpdates.publishedAt)),
+    ]);
+    return {
+      bookings: allBookings,
+      inquiries: allInquiries,
+      members: allMembers,
+      applications: allApplications,
+      waivers: allWaivers,
+      updates: allUpdates,
+    };
+  }),
+
+  /**
+   * cmsTab — fetches all four CMS collections in parallel.
+   * Enabled on the client only when the user navigates to the CMS tab,
+   * so it never fires on initial dashboard load.
+   */
+  cmsTab: portalProcedure.query(async () => {
+    const db = getDb();
+    const [testimonials, faqs, announcements, memberContent] = await Promise.all([
+      db.select().from(cmsTestimonials).orderBy(cmsTestimonials.sortOrder),
+      db.select().from(cmsFaqs).orderBy(cmsFaqs.sortOrder),
+      db.select().from(cmsAnnouncements).orderBy(desc(cmsAnnouncements.createdAt)),
+      db.select().from(cmsMemberContent).orderBy(desc(cmsMemberContent.publishedAt)),
+    ]);
+    return { testimonials, faqs, announcements, memberContent };
   }),
 });
 

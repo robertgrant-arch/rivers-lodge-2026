@@ -11,18 +11,33 @@ export default function AdminDashboard() {
   const { user, isAuthenticated, loading } = useAuth();
   const [tab, setTab] = useState<AdminTab>("overview");
 
-  // ─── Data queries ─────────────────────────────────────────────────────────
-  const bookings = trpc.bookings.list.useQuery(undefined, { enabled: isAuthenticated && user?.role === "admin" });
-  const inquiries = trpc.inquiries.list.useQuery(undefined, { enabled: isAuthenticated && user?.role === "admin" });
-  const members = trpc.membership.listMembers.useQuery(undefined, { enabled: isAuthenticated && user?.role === "admin" });
-  const applications = trpc.membership.listApplications.useQuery(undefined, { enabled: isAuthenticated && user?.role === "admin" });
-  const waivers = trpc.waivers.list.useQuery(undefined, { enabled: isAuthenticated && user?.role === "admin" });
-  const updates = trpc.updates.list.useQuery(undefined, { enabled: isAuthenticated && user?.role === "admin" });
+  const isAdmin = isAuthenticated && user?.role === "admin";
+
+  // ─── Data queries (was 12 independent calls, now 3) ──────────────────────────
+  //
+  // dashboardSummary: fans out 6 DB queries in parallel server-side and returns
+  // one payload.  staleTime=30s prevents re-fetches on tab-switch.
+  const summary = trpc.portal.dashboard.dashboardSummary.useQuery(undefined, {
+    enabled: isAdmin,
+    staleTime: 30_000,
+  });
+
+  // messages.allMessages is kept separate — parameterized by the `archived` toggle.
   const [showArchived, setShowArchived] = useState(false);
   const allMessages = trpc.messages.allMessages.useQuery(
     { archived: showArchived },
-    { enabled: isAuthenticated && user?.role === "admin" }
+    { enabled: isAdmin, staleTime: 30_000 }
   );
+
+  // cmsTab is lazy: enabled only when the user clicks the CMS tab, so it
+  // never fires on initial dashboard load.
+  const [cmsSubTab, setCmsSubTab] = useState<CmsSubTab>("testimonials");
+  const cmsData = trpc.portal.dashboard.cmsTab.useQuery(undefined, {
+    enabled: isAdmin && tab === "cms",
+    staleTime: 30_000,
+  });
+
+  // ─── Mutations ────────────────────────────────────────────────────────────
   const archiveMsg = trpc.messages.archive.useMutation({
     onSuccess: () => { allMessages.refetch(); toast.success("Message archived"); },
     onError: () => toast.error("Failed to archive message"),
@@ -31,66 +46,58 @@ export default function AdminDashboard() {
     onSuccess: () => { allMessages.refetch(); toast.success("Message restored to inbox"); },
     onError: () => toast.error("Failed to restore message"),
   });
-  const allUsers = trpc.admin.users.useQuery(undefined, { enabled: isAuthenticated && user?.role === "admin" });
 
-  // ─── CMS State & Queries ─────────────────────────────────────────────────────
-  const [cmsSubTab, setCmsSubTab] = useState<CmsSubTab>("testimonials");
-  const cmsTestimonials = trpc.cms.adminGetTestimonials.useQuery(undefined, { enabled: isAuthenticated && user?.role === "admin" });
-  const cmsFaqs = trpc.cms.adminGetFaqs.useQuery(undefined, { enabled: isAuthenticated && user?.role === "admin" });
-  const cmsAnnouncements = trpc.cms.adminGetAnnouncements.useQuery(undefined, { enabled: isAuthenticated && user?.role === "admin" });
-  const cmsMemberContent = trpc.cms.adminGetMemberContent.useQuery(undefined, { enabled: isAuthenticated && user?.role === "admin" });
-  // CMS Mutations
-  const createTestimonial = trpc.cms.adminCreateTestimonial.useMutation({ onSuccess: () => { toast.success("Testimonial created"); cmsTestimonials.refetch(); setTestimonialForm({ authorName: "", authorTitle: "", quote: "", rating: 5, division: "weddings", featured: true }); }, onError: () => toast.error("Failed to create") });
-  const deleteTestimonial = trpc.cms.adminDeleteTestimonial.useMutation({ onSuccess: () => { toast.success("Deleted"); cmsTestimonials.refetch(); }, onError: () => toast.error("Failed to delete") });
-  const createFaq = trpc.cms.adminCreateFaq.useMutation({ onSuccess: () => { toast.success("FAQ created"); cmsFaqs.refetch(); setFaqForm({ question: "", answer: "", division: "weddings", sortOrder: 0 }); }, onError: () => toast.error("Failed to create") });
-  const deleteFaq = trpc.cms.adminDeleteFaq.useMutation({ onSuccess: () => { toast.success("Deleted"); cmsFaqs.refetch(); }, onError: () => toast.error("Failed to delete") });
-  const createAnnouncement = trpc.cms.adminCreateAnnouncement.useMutation({ onSuccess: () => { toast.success("Announcement created"); cmsAnnouncements.refetch(); setAnnouncementForm({ title: "", body: "", type: "news", audience: "public", ctaLabel: "", ctaUrl: "" }); }, onError: () => toast.error("Failed to create") });
-  const deleteAnnouncement = trpc.cms.adminDeleteAnnouncement.useMutation({ onSuccess: () => { toast.success("Deleted"); cmsAnnouncements.refetch(); }, onError: () => toast.error("Failed to delete") });
-  const createMemberContent = trpc.cms.adminCreateMemberContent.useMutation({ onSuccess: () => { toast.success("Content created"); cmsMemberContent.refetch(); setMemberContentForm({ title: "", slug: "", body: "", contentType: "hunt_report", season: "" }); }, onError: () => toast.error("Failed to create") });
-  const deleteMemberContent = trpc.cms.adminDeleteMemberContent.useMutation({ onSuccess: () => { toast.success("Deleted"); cmsMemberContent.refetch(); }, onError: () => toast.error("Failed to delete") });
-  // CMS Forms
-  const [testimonialForm, setTestimonialForm] = useState<{ authorName: string; authorTitle: string; quote: string; rating: number; division: "weddings" | "corporate" | "general" | "membership"; featured: boolean }>({ authorName: "", authorTitle: "", quote: "", rating: 5, division: "weddings", featured: true });
-  const [faqForm, setFaqForm] = useState<{ question: string; answer: string; division: "weddings" | "corporate" | "general" | "membership"; sortOrder: number }>({ question: "", answer: "", division: "weddings", sortOrder: 0 });
-  const [announcementForm, setAnnouncementForm] = useState<{ title: string; body: string; type: "banner" | "alert" | "news"; audience: "public" | "members" | "all"; ctaLabel: string; ctaUrl: string }>({ title: "", body: "", type: "news", audience: "public", ctaLabel: "", ctaUrl: "" });
-  const [memberContentForm, setMemberContentForm] = useState<{ title: string; slug: string; body: string; contentType: "season_date" | "hunt_report" | "fish_report" | "member_news" | "policy_update"; season: string }>({ title: "", slug: "", body: "", contentType: "hunt_report", season: "" });
-
-  // ─── Mutations ────────────────────────────────────────────────────────────
   const updateInquiryStatus = trpc.inquiries.updateStatus.useMutation({
-    onSuccess: () => { toast.success("Status updated"); inquiries.refetch(); },
+    onSuccess: () => { toast.success("Status updated"); summary.refetch(); },
     onError: () => toast.error("Failed to update status"),
   });
 
   const updateAppStatus = trpc.membership.updateApplicationStatus.useMutation({
-    onSuccess: () => { toast.success("Application updated"); applications.refetch(); },
+    onSuccess: () => { toast.success("Application updated"); summary.refetch(); },
     onError: () => toast.error("Failed to update application"),
   });
 
-  const updateBooking = trpc.bookings.update.useMutation({
-    onSuccess: () => { toast.success("Booking updated"); bookings.refetch(); },
+  const updateBooking = trpc.booking.bookings.update.useMutation({
+    onSuccess: () => { toast.success("Booking updated"); summary.refetch(); },
     onError: () => toast.error("Failed to update booking"),
   });
 
-  const deleteBooking = trpc.bookings.delete.useMutation({
-    onSuccess: () => { toast.success("Booking deleted"); bookings.refetch(); },
+  const deleteBooking = trpc.booking.bookings.delete.useMutation({
+    onSuccess: () => { toast.success("Booking deleted"); summary.refetch(); },
     onError: () => toast.error("Failed to delete booking"),
   });
 
   const [updateForm, setUpdateForm] = useState({ title: "", body: "", category: "general" as "whitetail" | "waterfowl" | "turkey" | "fishing" | "general" });
   const createUpdate = trpc.updates.create.useMutation({
-    onSuccess: () => { toast.success("Update posted"); updates.refetch(); setUpdateForm({ title: "", body: "", category: "general" }); },
+    onSuccess: () => { toast.success("Update posted"); summary.refetch(); setUpdateForm({ title: "", body: "", category: "general" }); },
     onError: () => toast.error("Failed to post update"),
   });
 
   const deleteUpdate = trpc.updates.delete.useMutation({
-    onSuccess: () => { toast.success("Update deleted"); updates.refetch(); },
+    onSuccess: () => { toast.success("Update deleted"); summary.refetch(); },
     onError: () => toast.error("Failed to delete update"),
   });
 
   const [blockedDateInput, setBlockedDateInput] = useState("");
-  const addBlockedDate = trpc.bookings.addBlockedDate.useMutation({
+  const addBlockedDate = trpc.booking.bookings.addBlockedDate.useMutation({
     onSuccess: () => { toast.success("Date blocked"); setBlockedDateInput(""); },
     onError: () => toast.error("Failed to block date"),
   });
+
+  // ─── CMS Mutations ─────────────────────────────────────────────────────────
+  const [testimonialForm, setTestimonialForm] = useState<{ authorName: string; authorTitle: string; quote: string; rating: number; division: "weddings" | "corporate" | "general" | "membership"; featured: boolean }>({ authorName: "", authorTitle: "", quote: "", rating: 5, division: "weddings", featured: true });
+  const [faqForm, setFaqForm] = useState<{ question: string; answer: string; division: "weddings" | "corporate" | "general" | "membership"; sortOrder: number }>({ question: "", answer: "", division: "weddings", sortOrder: 0 });
+  const [announcementForm, setAnnouncementForm] = useState<{ title: string; body: string; type: "banner" | "alert" | "news"; audience: "public" | "members" | "all"; ctaLabel: string; ctaUrl: string }>({ title: "", body: "", type: "news", audience: "public", ctaLabel: "", ctaUrl: "" });
+  const [memberContentForm, setMemberContentForm] = useState<{ title: string; slug: string; body: string; contentType: "season_date" | "hunt_report" | "fish_report" | "member_news" | "policy_update"; season: string }>({ title: "", slug: "", body: "", contentType: "hunt_report", season: "" });
+
+  const createTestimonial = trpc.cms.adminCreateTestimonial.useMutation({ onSuccess: () => { toast.success("Testimonial created"); cmsData.refetch(); setTestimonialForm({ authorName: "", authorTitle: "", quote: "", rating: 5, division: "weddings", featured: true }); }, onError: () => toast.error("Failed to create") });
+  const deleteTestimonial = trpc.cms.adminDeleteTestimonial.useMutation({ onSuccess: () => { toast.success("Deleted"); cmsData.refetch(); }, onError: () => toast.error("Failed to delete") });
+  const createFaq = trpc.cms.adminCreateFaq.useMutation({ onSuccess: () => { toast.success("FAQ created"); cmsData.refetch(); setFaqForm({ question: "", answer: "", division: "weddings", sortOrder: 0 }); }, onError: () => toast.error("Failed to create") });
+  const deleteFaq = trpc.cms.adminDeleteFaq.useMutation({ onSuccess: () => { toast.success("Deleted"); cmsData.refetch(); }, onError: () => toast.error("Failed to delete") });
+  const createAnnouncement = trpc.cms.adminCreateAnnouncement.useMutation({ onSuccess: () => { toast.success("Announcement created"); cmsData.refetch(); setAnnouncementForm({ title: "", body: "", type: "news", audience: "public", ctaLabel: "", ctaUrl: "" }); }, onError: () => toast.error("Failed to create") });
+  const deleteAnnouncement = trpc.cms.adminDeleteAnnouncement.useMutation({ onSuccess: () => { toast.success("Deleted"); cmsData.refetch(); }, onError: () => toast.error("Failed to delete") });
+  const createMemberContent = trpc.cms.adminCreateMemberContent.useMutation({ onSuccess: () => { toast.success("Content created"); cmsData.refetch(); setMemberContentForm({ title: "", slug: "", body: "", contentType: "hunt_report", season: "" }); }, onError: () => toast.error("Failed to create") });
+  const deleteMemberContent = trpc.cms.adminDeleteMemberContent.useMutation({ onSuccess: () => { toast.success("Deleted"); cmsData.refetch(); }, onError: () => toast.error("Failed to delete") });
 
   // ─── Auth guard ───────────────────────────────────────────────────────────
   if (loading) {
@@ -103,7 +110,7 @@ export default function AdminDashboard() {
     );
   }
 
-  if (!isAuthenticated || user?.role !== "admin") {
+  if (!isAdmin) {
     return (
       <PublicLayout>
         <section className="min-h-screen flex items-center justify-center bg-background">
@@ -116,26 +123,39 @@ export default function AdminDashboard() {
     );
   }
 
-  // ─── Revenue calc ─────────────────────────────────────────────────────────
-  const totalRevenue = (bookings.data ?? []).reduce((sum, b) => {
+  // ─── Derived data (from the single summary query) ─────────────────────────
+  const bookingsData      = summary.data?.bookings      ?? [];
+  const inquiriesData     = summary.data?.inquiries     ?? [];
+  const membersData       = summary.data?.members       ?? [];
+  const applicationsData  = summary.data?.applications  ?? [];
+  const waiversData       = summary.data?.waivers       ?? [];
+  const updatesData       = summary.data?.updates       ?? [];
+
+  const totalRevenue = bookingsData.reduce((sum, b) => {
     const val = parseFloat(b.totalRevenue ?? "0");
     return sum + (isNaN(val) ? 0 : val);
   }, 0);
 
-  const confirmedBookings = (bookings.data ?? []).filter(b => b.status === "confirmed").length;
-  const newInquiries = (inquiries.data ?? []).filter(i => i.status === "new").length;
-  const pendingApps = (applications.data ?? []).filter(a => a.status === "pending").length;
+  const confirmedBookings = bookingsData.filter(b => b.status === "confirmed").length;
+  const newInquiries      = inquiriesData.filter(i => i.status === "new").length;
+  const pendingApps       = applicationsData.filter(a => a.status === "pending").length;
+
+  // CMS collections (from the lazy-loaded cmsTab query)
+  const cmsTestimonialsData  = cmsData.data?.testimonials  ?? [];
+  const cmsFaqsData          = cmsData.data?.faqs          ?? [];
+  const cmsAnnouncementsData = cmsData.data?.announcements ?? [];
+  const cmsMemberContentData = cmsData.data?.memberContent ?? [];
 
   const tabs: { key: AdminTab; label: string }[] = [
-    { key: "overview", label: "Overview" },
-    { key: "bookings", label: `Bookings${confirmedBookings > 0 ? ` (${confirmedBookings})` : ""}` },
-    { key: "inquiries", label: `Inquiries${newInquiries > 0 ? ` (${newInquiries})` : ""}` },
-    { key: "members", label: "Members" },
-    { key: "applications", label: `Applications${pendingApps > 0 ? ` (${pendingApps})` : ""}` },
-    { key: "waivers", label: "Waivers" },
-    { key: "updates", label: "Updates" },
-    { key: "messages", label: "Messages" },
-    { key: "cms", label: "CMS" },
+    { key: "overview",      label: "Overview" },
+    { key: "bookings",      label: `Bookings${confirmedBookings > 0 ? ` (${confirmedBookings})` : ""}` },
+    { key: "inquiries",     label: `Inquiries${newInquiries > 0 ? ` (${newInquiries})` : ""}` },
+    { key: "members",       label: "Members" },
+    { key: "applications",  label: `Applications${pendingApps > 0 ? ` (${pendingApps})` : ""}` },
+    { key: "waivers",       label: "Waivers" },
+    { key: "updates",       label: "Updates" },
+    { key: "messages",      label: "Messages" },
+    { key: "cms",           label: "CMS" },
   ];
 
   return (
@@ -173,7 +193,7 @@ export default function AdminDashboard() {
                   { label: "Total Revenue", value: `$${totalRevenue.toLocaleString()}` },
                   { label: "Confirmed Bookings", value: confirmedBookings },
                   { label: "New Inquiries", value: newInquiries },
-                  { label: "Active Members", value: (members.data ?? []).filter(m => m.active).length },
+                  { label: "Active Members", value: membersData.filter(m => m.active).length },
                 ].map((stat) => (
                   <div key={stat.label} className="bg-card border border-border p-5">
                     <p className="text-[9px] tracking-[0.16em] uppercase font-sans text-muted-foreground mb-2">{stat.label}</p>
@@ -186,7 +206,7 @@ export default function AdminDashboard() {
                 {/* Recent inquiries */}
                 <div className="bg-card border border-border p-6">
                   <h3 className="font-serif text-lg text-foreground mb-4">Recent Inquiries</h3>
-                  {(inquiries.data ?? []).slice(0, 5).map((inq) => (
+                  {inquiriesData.slice(0, 5).map((inq) => (
                     <div key={inq.id} className="flex items-center justify-between py-2 border-b border-border last:border-0">
                       <div>
                         <p className="text-sm font-sans font-medium text-foreground">{inq.name}</p>
@@ -202,7 +222,7 @@ export default function AdminDashboard() {
                 {/* Upcoming bookings */}
                 <div className="bg-card border border-border p-6">
                   <h3 className="font-serif text-lg text-foreground mb-4">Upcoming Bookings</h3>
-                  {(bookings.data ?? []).filter(b => b.status === "confirmed").slice(0, 5).map((b) => (
+                  {bookingsData.filter(b => b.status === "confirmed").slice(0, 5).map((b) => (
                     <div key={b.id} className="flex items-center justify-between py-2 border-b border-border last:border-0">
                       <div>
                         <p className="text-sm font-sans font-medium text-foreground">{b.clientName}</p>
@@ -213,7 +233,7 @@ export default function AdminDashboard() {
                       </span>
                     </div>
                   ))}
-                  {(bookings.data ?? []).filter(b => b.status === "confirmed").length === 0 && (
+                  {bookingsData.filter(b => b.status === "confirmed").length === 0 && (
                     <p className="text-sm font-sans text-muted-foreground">No confirmed bookings.</p>
                   )}
                 </div>
@@ -235,7 +255,7 @@ export default function AdminDashboard() {
                     </tr>
                   </thead>
                   <tbody>
-                    {(bookings.data ?? []).map((b) => (
+                    {bookingsData.map((b) => (
                       <tr key={b.id} className="border-b border-border/50 hover:bg-secondary/30 transition-colors">
                         <td className="py-3 pr-4">
                           <p className="font-medium text-foreground">{b.clientName}</p>
@@ -263,7 +283,7 @@ export default function AdminDashboard() {
                     ))}
                   </tbody>
                 </table>
-                {(bookings.data ?? []).length === 0 && <p className="text-sm font-sans text-muted-foreground py-8 text-center">No bookings yet.</p>}
+                {bookingsData.length === 0 && <p className="text-sm font-sans text-muted-foreground py-8 text-center">No bookings yet.</p>}
               </div>
             </div>
           )}
@@ -273,7 +293,7 @@ export default function AdminDashboard() {
             <div>
               <h2 className="font-serif text-2xl text-foreground mb-6">Inquiries</h2>
               <div className="flex flex-col gap-4">
-                {(inquiries.data ?? []).map((inq) => (
+                {inquiriesData.map((inq) => (
                   <div key={inq.id} className="bg-card border border-border p-5">
                     <div className="flex items-start justify-between gap-4 mb-3">
                       <div>
@@ -294,7 +314,7 @@ export default function AdminDashboard() {
                     <p className="text-[9px] font-sans text-muted-foreground mt-3">{new Date(inq.createdAt).toLocaleString()}</p>
                   </div>
                 ))}
-                {(inquiries.data ?? []).length === 0 && <p className="text-sm font-sans text-muted-foreground py-8 text-center">No inquiries yet.</p>}
+                {inquiriesData.length === 0 && <p className="text-sm font-sans text-muted-foreground py-8 text-center">No inquiries yet.</p>}
               </div>
             </div>
           )}
@@ -313,7 +333,7 @@ export default function AdminDashboard() {
                     </tr>
                   </thead>
                   <tbody>
-                    {(members.data ?? []).map((m) => (
+                    {membersData.map((m) => (
                       <tr key={m.id} className="border-b border-border/50 hover:bg-secondary/30 transition-colors">
                         <td className="py-3 pr-4 font-medium text-foreground">{m.memberNumber ?? `#${m.id}`}</td>
                         <td className="py-3 pr-4 text-muted-foreground">{m.userId}</td>
@@ -329,7 +349,7 @@ export default function AdminDashboard() {
                     ))}
                   </tbody>
                 </table>
-                {(members.data ?? []).length === 0 && <p className="text-sm font-sans text-muted-foreground py-8 text-center">No members yet.</p>}
+                {membersData.length === 0 && <p className="text-sm font-sans text-muted-foreground py-8 text-center">No members yet.</p>}
               </div>
             </div>
           )}
@@ -339,7 +359,7 @@ export default function AdminDashboard() {
             <div>
               <h2 className="font-serif text-2xl text-foreground mb-6">Membership Applications</h2>
               <div className="flex flex-col gap-4">
-                {(applications.data ?? []).map((app) => (
+                {applicationsData.map((app) => (
                   <div key={app.id} className="bg-card border border-border p-5">
                     <div className="flex items-start justify-between gap-4 mb-3">
                       <div>
@@ -360,7 +380,7 @@ export default function AdminDashboard() {
                     <p className="text-[9px] font-sans text-muted-foreground mt-3">{new Date(app.createdAt).toLocaleString()}</p>
                   </div>
                 ))}
-                {(applications.data ?? []).length === 0 && <p className="text-sm font-sans text-muted-foreground py-8 text-center">No applications yet.</p>}
+                {applicationsData.length === 0 && <p className="text-sm font-sans text-muted-foreground py-8 text-center">No applications yet.</p>}
               </div>
             </div>
           )}
@@ -379,7 +399,7 @@ export default function AdminDashboard() {
                     </tr>
                   </thead>
                   <tbody>
-                    {(waivers.data ?? []).map((w) => (
+                    {waiversData.map((w) => (
                       <tr key={w.id} className="border-b border-border/50 hover:bg-secondary/30 transition-colors">
                         <td className="py-3 pr-4 font-medium text-foreground">{w.signerName}</td>
                         <td className="py-3 pr-4 text-muted-foreground">{w.signerEmail ?? "—"}</td>
@@ -389,7 +409,7 @@ export default function AdminDashboard() {
                     ))}
                   </tbody>
                 </table>
-                {(waivers.data ?? []).length === 0 && <p className="text-sm font-sans text-muted-foreground py-8 text-center">No waivers signed yet.</p>}
+                {waiversData.length === 0 && <p className="text-sm font-sans text-muted-foreground py-8 text-center">No waivers signed yet.</p>}
               </div>
             </div>
           )}
@@ -424,7 +444,7 @@ export default function AdminDashboard() {
                 <div>
                   <h3 className="font-serif text-lg text-foreground mb-4">Published Updates</h3>
                   <div className="flex flex-col gap-3">
-                    {(updates.data ?? []).map((u) => (
+                    {updatesData.map((u) => (
                       <div key={u.id} className="bg-card border border-border p-4 flex items-start justify-between gap-3">
                         <div className="flex-1 min-w-0">
                           <p className="text-[9px] tracking-[0.14em] uppercase font-sans text-muted-foreground mb-1">{u.category}</p>
@@ -434,7 +454,7 @@ export default function AdminDashboard() {
                         <button onClick={() => { if (confirm("Delete this update?")) deleteUpdate.mutate({ id: u.id }); }} className="text-xs text-red-500 hover:text-red-700 transition-colors flex-shrink-0">Delete</button>
                       </div>
                     ))}
-                    {(updates.data ?? []).length === 0 && <p className="text-sm font-sans text-muted-foreground">No updates yet.</p>}
+                    {updatesData.length === 0 && <p className="text-sm font-sans text-muted-foreground">No updates yet.</p>}
                   </div>
                 </div>
               </div>
@@ -547,9 +567,9 @@ export default function AdminDashboard() {
                     </form>
                   </div>
                   <div>
-                    <h3 className="font-serif text-lg text-foreground mb-4">Published Testimonials ({cmsTestimonials.data?.length ?? 0})</h3>
+                    <h3 className="font-serif text-lg text-foreground mb-4">Published Testimonials ({cmsTestimonialsData.length})</h3>
                     <div className="flex flex-col gap-3 max-h-[500px] overflow-y-auto">
-                      {(cmsTestimonials.data ?? []).map((t) => (
+                      {cmsTestimonialsData.map((t) => (
                         <div key={t.id} className="bg-card border border-border p-4 flex items-start justify-between gap-3">
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-sans font-medium text-foreground">{t.authorName}</p>
@@ -559,7 +579,7 @@ export default function AdminDashboard() {
                           <button onClick={() => { if (confirm("Delete?")) deleteTestimonial.mutate({ id: t.id }); }} className="text-xs text-red-500 hover:text-red-700 flex-shrink-0">Delete</button>
                         </div>
                       ))}
-                      {(cmsTestimonials.data ?? []).length === 0 && <p className="text-sm font-sans text-muted-foreground">No testimonials yet.</p>}
+                      {cmsTestimonialsData.length === 0 && <p className="text-sm font-sans text-muted-foreground">No testimonials yet.</p>}
                     </div>
                   </div>
                 </div>
@@ -582,9 +602,9 @@ export default function AdminDashboard() {
                     </form>
                   </div>
                   <div>
-                    <h3 className="font-serif text-lg text-foreground mb-4">Published FAQs ({cmsFaqs.data?.length ?? 0})</h3>
+                    <h3 className="font-serif text-lg text-foreground mb-4">Published FAQs ({cmsFaqsData.length})</h3>
                     <div className="flex flex-col gap-3 max-h-[500px] overflow-y-auto">
-                      {(cmsFaqs.data ?? []).map((f) => (
+                      {cmsFaqsData.map((f) => (
                         <div key={f.id} className="bg-card border border-border p-4 flex items-start justify-between gap-3">
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-sans font-medium text-foreground line-clamp-2">{f.question}</p>
@@ -593,7 +613,7 @@ export default function AdminDashboard() {
                           <button onClick={() => { if (confirm("Delete?")) deleteFaq.mutate({ id: f.id }); }} className="text-xs text-red-500 hover:text-red-700 flex-shrink-0">Delete</button>
                         </div>
                       ))}
-                      {(cmsFaqs.data ?? []).length === 0 && <p className="text-sm font-sans text-muted-foreground">No FAQs yet.</p>}
+                      {cmsFaqsData.length === 0 && <p className="text-sm font-sans text-muted-foreground">No FAQs yet.</p>}
                     </div>
                   </div>
                 </div>
@@ -623,9 +643,9 @@ export default function AdminDashboard() {
                     </form>
                   </div>
                   <div>
-                    <h3 className="font-serif text-lg text-foreground mb-4">Active Announcements ({cmsAnnouncements.data?.length ?? 0})</h3>
+                    <h3 className="font-serif text-lg text-foreground mb-4">Active Announcements ({cmsAnnouncementsData.length})</h3>
                     <div className="flex flex-col gap-3 max-h-[500px] overflow-y-auto">
-                      {(cmsAnnouncements.data ?? []).map((a) => (
+                      {cmsAnnouncementsData.map((a) => (
                         <div key={a.id} className="bg-card border border-border p-4 flex items-start justify-between gap-3">
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-sans font-medium text-foreground">{a.title}</p>
@@ -635,7 +655,7 @@ export default function AdminDashboard() {
                           <button onClick={() => { if (confirm("Delete?")) deleteAnnouncement.mutate({ id: a.id }); }} className="text-xs text-red-500 hover:text-red-700 flex-shrink-0">Delete</button>
                         </div>
                       ))}
-                      {(cmsAnnouncements.data ?? []).length === 0 && <p className="text-sm font-sans text-muted-foreground">No announcements yet.</p>}
+                      {cmsAnnouncementsData.length === 0 && <p className="text-sm font-sans text-muted-foreground">No announcements yet.</p>}
                     </div>
                   </div>
                 </div>
@@ -660,9 +680,9 @@ export default function AdminDashboard() {
                     </form>
                   </div>
                   <div>
-                    <h3 className="font-serif text-lg text-foreground mb-4">Published Content ({cmsMemberContent.data?.length ?? 0})</h3>
+                    <h3 className="font-serif text-lg text-foreground mb-4">Published Content ({cmsMemberContentData.length})</h3>
                     <div className="flex flex-col gap-3 max-h-[500px] overflow-y-auto">
-                      {(cmsMemberContent.data ?? []).map((c) => (
+                      {cmsMemberContentData.map((c) => (
                         <div key={c.id} className="bg-card border border-border p-4 flex items-start justify-between gap-3">
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-sans font-medium text-foreground">{c.title}</p>
@@ -671,7 +691,7 @@ export default function AdminDashboard() {
                           <button onClick={() => { if (confirm("Delete?")) deleteMemberContent.mutate({ id: c.id }); }} className="text-xs text-red-500 hover:text-red-700 flex-shrink-0">Delete</button>
                         </div>
                       ))}
-                      {(cmsMemberContent.data ?? []).length === 0 && <p className="text-sm font-sans text-muted-foreground">No content yet.</p>}
+                      {cmsMemberContentData.length === 0 && <p className="text-sm font-sans text-muted-foreground">No content yet.</p>}
                     </div>
                   </div>
                 </div>

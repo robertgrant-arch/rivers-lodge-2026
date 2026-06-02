@@ -1,5 +1,6 @@
 import { router } from 'features/_core/server/trpc';
 import { authRouter } from 'features/auth/server/router';
+import { authAdminRouter } from 'features/auth/server/adminRouter';
 import { inquiriesRouter } from 'features/inquiries/server/router';
 import { membershipRouter } from 'features/membership/server/router';
 import { messagesRouter } from 'features/messages/server/router';
@@ -15,6 +16,8 @@ import { memberPortalRouter } from 'features/portal/server/router';
 
 export const appRouter = router({
   auth: authRouter,
+  // admin.users — user list for admin dashboard
+  admin: authAdminRouter,
   inquiries: inquiriesRouter,
   membership: membershipRouter,
   messages: messagesRouter,
