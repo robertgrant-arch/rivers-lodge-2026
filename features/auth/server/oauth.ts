@@ -3,9 +3,9 @@ import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/constants";
 import type { Express, Request, Response } from "express";
 import { parse as parseCookieHeader } from "cookie";
 import * as db from "@core/server/db";
-import { ENV } from "@core/server/env";
-import { getSessionCookieOptions } from "./cookies";
 import { sdk } from "@core/server/sdk";
+import { authConfig, OAUTH_CALLBACK_URL } from "./config";
+import { getSessionCookieOptions } from "./cookies";
 
 const OAUTH_STATE_COOKIE = "oauth_state";
 
@@ -113,37 +113,30 @@ function readCookie(req: Request, name: string): string | undefined {
   return cookies[name];
 }
 
-function oauthStateCookieOptions(req: Request) {
-  // Derive secure flag from the request so local dev (http) still works.
-  // SameSite=Lax is required — "strict" would drop the cookie when the
-  // browser follows the OAuth provider's redirect back to /api/oauth/callback,
-  // because that redirect is a top-level cross-site navigation.
-  return {
-    httpOnly: true,
-    secure: getSessionCookieOptions(req).secure,
-    maxAge: STATE_TTL_MS,
-    path: "/",
-    sameSite: "lax" as const,
-  };
-}
-
-// ─── Express utilities ────────────────────────────────────────────────────────
-
 function getQueryParam(req: Request, key: string): string | undefined {
   const value = req.query[key];
   return typeof value === "string" ? value : undefined;
 }
 
 /**
- * Build the absolute callback URI from the incoming request, honouring
- * X-Forwarded-Proto so the URL matches what the OAuth provider expects.
+ * Cookie options for the short-lived OAuth state nonce.
+ *
+ * SameSite=Lax is required regardless of COOKIE_CROSS_SITE — the browser
+ * must send this cookie when the OAuth provider redirects back to the callback
+ * path, which is a top-level cross-site navigation.  SameSite=Strict would
+ * drop the cookie on that redirect.
+ *
+ * `secure` follows the same env-based rule as the session cookie: always true
+ * in production, always false in dev.
  */
-function buildCallbackUri(req: Request): string {
-  const forwarded = req.headers["x-forwarded-proto"];
-  const proto =
-    (Array.isArray(forwarded) ? forwarded[0] : forwarded)?.split(",")[0]?.trim() ??
-    req.protocol;
-  return `${proto}://${req.get("host")}/api/oauth/callback`;
+function oauthStateCookieOptions() {
+  return {
+    httpOnly: true,
+    secure: authConfig.isProduction,
+    maxAge: STATE_TTL_MS,
+    path: "/",
+    sameSite: "lax" as const,
+  };
 }
 
 // ─── Route registration ───────────────────────────────────────────────────────
@@ -155,100 +148,152 @@ const STATE_ERROR_MESSAGES: Record<StateValidationError, string> = {
   expired: "OAuth login attempt expired — please try logging in again",
 };
 
+/**
+ * GET /api/oauth/start
+ *
+ * Begins the OAuth login flow server-side.
+ *  1. A cryptographic nonce is tied to this browser session via an httpOnly
+ *     cookie that no other origin can read or set.
+ *  2. The nonce is verified on callback → CSRF-safe.
+ *  3. The iat timestamp expires the flow after 5 min → replay-safe.
+ *  4. The callback URL is built from APP_BASE_URL / RENDER_EXTERNAL_URL —
+ *     deterministic, no request-origin heuristics.
+ */
+export function startMemberLogin(req: Request, res: Response): void {
+  // Accept only same-origin relative paths as the post-login destination.
+  const raw = getQueryParam(req, "redirectUri") ?? "/";
+  const postLoginUri = raw.startsWith("/") ? raw : "/";
+
+  const nonce = randomUUID();
+
+  // Embed nonce + destination in the state parameter sent to the OAuth provider.
+  const state = encodeOAuthState({ nonce, postLoginUri, iat: Date.now() });
+
+  // The nonce is also stored in an httpOnly cookie.  On callback we compare
+  // the two — a mismatch means the request was not initiated by this browser.
+  res.cookie(OAUTH_STATE_COOKIE, nonce, oauthStateCookieOptions());
+
+  const oauthUrl = new URL(`${authConfig.oauthServerUrl}/app-auth`);
+  oauthUrl.searchParams.set("appId", authConfig.appId);
+  oauthUrl.searchParams.set("redirectUri", OAUTH_CALLBACK_URL);
+  oauthUrl.searchParams.set("state", state);
+  oauthUrl.searchParams.set("type", "signIn");
+
+  console.log(`[auth:start] postLoginUri=${postLoginUri} callbackUrl=${OAUTH_CALLBACK_URL}`);
+  res.redirect(302, oauthUrl.toString());
+}
+
+/**
+ * GET /api/oauth/callback
+ *
+ * Receives the authorization code from the OAuth provider.
+ * Validates state before exchanging the code for a token.
+ */
+export async function handleMemberCallback(req: Request, res: Response): Promise<void> {
+  const code = getQueryParam(req, "code");
+  const rawState = getQueryParam(req, "state");
+
+  if (!code || !rawState) {
+    console.warn(`[auth:callback] rejected — missing params: code=${Boolean(code)} state=${Boolean(rawState)}`);
+    res.status(400).json({ error: "code and state are required" });
+    return;
+  }
+
+  // Read the nonce BEFORE clearing — order matters.
+  const cookieNonce = readCookie(req, OAUTH_STATE_COOKIE);
+  // Always clear the state cookie — single-use by design.
+  res.clearCookie(OAUTH_STATE_COOKIE, { path: "/" });
+
+  const result = validateOAuthState(rawState, cookieNonce);
+  if (!result.ok) {
+    console.warn(`[auth:callback] state_invalid reason=${result.reason}`);
+    res.status(400).json({ error: STATE_ERROR_MESSAGES[result.reason] });
+    return;
+  }
+
+  const { postLoginUri } = result.payload;
+
+  // ── Token exchange ────────────────────────────────────────────────────────
+
+  let tokenResponse: Awaited<ReturnType<typeof sdk.exchangeCodeForToken>>;
+  try {
+    // OAUTH_CALLBACK_URL must exactly match the value sent in startMemberLogin.
+    tokenResponse = await sdk.exchangeCodeForToken(code, OAUTH_CALLBACK_URL);
+  } catch (error) {
+    console.error("[auth:callback] token_exchange_failed", error);
+    res.status(502).json({ error: "OAuth token exchange failed" });
+    return;
+  }
+
+  // ── User info ─────────────────────────────────────────────────────────────
+
+  let userInfo: Awaited<ReturnType<typeof sdk.getUserInfo>>;
+  try {
+    userInfo = await sdk.getUserInfo(tokenResponse.accessToken);
+  } catch (error) {
+    console.error("[auth:callback] user_info_failed", error);
+    res.status(502).json({ error: "OAuth user info fetch failed" });
+    return;
+  }
+
+  if (!userInfo.openId) {
+    console.error("[auth:callback] user_info_missing_openid — provider returned no openId");
+    res.status(400).json({ error: "openId missing from user info" });
+    return;
+  }
+
+  // ── DB upsert ─────────────────────────────────────────────────────────────
+
+  try {
+    await db.upsertUser({
+      openId: userInfo.openId,
+      name: userInfo.name || null,
+      email: userInfo.email ?? null,
+      loginMethod: userInfo.loginMethod ?? userInfo.platform ?? null,
+      lastSignedIn: new Date(),
+    });
+  } catch (error) {
+    console.error(`[auth:callback] db_upsert_failed openId=${userInfo.openId}`, error);
+    res.status(503).json({ error: "Failed to persist user record" });
+    return;
+  }
+
+  // ── Session token creation ────────────────────────────────────────────────
+
+  let sessionToken: string;
+  try {
+    // sdk.verifySession requires a non-empty `name` field to reconstruct the
+    // session payload.  Fall back to openId so users with no display name can
+    // still authenticate — openId is always non-empty at this point.
+    const displayName = userInfo.name || userInfo.openId;
+    sessionToken = await sdk.createSessionToken(userInfo.openId, {
+      name: displayName,
+      expiresInMs: ONE_YEAR_MS,
+    });
+  } catch (error) {
+    console.error(`[auth:callback] session_token_failed openId=${userInfo.openId}`, error);
+    res.status(500).json({ error: "Failed to create session token" });
+    return;
+  }
+
+  // ── Cookie write ──────────────────────────────────────────────────────────
+
+  const cookieOptions = getSessionCookieOptions();
+  res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
+
+  console.log(
+    `[auth:callback] session_ok` +
+    ` openId=${userInfo.openId}` +
+    ` secure=${cookieOptions.secure}` +
+    ` sameSite=${cookieOptions.sameSite}` +
+    ` maxAge=${ONE_YEAR_MS}ms` +
+    ` redirect=${postLoginUri}`,
+  );
+
+  res.redirect(302, postLoginUri);
+}
+
 export function registerOAuthRoutes(app: Express) {
-  /**
-   * GET /api/oauth/start
-   *
-   * Begins the OAuth login flow server-side.  Moving state generation here
-   * (vs. the old client-side btoa(redirectUri) in getLoginUrl()) means:
-   *  1. A cryptographic nonce is tied to this browser session via an httpOnly
-   *     cookie that no other origin can read or set.
-   *  2. The nonce is verified on callback → CSRF-safe.
-   *  3. The iat timestamp expires the flow after 5 min → replay-safe.
-   */
-  app.get("/api/oauth/start", (req: Request, res: Response) => {
-    // Accept only same-origin relative paths as the post-login destination.
-    const raw = getQueryParam(req, "redirectUri") ?? "/";
-    const postLoginUri = raw.startsWith("/") ? raw : "/";
-
-    const nonce = randomUUID();
-
-    // Embed nonce + destination in the state parameter sent to the OAuth provider.
-    const state = encodeOAuthState({ nonce, postLoginUri, iat: Date.now() });
-
-    // The nonce is also stored in an httpOnly cookie.  On callback we compare
-    // the two — a mismatch means the request was not initiated by this browser.
-    res.cookie(OAUTH_STATE_COOKIE, nonce, oauthStateCookieOptions(req));
-
-    const callbackUri = buildCallbackUri(req);
-    const oauthUrl = new URL(`${ENV.oAuthServerUrl}/app-auth`);
-    oauthUrl.searchParams.set("appId", ENV.appId);
-    oauthUrl.searchParams.set("redirectUri", callbackUri);
-    oauthUrl.searchParams.set("state", state);
-    oauthUrl.searchParams.set("type", "signIn");
-
-    res.redirect(302, oauthUrl.toString());
-  });
-
-  /**
-   * GET /api/oauth/callback
-   *
-   * Receives the authorization code from the OAuth provider.
-   * Validates state before exchanging the code for a token.
-   */
-  app.get("/api/oauth/callback", async (req: Request, res: Response) => {
-    const code = getQueryParam(req, "code");
-    const rawState = getQueryParam(req, "state");
-
-    if (!code || !rawState) {
-      res.status(400).json({ error: "code and state are required" });
-      return;
-    }
-
-    // Read the nonce BEFORE clearing — order matters.
-    const cookieNonce = readCookie(req, OAUTH_STATE_COOKIE);
-    // Always clear the state cookie — single-use by design.
-    res.clearCookie(OAUTH_STATE_COOKIE, { path: "/" });
-
-    const result = validateOAuthState(rawState, cookieNonce);
-    if (!result.ok) {
-      res.status(400).json({ error: STATE_ERROR_MESSAGES[result.reason] });
-      return;
-    }
-
-    const { postLoginUri } = result.payload;
-    const callbackUri = buildCallbackUri(req);
-
-    try {
-      const tokenResponse = await sdk.exchangeCodeForToken(code, callbackUri);
-      const userInfo = await sdk.getUserInfo(tokenResponse.accessToken);
-
-      if (!userInfo.openId) {
-        res.status(400).json({ error: "openId missing from user info" });
-        return;
-      }
-
-      await db.upsertUser({
-        openId: userInfo.openId,
-        name: userInfo.name || null,
-        email: userInfo.email ?? null,
-        loginMethod: userInfo.loginMethod ?? userInfo.platform ?? null,
-        lastSignedIn: new Date(),
-      });
-
-      const sessionToken = await sdk.createSessionToken(userInfo.openId, {
-        name: userInfo.name || "",
-        expiresInMs: ONE_YEAR_MS,
-      });
-
-      const cookieOptions = getSessionCookieOptions(req);
-      res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
-
-      // Redirect to the post-login destination from the validated state payload.
-      res.redirect(302, postLoginUri);
-    } catch (error) {
-      console.error("[OAuth] Callback failed", error);
-      res.status(500).json({ error: "OAuth callback failed" });
-    }
-  });
+  app.get("/api/oauth/start", startMemberLogin);
+  app.get("/api/oauth/callback", handleMemberCallback);
 }

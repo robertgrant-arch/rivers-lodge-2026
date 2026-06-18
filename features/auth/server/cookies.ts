@@ -1,54 +1,29 @@
-import type { CookieOptions, Request } from "express";
-import { ENV } from "@core/server/env";
+import type { CookieOptions } from "express";
+import { authConfig } from "./config";
 
-const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "::1"]);
-
-function isIpAddress(host: string) {
-  // Basic IPv4 check and IPv6 presence detection.
-  if (/^\d{1,3}(\.\d{1,3}){3}$/.test(host)) return true;
-  return host.includes(":");
-}
-
-function isSecureRequest(req: Request) {
-  if (req.protocol === "https") return true;
-
-  const forwardedProto = req.headers["x-forwarded-proto"];
-  if (!forwardedProto) return false;
-
-  const protoList = Array.isArray(forwardedProto)
-    ? forwardedProto
-    : forwardedProto.split(",");
-
-  return protoList.some(proto => proto.trim().toLowerCase() === "https");
-}
-
-export function getSessionCookieOptions(
-  req: Request
-): Pick<CookieOptions, "domain" | "httpOnly" | "path" | "sameSite" | "secure"> {
-  // const hostname = req.hostname;
-  // const shouldSetDomain =
-  //   hostname &&
-  //   !LOCAL_HOSTS.has(hostname) &&
-  //   !isIpAddress(hostname) &&
-  //   hostname !== "127.0.0.1" &&
-  //   hostname !== "::1";
-
-  // const domain =
-  //   shouldSetDomain && !hostname.startsWith(".")
-  //     ? `.${hostname}`
-  //     : shouldSetDomain
-  //       ? hostname
-  //       : undefined;
-
-  // SameSite=None requires Secure=true — browsers silently reject SameSite=None
-  // cookies served over plain HTTP (RFC 6265bis §5.3.7).  We default to "lax",
-  // which is correct for same-origin / redirect-based OAuth flows and works on
-  // both HTTP (local dev) and HTTPS.
-  //
-  // Set COOKIE_CROSS_SITE=true only when the API and frontend are on different
-  // origins AND every deployment is HTTPS.  In that case we force Secure=true
-  // regardless of the incoming request so the cookie is never silently dropped.
-  if (ENV.cookieCrossSite) {
+/**
+ * Returns the cookie attributes to use for the session cookie.
+ *
+ * `secure` is derived from the deployment environment, not from request
+ * headers.  On Render (and any TLS-terminating reverse proxy) the app sees
+ * plain HTTP internally, so header-based detection (`X-Forwarded-Proto`) is
+ * unreliable unless `trust proxy` is configured.  Tying `secure` to
+ * `NODE_ENV=production` is deterministic and correct:
+ *   - production  → always Secure (all Render web services are HTTPS)
+ *   - development → never Secure (local HTTP dev server)
+ *
+ * SameSite policy:
+ *   - Default (SameSite=Lax): correct for same-origin OAuth redirect flows.
+ *   - COOKIE_CROSS_SITE=true (SameSite=None): only when API and frontend are
+ *     on different origins AND every deployment is HTTPS.  Requires Secure=true
+ *     per RFC 6265bis §5.3.7 — browsers silently drop SameSite=None cookies
+ *     over plain HTTP.
+ */
+export function getSessionCookieOptions(): Pick<
+  CookieOptions,
+  "httpOnly" | "path" | "sameSite" | "secure"
+> {
+  if (authConfig.cookieCrossSite) {
     return {
       httpOnly: true,
       path: "/",
@@ -61,6 +36,6 @@ export function getSessionCookieOptions(
     httpOnly: true,
     path: "/",
     sameSite: "lax",
-    secure: isSecureRequest(req),
+    secure: authConfig.isProduction,
   };
 }

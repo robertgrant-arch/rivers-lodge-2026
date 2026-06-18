@@ -3,7 +3,7 @@ import express from "express";
 import helmet from "helmet";
 import { createServer } from "http";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
-import { registerOAuthRoutes } from '@features/auth/server/oauth';
+import { registerOAuthRoutes } from '@features/auth/public';
 import { registerStorageProxy } from "./storageProxy";
 import { appRouter } from "./router";
 import { createContext } from "./context";
@@ -15,6 +15,13 @@ import { checkDbHealth } from "./db";
 async function startServer() {
   const app = express();
   const server = createServer(app);
+
+  // ── Proxy trust ─────────────────────────────────────────────────────────────
+  // Render (and most cloud platforms) place a TLS-terminating load balancer in
+  // front of the Node process.  "trust proxy" 1 tells Express to trust the
+  // first X-Forwarded-* hop so that req.ip reflects the real client IP (used
+  // by the auth rate limiter) and req.protocol reflects the external scheme.
+  app.set("trust proxy", 1);
 
   // ── Security headers ────────────────────────────────────────────────────────
   // CSP is intentionally disabled here — a real policy is added in a later

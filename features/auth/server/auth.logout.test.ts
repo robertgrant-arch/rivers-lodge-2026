@@ -52,10 +52,11 @@ describe("auth.logout", () => {
     expect(clearedCookies).toHaveLength(1);
     expect(clearedCookies[0]?.name).toBe(COOKIE_NAME);
     // COOKIE_CROSS_SITE is not set in tests → default SameSite=Lax.
-    // The mock request uses protocol "https" so secure is also true.
+    // secure is env-driven (authConfig.isProduction), not request-driven.
+    // Tests run with NODE_ENV != 'production', so secure=false here.
     expect(clearedCookies[0]?.options).toMatchObject({
       maxAge: -1,
-      secure: true,
+      secure: false,
       sameSite: "lax",
       httpOnly: true,
       path: "/",

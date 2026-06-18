@@ -1,4 +1,4 @@
-import { useAuth } from '@features/auth/client/useAuth';
+import { useAuth, getLoginUrl } from '@features/auth/public';
 import { Avatar, AvatarFallback } from '@shared/ui/avatar';
 import {
   DropdownMenu,
@@ -19,7 +19,6 @@ import {
   SidebarTrigger,
   useSidebar,
 } from '@shared/ui/sidebar';
-import { getLoginUrl } from '@shared/constants';
 import { useIsMobile } from '@shared/hooks/useMobile';
 import { LayoutDashboard, LogOut, PanelLeft, Users } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";

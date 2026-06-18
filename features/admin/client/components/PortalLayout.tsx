@@ -1,4 +1,4 @@
-import { useAuth } from '@features/auth/client/useAuth';
+import { useAuth, getLoginUrl } from '@features/auth/public';
 import { Avatar, AvatarFallback } from '@shared/ui/avatar';
 import { Badge } from '@shared/ui/badge';
 import { Button } from '@shared/ui/button';
@@ -23,7 +23,6 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from '@shared/ui/sidebar';
-import { getLoginUrl } from '@shared/constants';
 import { trpc } from '@shared/lib/trpc';
 import {
   BarChart3,
