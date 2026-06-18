@@ -3,7 +3,7 @@ import express from "express";
 import helmet from "helmet";
 import { createServer } from "http";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
-import { registerOAuthRoutes } from '@features/auth/public';
+import { registerOAuthRoutes } from '@features/auth/server/public';
 import { registerStorageProxy } from "./storageProxy";
 import { appRouter } from "./router";
 import { createContext } from "./context";

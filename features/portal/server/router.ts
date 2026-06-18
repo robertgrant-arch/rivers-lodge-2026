@@ -9,7 +9,7 @@
  */
 
 import { router } from "../../_core/server/trpc";
-import { requireMemberSession } from "@features/auth/public";
+import { requireMemberSession } from "@features/auth/server/public";
 import { getDb } from "@core/server/db";
 import { members, messages, bookings } from "@core/db/schema";
 import { eq } from "drizzle-orm";
