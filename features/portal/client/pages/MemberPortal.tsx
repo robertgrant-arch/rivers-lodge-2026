@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "wouter";
-import { useAuth } from '@features/auth/client/useAuth';
+import { useAuth, getLoginUrl } from '@features/auth/public';
 import { trpc } from '@shared/lib/trpc';
-import { getLoginUrl } from '@shared/constants';
 import { toast } from "sonner";
 import PublicLayout from "@/components/PublicLayout";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@shared/ui/dialog';

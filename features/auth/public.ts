@@ -8,6 +8,17 @@ export type { User, InsertUser, UserRole } from "./types";
 export { useAuth } from "./client/useAuth";
 export { LoginButton } from "./client/LoginButton";
 
+/**
+ * Returns the URL for the member login entrypoint, with an optional post-login
+ * redirect path.  Consumers should import this from here rather than
+ * constructing OAuth URLs directly — callers do not need to know which route
+ * the login flow starts from.
+ *
+ * @param postLoginUri - Same-origin path to redirect to after successful login.
+ *   Defaults to "/".
+ */
+export { getLoginUrl } from "@shared/constants";
+
 // ── Server: named login-flow interface ───────────────────────────────────────
 // These five functions are the canonical contract for the member-auth slice.
 // Consumers must import from here — never from auth internals directly.
