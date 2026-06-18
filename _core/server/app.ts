@@ -3,12 +3,12 @@ import express from "express";
 import helmet from "helmet";
 import { createServer } from "http";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
-import { registerOAuthRoutes } from '@features/auth/server/public';
+import { clerkMiddleware } from "@clerk/express";
 import { registerStorageProxy } from "./storageProxy";
 import { appRouter } from "./router";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
-import { submitLimiter, authLimiter } from "./rateLimit";
+import { submitLimiter } from "./rateLimit";
 import { resolvePort } from "./port";
 import { checkDbHealth } from "./db";
 
@@ -23,6 +23,10 @@ async function startServer() {
   // by the auth rate limiter) and req.protocol reflects the external scheme.
   app.set("trust proxy", 1);
 
+  // ── Clerk authentication middleware ─────────────────────────────────────────
+  // Must come early so getAuth(req) is available to all downstream handlers.
+  app.use(clerkMiddleware());
+
   // ── Security headers ────────────────────────────────────────────────────────
   // CSP is intentionally disabled here — a real policy is added in a later
   // prompt once nonces are wired through the SSR/Vite HTML transform.
@@ -36,9 +40,6 @@ async function startServer() {
   app.use(express.urlencoded({ limit: "1mb", extended: true }));
 
   // ── Rate limiting ───────────────────────────────────────────────────────────
-  // Auth endpoints (OAuth start + callback) — 10 req/min/IP.
-  app.use("/api/oauth", authLimiter);
-
   // Public form-submission tRPC procedures — 5 req/min/IP.
   // We match on path prefix before createExpressMiddleware so the limiter
   // fires before tRPC decoding.  tRPC routes are:
@@ -57,7 +58,6 @@ async function startServer() {
   });
 
   registerStorageProxy(app);
-  registerOAuthRoutes(app);
 
   // XML sitemap — minimal static set of public marketing pages.
   // A richer dynamic sitemap (property listings, blog posts, etc.) is a

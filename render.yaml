@@ -12,15 +12,9 @@ services:
         value: production
       - key: DATABASE_URL
         sync: false
-      - key: JWT_SECRET
-        generateValue: true
-      - key: VITE_APP_ID
+      - key: CLERK_SECRET_KEY
         sync: false
-      - key: OAUTH_SERVER_URL
-        sync: false
-      - key: APP_BASE_URL
-        sync: false
-      - key: VITE_OAUTH_PORTAL_URL
+      - key: VITE_CLERK_PUBLISHABLE_KEY
         sync: false
       - key: OWNER_OPEN_ID
         sync: false

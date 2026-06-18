@@ -19,7 +19,7 @@
 import express from "express";
 import request from "supertest";
 import { describe, expect, it } from "vitest";
-import { submitLimiter, authLimiter } from "./rateLimit";
+import { submitLimiter } from "./rateLimit";
 
 // ─── App factory ──────────────────────────────────────────────────────────────
 
@@ -34,14 +34,6 @@ function makeSubmitApp() {
   return app;
 }
 
-function makeAuthApp() {
-  const app = express();
-  app.set("trust proxy", 1);
-  app.use("/api/oauth/start", authLimiter, (_req, res) =>
-    res.json({ ok: true }),
-  );
-  return app;
-}
 
 function makeUnlimitedApp() {
   const app = express();
@@ -133,17 +125,6 @@ describe("submitLimiter (5 req/min/IP)", () => {
   });
 });
 
-// ─── authLimiter tests ────────────────────────────────────────────────────────
-
-describe("authLimiter (10 req/min/IP)", () => {
-  it("allows the first 10 requests and blocks the 11th", async () => {
-    const app = makeAuthApp();
-    const codes = await fire(app, "/api/oauth/start", 12, "post");
-
-    expect(codes.slice(0, 10)).toEqual(Array(10).fill(200));
-    expect(codes.slice(10)).toEqual([429, 429]);
-  });
-});
 
 // ─── Non-rate-limited path ────────────────────────────────────────────────────
 
