@@ -18,6 +18,8 @@ services:
         sync: false
       - key: OAUTH_SERVER_URL
         sync: false
+      - key: APP_BASE_URL
+        sync: false
       - key: VITE_OAUTH_PORTAL_URL
         sync: false
       - key: OWNER_OPEN_ID

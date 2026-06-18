@@ -7,9 +7,8 @@ import { publicProcedure, router } from "../../_core/server/trpc";
  * Clear the member session cookie.  Called by the tRPC logout mutation and
  * exported so integration tests can invoke the behaviour directly.
  */
-export function logoutMember(req: Request, res: Response): void {
-  const cookieOptions = getSessionCookieOptions(req);
-  res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
+export function logoutMember(_req: Request, res: Response): void {
+  res.clearCookie(COOKIE_NAME, { ...getSessionCookieOptions(), maxAge: -1 });
 }
 
 export const authRouter = router({

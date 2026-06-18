@@ -16,6 +16,13 @@ async function startServer() {
   const app = express();
   const server = createServer(app);
 
+  // ── Proxy trust ─────────────────────────────────────────────────────────────
+  // Render (and most cloud platforms) place a TLS-terminating load balancer in
+  // front of the Node process.  "trust proxy" 1 tells Express to trust the
+  // first X-Forwarded-* hop so that req.ip reflects the real client IP (used
+  // by the auth rate limiter) and req.protocol reflects the external scheme.
+  app.set("trust proxy", 1);
+
   // ── Security headers ────────────────────────────────────────────────────────
   // CSP is intentionally disabled here — a real policy is added in a later
   // prompt once nonces are wired through the SSR/Vite HTML transform.
