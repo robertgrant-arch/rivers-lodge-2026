@@ -229,7 +229,10 @@ function UpdatesTab({
 // ─── Main Portal ──────────────────────────────────────────────────────────────────────────────────
 
 export default function MemberPortal() {
-  const { user, isAuthenticated, loading } = useAuth();
+  const { user, isAuthenticated, loading } = useAuth({
+    redirectOnUnauthenticated: true,
+    redirectPath: getLoginUrl("/portal"),
+  });
   const [tab, setTab] = useState<Tab>("dashboard");
   const [msgForm, setMsgForm] = useState({ subject: "", body: "" });
   const [notifOpen, setNotifOpen] = useState(false);
@@ -290,30 +293,9 @@ export default function MemberPortal() {
     );
   }
 
-  if (!isAuthenticated) {
-    return (
-      <PublicLayout>
-        <section className="min-h-screen flex items-center justify-center bg-background">
-          <div className="max-w-md w-full mx-auto px-6 text-center">
-            <div className="w-16 h-px bg-white/20 mx-auto mb-8" />
-            <p className="eyebrow text-white/40 mb-4">Member Portal</p>
-            <h1 className="font-serif text-4xl text-white mb-5">Member access only.</h1>
-            <p className="text-base font-sans text-white/50 leading-relaxed mb-8">
-              The Rivers Lodge member portal is restricted to active members. Please sign in to continue.
-            </p>
-            <a href={getLoginUrl()} className="btn-primary inline-flex items-center justify-center px-8 py-3.5">
-              Sign In
-            </a>
-            <div className="mt-6">
-              <a href="/membership" className="text-xs font-sans text-white/40 hover:text-white transition-colors underline underline-offset-2">
-                Not a member? Apply here.
-              </a>
-            </div>
-          </div>
-        </section>
-      </PublicLayout>
-    );
-  }
+  // Redirect is triggered by useAuth above; this null-guard covers the
+  // single render cycle that can occur before the useEffect fires.
+  if (!isAuthenticated) return null;
 
   const member = memberStatus.data;
   // Admins, owners, and staff roles always have portal access regardless of member record

@@ -1,4 +1,5 @@
 import { Link } from "wouter";
+import { getLoginUrl } from "@shared/constants";
 
 const weddingsLinks = [
   { label: "Weddings", href: "/weddings" },
@@ -17,9 +18,8 @@ const membershipLinks = [
 ];
 
 const contactLinks = [
-  { label: "Contact Us", href: "/contact" },
-  { label: "Member Login", href: "/portal" },
-  { label: "Privacy Policy", href: "/privacy" },
+  { label: "Contact Us", href: "/contact", external: false },
+  { label: "Privacy Policy", href: "/privacy", external: false },
 ];
 
 export default function PublicFooter() {
@@ -119,6 +119,14 @@ export default function PublicFooter() {
               Contact &amp; Legal
             </h4>
             <nav className="flex flex-col gap-3">
+              {/* Member Login must use a plain <a> — it targets /api/oauth/start,
+                  a server route that requires a full-page navigation. */}
+              <a
+                href={getLoginUrl()}
+                className="text-[12px] font-sans hover:text-[oklch(0.94_0.008_78)] transition-colors"
+              >
+                Member Login
+              </a>
               {contactLinks.map((item) => (
                 <Link
                   key={item.label}
