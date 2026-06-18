@@ -13,6 +13,8 @@ type InquiryType = "wedding" | "corporate" | "membership" | "lodging" | "tour" |
 interface Props {
   defaultType?: InquiryType;
   track?: "weddings" | "outdoors";
+  /** Restrict the type selector to a specific subset. Falls back to all types when omitted. */
+  allowedTypes?: InquiryType[];
   onSuccess?: () => void;
   className?: string;
 }
@@ -21,7 +23,7 @@ const STEPS = ["Your Inquiry", "Event Details", "Contact Info"];
 
 const TYPE_LABELS: Record<InquiryType, string> = {
   wedding: "Wedding",
-  corporate: "Corporate Event",
+  corporate: "Corporate",
   membership: "Membership",
   lodging: "Lodging",
   tour: "Property Tour",
@@ -29,14 +31,21 @@ const TYPE_LABELS: Record<InquiryType, string> = {
   general: "General Inquiry",
 };
 
-export default function InquiryForm({ defaultType = "general", track, onSuccess, className = "" }: Props) {
+export default function InquiryForm({ defaultType = "general", track, allowedTypes, onSuccess, className = "" }: Props) {
   const [, navigate] = useLocation();
   const [step, setStep] = useState(0);
   const [submitted, setSubmitted] = useState(false);
   const [captchaToken, setCaptchaToken] = useState<string>("");
   const turnstileRef = useRef<TurnstileInstance>(null);
+
+  const visibleTypes: InquiryType[] = allowedTypes ?? (Object.keys(TYPE_LABELS) as InquiryType[]);
+  // If defaultType was stripped from the allowed set, fall back to the first visible type.
+  const resolvedDefault: InquiryType = visibleTypes.includes(defaultType as InquiryType)
+    ? (defaultType as InquiryType)
+    : visibleTypes[0];
+
   const [form, setForm] = useState({
-    type: defaultType as InquiryType,
+    type: resolvedDefault,
     eventDate: "",
     guestCount: "",
     message: "",
@@ -149,7 +158,7 @@ export default function InquiryForm({ defaultType = "general", track, onSuccess,
         <div className="space-y-4">
           <p className="text-white/50 font-sans text-sm mb-5">What brings you to Rivers Lodge?</p>
           <div className="grid grid-cols-2 gap-2">
-            {(Object.keys(TYPE_LABELS) as InquiryType[]).map((t) => (
+            {visibleTypes.map((t) => (
               <button
                 key={t}
                 onClick={() => set("type", t)}
