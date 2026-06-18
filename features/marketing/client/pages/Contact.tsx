@@ -39,6 +39,10 @@ export default function Contact() {
     ? ("outdoors" as const)
     : undefined;
 
+  // Weddings/events contact path shows only the two event inquiry types.
+  // Other tracks remain unrestricted.
+  const allowedTypes = track === "weddings" ? (["wedding", "corporate"] as const) : undefined;
+
   const heroRef = useFadeUp();
   const formRef = useFadeUp(0.08);
   const infoRef = useFadeUp(0.08);
@@ -72,7 +76,7 @@ export default function Contact() {
             {/* Multi-step form */}
             <div ref={formRef as React.RefObject<HTMLDivElement>} className="fade-up">
               <div className="border border-white/8 p-8 md:p-12 bg-white/2">
-                <InquiryForm defaultType={safeType} track={track} />
+                <InquiryForm defaultType={safeType} track={track} allowedTypes={allowedTypes} />
               </div>
             </div>
 
