@@ -239,7 +239,7 @@ export default function MemberPortal() {
   const [selectedRequest, setSelectedRequest] = useState<RequestItem | null>(null);
 
   const memberStatus   = trpc.membership.myStatus.useQuery(undefined, { enabled: isAuthenticated });
-  const blockedDates   = trpc.bookings.blockedDates.useQuery();
+  const blockedDates   = trpc.booking.bookings.blockedDates.useQuery();
   const updates        = trpc.updates.list.useQuery();
   const cmsMemberContent = trpc.cms.getMemberContent.useQuery(undefined, { enabled: isAuthenticated });
   const cmsAnnouncements = trpc.cms.getAnnouncements.useQuery({ audience: "members" });
@@ -325,7 +325,7 @@ export default function MemberPortal() {
     );
   }
 
-  const blockedDateStrings = (blockedDates.data ?? []).map((d) => {
+  const blockedDateStrings = (blockedDates.data ?? []).map((d: { date: Date | string }) => {
     const date = new Date(d.date);
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
   });

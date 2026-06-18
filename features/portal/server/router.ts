@@ -21,10 +21,10 @@ export const memberPortalRouter = router({
    * Returns the authenticated member's profile + membership record.
    */
   myProfile: requireMemberSession.query(async ({ ctx }) => {
-    const db = getDb();
-    const member = await db.query.members?.findFirst({
-      where: eq(members.userId, ctx.user.id),
-    });
+    const db = await getDb();
+    const member = db
+      ? (await db.select().from(members).where(eq(members.userId, ctx.user.id)).limit(1))[0] ?? null
+      : null;
     return {
       user: {
         id: ctx.user.id,
@@ -32,7 +32,7 @@ export const memberPortalRouter = router({
         email: ctx.user.email,
         role: ctx.user.role,
       },
-      member: member ?? null,
+      member,
     };
   }),
 
@@ -40,7 +40,8 @@ export const memberPortalRouter = router({
    * Returns the authenticated member's bookings (legacy bookings table).
    */
   myBookings: requireMemberSession.query(async ({ ctx }) => {
-    const db = getDb();
+    const db = await getDb();
+    if (!db) return [];
     const rows = await db.select().from(bookings).where(eq(bookings.userId, ctx.user.id));
     return rows;
   }),
@@ -49,8 +50,9 @@ export const memberPortalRouter = router({
    * Returns the authenticated member's concierge messages.
    */
   myMessages: requireMemberSession.query(async ({ ctx }) => {
-    const db = getDb();
-    const rows = await db.select().from(messages).where(eq(messages.userId, ctx.user.id));
+    const db = await getDb();
+    if (!db) return [];
+    const rows = await db.select().from(messages).where(eq(messages.fromUserId, ctx.user.id));
     return rows;
   }),
 });

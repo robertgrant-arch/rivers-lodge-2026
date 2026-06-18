@@ -51,7 +51,7 @@ function createDb(): Promise<DrizzleDb | null> {
       waitForConnections: true,
       queueLimit: 0, // unlimited queue; rely on connection timeout instead
     });
-    return Promise.resolve(drizzle(_pool));
+    return Promise.resolve(drizzle(_pool) as unknown as DrizzleDb);
   } catch (error) {
     console.warn("[Database] Failed to create connection pool:", error);
     return Promise.resolve(null);
