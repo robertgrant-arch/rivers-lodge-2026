@@ -18,6 +18,9 @@ export { startMemberLogin } from "./server/oauth";
 /** Express handler: completes the OAuth flow (GET /api/oauth/callback). */
 export { handleMemberCallback } from "./server/oauth";
 
+/** Registers GET /api/oauth/start and GET /api/oauth/callback on an Express app. */
+export { registerOAuthRoutes } from "./server/oauth";
+
 /** Read and verify the member session from an Express request. Returns User | null. */
 export { getMemberSession } from "./server/session";
 
