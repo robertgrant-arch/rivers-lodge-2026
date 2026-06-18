@@ -14,8 +14,13 @@ import type { User } from "../types";
  */
 export async function getMemberSession(req: Request): Promise<User | null> {
   try {
-    return await sdk.authenticateRequest(req);
-  } catch {
+    const user = await sdk.authenticateRequest(req);
+    console.log(`[auth:session] read_ok openId=${user.openId}`);
+    return user;
+  } catch (err) {
+    // Unauthenticated requests are expected (public pages) — log at debug
+    // level so failures are visible without being noisy for anonymous traffic.
+    console.log(`[auth:session] read_fail ${String(err)}`);
     return null;
   }
 }
@@ -27,5 +32,9 @@ export async function getMemberSession(req: Request): Promise<User | null> {
  * Every portal / member-facing router should build procedures on top of this
  * rather than importing protectedProcedure from _core directly, so that the
  * auth feature is the single owner of the session-enforcement contract.
+ *
+ * Guard redirect decisions: when this procedure throws UNAUTHORIZED, the
+ * client-side useAuth hook (features/auth/client/useAuth.ts) catches the
+ * UNAUTHORIZED tRPC error via meQuery and redirects to getLoginUrl().
  */
 export { protectedProcedure as requireMemberSession };

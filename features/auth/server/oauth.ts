@@ -179,6 +179,7 @@ export function startMemberLogin(req: Request, res: Response): void {
   oauthUrl.searchParams.set("state", state);
   oauthUrl.searchParams.set("type", "signIn");
 
+  console.log(`[auth:start] postLoginUri=${postLoginUri} callbackUrl=${OAUTH_CALLBACK_URL}`);
   res.redirect(302, oauthUrl.toString());
 }
 
@@ -193,6 +194,7 @@ export async function handleMemberCallback(req: Request, res: Response): Promise
   const rawState = getQueryParam(req, "state");
 
   if (!code || !rawState) {
+    console.warn(`[auth:callback] rejected — missing params: code=${Boolean(code)} state=${Boolean(rawState)}`);
     res.status(400).json({ error: "code and state are required" });
     return;
   }
@@ -204,24 +206,45 @@ export async function handleMemberCallback(req: Request, res: Response): Promise
 
   const result = validateOAuthState(rawState, cookieNonce);
   if (!result.ok) {
+    console.warn(`[auth:callback] state_invalid reason=${result.reason}`);
     res.status(400).json({ error: STATE_ERROR_MESSAGES[result.reason] });
     return;
   }
 
   const { postLoginUri } = result.payload;
 
+  // ── Token exchange ────────────────────────────────────────────────────────
+
+  let tokenResponse: Awaited<ReturnType<typeof sdk.exchangeCodeForToken>>;
   try {
-    // OAUTH_CALLBACK_URL is the same value used in startMemberLogin — the
-    // provider requires the redirectUri in the exchange request to exactly
-    // match the one sent at the start of the flow.
-    const tokenResponse = await sdk.exchangeCodeForToken(code, OAUTH_CALLBACK_URL);
-    const userInfo = await sdk.getUserInfo(tokenResponse.accessToken);
+    // OAUTH_CALLBACK_URL must exactly match the value sent in startMemberLogin.
+    tokenResponse = await sdk.exchangeCodeForToken(code, OAUTH_CALLBACK_URL);
+  } catch (error) {
+    console.error("[auth:callback] token_exchange_failed", error);
+    res.status(502).json({ error: "OAuth token exchange failed" });
+    return;
+  }
 
-    if (!userInfo.openId) {
-      res.status(400).json({ error: "openId missing from user info" });
-      return;
-    }
+  // ── User info ─────────────────────────────────────────────────────────────
 
+  let userInfo: Awaited<ReturnType<typeof sdk.getUserInfo>>;
+  try {
+    userInfo = await sdk.getUserInfo(tokenResponse.accessToken);
+  } catch (error) {
+    console.error("[auth:callback] user_info_failed", error);
+    res.status(502).json({ error: "OAuth user info fetch failed" });
+    return;
+  }
+
+  if (!userInfo.openId) {
+    console.error("[auth:callback] user_info_missing_openid — provider returned no openId");
+    res.status(400).json({ error: "openId missing from user info" });
+    return;
+  }
+
+  // ── DB upsert ─────────────────────────────────────────────────────────────
+
+  try {
     await db.upsertUser({
       openId: userInfo.openId,
       name: userInfo.name || null,
@@ -229,21 +252,45 @@ export async function handleMemberCallback(req: Request, res: Response): Promise
       loginMethod: userInfo.loginMethod ?? userInfo.platform ?? null,
       lastSignedIn: new Date(),
     });
+  } catch (error) {
+    console.error(`[auth:callback] db_upsert_failed openId=${userInfo.openId}`, error);
+    res.status(503).json({ error: "Failed to persist user record" });
+    return;
+  }
 
-    const sessionToken = await sdk.createSessionToken(userInfo.openId, {
-      name: userInfo.name || "",
+  // ── Session token creation ────────────────────────────────────────────────
+
+  let sessionToken: string;
+  try {
+    // sdk.verifySession requires a non-empty `name` field to reconstruct the
+    // session payload.  Fall back to openId so users with no display name can
+    // still authenticate — openId is always non-empty at this point.
+    const displayName = userInfo.name || userInfo.openId;
+    sessionToken = await sdk.createSessionToken(userInfo.openId, {
+      name: displayName,
       expiresInMs: ONE_YEAR_MS,
     });
-
-    const cookieOptions = getSessionCookieOptions();
-    res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
-
-    // Redirect to the post-login destination from the validated state payload.
-    res.redirect(302, postLoginUri);
   } catch (error) {
-    console.error("[OAuth] Callback failed", error);
-    res.status(500).json({ error: "OAuth callback failed" });
+    console.error(`[auth:callback] session_token_failed openId=${userInfo.openId}`, error);
+    res.status(500).json({ error: "Failed to create session token" });
+    return;
   }
+
+  // ── Cookie write ──────────────────────────────────────────────────────────
+
+  const cookieOptions = getSessionCookieOptions();
+  res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
+
+  console.log(
+    `[auth:callback] session_ok` +
+    ` openId=${userInfo.openId}` +
+    ` secure=${cookieOptions.secure}` +
+    ` sameSite=${cookieOptions.sameSite}` +
+    ` maxAge=${ONE_YEAR_MS}ms` +
+    ` redirect=${postLoginUri}`,
+  );
+
+  res.redirect(302, postLoginUri);
 }
 
 export function registerOAuthRoutes(app: Express) {
