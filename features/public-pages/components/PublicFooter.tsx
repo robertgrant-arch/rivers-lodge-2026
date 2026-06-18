@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { getLoginUrl } from "@shared/constants";
+import { getLoginUrl } from "@features/auth/public";
 
 const weddingsLinks = [
   { label: "Weddings", href: "/weddings" },
