@@ -15,8 +15,7 @@
 
 import { useState, useMemo } from "react";
 import { trpc } from '@shared/lib/trpc';
-import { useAuth } from '@features/auth/client/useAuth';
-import { getLoginUrl } from '@shared/constants';
+import { useAuth, getLoginUrl } from '@features/auth/public';
 import { Link } from "wouter";
 import { Button } from '@shared/ui/button';
 import { Badge } from '@shared/ui/badge';
