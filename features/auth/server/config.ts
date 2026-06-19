@@ -55,13 +55,16 @@ function resolveAppBaseUrl(): string {
   return `http://localhost:${port}`;
 }
 
+const oauthServerUrl = requireVar("OAUTH_SERVER_URL").replace(/\/$/, "");
+const appBaseUrl = resolveAppBaseUrl();
+
 export const authConfig = Object.freeze({
-  /** Manus OAuth server base URL. */
-  oauthServerUrl: requireVar("OAUTH_SERVER_URL"),
+  /** Manus OAuth server base URL (trailing slash stripped). */
+  oauthServerUrl,
   /** Application (project) ID registered in the Manus OAuth console. */
   appId: requireVar("VITE_APP_ID"),
   /** Public base URL of this service — used to build the OAuth callback URL. */
-  appBaseUrl: resolveAppBaseUrl(),
+  appBaseUrl,
   /**
    * When true, session cookies use SameSite=None; Secure=true so cross-origin
    * requests work (API and frontend on different origins).  Only enable on
@@ -76,3 +79,11 @@ export const authConfig = Object.freeze({
  * Deterministic — no request-origin heuristics.
  */
 export const OAUTH_CALLBACK_URL = `${authConfig.appBaseUrl}/api/oauth/callback`;
+
+// Log resolved auth config at startup so misconfiguration is visible in Render logs.
+console.log(
+  `[auth:config] oauthServerUrl=${authConfig.oauthServerUrl || "(empty — OAUTH_SERVER_URL not set)"}` +
+  ` appId=${authConfig.appId ? "(set)" : "(empty — VITE_APP_ID not set)"}` +
+  ` callbackUrl=${OAUTH_CALLBACK_URL}` +
+  ` isProduction=${authConfig.isProduction}`,
+);

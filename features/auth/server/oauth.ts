@@ -160,27 +160,40 @@ const STATE_ERROR_MESSAGES: Record<StateValidationError, string> = {
  *     deterministic, no request-origin heuristics.
  */
 export function startMemberLogin(req: Request, res: Response): void {
-  // Accept only same-origin relative paths as the post-login destination.
-  const raw = getQueryParam(req, "redirectUri") ?? "/";
-  const postLoginUri = raw.startsWith("/") ? raw : "/";
+  // Guard: if the OAuth server URL was not configured, fail with an actionable
+  // error rather than letting new URL() throw an opaque 500.
+  if (!authConfig.oauthServerUrl) {
+    console.error("[auth:start] OAUTH_SERVER_URL is not configured — cannot start login flow");
+    res.status(503).json({ error: "Auth provider not configured. Contact the site administrator." });
+    return;
+  }
 
-  const nonce = randomUUID();
+  try {
+    // Accept only same-origin relative paths as the post-login destination.
+    const raw = getQueryParam(req, "redirectUri") ?? "/";
+    const postLoginUri = raw.startsWith("/") ? raw : "/";
 
-  // Embed nonce + destination in the state parameter sent to the OAuth provider.
-  const state = encodeOAuthState({ nonce, postLoginUri, iat: Date.now() });
+    const nonce = randomUUID();
 
-  // The nonce is also stored in an httpOnly cookie.  On callback we compare
-  // the two — a mismatch means the request was not initiated by this browser.
-  res.cookie(OAUTH_STATE_COOKIE, nonce, oauthStateCookieOptions());
+    // Embed nonce + destination in the state parameter sent to the OAuth provider.
+    const state = encodeOAuthState({ nonce, postLoginUri, iat: Date.now() });
 
-  const oauthUrl = new URL(`${authConfig.oauthServerUrl}/app-auth`);
-  oauthUrl.searchParams.set("appId", authConfig.appId);
-  oauthUrl.searchParams.set("redirectUri", OAUTH_CALLBACK_URL);
-  oauthUrl.searchParams.set("state", state);
-  oauthUrl.searchParams.set("type", "signIn");
+    // The nonce is also stored in an httpOnly cookie.  On callback we compare
+    // the two — a mismatch means the request was not initiated by this browser.
+    res.cookie(OAUTH_STATE_COOKIE, nonce, oauthStateCookieOptions());
 
-  console.log(`[auth:start] postLoginUri=${postLoginUri} callbackUrl=${OAUTH_CALLBACK_URL}`);
-  res.redirect(302, oauthUrl.toString());
+    const oauthUrl = new URL(`${authConfig.oauthServerUrl}/app-auth`);
+    oauthUrl.searchParams.set("appId", authConfig.appId);
+    oauthUrl.searchParams.set("redirectUri", OAUTH_CALLBACK_URL);
+    oauthUrl.searchParams.set("state", state);
+    oauthUrl.searchParams.set("type", "signIn");
+
+    console.log(`[auth:start] postLoginUri=${postLoginUri} callbackUrl=${OAUTH_CALLBACK_URL}`);
+    res.redirect(302, oauthUrl.toString());
+  } catch (err) {
+    console.error("[auth:start] unexpected error building OAuth redirect", err);
+    res.status(503).json({ error: "Login temporarily unavailable. Please try again." });
+  }
 }
 
 /**
