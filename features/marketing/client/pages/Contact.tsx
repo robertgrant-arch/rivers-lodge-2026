@@ -41,7 +41,7 @@ export default function Contact() {
 
   // Weddings/events contact path shows only the two event inquiry types.
   // Other tracks remain unrestricted.
-  const allowedTypes = track === "weddings" ? (["wedding", "corporate"] as const) : undefined;
+  const allowedTypes = track === "weddings" ? (["wedding", "corporate"] as InquiryType[]) : undefined;
 
   const heroRef = useFadeUp();
   const formRef = useFadeUp(0.08);

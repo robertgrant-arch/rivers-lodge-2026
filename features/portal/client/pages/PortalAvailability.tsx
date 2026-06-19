@@ -28,25 +28,25 @@ export default function PortalAvailability() {
   const [newBlockedDate, setNewBlockedDate] = useState("");
   const [newBlockedReason, setNewBlockedReason] = useState("");
 
-  const blockedDatesQuery = trpc.bookings.blockedDates.useQuery();
+  const blockedDatesQuery = trpc.booking.bookings.blockedDates.useQuery();
   const utils = trpc.useUtils();
 
-  const addBlockedDate = trpc.bookings.addBlockedDate.useMutation({
+  const addBlockedDate = trpc.booking.bookings.addBlockedDate.useMutation({
     onSuccess: () => {
       toast.success("Date blocked");
       setNewBlockedDate("");
       setNewBlockedReason("");
-      utils.bookings.blockedDates.invalidate();
+      utils.booking.bookings.blockedDates.invalidate();
     },
-    onError: (err) => toast.error(err.message),
+    onError: (err: { message: string }) => toast.error(err.message),
   });
 
-  const removeBlockedDate = trpc.bookings.removeBlockedDate.useMutation({
+  const removeBlockedDate = trpc.booking.bookings.removeBlockedDate.useMutation({
     onSuccess: () => {
       toast.success("Date unblocked");
-      utils.bookings.blockedDates.invalidate();
+      utils.booking.bookings.blockedDates.invalidate();
     },
-    onError: (err) => toast.error(err.message),
+    onError: (err: { message: string }) => toast.error(err.message),
   });
 
   const resourcesQuery = trpc.booking.resources.list.useQuery({});
@@ -169,7 +169,7 @@ export default function PortalAvailability() {
               </div>
             ) : (
               <div className="divide-y divide-border">
-                {(blockedDatesQuery.data ?? []).map((bd) => (
+                {(blockedDatesQuery.data ?? []).map((bd: { id: number; date: Date | string; reason?: string | null }) => (
                   <div key={bd.id} className="flex items-center justify-between px-5 py-3">
                     <div>
                       <p className="text-sm font-medium">{new Date(bd.date).toLocaleDateString(undefined, { weekday: "short", year: "numeric", month: "short", day: "numeric" })}</p>

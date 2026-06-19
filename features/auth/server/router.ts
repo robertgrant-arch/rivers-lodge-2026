@@ -1,21 +1,12 @@
-import type { Request, Response } from "express";
-import { COOKIE_NAME } from '@shared/constants';
-import { getSessionCookieOptions } from "./cookies";
 import { publicProcedure, router } from "../../_core/server/trpc";
 
-/**
- * Clear the member session cookie.  Called by the tRPC logout mutation and
- * exported so integration tests can invoke the behaviour directly.
- */
-export function logoutMember(_req: Request, res: Response): void {
-  res.clearCookie(COOKIE_NAME, { ...getSessionCookieOptions(), maxAge: -1 });
-}
-
 export const authRouter = router({
+  /** Returns the currently authenticated DB user, or null for public requests. */
   me: publicProcedure.query((opts) => opts.ctx.user),
 
-  logout: publicProcedure.mutation(({ ctx }) => {
-    logoutMember(ctx.req, ctx.res);
-    return { success: true } as const;
-  }),
+  /**
+   * No-op — sign-out is handled on the frontend by Clerk's signOut().
+   * Kept for API compatibility so existing callers don't error.
+   */
+  logout: publicProcedure.mutation(() => ({ success: true } as const)),
 });

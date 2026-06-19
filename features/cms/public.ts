@@ -13,6 +13,4 @@ export type {
   CmsContactRoute,
   CmsMemberContent,
   CmsSingleton,
-  FieldReport,
-  Newsletter,
 } from './types';

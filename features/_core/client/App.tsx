@@ -1,4 +1,5 @@
 import { Suspense, lazy } from "react";
+import { SignIn, SignUp } from "@clerk/clerk-react";
 import { Toaster } from '@shared/ui/sonner';
 import { TooltipProvider } from '@shared/ui/tooltip';
 import { Route, Switch } from "wouter";
@@ -101,6 +102,10 @@ function Router() {
   return (
     <Suspense fallback={<RouteLoader />}>
       <Switch>
+        {/* Auth pages — rendered by Clerk */}
+        <Route path="/sign-in">{() => <div className="min-h-screen flex items-center justify-center bg-background"><SignIn routing="path" path="/sign-in" afterSignInUrl="/portal" /></div>}</Route>
+        <Route path="/sign-up">{() => <div className="min-h-screen flex items-center justify-center bg-background"><SignUp routing="path" path="/sign-up" afterSignUpUrl="/portal" /></div>}</Route>
+
         {/* Public */}
         <Route path="/" component={Home} />
         <Route path="/events" component={WeddingsLanding} />

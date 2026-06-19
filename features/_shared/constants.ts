@@ -1,18 +1,12 @@
 export { COOKIE_NAME, ONE_YEAR_MS, AXIOS_TIMEOUT_MS, UNAUTHED_ERR_MSG, NOT_ADMIN_ERR_MSG } from '../_core/shared/const';
 
 /**
- * Returns the URL for the server-side OAuth start endpoint.
+ * Returns the URL for the Clerk-hosted sign-in page.
  *
- * The start endpoint generates a cryptographic nonce, stores it in an
- * httpOnly cookie, embeds it in the OAuth state parameter, and redirects
- * to the OAuth provider.  This makes the login flow CSRF-safe — no client-
- * side state construction, no replayable btoa(redirectUri) encoding.
+ * Components that need to send users to sign-in should import this rather
+ * than hard-coding the path, so the destination can be changed in one place.
  *
- * Falls back to "/portal" in environments where the server is unreachable
- * (e.g. static preview builds) so the public site still renders.
+ * @param _postLoginUri - Kept for backward compatibility; Clerk handles
+ *   post-sign-in redirects via its own afterSignInUrl / redirectUrl props.
  */
-export const getLoginUrl = (postLoginUri = "/"): string => {
-  if (typeof window === "undefined") return "/api/oauth/start";
-  const params = new URLSearchParams({ redirectUri: postLoginUri });
-  return `/api/oauth/start?${params}`;
-};
+export const getLoginUrl = (_postLoginUri = "/"): string => "/sign-in";

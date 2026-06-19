@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import { appRouter } from "../_core/server/router";
-import { COOKIE_NAME } from "../features/_core/shared/const";
 import type { TrpcContext } from '@core/server/context';
 
 type AuthenticatedUser = NonNullable<TrpcContext["user"]>;
@@ -61,14 +60,11 @@ function createMemberContext(): TrpcContext {
 
 // ─── Auth tests ───────────────────────────────────────────────────────────────
 describe("auth.logout", () => {
-  it("clears session cookie and returns success", async () => {
-    const { ctx, clearedCookies } = createAdminContext();
+  it("returns success (sign-out is now handled by Clerk on the frontend)", async () => {
+    const { ctx } = createAdminContext();
     const caller = appRouter.createCaller(ctx);
     const result = await caller.auth.logout();
     expect(result).toEqual({ success: true });
-    expect(clearedCookies).toHaveLength(1);
-    expect(clearedCookies[0]?.name).toBe(COOKIE_NAME);
-    expect(clearedCookies[0]?.options).toMatchObject({ maxAge: -1 });
   });
 
   it("auth.me returns null for unauthenticated users", async () => {

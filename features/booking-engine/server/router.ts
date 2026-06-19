@@ -408,6 +408,7 @@ const bookingsRouter = router({
       totalRevenue: z.string().optional(),
       depositPaid: z.boolean().optional(),
       notes: z.string().optional(),
+      status: z.enum(["inquiry", "confirmed", "completed", "cancelled"]).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       requirePortalRole(ctx);
@@ -554,6 +555,50 @@ const bookingsRouter = router({
         acknowledgedByUserId: ctx.user!.id,
         notes: input.notes ?? null,
       });
+      return { success: true };
+    }),
+
+  delete: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      requirePortalRole(ctx);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      await db.delete(bookings).where(eq(bookings.id, input.id));
+      return { success: true };
+    }),
+
+  blockedDates: protectedProcedure
+    .query(async ({ ctx }) => {
+      requirePortalRole(ctx);
+      const db = await getDb();
+      if (!db) return [];
+      return db.select().from(blockedDates).orderBy(blockedDates.date);
+    }),
+
+  addBlockedDate: protectedProcedure
+    .input(z.object({
+      date: z.string(),
+      reason: z.string().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      requirePortalRole(ctx);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      await db.insert(blockedDates).values({
+        date: new Date(input.date),
+        reason: input.reason ?? null,
+      });
+      return { success: true };
+    }),
+
+  removeBlockedDate: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      requirePortalRole(ctx);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      await db.delete(blockedDates).where(eq(blockedDates.id, input.id));
       return { success: true };
     }),
 });
