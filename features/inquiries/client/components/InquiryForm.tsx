@@ -98,9 +98,9 @@ export default function InquiryForm({ defaultType = "general", track, allowedTyp
 
   if (submitted) {
     return (
-      <div className={`text-center py-12 ${className}`}>
-        <div className="w-12 h-12 mx-auto mb-6 flex items-center justify-center border border-[var(--gold)]">
-          <svg className="w-5 h-5 text-[var(--gold)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div className={`text-center py-12 ${className}`} role="status">
+        <div className="w-12 h-12 mx-auto mb-6 flex items-center justify-center border border-[var(--gold)]" aria-hidden="true">
+          <svg className="w-5 h-5 text-[var(--gold)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 13l4 4L19 7" />
           </svg>
         </div>
@@ -115,13 +115,19 @@ export default function InquiryForm({ defaultType = "general", track, allowedTyp
 
   return (
     <div className={className}>
+      {/* Screen-reader step announcement — updates whenever step changes */}
+      <p className="sr-only" aria-live="polite" aria-atomic="true">
+        Step {step + 1} of {STEPS.length}: {STEPS[step]}
+      </p>
+
       {/* Progress indicator */}
-      <div className="flex items-center gap-0 mb-8">
+      <div className="flex items-center gap-0 mb-8" role="list" aria-label="Form progress">
         {STEPS.map((label, i) => (
-          <div key={i} className="flex items-center flex-1">
+          <div key={i} className="flex items-center flex-1" role="listitem">
             <div className="flex items-center gap-2 flex-shrink-0">
               <div
                 className="w-6 h-6 flex items-center justify-center text-[10px] font-sans font-medium transition-colors"
+                aria-hidden="true"
                 style={{
                   background: i <= step ? accentColor : "transparent",
                   border: `1px solid ${i <= step ? accentColor : "rgba(255,255,255,0.15)"}`,
@@ -129,7 +135,7 @@ export default function InquiryForm({ defaultType = "general", track, allowedTyp
                 }}
               >
                 {i < step ? (
-                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
                 ) : (
@@ -137,15 +143,19 @@ export default function InquiryForm({ defaultType = "general", track, allowedTyp
                 )}
               </div>
               <span
-                className="text-[9px] tracking-[0.12em] uppercase font-sans hidden sm:block"
+                className="text-[9px] tracking-[0.12em] uppercase font-sans"
+                aria-current={i === step ? "step" : undefined}
                 style={{ color: i === step ? "rgba(255,255,255,0.7)" : "rgba(255,255,255,0.25)" }}
               >
-                {label}
+                {/* Always in DOM for screen readers; visually hidden on small screens */}
+                <span className="hidden sm:inline">{label}</span>
+                <span className="sr-only sm:hidden">{label}{i === step ? " (current)" : i < step ? " (complete)" : ""}</span>
               </span>
             </div>
             {i < STEPS.length - 1 && (
               <div
                 className="flex-1 h-px mx-3 transition-colors"
+                aria-hidden="true"
                 style={{ background: i < step ? accentColor : "rgba(255,255,255,0.1)" }}
               />
             )}
@@ -155,15 +165,20 @@ export default function InquiryForm({ defaultType = "general", track, allowedTyp
 
       {/* Step 0 — Inquiry type */}
       {step === 0 && (
-        <div className="space-y-4">
-          <p className="text-white/50 font-sans text-sm mb-5">What brings you to Rivers Lodge?</p>
-          <div className="grid grid-cols-2 gap-2">
+        <fieldset className="border-0 p-0 m-0">
+          <legend className="text-white/50 font-sans text-sm mb-5 w-full">
+            What brings you to Rivers Lodge?
+          </legend>
+          <div className="grid grid-cols-2 gap-3">
             {visibleTypes.map((t) => (
               <button
                 key={t}
+                type="button"
                 onClick={() => set("type", t)}
-                className="px-4 py-3 text-left text-sm font-sans transition-all border"
+                aria-pressed={form.type === t}
+                className="px-4 py-3 text-left text-sm font-sans transition-all border focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
                 style={{
+                  outlineColor: accentColor,
                   borderColor: form.type === t ? accentColor : "rgba(255,255,255,0.12)",
                   color: form.type === t ? "white" : "rgba(255,255,255,0.5)",
                   background: form.type === t ? `color-mix(in oklch, ${accentColor} 8%, transparent)` : "transparent",
@@ -173,18 +188,21 @@ export default function InquiryForm({ defaultType = "general", track, allowedTyp
               </button>
             ))}
           </div>
-        </div>
+          <p className="mt-5 text-[11px] font-sans text-white/30 leading-relaxed">
+            We respond to all inquiries within 24 hours. Your dedicated coordinator will guide you from first contact through every detail.
+          </p>
+        </fieldset>
       )}
 
       {/* Step 1 — Event details */}
       {step === 1 && (
         <div className="space-y-6">
-          <p className="text-white/50 font-sans text-sm mb-2">Tell us about your event or stay.</p>
+          <p className="text-white/50 font-sans text-sm">Tell us about your event or stay.</p>
 
           {/* Availability calendar for date-sensitive inquiries */}
           {["wedding", "corporate", "lodging", "event", "tour"].includes(form.type) && (
             <div>
-              <label className="block text-[9px] tracking-[0.14em] uppercase font-sans text-white/40 mb-3">
+              <label className="block text-[9px] tracking-[0.14em] uppercase font-sans text-white/40 mb-3" htmlFor="eventDate">
                 Preferred Date
               </label>
               <AvailabilityCalendar
@@ -193,18 +211,25 @@ export default function InquiryForm({ defaultType = "general", track, allowedTyp
                 showLegend={true}
               />
               {form.eventDate && (
-                <p className="mt-2 text-xs font-sans text-white/40">
-                  Selected: {new Date(form.eventDate + "T12:00:00").toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
+                <p className="mt-2 text-xs font-sans text-white/40" aria-live="polite">
+                  Selected:{" "}
+                  {new Date(form.eventDate + "T12:00:00").toLocaleDateString("en-US", {
+                    weekday: "long",
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                  })}
                 </p>
               )}
             </div>
           )}
 
           <div>
-            <label className="block text-[9px] tracking-[0.14em] uppercase font-sans text-white/40 mb-2">
+            <label className="block text-[9px] tracking-[0.14em] uppercase font-sans text-white/40 mb-2" htmlFor="guestCount">
               Number of Guests
             </label>
             <input
+              id="guestCount"
               type="number"
               min="1"
               max="500"
@@ -216,10 +241,11 @@ export default function InquiryForm({ defaultType = "general", track, allowedTyp
           </div>
 
           <div>
-            <label className="block text-[9px] tracking-[0.14em] uppercase font-sans text-white/40 mb-2">
+            <label className="block text-[9px] tracking-[0.14em] uppercase font-sans text-white/40 mb-2" htmlFor="message">
               Tell Us More
             </label>
             <textarea
+              id="message"
               rows={4}
               value={form.message}
               onChange={(e) => set("message", e.target.value)}
@@ -233,41 +259,48 @@ export default function InquiryForm({ defaultType = "general", track, allowedTyp
       {/* Step 2 — Contact info */}
       {step === 2 && (
         <div className="space-y-5">
-          <p className="text-white/50 font-sans text-sm mb-2">How should we reach you?</p>
+          <p className="text-white/50 font-sans text-sm">How should we reach you?</p>
 
           <div>
-            <label className="block text-[9px] tracking-[0.14em] uppercase font-sans text-white/40 mb-2">
-              Full Name <span style={{ color: accentColor }}>*</span>
+            <label className="block text-[9px] tracking-[0.14em] uppercase font-sans text-white/40 mb-2" htmlFor="fullName">
+              Full Name <span style={{ color: accentColor }} aria-hidden="true">*</span>
+              <span className="sr-only">(required)</span>
             </label>
             <input
+              id="fullName"
               type="text"
               value={form.name}
               onChange={(e) => set("name", e.target.value)}
               placeholder="Your name"
               className="form-field w-full"
               required
+              aria-required="true"
             />
           </div>
 
           <div>
-            <label className="block text-[9px] tracking-[0.14em] uppercase font-sans text-white/40 mb-2">
-              Email Address <span style={{ color: accentColor }}>*</span>
+            <label className="block text-[9px] tracking-[0.14em] uppercase font-sans text-white/40 mb-2" htmlFor="emailAddress">
+              Email Address <span style={{ color: accentColor }} aria-hidden="true">*</span>
+              <span className="sr-only">(required)</span>
             </label>
             <input
+              id="emailAddress"
               type="email"
               value={form.email}
               onChange={(e) => set("email", e.target.value)}
               placeholder="your@email.com"
               className="form-field w-full"
               required
+              aria-required="true"
             />
           </div>
 
           <div>
-            <label className="block text-[9px] tracking-[0.14em] uppercase font-sans text-white/40 mb-2">
-              Phone Number
+            <label className="block text-[9px] tracking-[0.14em] uppercase font-sans text-white/40 mb-2" htmlFor="phoneNumber">
+              Phone Number <span className="normal-case opacity-60">(optional)</span>
             </label>
             <input
+              id="phoneNumber"
               type="tel"
               value={form.phone}
               onChange={(e) => set("phone", e.target.value)}
@@ -277,7 +310,7 @@ export default function InquiryForm({ defaultType = "general", track, allowedTyp
           </div>
 
           {/* Summary */}
-          <div className="mt-4 p-4 border border-white/8 bg-white/2">
+          <div className="mt-4 p-4 border border-white/8 bg-white/2" role="region" aria-label="Inquiry summary">
             <p className="text-[9px] tracking-[0.12em] uppercase font-sans text-white/30 mb-3">Inquiry Summary</p>
             <div className="space-y-1.5 text-xs font-sans text-white/50">
               <div className="flex justify-between">
@@ -323,8 +356,10 @@ export default function InquiryForm({ defaultType = "general", track, allowedTyp
       <div className="flex items-center justify-between mt-8 pt-6 border-t border-white/8">
         {step > 0 ? (
           <button
+            type="button"
             onClick={() => setStep(s => s - 1)}
-            className="text-xs font-sans text-white/40 hover:text-white/70 transition-colors tracking-[0.1em] uppercase"
+            aria-label={`Back to ${STEPS[step - 1]}`}
+            className="text-xs font-sans text-white/40 hover:text-white/70 transition-colors tracking-[0.1em] uppercase focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:rounded-sm"
           >
             ← Back
           </button>
@@ -334,15 +369,18 @@ export default function InquiryForm({ defaultType = "general", track, allowedTyp
 
         {step < STEPS.length - 1 ? (
           <button
+            type="button"
             onClick={() => setStep(s => s + 1)}
             disabled={!canAdvance()}
-            className="btn-primary text-sm disabled:opacity-30 disabled:cursor-not-allowed"
+            aria-label={`Continue to ${STEPS[step + 1]}`}
+            className="btn-primary text-sm disabled:opacity-30 disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
             style={{ "--btn-accent": accentColor } as React.CSSProperties}
           >
             Continue
           </button>
         ) : (
           <button
+            type="button"
             onClick={handleSubmit}
             disabled={
               !canAdvance() ||
@@ -351,7 +389,7 @@ export default function InquiryForm({ defaultType = "general", track, allowedTyp
               // In dev (no site key), captchaToken is "" and that's acceptable.
               (!!TURNSTILE_SITE_KEY && !captchaToken)
             }
-            className="btn-primary text-sm disabled:opacity-30 disabled:cursor-not-allowed"
+            className="btn-primary text-sm disabled:opacity-30 disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
             style={{ "--btn-accent": accentColor } as React.CSSProperties}
           >
             {submit.isPending ? "Sending…" : "Send Inquiry"}
@@ -360,8 +398,9 @@ export default function InquiryForm({ defaultType = "general", track, allowedTyp
       </div>
 
       {submit.isError && (
-        <p className="mt-3 text-xs font-sans text-red-400/80">
-          Something went wrong. Please try again or email us directly.
+        <p className="mt-3 text-xs font-sans text-red-400/80" role="alert">
+          Something went wrong. Please try again or email us directly at{" "}
+          <a href="mailto:events@riverslodge.com" className="underline">events@riverslodge.com</a>.
         </p>
       )}
     </div>
