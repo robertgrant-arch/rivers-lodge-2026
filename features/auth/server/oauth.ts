@@ -1,5 +1,5 @@
 // OAuth routes removed — authentication is now handled by Clerk.
-// Keeping this module so existing imports in server/public.ts compile.
+// Keeping this module so existing imports compile.
 
 import type { Express } from "express";
 
