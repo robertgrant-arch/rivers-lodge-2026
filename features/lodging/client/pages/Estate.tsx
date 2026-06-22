@@ -77,7 +77,7 @@ export default function Estate() {
           <div className="gold-rule mb-5" />
           <p className="eyebrow text-white/50 mb-4">The Estate</p>
           <h1 className="font-serif font-light text-white leading-[0.92] mb-6" style={{ fontSize: "clamp(3rem,7.5vw,6.5rem)" }}>
-            Three hundred acres.
+            Thousands of acres.
             <br /><em className="italic font-light">One river.</em>
           </h1>
           <p className="font-sans text-white/65 max-w-md leading-relaxed" style={{ fontSize: "0.9375rem" }}>
