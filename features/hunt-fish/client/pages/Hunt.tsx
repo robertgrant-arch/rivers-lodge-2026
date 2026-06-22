@@ -68,7 +68,7 @@ export default function Hunt() {
             <br /><em className="italic font-light">managed Kansas land.</em>
           </h1>
           <p className="font-sans text-white/65 max-w-lg leading-relaxed mb-10" style={{ fontSize: "0.9375rem" }}>
-            Three hundred acres of whitetail timber, managed food plots, waterfowl wetlands, and upland fields. Available exclusively to members.
+            Thousands of acres of whitetail timber, managed food plots, waterfowl wetlands, and upland fields. Available exclusively to members.
           </p>
           <Link href="/membership" className="btn-outline" style={{ borderColor: "oklch(0.58 0.065 145)", color: "oklch(0.58 0.065 145)" }}>
             Explore Membership
