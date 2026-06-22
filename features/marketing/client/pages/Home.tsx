@@ -428,7 +428,7 @@ export default function Home() {
               >
                 Five buildings.<br />
                 <em className="italic">One river.</em><br />
-                Three hundred acres.
+                Thousands of acres.
               </h2>
               <p className="font-sans text-muted-brand leading-relaxed mb-8" style={{ fontSize: "0.9375rem" }}>
                 The Rivers Lodge &amp; Hunt Club is built around the natural drama of the Marais des Cygnes River valley. The Lodge sleeps up to 20. The Rivers Barn hosts up to 300 for events. The Clubhouse, Annex, and Riverhouse Suites complete a property that can accommodate an entire wedding party — or a private hunting party — without leaving the estate.
