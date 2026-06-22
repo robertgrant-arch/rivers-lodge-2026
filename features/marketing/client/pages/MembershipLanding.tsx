@@ -82,7 +82,7 @@ export default function MembershipLanding() {
               className="font-serif font-light italic text-white leading-tight mb-6"
               style={{ fontSize: "clamp(2.5rem,6vw,5.5rem)" }}
             >
-              Three hundred acres.<br />Entirely private.
+              Thousands of acres.<br />Entirely private.
             </h1>
             <p className="text-[oklch(0.94_0.008_78)/75] font-sans text-base max-w-lg mb-10 leading-relaxed">
               The Rivers Lodge &amp; Hunt Club offers a limited number of memberships each season. Hunt, fish, and belong to something rare.
