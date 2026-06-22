@@ -217,7 +217,7 @@ export default function MembershipLanding() {
           <div className="max-w-[1440px] mx-auto px-5 lg:px-10 py-10">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
               {[
-                { value: "300+", label: "Private Acres" },
+                { value: "Thousands", label: "Private Acres" },
                 { value: "5", label: "Private Fisheries" },
                 { value: "3", label: "Hunting Pursuits" },
                 { value: "60 min", label: "From Kansas City" },
