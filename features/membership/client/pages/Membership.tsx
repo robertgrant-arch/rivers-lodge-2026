@@ -111,7 +111,7 @@ export default function Membership() {
             <br /><em className="italic font-light">belong.</em>
           </h1>
           <p className="font-sans text-white/65 max-w-lg leading-relaxed mb-10" style={{ fontSize: "0.9375rem" }}>
-            Private membership on 300 acres of managed Kansas land. A limited number of memberships are available each season.
+            Private membership on thousands of acres of Kansas and Missouri land. A limited number of memberships are available each season.
           </p>
           <a href="#apply" className="btn-outline" style={{ borderColor: "oklch(0.58 0.065 145)", color: "oklch(0.58 0.065 145)" }}>
             Apply for Membership
