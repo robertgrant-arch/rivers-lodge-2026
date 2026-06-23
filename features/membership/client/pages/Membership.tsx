@@ -17,7 +17,7 @@ const RIVER   = "https://files.manuscdn.com/user_upload_by_module/session_file/3
 const GROUNDS = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/RNvGygATwGRMluZa.jpg";
 const LODGE   = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/TdlSWCLWjUxbkCAY.jpg";
 
-type MembershipTier = "Outdoors Member" | "Lodge Member" | "Founding Member" | "Not Sure Yet";
+type MembershipTier = "Individual" | "Corporate" | "Not Sure Yet";
 
 const ACCENT = "oklch(0.58 0.065 145)";
 
@@ -46,23 +46,16 @@ const benefits = [
 
 const tiers = [
   {
-    name: "Outdoors Member" as MembershipTier,
+    name: "Individual" as MembershipTier,
     price: "Contact for pricing",
-    desc: "Full hunting and fishing access. Sporting clays. Clubhouse access. Guest privileges.",
-    features: ["Hunting — all species", "Fishing — all fisheries", "Sporting clays", "Clubhouse access", "2 guest days/month"],
+    desc: "One designated member with all lodge benefits, unlimited guest days, annual member events, and guided and DIY hunting and fishing access.",
+    features: ["One designated member", "All lodge benefits", "Unlimited guest days", "Annual member events", "Guided and DIY hunting and fishing access"],
   },
   {
-    name: "Lodge Member" as MembershipTier,
+    name: "Corporate" as MembershipTier,
     price: "Contact for pricing",
-    desc: "Everything in Outdoors, plus priority lodging access and expanded guest privileges.",
-    features: ["All Outdoors benefits", "Priority lodging booking", "4 guest days/month", "Annual member event"],
-    featured: true,
-  },
-  {
-    name: "Founding Member" as MembershipTier,
-    price: "By invitation",
-    desc: "Reserved for a small number of founding members. Full access, no restrictions.",
-    features: ["All Lodge benefits", "Unlimited guest days", "Land management input", "Founding member recognition"],
+    desc: "Three designated members with all lodge benefits, unlimited guest days, annual member events, and guided and DIY hunting and fishing access.",
+    features: ["Three designated members", "All lodge benefits", "Unlimited guest days", "Annual member events", "Guided and DIY hunting and fishing access"],
   },
 ];
 
@@ -226,9 +219,8 @@ function MembershipInquiryForm({ initialTier }: { initialTier: MembershipTier | 
             aria-required="true"
           >
             <option value="" disabled>Select a tier…</option>
-            <option value="Outdoors Member">Outdoors Member</option>
-            <option value="Lodge Member">Lodge Member</option>
-            <option value="Founding Member">Founding Member</option>
+            <option value="Individual">Individual</option>
+            <option value="Corporate">Corporate</option>
             <option value="Not Sure Yet">Not Sure Yet</option>
           </select>
         </div>
@@ -413,10 +405,10 @@ export default function Membership() {
             <div style={{ height: "1px", width: "2rem", backgroundColor: ACCENT, marginBottom: "1.25rem" }} />
             <p className="eyebrow text-muted-brand mb-4">Membership Tiers</p>
             <h2 className="font-serif font-light text-warm leading-tight" style={{ fontSize: "clamp(1.75rem,3vw,2.5rem)" }}>
-              Three levels of access.
+              Two membership types.
             </h2>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-px bg-border">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-border">
             {tiers.map((tier) => (
               <div key={tier.name} className={`p-8 lg:p-10 flex flex-col ${tier.featured ? "bg-surface" : "bg-background"}`}
                 style={tier.featured ? { borderTop: `2px solid ${ACCENT}` } : {}}>
