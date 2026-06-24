@@ -106,7 +106,7 @@ function Router() {
     <Suspense fallback={<RouteLoader />}>
       <Switch>
         {/* Auth pages — rendered by Clerk */}
-        <Route path="/sign-in">{() => <div className="min-h-screen flex items-center justify-center bg-background"><SignIn routing="path" path="/sign-in" afterSignInUrl="/portal" appearance={{ elements: { footerAction: "hidden" } }} /></div>}</Route>
+        <Route path="/sign-in">{() => <div className="min-h-screen flex items-center justify-center bg-background"><SignIn routing="path" path="/sign-in" afterSignInUrl="/portal" signUpUrl="" appearance={{ elements: { footer: "hidden", footerAction: "hidden", footerActionLink: "hidden" } }} /></div>}</Route>
         <Route path="/sign-up">{() => { window.location.replace("/sign-in"); return null; }}</Route>
 
         {/* Public */}
