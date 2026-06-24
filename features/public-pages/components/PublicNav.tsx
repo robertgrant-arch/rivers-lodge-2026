@@ -195,7 +195,7 @@ export default function PublicNav() {
 
             {/* 3. Food & Wine */}
             <Link
-              href="/contact?type=dining"
+              href="/food-and-wine"
               className="px-3 py-2 text-[11px] tracking-[0.13em] uppercase font-sans font-medium text-[oklch(0.94_0.008_78)] hover:opacity-70 transition-opacity"
             >
               Food &amp; Wine
@@ -404,7 +404,7 @@ export default function PublicNav() {
 
           {/* 3. Food & Wine */}
           <Link
-            href="/contact?type=dining"
+            href="/food-and-wine"
             onClick={() => setMobileOpen(false)}
             className="py-3 text-[oklch(0.94_0.008_78)] font-serif text-xl italic hover:text-[oklch(0.72_0.095_78)] transition-colors"
           >

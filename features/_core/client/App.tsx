@@ -40,6 +40,9 @@ const Estate = lazy(() => import("@features/lodging/client/pages/Estate"));
 // Corporate pages
 const Corporate = lazy(() => import("@features/corporate/client/pages/Corporate"));
 
+// Food & Wine page
+const FoodAndWine = lazy(() => import("@features/food-and-wine/client/pages/FoodAndWine"));
+
 // Membership pages
 const Membership = lazy(() => import("@features/membership/client/pages/Membership"));
 
@@ -114,6 +117,7 @@ function Router() {
         <Route path="/venues" component={Venues} />
         <Route path="/lodging" component={Lodging} />
         <Route path="/corporate" component={Corporate} />
+        <Route path="/food-and-wine" component={FoodAndWine} />
         <Route path="/estate" component={Estate} />
         <Route path="/gallery" component={Gallery} />
         <Route path="/contact" component={Contact} />
