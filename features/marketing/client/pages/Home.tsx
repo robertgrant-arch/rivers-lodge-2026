@@ -302,8 +302,8 @@ export default function Home() {
             A private estate on the Marais des Cygnes. A destination wedding venue one hour from Kansas City — and a private membership club for those who hunt, fish, and live on the land.
           </p>
           <div className="flex flex-col sm:flex-row gap-4">
-            <Link href="/events" className="btn-primary">Weddings &amp; Events</Link>
-            <Link href="/outdoors" className="btn-ghost">Membership &amp; Outdoors</Link>
+            <Link href="/membership" className="btn-primary">Explore Membership</Link>
+            <Link href="/weddings" className="btn-ghost">Weddings &amp; Events</Link>
           </div>
         </div>
 
@@ -355,24 +355,24 @@ export default function Home() {
         {/* Desktop: flex-expansion panels */}
         <div className="hidden md:flex" style={{ height: "78vh", minHeight: "520px" }}>
           <TrackPanel
-            track="Weddings & Events"
+            track="Weddings"
             title="Your wedding weekend, entirely private."
-            tagline="Destination weddings, corporate retreats, and milestone events."
-            description="From intimate ceremonies on the River Lawn to grand receptions in the Rivers Barn — every event at the Lodge is exclusively yours. No other groups, no shared access."
+            tagline="Destination weddings in a setting like no other."
+            description="From intimate ceremonies on the River Lawn to grand receptions in the Rivers Barn — every wedding at the Lodge is exclusively yours. No other groups, no shared access."
             links={[
               { label: "Weddings", href: "/weddings" },
-              { label: "Corporate", href: "/corporate" },
               { label: "Lodging", href: "/lodging" },
+              { label: "Venues", href: "/venues" },
             ]}
-            cta="Plan Your Event"
-            ctaHref="/events"
+            cta="Plan Your Wedding"
+            ctaHref="/weddings"
             image={WEDDING_2}
             accentColor="oklch(0.70 0.060 50)"
             isExpanded={expandedTrack === "weddings"}
             onHover={() => setExpandedTrack("weddings")}
           />
           <TrackPanel
-            track="Membership & Outdoors"
+            track="Explore Membership"
             title="Hunt, fish, and belong."
             tagline="Private membership on 300 acres of prime Kansas land."
             description="Five private fisheries, managed whitetail and waterfowl hunting, sporting clays, and a community of members who share a deep respect for the land."
@@ -382,7 +382,7 @@ export default function Home() {
               { label: "Membership", href: "/membership" },
             ]}
             cta="Explore Membership"
-            ctaHref="/outdoors"
+            ctaHref="/membership"
             image={AERIAL_RIVER}
             accentColor="oklch(0.58 0.065 145)"
             isExpanded={expandedTrack === "membership"}
@@ -393,8 +393,8 @@ export default function Home() {
         {/* Mobile: stacked full-width cards */}
         <div className="md:hidden flex flex-col">
           {[
-            { track: "Weddings & Events", title: "Your wedding weekend, entirely private.", cta: "Plan Your Event", href: "/events", image: WEDDING_2, accent: "oklch(0.70 0.060 50)" },
-            { track: "Membership & Outdoors", title: "Hunt, fish, and belong.", cta: "Explore Membership", href: "/outdoors", image: AERIAL_RIVER, accent: "oklch(0.58 0.065 145)" },
+            { track: "Weddings", title: "Your wedding weekend, entirely private.", cta: "Plan Your Wedding", href: "/weddings", image: WEDDING_2, accent: "oklch(0.70 0.060 50)" },
+            { track: "Explore Membership", title: "Hunt, fish, and belong.", cta: "Explore Membership", href: "/membership", image: AERIAL_RIVER, accent: "oklch(0.58 0.065 145)" },
           ].map((card) => (
             <div key={card.track} className="relative overflow-hidden" style={{ height: "62vw", minHeight: "280px" }}>
               <img src={card.image} alt={card.title} className="absolute inset-0 w-full h-full object-cover" loading="lazy" />
@@ -515,7 +515,7 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-border">
             <div className="bg-background p-10 lg:p-16 flex flex-col">
               <div className="h-px w-8 mb-6" style={{ backgroundColor: "oklch(0.70 0.060 50)" }} />
-              <p className="eyebrow text-muted-brand mb-3">Weddings &amp; Events</p>
+              <p className="eyebrow text-muted-brand mb-3">Weddings</p>
               <h3 className="font-serif font-light text-warm leading-tight mb-5"
                 style={{ fontSize: "clamp(1.625rem,2.5vw,2.25rem)" }}>
                 Start planning your<br />wedding weekend.
@@ -524,7 +524,7 @@ export default function Home() {
                 Our team works with a limited number of couples each year to ensure every wedding receives the full attention it deserves.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
-                <Link href="/events" className="btn-outline" style={{ borderColor: "oklch(0.70 0.060 50)", color: "oklch(0.70 0.060 50)" }}>
+                <Link href="/weddings" className="btn-outline" style={{ borderColor: "oklch(0.70 0.060 50)", color: "oklch(0.70 0.060 50)" }}>
                   Explore Weddings
                 </Link>
                 <Link href="/contact?type=wedding" className="btn-ghost">Request a Tour</Link>
@@ -533,7 +533,7 @@ export default function Home() {
 
             <div className="bg-surface p-10 lg:p-16 flex flex-col">
               <div className="h-px w-8 mb-6" style={{ backgroundColor: "oklch(0.58 0.065 145)" }} />
-              <p className="eyebrow text-muted-brand mb-3">Membership &amp; Outdoors</p>
+              <p className="eyebrow text-muted-brand mb-3">Explore Membership</p>
               <h3 className="font-serif font-light text-warm leading-tight mb-5"
                 style={{ fontSize: "clamp(1.625rem,2.5vw,2.25rem)" }}>
                 Membership is<br />by invitation.
@@ -542,7 +542,7 @@ export default function Home() {
                 A limited number of memberships are available each season. If you're interested in joining, we'd like to hear from you.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
-                <Link href="/outdoors" className="btn-outline" style={{ borderColor: "oklch(0.58 0.065 145)", color: "oklch(0.58 0.065 145)" }}>
+                <Link href="/membership" className="btn-outline" style={{ borderColor: "oklch(0.58 0.065 145)", color: "oklch(0.58 0.065 145)" }}>
                   Learn About Membership
                 </Link>
                 <Link href="/membership#apply" className="btn-ghost">Apply Now</Link>
