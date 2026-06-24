@@ -15,6 +15,8 @@ interface Props {
   track?: "weddings" | "outdoors";
   /** Restrict the type selector to a specific subset. Falls back to all types when omitted. */
   allowedTypes?: InquiryType[];
+  /** Called when the user selects a type tile in step 0. Parent can use this to swap renderers. */
+  onTypeChange?: (type: InquiryType) => void;
   onSuccess?: () => void;
   className?: string;
 }
@@ -31,7 +33,7 @@ const TYPE_LABELS: Record<InquiryType, string> = {
   general: "General Inquiry",
 };
 
-export default function InquiryForm({ defaultType = "general", track, allowedTypes, onSuccess, className = "" }: Props) {
+export default function InquiryForm({ defaultType = "general", track, allowedTypes, onTypeChange, onSuccess, className = "" }: Props) {
   const [, navigate] = useLocation();
   const [step, setStep] = useState(0);
   const [submitted, setSubmitted] = useState(false);
@@ -174,7 +176,7 @@ export default function InquiryForm({ defaultType = "general", track, allowedTyp
               <button
                 key={t}
                 type="button"
-                onClick={() => set("type", t)}
+                onClick={() => { set("type", t); onTypeChange?.(t); }}
                 aria-pressed={form.type === t}
                 className="px-4 py-3 text-left text-sm font-sans transition-all border focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
                 style={{

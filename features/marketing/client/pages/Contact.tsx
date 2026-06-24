@@ -1,5 +1,5 @@
 import { useRef, useEffect, useState } from "react";
-import { useLocation } from "wouter";
+import { useSearch } from "wouter";
 import { Turnstile } from "@marsidev/react-turnstile";
 import type { TurnstileInstance } from "@marsidev/react-turnstile";
 import PublicLayout from "@shared/components/PublicLayout";
@@ -248,16 +248,22 @@ function CorporateInquiryForm() {
 }
 
 export default function Contact() {
-  const [location] = useLocation();
-  const params = new URLSearchParams(location.split("?")[1] || "");
+  // useSearch() is Wouter v3's correct hook for the query string (?foo=bar).
+  // useLocation() returns only the pathname and omits search params.
+  const search = useSearch();
+  const params = new URLSearchParams(search);
   const defaultType = params.get("type") || "general";
-  const safeType: InquiryType = validTypes.includes(defaultType as InquiryType)
+  const initialType: InquiryType = validTypes.includes(defaultType as InquiryType)
     ? (defaultType as InquiryType)
     : "general";
 
-  const track = ["wedding", "corporate", "event"].includes(safeType)
+  // Track the active inquiry type so switching to Corporate in the wizard's
+  // step-0 tile grid also triggers the simple form (not just the deep link).
+  const [selectedType, setSelectedType] = useState<InquiryType>(initialType);
+
+  const track = ["wedding", "corporate", "event"].includes(selectedType)
     ? ("weddings" as const)
-    : ["membership", "lodging", "tour"].includes(safeType)
+    : ["membership", "lodging", "tour"].includes(selectedType)
     ? ("outdoors" as const)
     : undefined;
 
@@ -302,10 +308,15 @@ export default function Contact() {
             {/* Form — single-step for corporate, multi-step wizard for all other types */}
             <div ref={formRef as React.RefObject<HTMLDivElement>} className="fade-up">
               <div className="border border-white/8 p-8 md:p-12 bg-white/2">
-                {safeType === "corporate" ? (
+                {selectedType === "corporate" ? (
                   <CorporateInquiryForm />
                 ) : (
-                  <InquiryForm defaultType={safeType} track={track} allowedTypes={allowedTypes} />
+                  <InquiryForm
+                    defaultType={selectedType}
+                    track={track}
+                    allowedTypes={allowedTypes}
+                    onTypeChange={setSelectedType}
+                  />
                 )}
               </div>
             </div>
