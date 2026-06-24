@@ -94,6 +94,9 @@ export default function PublicFooter() {
               Food &amp; Wine
             </h4>
             <nav className="flex flex-col gap-3">
+              <Link href="/food-and-wine" className="text-[12px] font-sans hover:text-[oklch(0.72_0.095_78)] transition-colors">
+                Food &amp; Wine
+              </Link>
               <Link href="/contact?type=dining" className="text-[12px] font-sans hover:text-[oklch(0.72_0.095_78)] transition-colors">
                 Dining Inquiry
               </Link>
