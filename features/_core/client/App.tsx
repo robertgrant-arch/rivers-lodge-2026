@@ -5,6 +5,7 @@ import { TooltipProvider } from '@shared/ui/tooltip';
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "../../_shared/components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import { useScrollToTop } from '@shared/hooks/useScrollToTop';
 // Layout components — must be sync (used by every /ops page simultaneously)
 import PortalLayout from "../../admin/client/components/PortalLayout";
 
@@ -102,6 +103,7 @@ function RouteLoader() {
 }
 
 function Router() {
+  useScrollToTop();
   return (
     <Suspense fallback={<RouteLoader />}>
       <Switch>
