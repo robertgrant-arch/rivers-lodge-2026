@@ -1,25 +1,25 @@
 import { Link } from "wouter";
 import { getLoginUrl } from "@features/auth/public";
 
-const weddingsLinks = [
+const membershipLinks = [
+  { label: "Membership Overview", href: "/membership" },
+  { label: "Apply", href: "/membership#apply" },
+  { label: "The Estate", href: "/estate" },
+  { label: "Hunt", href: "/hunt" },
+  { label: "Fish", href: "/fish" },
+];
+
+const eventsLinks = [
   { label: "Weddings", href: "/weddings" },
-  { label: "Corporate Outings", href: "/corporate" },
-  { label: "Lodging & Spaces", href: "/lodging" },
+  { label: "Corporate Events", href: "/corporate" },
+  { label: "Food & Wine", href: "/contact?type=dining" },
   { label: "Venue Spaces", href: "/venues" },
   { label: "Gallery", href: "/gallery" },
 ];
 
-const membershipLinks = [
-  { label: "Hunt", href: "/hunt" },
-  { label: "Fish", href: "/fish" },
-  { label: "Membership", href: "/membership" },
-  { label: "The Estate", href: "/estate" },
-  { label: "Apply", href: "/membership#apply" },
-];
-
 const contactLinks = [
-  { label: "Contact Us", href: "/contact", external: false },
-  { label: "Privacy Policy", href: "/privacy", external: false },
+  { label: "Contact Us", href: "/contact" },
+  { label: "Privacy Policy", href: "/privacy" },
 ];
 
 export default function PublicFooter() {
@@ -77,24 +77,6 @@ export default function PublicFooter() {
             </div>
           </div>
 
-          {/* ── Weddings & Events ─────────────────────────────────────── */}
-          <div>
-            <h4 className="text-[10px] tracking-[0.22em] uppercase font-sans font-medium text-[oklch(0.94_0.008_78)] mb-5">
-              Weddings &amp; Events
-            </h4>
-            <nav className="flex flex-col gap-3">
-              {weddingsLinks.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className="text-[12px] font-sans hover:text-[oklch(0.70_0.060_50)] transition-colors"
-                >
-                  {item.label}
-                </Link>
-              ))}
-            </nav>
-          </div>
-
           {/* ── Membership & Outdoors ─────────────────────────────────── */}
           <div>
             <h4 className="text-[10px] tracking-[0.22em] uppercase font-sans font-medium text-[oklch(0.94_0.008_78)] mb-5">
@@ -106,6 +88,24 @@ export default function PublicFooter() {
                   key={item.href}
                   href={item.href}
                   className="text-[12px] font-sans hover:text-[oklch(0.58_0.065_145)] transition-colors"
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </nav>
+          </div>
+
+          {/* ── Events & Experiences ──────────────────────────────────── */}
+          <div>
+            <h4 className="text-[10px] tracking-[0.22em] uppercase font-sans font-medium text-[oklch(0.94_0.008_78)] mb-5">
+              Events &amp; Experiences
+            </h4>
+            <nav className="flex flex-col gap-3">
+              {eventsLinks.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="text-[12px] font-sans hover:text-[oklch(0.70_0.060_50)] transition-colors"
                 >
                   {item.label}
                 </Link>
