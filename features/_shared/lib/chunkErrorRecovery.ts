@@ -33,6 +33,29 @@ export function isChunkLoadError(error: unknown): boolean {
   );
 }
 
+const BFCACHE_KEY = "rl_bfcache_reload_at";
+const BFCACHE_COOLDOWN_MS = 10_000; // 10 s — bfcache restores are near-instant
+
+/**
+ * Called on `pageshow` when `event.persisted === true` (bfcache restore).
+ * The page was frozen after a full-page navigation (e.g. Clerk auth redirect)
+ * and the JS module graph may be stale. Reload once to pick up the fresh build.
+ */
+export function handleBfcacheRestore(): boolean {
+  try {
+    const last = sessionStorage.getItem(BFCACHE_KEY);
+    const now = Date.now();
+    if (last && now - parseInt(last, 10) < BFCACHE_COOLDOWN_MS) {
+      return false;
+    }
+    sessionStorage.setItem(BFCACHE_KEY, String(now));
+    window.location.reload();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Attempt a one-time page reload to recover from a stale-chunk error.
  * Returns `true` if a reload was initiated, `false` if the cooldown is active
