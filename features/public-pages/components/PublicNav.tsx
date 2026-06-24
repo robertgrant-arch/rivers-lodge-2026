@@ -108,6 +108,23 @@ export default function PublicNav() {
     <>
       <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${navBg}`}
         style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}>
+
+        {/* Dark gradient scrim — sits behind nav content, in front of hero images */}
+        {isTransparent && (
+          <div
+            aria-hidden="true"
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              background: "linear-gradient(to bottom, rgba(0,0,0,0.45) 0%, transparent 100%)",
+              height: "160px",
+              top: 0,
+              left: 0,
+              right: 0,
+              zIndex: -1,
+            }}
+          />
+        )}
+
         <div className="max-w-[1440px] mx-auto px-5 lg:px-10 flex items-center justify-between h-16 md:h-20">
 
           {/* ── Wordmark ─────────────────────────────────────────────────── */}
