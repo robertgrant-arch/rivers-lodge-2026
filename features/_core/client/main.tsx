@@ -7,6 +7,20 @@ import { createRoot } from "react-dom/client";
 import superjson from "superjson";
 import App from "./App";
 import "./index.css";
+import { isChunkLoadError, tryRecoverFromChunkError } from '@shared/lib/chunkErrorRecovery';
+
+// Global safety net for stale-chunk errors that escape the React error boundary
+// (e.g. unhandledrejection from a lazy import() called outside of Suspense).
+window.addEventListener("unhandledrejection", (event) => {
+  if (isChunkLoadError(event.reason)) {
+    tryRecoverFromChunkError();
+  }
+});
+window.addEventListener("error", (event) => {
+  if (isChunkLoadError(event.error ?? event.message)) {
+    tryRecoverFromChunkError();
+  }
+});
 
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY as string;
 
