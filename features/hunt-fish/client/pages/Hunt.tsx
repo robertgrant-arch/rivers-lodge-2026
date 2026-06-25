@@ -33,7 +33,7 @@ function ImgPlaceholder({ aspectClass, label }: { aspectClass: string; label: st
   );
 }
 
-const pursuits = [
+const pursuits: { title: string; desc: string; imgLabel: string; img?: string }[] = [
   {
     title: "Whitetail Deer",
     desc: "Managed trophy whitetail hunting across thousands of acres of timber, flood plots, and river bottom. Elevated stands and ground blinds positioned throughout the property.",
@@ -55,9 +55,10 @@ const pursuits = [
     imgLabel: "Sporting clays course",
   },
   {
-    title: "Small Game",
-    desc: "Quail, pheasant, and rabbit hunting in the upland fields and native grass areas. Guided hunts available with trained dogs.",
-    imgLabel: "Small game hunting",
+    title: "Upland Birds",
+    desc: "Quail and pheasant hunting in the upland fields and native grass areas. Guided hunts available with trained dogs.",
+    imgLabel: "Upland bird hunting",
+    img: "/img/3C0A0165.jpg",
   },
   {
     title: "Fishing",
@@ -140,8 +141,14 @@ export default function Hunt() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-px bg-border">
             {pursuits.map((p) => (
               <div key={p.title} className="bg-surface overflow-hidden">
-                {/* TODO: replace with real pursuit photography */}
-                <ImgPlaceholder aspectClass="aspect-[4/3] w-full" label={p.imgLabel} />
+                {p.img ? (
+                  <div className="aspect-[4/3] w-full overflow-hidden">
+                    <img src={p.img} alt={p.imgLabel} className="w-full h-full object-cover" loading="lazy" />
+                  </div>
+                ) : (
+                  /* TODO: replace with real pursuit photography */
+                  <ImgPlaceholder aspectClass="aspect-[4/3] w-full" label={p.imgLabel} />
+                )}
                 <div className="p-7">
                   <div style={{ height: "1px", width: "1.5rem", backgroundColor: ACCENT, marginBottom: "1rem" }} />
                   <h3 className="font-serif text-warm text-xl mb-3">{p.title}</h3>
