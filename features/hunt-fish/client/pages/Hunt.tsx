@@ -1,33 +1,10 @@
-import { useRef, useEffect, useState } from "react";
+import { useRef, useEffect } from "react";
 import { Link } from "wouter";
 import PublicLayout from "../../../_shared/components/PublicLayout";
 import SEOHead from '@shared/components/SEOHead';
 
 const ACCENT = "oklch(0.58 0.065 145)";
 const HUNT_HERO = "/img/hunt-hero.jpg";
-
-function HeroBackground() {
-  const [imgFailed, setImgFailed] = useState(false);
-  return imgFailed ? (
-    <div
-      className="w-full h-full bg-[oklch(0.13_0.008_70)] flex items-center justify-center"
-      role="img"
-      aria-label="Hunt hero image placeholder"
-    >
-      <span className="text-[10px] tracking-[0.18em] uppercase font-sans text-[oklch(0.28_0.010_70)] select-none">
-        Hunt Hero Image
-      </span>
-    </div>
-  ) : (
-    <img
-      src={HUNT_HERO}
-      alt="Hunt and outdoor pursuits at Rivers Lodge"
-      className="w-full h-full object-cover"
-      fetchPriority="high"
-      onError={() => setImgFailed(true)}
-    />
-  );
-}
 
 function useFadeUp(t = 0.12) {
   const ref = useRef<HTMLElement>(null);
@@ -106,8 +83,21 @@ export default function Hunt() {
       {/* ── Hero ─────────────────────────────────────────────────────── */}
       <section className="relative hero-full flex items-end pb-24 overflow-hidden">
         <div className="absolute inset-0">
-          <HeroBackground />
-          <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, transparent 0%, oklch(0 0 0/0.12) 40%, oklch(0 0 0/0.82) 100%)" }} />
+          {/* Placeholder — always in the DOM; visible until hunt-hero.jpg is added */}
+          <div className="absolute inset-0 bg-[oklch(0.17_0.012_70)] flex items-center justify-center" aria-hidden="true">
+            <span className="text-[10px] tracking-[0.18em] uppercase font-sans text-white/40 select-none pointer-events-none">
+              Hunt Hero Image
+            </span>
+          </div>
+          {/* Real photo — absolutely positioned on top; hidden via onError until the file exists */}
+          <img
+            src={HUNT_HERO}
+            alt="Hunt and outdoor pursuits at Rivers Lodge"
+            className="absolute inset-0 w-full h-full object-cover"
+            fetchPriority="high"
+            onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+          />
+          <div className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(to bottom, transparent 0%, oklch(0 0 0/0.12) 40%, oklch(0 0 0/0.82) 100%)" }} />
         </div>
         <div className="relative z-10 max-w-[1440px] mx-auto px-5 lg:px-14 w-full">
           <div style={{ height: "1px", width: "2rem", backgroundColor: ACCENT, marginBottom: "1.25rem" }} />
