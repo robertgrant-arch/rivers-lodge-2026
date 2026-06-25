@@ -56,7 +56,7 @@ const pursuits: { title: string; desc: string; imgLabel: string; img?: string }[
   },
   {
     title: "Upland Birds",
-    desc: "Quail, pheasant, and rabbit hunting in the upland fields and native grass areas. Guided hunts available with trained dogs.",
+    desc: "Quail and pheasant hunting in the upland fields and native grass areas. Guided hunts available with trained dogs.",
     imgLabel: "Upland bird hunting",
     img: "/img/3C0A0165.jpg",
   },
