@@ -55,10 +55,10 @@ export default function PublicFooter() {
             </div>
           </div>
 
-          {/* ── Lane 1: Events ────────────────────────────────────────── */}
+          {/* ── Lane 1: Weddings & Events ─────────────────────────────── */}
           <div>
             <h4 className="text-[10px] tracking-[0.22em] uppercase font-sans font-medium text-[#E0D3BD] mb-5">
-              Events
+              Weddings &amp; Events
             </h4>
             <nav className="flex flex-col gap-3">
               <Link href="/weddings" className="text-[12px] font-sans hover:text-[#9B4D19] transition-colors">
@@ -67,31 +67,49 @@ export default function PublicFooter() {
               <Link href="/corporate" className="text-[12px] font-sans hover:text-[#9B4D19] transition-colors">
                 Corporate Events
               </Link>
+              <Link href="/outdoor-activities" className="text-[12px] font-sans hover:text-[#9B4D19] transition-colors">
+                Outdoor Pursuits
+              </Link>
               <Link href="/food-and-wine" className="text-[12px] font-sans hover:text-[#9B4D19] transition-colors">
                 Food &amp; Wine
-              </Link>
-              <Link href="/outdoor-activities" className="text-[12px] font-sans hover:text-[#9B4D19] transition-colors">
-                Outdoor Activities
               </Link>
             </nav>
           </div>
 
-          {/* ── Lane 2: Lodging ───────────────────────────────────────── */}
-          <div>
+          {/* ── Lane 2: Lodging & Venues ──────────────────────────────── */}
+          <div className="col-span-2 md:col-span-1">
             <h4 className="text-[10px] tracking-[0.22em] uppercase font-sans font-medium text-[#E0D3BD] mb-5">
-              Lodging
+              Lodging &amp; Venues
             </h4>
-            <nav className="flex flex-col gap-3">
-              <Link href="/lodging#the-lodge" className="text-[12px] font-sans hover:text-[#9B4D19] transition-colors">
+            <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+              <Link href="/lodging/the-lodge" className="text-[12px] font-sans hover:text-[#9B4D19] transition-colors">
                 The Lodge
               </Link>
-              <Link href="/lodging#riverhouse" className="text-[12px] font-sans hover:text-[#9B4D19] transition-colors">
-                Riverhouse Suites
-              </Link>
-              <Link href="/lodging#the-barn" className="text-[12px] font-sans hover:text-[#9B4D19] transition-colors">
+              <Link href="/lodging/the-barn" className="text-[12px] font-sans hover:text-[#9B4D19] transition-colors">
                 The Barn
               </Link>
-            </nav>
+              <Link href="/lodging/riverhouse-suites" className="text-[12px] font-sans hover:text-[#9B4D19] transition-colors">
+                Riverhouse Suites
+              </Link>
+              <Link href="/lodging/the-green-drake" className="text-[12px] font-sans hover:text-[#9B4D19] transition-colors">
+                The Green Drake
+              </Link>
+              <Link href="/lodging/the-annex" className="text-[12px] font-sans hover:text-[#9B4D19] transition-colors">
+                The Annex
+              </Link>
+              <Link href="/lodging/the-clubhouse" className="text-[12px] font-sans hover:text-[#9B4D19] transition-colors">
+                The Clubhouse
+              </Link>
+              <Link href="/lodging/the-ohana" className="text-[12px] font-sans hover:text-[#9B4D19] transition-colors">
+                The Ohana
+              </Link>
+              <Link href="/lodging/the-farmhouse" className="text-[12px] font-sans hover:text-[#9B4D19] transition-colors">
+                The Farmhouse
+              </Link>
+              <Link href="/lodging/trego-road" className="text-[12px] font-sans hover:text-[#9B4D19] transition-colors">
+                Trego Road
+              </Link>
+            </div>
           </div>
 
           {/* ── Lane 3: Explore Membership ────────────────────────────── */}

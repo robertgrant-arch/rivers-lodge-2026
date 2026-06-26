@@ -71,6 +71,7 @@ async function startServer() {
     const now = new Date().toISOString().split("T")[0];
     const urls = [
       { loc: "/",                                    priority: "1.0", changefreq: "weekly"  },
+      { loc: "/weddings-events",                      priority: "0.9", changefreq: "monthly" },
       { loc: "/weddings",                            priority: "0.9", changefreq: "monthly" },
       { loc: "/outdoor-activities",                  priority: "0.9", changefreq: "monthly" },
       { loc: "/outdoor-activities/whitetail",        priority: "0.8", changefreq: "monthly" },
@@ -79,6 +80,15 @@ async function startServer() {
       { loc: "/outdoor-activities/turkey",           priority: "0.8", changefreq: "monthly" },
       { loc: "/outdoor-activities/fishing",          priority: "0.8", changefreq: "monthly" },
       { loc: "/lodging",                             priority: "0.8", changefreq: "monthly" },
+      { loc: "/lodging/the-lodge",                   priority: "0.7", changefreq: "monthly" },
+      { loc: "/lodging/riverhouse-suites",           priority: "0.7", changefreq: "monthly" },
+      { loc: "/lodging/the-annex",                   priority: "0.7", changefreq: "monthly" },
+      { loc: "/lodging/the-ohana",                   priority: "0.7", changefreq: "monthly" },
+      { loc: "/lodging/the-farmhouse",               priority: "0.7", changefreq: "monthly" },
+      { loc: "/lodging/trego-road",                  priority: "0.7", changefreq: "monthly" },
+      { loc: "/lodging/the-barn",                    priority: "0.7", changefreq: "monthly" },
+      { loc: "/lodging/the-green-drake",             priority: "0.7", changefreq: "monthly" },
+      { loc: "/lodging/the-clubhouse",               priority: "0.7", changefreq: "monthly" },
       { loc: "/corporate",                           priority: "0.7", changefreq: "monthly" },
       { loc: "/membership",                          priority: "0.8", changefreq: "monthly" },
       { loc: "/contact",                             priority: "0.6", changefreq: "yearly"  },

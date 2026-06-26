@@ -28,7 +28,7 @@ export default function OutdoorActivities() {
   return (
     <PublicLayout>
       <SEOHead
-        title="Outdoor Activities"
+        title="Outdoor Pursuits"
         description="Hunting, fishing, and outdoor pursuits on thousands of privately managed acres in La Cygne, Kansas. Whitetail, waterfowl, upland birds, turkey, and world-class fishing — exclusively for members and guests of Rivers Lodge."
         url="/outdoor-activities"
       />
@@ -70,11 +70,11 @@ export default function OutdoorActivities() {
             Thousands of privately managed acres along the Marais des Cygnes. Trophy whitetail, world-class fishing, waterfowl, upland birds, and more — one hour south of Kansas City.
           </p>
           <div className="flex flex-col sm:flex-row gap-4">
-            <Link href="/membership" className="btn-outline" style={{ borderColor: ACCENT, color: ACCENT }}>
-              Explore Membership
-            </Link>
+            <a href="#pursuits" className="btn-outline" style={{ borderColor: ACCENT, color: ACCENT }}>
+              Choose a Pursuit
+            </a>
             <Link href="/contact" className="btn-ghost">
-              Book a Trip
+              Plan a Trip
             </Link>
           </div>
         </div>
@@ -107,13 +107,14 @@ export default function OutdoorActivities() {
 
       {/* Pursuit cards grid */}
       <section
+        id="pursuits"
         ref={pursuitsRef as React.RefObject<HTMLDivElement>}
         className="fade-up section bg-surface"
       >
         <div className="max-w-[1440px] mx-auto px-5 lg:px-14">
           <div className="mb-14">
             <div style={{ height: "1px", width: "2rem", backgroundColor: ACCENT, marginBottom: "1.25rem" }} />
-            <p className="eyebrow text-muted-brand mb-4">Outdoor Activities</p>
+            <p className="eyebrow text-muted-brand mb-4">Outdoor Pursuits</p>
             <h2
               className="font-serif font-light text-warm leading-tight"
               style={{ fontSize: "clamp(1.75rem,3vw,2.5rem)" }}
