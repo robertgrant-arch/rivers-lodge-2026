@@ -12,7 +12,7 @@ function getTrackFromPath(path: string): Track {
   if (
     path.startsWith("/weddings") || path.startsWith("/venues") ||
     path.startsWith("/corporate") || path.startsWith("/food-and-wine") ||
-    path.startsWith("/outdoor-activities")
+    path.startsWith("/outdoor-activities") || path.startsWith("/weddings-events")
   ) return "events";
   if (path.startsWith("/lodging")) return "lodging";
   if (path.startsWith("/membership") || path.startsWith("/estate")) return "membership";
@@ -21,17 +21,27 @@ function getTrackFromPath(path: string): Track {
 }
 
 const eventsDropdown = [
-  { label: "Weddings",            href: "/weddings",            desc: "Ceremonies & receptions on the estate" },
-  { label: "Corporate Events",    href: "/corporate",           desc: "Retreats, outings & meetings" },
-  { label: "Food & Wine",         href: "/food-and-wine",       desc: "Chef-driven, land-to-table dining" },
-  { label: "Outdoor Activities",  href: "/outdoor-activities",  desc: "Hunting, fishing & more on the estate" },
+  { label: "Weddings",          href: "/weddings",            desc: "Ceremonies & receptions on the estate" },
+  { label: "Corporate Events",  href: "/corporate",           desc: "Retreats, outings & meetings" },
+  { label: "Outdoor Pursuits",  href: "/outdoor-activities",  desc: "Hunting, fishing & more on the estate" },
+  { label: "Food & Wine",       href: "/food-and-wine",       desc: "Chef-driven, land-to-table dining" },
 ];
 
-const lodgingDropdown = [
-  { label: "The Lodge",           href: "/lodging#the-lodge",   desc: "Main lodge accommodations" },
-  { label: "Riverhouse Suites",   href: "/lodging#riverhouse",  desc: "Suites on the Marais des Cygnes" },
-  { label: "The Barn",            href: "/lodging#the-barn",    desc: "Rustic event & lodging barn" },
-  { label: "Outdoor Activities",  href: "/outdoor-activities",  desc: "Hunting, fishing & more on the estate" },
+// Stay group
+const lodgingStay = [
+  { label: "The Lodge",         href: "/lodging/the-lodge",         desc: "Main lodge — 6,000 sq ft, 4 bedrooms" },
+  { label: "Riverhouse Suites", href: "/lodging/riverhouse-suites", desc: "Suites on the Marais des Cygnes" },
+  { label: "The Annex",         href: "/lodging/the-annex",         desc: "4 bedrooms, modern farmhouse" },
+  { label: "The Ohana",         href: "/lodging/the-ohana",         desc: "Private 20-acre lake setting" },
+  { label: "The Farmhouse",     href: "/lodging/the-farmhouse",     desc: "Classic Kansas farmhouse" },
+  { label: "Trego Road",        href: "/lodging/trego-road",        desc: "Secluded retreat at property edge" },
+];
+
+// Gather group
+const lodgingGather = [
+  { label: "The Barn",          href: "/lodging/the-barn",          desc: "Premier event & reception venue" },
+  { label: "The Green Drake",   href: "/lodging/the-green-drake",   desc: "Intimate space at the water's edge" },
+  { label: "The Clubhouse",     href: "/lodging/the-clubhouse",     desc: "Private clubhouse for members" },
 ];
 
 const membershipDropdown = [
@@ -67,37 +77,8 @@ const ORANGE = "#9B4D19";
 const SAGE   = "#6B7250";
 const GOLD   = "#9B4D19";
 
-function desktopItemCls(active: boolean, color: string) {
-  return `px-3 py-2 text-[11px] tracking-[0.13em] uppercase font-sans font-medium transition-colors ${
-    active
-      ? `text-[${color}]`
-      : `text-[#E0D3BD] hover:text-[${color}]`
-  }`;
-}
-
-type DropItem = { label: string; href: string; desc: string };
-
-function DropdownMenu({ items, accentColor }: { items: DropItem[]; accentColor: string }) {
-  return (
-    <div className="absolute top-full left-0 mt-1 w-64 bg-[#363330] border border-[#57544E] shadow-2xl py-2 z-50">
-      {items.map((item) => (
-        <Link
-          key={item.href}
-          href={item.href}
-          className="flex flex-col px-5 py-3 hover:bg-[#423F3B] transition-colors group"
-        >
-          <span
-            className="text-[11px] tracking-[0.12em] uppercase font-sans font-medium text-[#E0D3BD] transition-colors"
-            style={{ "--hover-color": accentColor } as React.CSSProperties}
-          >
-            {item.label}
-          </span>
-          <span className="text-[11px] font-sans text-[#908B82] mt-0.5 normal-case tracking-normal">{item.desc}</span>
-        </Link>
-      ))}
-    </div>
-  );
-}
+const chevronCls = (open: boolean) =>
+  `transition-transform duration-200 ${open ? "rotate-180" : ""}`;
 
 export default function PublicNav() {
   const [location] = useLocation();
@@ -114,6 +95,8 @@ export default function PublicNav() {
   // Mobile accordions
   const [mobileEventsOpen,     setMobileEventsOpen]     = useState(false);
   const [mobileLodgingOpen,    setMobileLodgingOpen]    = useState(false);
+  const [mobileLodgingStayOpen,   setMobileLodgingStayOpen]   = useState(false);
+  const [mobileLodgingGatherOpen, setMobileLodgingGatherOpen] = useState(false);
   const [mobileMembershipOpen, setMobileMembershipOpen] = useState(false);
   const [mobileAboutOpen,      setMobileAboutOpen]      = useState(false);
 
@@ -175,33 +158,8 @@ export default function PublicNav() {
     ? "bg-transparent"
     : "bg-[#2B2823]/95 backdrop-blur-sm shadow-[0_1px_0_oklch(1_0_0/0.06)]";
 
-  const chevronCls = (open: boolean) =>
-    `transition-transform duration-200 ${open ? "rotate-180" : ""}`;
-
-  function DesktopDropdownTrigger({
-    label, isOpen, onToggle, activeColor, active,
-  }: {
-    label: string; isOpen: boolean; onToggle: () => void; activeColor: string; active: boolean;
-  }) {
-    const color = active ? activeColor : "#E0D3BD";
-    const style: React.CSSProperties = active
-      ? { color: activeColor }
-      : {};
-    return (
-      <button
-        onClick={onToggle}
-        className="flex items-center gap-1 px-3 py-2 text-[11px] tracking-[0.13em] uppercase font-sans font-medium text-[#E0D3BD] transition-colors"
-        style={style}
-        onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = activeColor; }}
-        onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = active ? activeColor : "#E0D3BD"; }}
-        aria-expanded={isOpen}
-        aria-haspopup="true"
-      >
-        {label}
-        <ChevronDown size={11} className={chevronCls(isOpen)} />
-      </button>
-    );
-  }
+  const activeColor = (active: boolean, color: string) =>
+    active ? color : "#E0D3BD";
 
   return (
     <>
@@ -235,15 +193,30 @@ export default function PublicNav() {
           {/* ── Desktop Nav ──────────────────────────────────────────────── */}
           <nav className="hidden lg:flex items-center gap-0.5">
 
-            {/* 1. Events ▾ */}
+            {/* 1. Weddings & Events — clickable label + chevron */}
             <div ref={eventsRef} className="relative">
-              <DesktopDropdownTrigger
-                label="Events"
-                isOpen={eventsOpen}
-                activeColor={ORANGE}
-                active={track === "events"}
-                onToggle={() => { setEventsOpen(!eventsOpen); setLodgingOpen(false); setMembershipOpen(false); setAboutOpen(false); }}
-              />
+              <div className="flex items-center">
+                <Link
+                  href="/weddings-events"
+                  className="px-3 py-2 text-[11px] tracking-[0.13em] uppercase font-sans font-medium transition-colors"
+                  style={{ color: activeColor(track === "events", ORANGE) }}
+                  onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = ORANGE; }}
+                  onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = activeColor(track === "events", ORANGE); }}
+                >
+                  Weddings &amp; Events
+                </Link>
+                <button
+                  onClick={() => { setEventsOpen(!eventsOpen); setLodgingOpen(false); setMembershipOpen(false); setAboutOpen(false); }}
+                  aria-label="Open Weddings & Events menu"
+                  aria-expanded={eventsOpen}
+                  className="p-1.5 -ml-1 transition-colors"
+                  style={{ color: activeColor(track === "events", ORANGE) }}
+                  onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = ORANGE; }}
+                  onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = activeColor(track === "events", ORANGE); }}
+                >
+                  <ChevronDown size={11} className={chevronCls(eventsOpen)} />
+                </button>
+              </div>
               {eventsOpen && (
                 <div className="absolute top-full left-0 mt-1 w-64 bg-[#363330] border border-[#57544E] shadow-2xl py-2 z-50">
                   {eventsDropdown.map((item) => (
@@ -256,19 +229,46 @@ export default function PublicNav() {
               )}
             </div>
 
-            {/* 2. Lodging ▾ */}
+            {/* 2. Lodging & Venues — clickable label + chevron + grouped dropdown */}
             <div ref={lodgingRef} className="relative">
-              <DesktopDropdownTrigger
-                label="Lodging"
-                isOpen={lodgingOpen}
-                activeColor={ORANGE}
-                active={track === "lodging"}
-                onToggle={() => { setLodgingOpen(!lodgingOpen); setEventsOpen(false); setMembershipOpen(false); setAboutOpen(false); }}
-              />
+              <div className="flex items-center">
+                <Link
+                  href="/lodging"
+                  className="px-3 py-2 text-[11px] tracking-[0.13em] uppercase font-sans font-medium transition-colors"
+                  style={{ color: activeColor(track === "lodging", ORANGE) }}
+                  onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = ORANGE; }}
+                  onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = activeColor(track === "lodging", ORANGE); }}
+                >
+                  Lodging &amp; Venues
+                </Link>
+                <button
+                  onClick={() => { setLodgingOpen(!lodgingOpen); setEventsOpen(false); setMembershipOpen(false); setAboutOpen(false); }}
+                  aria-label="Open Lodging & Venues menu"
+                  aria-expanded={lodgingOpen}
+                  className="p-1.5 -ml-1 transition-colors"
+                  style={{ color: activeColor(track === "lodging", ORANGE) }}
+                  onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = ORANGE; }}
+                  onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = activeColor(track === "lodging", ORANGE); }}
+                >
+                  <ChevronDown size={11} className={chevronCls(lodgingOpen)} />
+                </button>
+              </div>
               {lodgingOpen && (
-                <div className="absolute top-full left-0 mt-1 w-64 bg-[#363330] border border-[#57544E] shadow-2xl py-2 z-50">
-                  {lodgingDropdown.map((item) => (
-                    <Link key={item.href} href={item.href} className="flex flex-col px-5 py-3 hover:bg-[#423F3B] transition-colors group">
+                <div className="absolute top-full left-0 mt-1 w-72 bg-[#363330] border border-[#57544E] shadow-2xl py-2 z-50">
+                  {/* Stay group */}
+                  <p className="px-5 pt-2 pb-1.5 text-[9px] tracking-[0.20em] uppercase font-sans text-[#6B6760]">Stay</p>
+                  {lodgingStay.map((item) => (
+                    <Link key={item.href} href={item.href} className="flex flex-col px-5 py-2.5 hover:bg-[#423F3B] transition-colors group">
+                      <span className="text-[11px] tracking-[0.12em] uppercase font-sans font-medium text-[#E0D3BD] group-hover:text-[#9B4D19] transition-colors">{item.label}</span>
+                      <span className="text-[11px] font-sans text-[#908B82] mt-0.5 normal-case tracking-normal">{item.desc}</span>
+                    </Link>
+                  ))}
+                  {/* Divider */}
+                  <div className="my-2 border-t border-[#57544E]" />
+                  {/* Gather group */}
+                  <p className="px-5 pb-1.5 text-[9px] tracking-[0.20em] uppercase font-sans text-[#6B6760]">Gather</p>
+                  {lodgingGather.map((item) => (
+                    <Link key={item.href} href={item.href} className="flex flex-col px-5 py-2.5 hover:bg-[#423F3B] transition-colors group">
                       <span className="text-[11px] tracking-[0.12em] uppercase font-sans font-medium text-[#E0D3BD] group-hover:text-[#9B4D19] transition-colors">{item.label}</span>
                       <span className="text-[11px] font-sans text-[#908B82] mt-0.5 normal-case tracking-normal">{item.desc}</span>
                     </Link>
@@ -312,13 +312,20 @@ export default function PublicNav() {
 
             {/* 4. About ▾ */}
             <div ref={aboutRef} className="relative">
-              <DesktopDropdownTrigger
-                label="About"
-                isOpen={aboutOpen}
-                activeColor={GOLD}
-                active={track === "about"}
-                onToggle={() => { setAboutOpen(!aboutOpen); setEventsOpen(false); setLodgingOpen(false); setMembershipOpen(false); }}
-              />
+              <div className="flex items-center">
+                <button
+                  onClick={() => { setAboutOpen(!aboutOpen); setEventsOpen(false); setLodgingOpen(false); setMembershipOpen(false); }}
+                  className="flex items-center gap-1 px-3 py-2 text-[11px] tracking-[0.13em] uppercase font-sans font-medium text-[#E0D3BD] transition-colors"
+                  style={{ color: activeColor(track === "about", GOLD) }}
+                  onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = GOLD; }}
+                  onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = activeColor(track === "about", GOLD); }}
+                  aria-expanded={aboutOpen}
+                  aria-haspopup="true"
+                >
+                  About
+                  <ChevronDown size={11} className={chevronCls(aboutOpen)} />
+                </button>
+              </div>
               {aboutOpen && (
                 <div className="absolute top-full left-0 mt-1 w-64 bg-[#363330] border border-[#57544E] shadow-2xl py-2 z-50">
                   {aboutDropdown.map((item) => (
@@ -438,15 +445,19 @@ export default function PublicNav() {
             )}
           </div>
 
-          {/* 1. Events */}
+          {/* 1. Weddings & Events */}
           <div className="mb-2">
             <div className="flex items-center justify-between py-3">
-              <span className="text-[11px] tracking-[0.18em] uppercase font-sans font-medium text-[#9B4D19]">
-                Events
-              </span>
+              <Link
+                href="/weddings-events"
+                onClick={() => setMobileOpen(false)}
+                className="text-[11px] tracking-[0.18em] uppercase font-sans font-medium text-[#9B4D19]"
+              >
+                Weddings &amp; Events
+              </Link>
               <button
                 onClick={() => setMobileEventsOpen(!mobileEventsOpen)}
-                aria-label="Toggle Events"
+                aria-label="Toggle Weddings & Events"
                 className="p-1 text-[#BABAAE]"
               >
                 <ChevronDown size={14} className={chevronCls(mobileEventsOpen)} />
@@ -468,15 +479,19 @@ export default function PublicNav() {
             )}
           </div>
 
-          {/* 2. Lodging */}
+          {/* 2. Lodging & Venues */}
           <div className="mb-2">
             <div className="flex items-center justify-between py-3">
-              <span className="text-[11px] tracking-[0.18em] uppercase font-sans font-medium text-[#9B4D19]">
-                Lodging
-              </span>
+              <Link
+                href="/lodging"
+                onClick={() => setMobileOpen(false)}
+                className="text-[11px] tracking-[0.18em] uppercase font-sans font-medium text-[#9B4D19]"
+              >
+                Lodging &amp; Venues
+              </Link>
               <button
                 onClick={() => setMobileLodgingOpen(!mobileLodgingOpen)}
-                aria-label="Toggle Lodging"
+                aria-label="Toggle Lodging & Venues"
                 className="p-1 text-[#BABAAE]"
               >
                 <ChevronDown size={14} className={chevronCls(mobileLodgingOpen)} />
@@ -484,16 +499,61 @@ export default function PublicNav() {
             </div>
             {mobileLodgingOpen && (
               <div className="pl-4 mt-1 flex flex-col gap-0 border-l border-[#9B4D19/30]">
-                {lodgingDropdown.map((item) => (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={() => setMobileOpen(false)}
-                    className="py-3 text-[#E0D3BD] font-serif text-xl italic hover:text-[#9B4D19] transition-colors"
-                  >
-                    {item.label}
-                  </Link>
-                ))}
+                {/* Stay sub-group */}
+                <div className="mb-1">
+                  <div className="flex items-center justify-between py-2">
+                    <span className="text-[9px] tracking-[0.20em] uppercase font-sans text-[#6B6760]">Stay</span>
+                    <button
+                      onClick={() => setMobileLodgingStayOpen(!mobileLodgingStayOpen)}
+                      aria-label="Toggle Stay"
+                      className="p-1 text-[#BABAAE]"
+                    >
+                      <ChevronDown size={12} className={chevronCls(mobileLodgingStayOpen)} />
+                    </button>
+                  </div>
+                  {mobileLodgingStayOpen && (
+                    <div className="pl-3 flex flex-col gap-0">
+                      {lodgingStay.map((item) => (
+                        <Link
+                          key={item.href}
+                          href={item.href}
+                          onClick={() => setMobileOpen(false)}
+                          className="py-2.5 text-[#E0D3BD] font-serif text-lg italic hover:text-[#9B4D19] transition-colors"
+                        >
+                          {item.label}
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Gather sub-group */}
+                <div>
+                  <div className="flex items-center justify-between py-2">
+                    <span className="text-[9px] tracking-[0.20em] uppercase font-sans text-[#6B6760]">Gather</span>
+                    <button
+                      onClick={() => setMobileLodgingGatherOpen(!mobileLodgingGatherOpen)}
+                      aria-label="Toggle Gather"
+                      className="p-1 text-[#BABAAE]"
+                    >
+                      <ChevronDown size={12} className={chevronCls(mobileLodgingGatherOpen)} />
+                    </button>
+                  </div>
+                  {mobileLodgingGatherOpen && (
+                    <div className="pl-3 flex flex-col gap-0">
+                      {lodgingGather.map((item) => (
+                        <Link
+                          key={item.href}
+                          href={item.href}
+                          onClick={() => setMobileOpen(false)}
+                          className="py-2.5 text-[#E0D3BD] font-serif text-lg italic hover:text-[#9B4D19] transition-colors"
+                        >
+                          {item.label}
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>
