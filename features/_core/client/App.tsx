@@ -30,9 +30,13 @@ const WeddingsLanding = lazy(() => import("@features/weddings/client/pages/Weddi
 const Weddings = lazy(() => import("@features/weddings/client/pages/Weddings"));
 const Venues = lazy(() => import("@features/weddings/client/pages/Venues"));
 
-// Hunt & Fish pages
+// Hunt & Fish pages (kept for backwards-compat; /hunt and /fish 301-redirect server-side)
 const Hunt = lazy(() => import("@features/hunt-fish/client/pages/Hunt"));
 const Fish = lazy(() => import("@features/hunt-fish/client/pages/Fish"));
+
+// Outdoor Activities hub + detail pages
+const OutdoorActivities = lazy(() => import("@features/outdoor-activities/client/pages/OutdoorActivities"));
+const PursuitDetail = lazy(() => import("@features/outdoor-activities/client/pages/PursuitDetail"));
 
 // Lodging pages
 const Lodging = lazy(() => import("@features/lodging/client/pages/Lodging"));
@@ -136,8 +140,12 @@ function Router() {
         <Route path="/about" component={About} />
         <Route path="/about/team" component={AboutTeam} />
         <Route path="/about/property" component={AboutProperty} />
-        <Route path="/hunt" component={Hunt} />
-        <Route path="/fish" component={Fish} />
+        {/* Outdoor Activities hub + pursuit detail pages */}
+        <Route path="/outdoor-activities" component={OutdoorActivities} />
+        <Route path="/outdoor-activities/:slug">{(p) => <PursuitDetail slug={p.slug ?? ""} />}</Route>
+        {/* Legacy /hunt and /fish — client-side redirect fallback (server sends 301 first) */}
+        <Route path="/hunt">{() => { if (typeof window !== "undefined") window.location.replace("/outdoor-activities/whitetail"); return null; }}</Route>
+        <Route path="/fish">{() => { if (typeof window !== "undefined") window.location.replace("/outdoor-activities/fishing"); return null; }}</Route>
 
         {/* Gated */}
         <Route path="/portal" component={MemberPortal} />

@@ -70,11 +70,8 @@ export default function PublicFooter() {
               <Link href="/food-and-wine" className="text-[12px] font-sans hover:text-[#9B4D19] transition-colors">
                 Food &amp; Wine
               </Link>
-              <Link href="/hunt" className="text-[12px] font-sans hover:text-[#9B4D19] transition-colors">
-                Hunt
-              </Link>
-              <Link href="/fish" className="text-[12px] font-sans hover:text-[#9B4D19] transition-colors">
-                Fish
+              <Link href="/outdoor-activities" className="text-[12px] font-sans hover:text-[#9B4D19] transition-colors">
+                Outdoor Activities
               </Link>
             </nav>
           </div>

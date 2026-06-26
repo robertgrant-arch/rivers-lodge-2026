@@ -185,7 +185,7 @@ export default function Fish() {
               <Link href="/membership" className="btn-outline" style={{ borderColor: "#6B7250", color: "#6B7250" }}>
                 Explore Membership
               </Link>
-              <Link href="/hunt" className="btn-ghost">View Hunting</Link>
+              <Link href="/outdoor-activities" className="btn-ghost">View All Pursuits</Link>
             </div>
           </div>
         </div>

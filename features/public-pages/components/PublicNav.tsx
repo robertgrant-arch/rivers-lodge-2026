@@ -12,7 +12,7 @@ function getTrackFromPath(path: string): Track {
   if (
     path.startsWith("/weddings") || path.startsWith("/venues") ||
     path.startsWith("/corporate") || path.startsWith("/food-and-wine") ||
-    path.startsWith("/hunt") || path.startsWith("/fish")
+    path.startsWith("/outdoor-activities")
   ) return "events";
   if (path.startsWith("/lodging")) return "lodging";
   if (path.startsWith("/membership") || path.startsWith("/estate")) return "membership";
@@ -21,19 +21,17 @@ function getTrackFromPath(path: string): Track {
 }
 
 const eventsDropdown = [
-  { label: "Weddings",        href: "/weddings",      desc: "Ceremonies & receptions on the estate" },
-  { label: "Corporate Events",href: "/corporate",     desc: "Retreats, outings & meetings" },
-  { label: "Food & Wine",     href: "/food-and-wine", desc: "Chef-driven, land-to-table dining" },
-  { label: "Hunt",            href: "/hunt",           desc: "Whitetail, waterfowl & more" },
-  { label: "Fish",            href: "/fish",           desc: "Five private fisheries" },
+  { label: "Weddings",            href: "/weddings",            desc: "Ceremonies & receptions on the estate" },
+  { label: "Corporate Events",    href: "/corporate",           desc: "Retreats, outings & meetings" },
+  { label: "Food & Wine",         href: "/food-and-wine",       desc: "Chef-driven, land-to-table dining" },
+  { label: "Outdoor Activities",  href: "/outdoor-activities",  desc: "Hunting, fishing & more on the estate" },
 ];
 
 const lodgingDropdown = [
-  { label: "The Lodge",         href: "/lodging#the-lodge", desc: "Main lodge accommodations" },
-  { label: "Riverhouse Suites", href: "/lodging#riverhouse", desc: "Suites on the Marais des Cygnes" },
-  { label: "The Barn",          href: "/lodging#the-barn",  desc: "Rustic event & lodging barn" },
-  { label: "Hunt",              href: "/hunt",               desc: "Whitetail, waterfowl & more" },
-  { label: "Fish",              href: "/fish",               desc: "Five private fisheries" },
+  { label: "The Lodge",           href: "/lodging#the-lodge",   desc: "Main lodge accommodations" },
+  { label: "Riverhouse Suites",   href: "/lodging#riverhouse",  desc: "Suites on the Marais des Cygnes" },
+  { label: "The Barn",            href: "/lodging#the-barn",    desc: "Rustic event & lodging barn" },
+  { label: "Outdoor Activities",  href: "/outdoor-activities",  desc: "Hunting, fishing & more on the estate" },
 ];
 
 const membershipDropdown = [

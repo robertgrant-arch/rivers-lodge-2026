@@ -59,6 +59,10 @@ async function startServer() {
 
   registerStorageProxy(app);
 
+  // 301 redirects — legacy hunt/fish routes now live under /outdoor-activities
+  app.get("/hunt", (_req, res) => res.redirect(301, "/outdoor-activities/whitetail"));
+  app.get("/fish", (_req, res) => res.redirect(301, "/outdoor-activities/fishing"));
+
   // XML sitemap — minimal static set of public marketing pages.
   // A richer dynamic sitemap (property listings, blog posts, etc.) is a
   // later prompt; this ensures search engines can discover the core pages.
@@ -66,15 +70,19 @@ async function startServer() {
     const base = "https://theriverslodge.com";
     const now = new Date().toISOString().split("T")[0];
     const urls = [
-      { loc: "/",           priority: "1.0", changefreq: "weekly" },
-      { loc: "/weddings",   priority: "0.9", changefreq: "monthly" },
-      { loc: "/hunt",       priority: "0.9", changefreq: "monthly" },
-      { loc: "/fish",       priority: "0.8", changefreq: "monthly" },
-      { loc: "/lodging",    priority: "0.8", changefreq: "monthly" },
-      { loc: "/corporate",  priority: "0.7", changefreq: "monthly" },
-      { loc: "/membership", priority: "0.8", changefreq: "monthly" },
-      { loc: "/contact",    priority: "0.6", changefreq: "yearly"  },
-      { loc: "/gallery",    priority: "0.5", changefreq: "monthly" },
+      { loc: "/",                                    priority: "1.0", changefreq: "weekly"  },
+      { loc: "/weddings",                            priority: "0.9", changefreq: "monthly" },
+      { loc: "/outdoor-activities",                  priority: "0.9", changefreq: "monthly" },
+      { loc: "/outdoor-activities/whitetail",        priority: "0.8", changefreq: "monthly" },
+      { loc: "/outdoor-activities/waterfowl",        priority: "0.8", changefreq: "monthly" },
+      { loc: "/outdoor-activities/upland-birds",     priority: "0.8", changefreq: "monthly" },
+      { loc: "/outdoor-activities/turkey",           priority: "0.8", changefreq: "monthly" },
+      { loc: "/outdoor-activities/fishing",          priority: "0.8", changefreq: "monthly" },
+      { loc: "/lodging",                             priority: "0.8", changefreq: "monthly" },
+      { loc: "/corporate",                           priority: "0.7", changefreq: "monthly" },
+      { loc: "/membership",                          priority: "0.8", changefreq: "monthly" },
+      { loc: "/contact",                             priority: "0.6", changefreq: "yearly"  },
+      { loc: "/gallery",                             priority: "0.5", changefreq: "monthly" },
     ];
 
     const xml = [
