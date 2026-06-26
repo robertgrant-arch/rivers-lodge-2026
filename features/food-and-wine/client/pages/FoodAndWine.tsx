@@ -28,10 +28,29 @@ function ImgPlaceholder({ aspectClass, label }: { aspectClass: string; label: st
       aria-label={label}
       role="img"
     >
-      {/* TODO: replace with real photography */}
       <span className="text-[10px] tracking-[0.18em] uppercase font-sans text-[oklch(0.28_0.010_40)] select-none">
         {label}
       </span>
+    </div>
+  );
+}
+
+/* Safe image — placeholder always in DOM as base layer; real <img> hides on 404 */
+function SafeImg({ src, alt, label, aspectClass }: { src: string; alt: string; label: string; aspectClass: string }) {
+  return (
+    <div className={`${aspectClass} relative`}>
+      <div className="absolute inset-0 bg-[oklch(0.13_0.010_35)] flex items-center justify-center" aria-hidden="true">
+        <span className="text-[10px] tracking-[0.18em] uppercase font-sans text-[oklch(0.28_0.010_40)] select-none pointer-events-none">
+          {label}
+        </span>
+      </div>
+      <img
+        src={src}
+        alt={alt}
+        className="absolute inset-0 w-full h-full object-cover"
+        loading="lazy"
+        onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+      />
     </div>
   );
 }
@@ -102,18 +121,12 @@ export default function FoodAndWine() {
                 <br /><em className="italic">Chef Casey.</em>
               </h2>
               <div className="space-y-5 font-sans text-muted-brand leading-relaxed" style={{ fontSize: "0.9375rem" }}>
-                {/*
-                  TODO: Replace the paragraph below with Chef Casey's real bio.
-                  Keep the same <p> tag structure — one or two paragraphs works well here.
-                */}
-                <p className="italic text-[oklch(0.45_0.012_70)]">
-                  [Chef Casey bio placeholder — to be provided. Describe his background,
-                  culinary philosophy, and connection to the lodge's land-to-table program.]
+                <p>
+                  Casey Byrom is a classically trained chef, born and raised in Kansas City, Missouri. His resume boasts some of Kansas City's best restaurants, including Ibis Bakery, Webster House and The American Restaurant. Focusing on local farm fresh ingredients, Casey is passionate about exploring Mid-Western cuisine. His philosophy is that food is not only the way we nourish our bodies, but also how we connect with each other when we gather around the table.
                 </p>
               </div>
             </div>
-            {/* TODO: Replace with Chef Casey portrait (3:4 aspect ratio recommended) */}
-            <ImgPlaceholder aspectClass="aspect-[3/4] overflow-hidden w-full max-w-md mx-auto lg:mx-0" label="Chef Casey portrait" />
+            <SafeImg src="/img/chef%20casey.jpg" alt="Chef Casey" label="Chef Casey portrait" aspectClass="aspect-[3/4] overflow-hidden w-full max-w-md mx-auto lg:mx-0" />
           </div>
         </div>
       </section>
@@ -139,12 +152,11 @@ export default function FoodAndWine() {
 
             {/* Image collage */}
             <div className="grid grid-cols-2 gap-3 order-last lg:order-first">
-              {/* TODO: Replace with food / garden photography */}
               <div className="col-span-2 overflow-hidden">
-                <ImgPlaceholder aspectClass="aspect-[16/9] w-full" label="Garden or farm-to-table food" />
+                <SafeImg src="/img/ChefSwethaSelect30617.jpg" alt="Farm-to-table food at Rivers Lodge" label="Garden or farm-to-table food" aspectClass="aspect-[16/9] w-full" />
               </div>
-              <ImgPlaceholder aspectClass="aspect-square" label="Locally sourced ingredients" />
-              <ImgPlaceholder aspectClass="aspect-square" label="On-property garden" />
+              <SafeImg src="/img/Cool%20Food%202.JPG" alt="Locally sourced ingredients" label="Locally sourced ingredients" aspectClass="aspect-square overflow-hidden" />
+              <SafeImg src="/img/food%202.jpg" alt="On-property garden produce" label="On-property garden" aspectClass="aspect-square overflow-hidden" />
             </div>
 
             <div>
