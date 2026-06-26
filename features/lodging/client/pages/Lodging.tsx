@@ -14,8 +14,8 @@ const FALLBACK_LODGING = [
     bedrooms: 4,
     desc: "Our 6,000 square foot lodge has 4 bedrooms decorated by a prominent Kansas City designer and incorporates many aspects of history and outdoor pursuits from the area. The lodge has a full kitchen, large balcony, heated floors, heating/AC, and a large recreation room.",
     features: ["4 bedrooms", "6,000 sq ft", "Full kitchen", "Large balcony", "Heated floors", "Recreation room", "Kansas City designer interiors"],
-    img: "",
-    img2: "",
+    img: "/img/Main%20Lodge.jpg",
+    img2: "/img/main%20lodge%20inside.jpg",
   },
   {
     slug: "riverhouse-suites",
@@ -25,8 +25,8 @@ const FALLBACK_LODGING = [
     bedrooms: 4,
     desc: "The Riverhouse Suites were completed in 2022 and designed with luxury in mind. Each room is uniquely decorated and all rooms have their own bathrooms and individual heating/AC units.",
     features: ["4 private suites", "Private bath per suite", "Individual heating/AC", "Uniquely decorated rooms", "Luxury finishes", "Completed 2022"],
-    img: "",
-    img2: "",
+    img: "/img/Riverhouse%20Suite.jpg",
+    img2: "/img/Riverhouse%20Suite%201.jpg",
   },
   {
     slug: "annex-bridal-suite",
@@ -36,7 +36,7 @@ const FALLBACK_LODGING = [
     bedrooms: 4,
     desc: "The Annex & Bridal Suite was completely remodeled in 2021. It has a modern farmhouse feel with a light and airy design. Just steps away from Rivers Barn, it is the perfect spot to spend the day getting ready for your big day. The Annex & Bridal Suite has 4 bedrooms and 3 bathrooms.",
     features: ["4 bedrooms", "3 bathrooms", "Steps from Rivers Barn", "Remodeled 2021", "Modern farmhouse feel", "Light and airy design"],
-    img: "",
+    img: "/img/annex-hero.jpg",
     img2: "",
   },
   {
@@ -47,8 +47,8 @@ const FALLBACK_LODGING = [
     bedrooms: 4,
     desc: "The Ohana House is located approximately 15 minutes from the main lodge. It has 4 bedrooms and bathrooms, a 20-acre lake, a gorgeous fire pit, and miles of nature trails. Enjoy fishing, canoeing, paddle boarding, hiking, or just laying on a hammock. The Ohana House can be rented as part of a corporate or wedding package, or is a perfect place for just a family getaway.",
     features: ["4 bedrooms & bathrooms", "20-acre private lake", "Gorgeous fire pit", "Miles of nature trails", "Fishing, canoeing, paddleboarding", "15 min from main lodge"],
-    img: "",
-    img2: "",
+    img: "/img/Ohana%20Aerial.jpg",
+    img2: "/img/Ohana%20Firepit.jpg",
   },
   {
     slug: "the-farmhouse",
@@ -58,7 +58,7 @@ const FALLBACK_LODGING = [
     bedrooms: null,
     desc: "A classic Kansas farmhouse on the estate grounds. Comfortable, private, and full of character — ideal for overflow lodging, family groups, or guests who prefer a quieter corner of the property.",
     features: ["Private setting", "Classic farmhouse character", "Estate grounds", "Ideal for overflow", "Quiet and secluded", "Full amenities"],
-    img: "",
+    img: "/img/farmhouse-hero.jpg",
     img2: "",
   },
 ];
