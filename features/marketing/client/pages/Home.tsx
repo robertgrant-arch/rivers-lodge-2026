@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Link } from "wouter";
 import PublicLayout from "@shared/components/PublicLayout";
 import SEOHead from '@shared/components/SEOHead';
+import Picture from "@shared/components/Picture";
 
 /* ── Hero slideshow ──────────────────────────────────────────────────────── */
 const HERO_SLIDES: { src: string; alt: string; label: string }[] = [
@@ -49,6 +50,10 @@ function HeroSlideshow() {
             alt={slide.alt}
             className="absolute inset-0 w-full h-full object-cover object-center"
             fetchPriority={i === 0 ? "high" : "low"}
+            loading={i === 0 ? "eager" : "lazy"}
+            decoding="async"
+            width={1920}
+            height={1080}
             onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
           />
         </div>
@@ -183,11 +188,14 @@ export default function Home() {
         <div className="max-w-[1440px] mx-auto px-5 lg:px-14">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
             {/* Image */}
-            <SafeImg
+            <Picture
               src="/img/Ohana%20Aerial.jpg"
               alt="Aerial view of Rivers Lodge estate on the Marais des Cygnes"
               label="Estate aerial"
               className="aspect-[4/3] overflow-hidden w-full"
+              width={1200}
+              height={900}
+              sizes="(max-width: 1024px) 100vw, 50vw"
             />
             {/* Text */}
             <div>
@@ -230,11 +238,14 @@ export default function Home() {
               <Link href="/lodging" className="btn-ghost" style={{ borderColor: "#9B4D19", color: "#9B4D19" }}>Plan Your Stay</Link>
             </div>
             {/* Image — right on desktop */}
-            <SafeImg
+            <Picture
               src="/img/Clubhouse%20Home.jpg"
               alt="Clubhouse interior at Rivers Lodge"
               label="Clubhouse interior"
               className="aspect-[4/3] overflow-hidden w-full order-1 lg:order-2"
+              width={1200}
+              height={900}
+              sizes="(max-width: 1024px) 100vw, 50vw"
             />
           </div>
         </div>
@@ -245,11 +256,14 @@ export default function Home() {
         <div className="max-w-[1440px] mx-auto px-5 lg:px-14">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
             {/* Image */}
-            <SafeImg
+            <Picture
               src="/img/3C0A0165.jpg"
               alt="Upland bird hunting at Rivers Lodge & Hunt Club"
               label="Membership / outdoors"
               className="aspect-[4/3] overflow-hidden w-full"
+              width={1200}
+              height={900}
+              sizes="(max-width: 1024px) 100vw, 50vw"
             />
             {/* Text */}
             <div>

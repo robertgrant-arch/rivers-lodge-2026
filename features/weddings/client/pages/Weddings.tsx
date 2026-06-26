@@ -3,6 +3,7 @@ import { Link } from "wouter";
 import { Turnstile } from "@marsidev/react-turnstile";
 import type { TurnstileInstance } from "@marsidev/react-turnstile";
 import PublicLayout from "@features/public-pages/components/PublicLayout";
+import Picture from "@shared/components/Picture";
 import { trpc } from '@shared/lib/trpc';
 import SEOHead, { structuredData } from '@shared/components/SEOHead';
 import StickyInquiryCTA from "@/components/StickyInquiryCTA";
@@ -240,7 +241,7 @@ export default function Weddings() {
           <div className="absolute inset-0 bg-[#363330] flex items-center justify-center" aria-hidden="true">
             <span className="text-[10px] tracking-[0.18em] uppercase font-sans text-white/40 select-none pointer-events-none">Wedding Hero Image</span>
           </div>
-          <img src={HERO} alt="Wedding at Rivers Lodge" className="absolute inset-0 w-full h-full object-cover object-top" fetchPriority="high" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
+          <img src={HERO} alt="Wedding at Rivers Lodge" className="absolute inset-0 w-full h-full object-cover object-top" fetchPriority="high" loading="eager" decoding="async" width={1920} height={1080} onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
           <div className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(to bottom, transparent 0%, oklch(0 0 0/0.10) 40%, oklch(0 0 0/0.78) 100%)" }} />
         </div>
         <div className="relative z-10 max-w-[1440px] mx-auto px-5 lg:px-14 w-full">
@@ -279,24 +280,33 @@ export default function Weddings() {
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
-              <div className="col-span-2 aspect-[16/9] overflow-hidden relative">
-                <div className="absolute inset-0 bg-[#363330] flex items-center justify-center" aria-hidden="true">
-                  <span className="text-[10px] tracking-[0.18em] uppercase font-sans text-white/40 select-none pointer-events-none">Wedding photo</span>
-                </div>
-                <img src="/img/wedding%20photo%201.jpg" alt="Outdoor wedding ceremony" className="absolute inset-0 w-full h-full object-cover" loading="lazy" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
-              </div>
-              <div className="aspect-square overflow-hidden relative">
-                <div className="absolute inset-0 bg-[#363330] flex items-center justify-center" aria-hidden="true">
-                  <span className="text-[10px] tracking-[0.18em] uppercase font-sans text-white/40 select-none pointer-events-none">Wedding photo</span>
-                </div>
-                <img src="/img/wedding%204.jpg" alt="Wedding reception" className="absolute inset-0 w-full h-full object-cover" loading="lazy" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
-              </div>
-              <div className="aspect-square overflow-hidden relative">
-                <div className="absolute inset-0 bg-[#363330] flex items-center justify-center" aria-hidden="true">
-                  <span className="text-[10px] tracking-[0.18em] uppercase font-sans text-white/40 select-none pointer-events-none">Wedding photo</span>
-                </div>
-                <img src="/img/Wedding%205.jpg" alt="Wedding at Rivers Lodge" className="absolute inset-0 w-full h-full object-cover" loading="lazy" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
-              </div>
+              <Picture
+                src="/img/wedding%20photo%201.jpg"
+                alt="Outdoor wedding ceremony"
+                label="Wedding photo"
+                className="col-span-2 aspect-[16/9] overflow-hidden"
+                sizes="(max-width: 1024px) 100vw, 50vw"
+                width={1200}
+                height={675}
+              />
+              <Picture
+                src="/img/wedding%204.jpg"
+                alt="Wedding reception"
+                label="Wedding photo"
+                className="aspect-square overflow-hidden"
+                sizes="(max-width: 1024px) 50vw, 25vw"
+                width={768}
+                height={768}
+              />
+              <Picture
+                src="/img/Wedding%205.jpg"
+                alt="Wedding at Rivers Lodge"
+                label="Wedding photo"
+                className="aspect-square overflow-hidden"
+                sizes="(max-width: 1024px) 50vw, 25vw"
+                width={768}
+                height={768}
+              />
             </div>
           </div>
         </div>
@@ -326,9 +336,14 @@ export default function Weddings() {
           <div className="space-y-px bg-border">
             {venues.map((v, i) => (
               <div key={v.name} className={`grid grid-cols-1 md:grid-cols-2 bg-background ${i % 2 === 1 ? "md:[direction:rtl]" : ""}`}>
-                <div className={`aspect-[4/3] overflow-hidden ${i % 2 === 1 ? "md:[direction:ltr]" : ""}`}>
-                  <img src={v.img} alt={v.name} className="w-full h-full object-cover" loading="lazy" />
-                </div>
+                <Picture
+                  src={v.img}
+                  alt={v.name}
+                  className={`aspect-[4/3] overflow-hidden ${i % 2 === 1 ? "md:[direction:ltr]" : ""}`}
+                  sizes="(max-width: 768px) 100vw, 50vw"
+                  width={800}
+                  height={600}
+                />
                 <div className={`p-10 lg:p-14 flex flex-col justify-center ${i % 2 === 1 ? "md:[direction:ltr]" : ""}`}>
                   <div style={{ height: "1px", width: "1.5rem", backgroundColor: "#9B4D19", marginBottom: "1rem" }} />
                   <h3 className="font-serif text-warm text-2xl mb-4">{v.name}</h3>
