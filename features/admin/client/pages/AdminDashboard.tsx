@@ -163,7 +163,7 @@ export default function AdminDashboard() {
     <PublicLayout>
       <div className="min-h-screen bg-background">
         {/* Header */}
-        <div className="bg-[oklch(0.13_0.008_66)] pt-24 pb-8">
+        <div className="bg-[#2B2823] pt-24 pb-8">
           <div className="max-w-7xl mx-auto px-6 lg:px-10">
             <p className="text-[9px] tracking-[0.22em] uppercase font-sans text-white/40 mb-2">Admin Dashboard</p>
             <h1 className="font-serif text-3xl md:text-4xl text-white">Rivers Lodge Management</h1>

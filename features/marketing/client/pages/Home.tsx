@@ -37,7 +37,7 @@ function HeroSlideshow() {
           }}
         >
           <div
-            className="absolute inset-0 bg-[oklch(0.17_0.012_70)] flex items-center justify-center"
+            className="absolute inset-0 bg-[#2B2823] flex items-center justify-center"
             aria-hidden="true"
           >
             <span className="text-[10px] tracking-[0.18em] uppercase font-sans text-white/40 select-none pointer-events-none">
@@ -119,7 +119,7 @@ function useFadeUp(threshold = 0.12) {
 function SafeImg({ src, alt, label, className }: { src: string; alt: string; label: string; className?: string }) {
   return (
     <div className={`relative ${className ?? ""}`}>
-      <div className="absolute inset-0 bg-[oklch(0.13_0.010_64)] flex items-center justify-center" aria-hidden="true">
+      <div className="absolute inset-0 bg-[#363330] flex items-center justify-center" aria-hidden="true">
         <span className="text-[10px] tracking-[0.18em] uppercase font-sans text-white/30 select-none pointer-events-none">
           {label}
         </span>
@@ -215,7 +215,7 @@ export default function Home() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
             {/* Text — left on desktop */}
             <div className="order-2 lg:order-1">
-              <div className="h-px w-8 mb-5" style={{ backgroundColor: "oklch(0.70 0.060 50)" }} />
+              <div className="h-px w-8 mb-5" style={{ backgroundColor: "#9B4D19" }} />
               <p className="eyebrow text-muted-brand mb-4">Stay &amp; Gather</p>
               <h2
                 className="font-serif font-light text-warm leading-tight mb-6"
@@ -227,7 +227,7 @@ export default function Home() {
               <p className="font-sans text-muted-brand leading-relaxed mb-10" style={{ fontSize: "0.9375rem" }}>
                 From intimate river-lawn ceremonies to grand receptions in the Rivers Barn, every gathering at the Lodge is exclusively yours. No shared access, no strangers — just your people, your weekend, your estate.
               </p>
-              <Link href="/lodging" className="btn-ghost" style={{ borderColor: "oklch(0.70 0.060 50)", color: "oklch(0.70 0.060 50)" }}>Plan Your Stay</Link>
+              <Link href="/lodging" className="btn-ghost" style={{ borderColor: "#9B4D19", color: "#9B4D19" }}>Plan Your Stay</Link>
             </div>
             {/* Image — right on desktop */}
             <SafeImg
@@ -253,7 +253,7 @@ export default function Home() {
             />
             {/* Text */}
             <div>
-              <div className="h-px w-8 mb-5" style={{ backgroundColor: "oklch(0.58 0.065 145)" }} />
+              <div className="h-px w-8 mb-5" style={{ backgroundColor: "#6B7250" }} />
               <p className="eyebrow text-muted-brand mb-4">Membership</p>
               <h2
                 className="font-serif font-light text-warm leading-tight mb-6"
@@ -265,7 +265,7 @@ export default function Home() {
               <p className="font-sans text-muted-brand leading-relaxed mb-10" style={{ fontSize: "0.9375rem" }}>
                 Managed whitetail, waterfowl, and upland bird hunting. Five private fisheries. Sporting clays and a community of members who share a deep respect for the land. A limited number of memberships are available each season.
               </p>
-              <Link href="/membership" className="btn-ghost" style={{ borderColor: "oklch(0.58 0.065 145)", color: "oklch(0.58 0.065 145)" }}>Explore Membership</Link>
+              <Link href="/membership" className="btn-ghost" style={{ borderColor: "#6B7250", color: "#6B7250" }}>Explore Membership</Link>
             </div>
           </div>
         </div>

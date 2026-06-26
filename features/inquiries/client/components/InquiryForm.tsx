@@ -133,7 +133,7 @@ export default function InquiryForm({ defaultType = "general", track, allowedTyp
                 style={{
                   background: i <= step ? accentColor : "transparent",
                   border: `1px solid ${i <= step ? accentColor : "rgba(255,255,255,0.15)"}`,
-                  color: i <= step ? "oklch(0.12 0.015 66)" : "rgba(255,255,255,0.3)",
+                  color: i <= step ? "#2B2823" : "rgba(255,255,255,0.3)",
                 }}
               >
                 {i < step ? (

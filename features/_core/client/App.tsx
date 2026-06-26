@@ -104,7 +104,7 @@ function RouteLoader() {
       role="status"
       aria-label="Loading page"
     >
-      <div className="w-8 h-8 border-2 border-[oklch(0.72_0.095_78)] border-t-transparent rounded-full animate-spin" />
+      <div className="w-8 h-8 border-2 border-[#9B4D19] border-t-transparent rounded-full animate-spin" />
     </div>
   );
 }

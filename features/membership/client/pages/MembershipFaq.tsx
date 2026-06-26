@@ -2,7 +2,7 @@ import { Link } from "wouter";
 import PublicLayout from "@features/public-pages/components/PublicLayout";
 import SEOHead from "@shared/components/SEOHead";
 
-const ACCENT = "oklch(0.58 0.065 145)";
+const ACCENT = "#6B7250";
 
 export default function MembershipFaq() {
   return (
@@ -17,7 +17,7 @@ export default function MembershipFaq() {
         {/* Hero */}
         <section className="relative hero-full flex items-end pb-24 overflow-hidden">
           <div className="absolute inset-0">
-            <div className="absolute inset-0 bg-[oklch(0.11_0.012_64)] flex items-center justify-center" aria-hidden="true">
+            <div className="absolute inset-0 bg-[#2B2823] flex items-center justify-center" aria-hidden="true">
               <span className="text-[10px] tracking-[0.18em] uppercase font-sans text-white/40 select-none pointer-events-none">
                 FAQ Hero Image
               </span>
@@ -42,7 +42,7 @@ export default function MembershipFaq() {
               <h2 className="font-serif font-light text-warm leading-tight mb-8" style={{ fontSize: "clamp(1.875rem,3.5vw,3rem)" }}>
                 Membership FAQ.
               </h2>
-              <p className="font-sans text-muted-brand leading-relaxed italic text-[oklch(0.45_0.012_70)]" style={{ fontSize: "0.9375rem" }}>
+              <p className="font-sans text-muted-brand leading-relaxed italic text-[#7A766F]" style={{ fontSize: "0.9375rem" }}>
                 [FAQ content — to be provided.]
               </p>
             </div>

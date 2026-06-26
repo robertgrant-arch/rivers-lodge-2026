@@ -128,7 +128,7 @@ export default function AvailabilityCalendar({
               className={`
                 relative aspect-square flex items-center justify-center text-xs font-sans transition-colors
                 ${isSelected
-                  ? "bg-[var(--gold)] text-[oklch(0.12_0.015_66)] font-medium"
+                  ? "bg-[var(--gold)] text-[#2B2823] font-medium"
                   : isBlocked
                   ? "bg-white/4 text-white/15 cursor-not-allowed"
                   : isPastDay

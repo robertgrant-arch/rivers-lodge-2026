@@ -92,14 +92,14 @@ export default function Lodging() {
       <section className="pt-32 pb-16 md:pt-40 md:pb-20 bg-background">
         <div className="max-w-[1440px] mx-auto px-5 lg:px-10">
           <div className="gold-rule" />
-          <p className="eyebrow text-[oklch(0.55_0.012_70)] mb-4">On-Site Lodging</p>
+          <p className="eyebrow text-[#908B82] mb-4">On-Site Lodging</p>
           <h1
-            className="font-serif font-light italic text-[oklch(0.94_0.008_78)] leading-tight mb-6"
+            className="font-serif font-light italic text-[#E0D3BD] leading-tight mb-6"
             style={{ fontSize: "clamp(2.5rem,5vw,4.5rem)" }}
           >
             Stay on the estate.<br />All weekend.
           </h1>
-          <p className="text-[oklch(0.60_0.015_72)] font-sans text-base max-w-xl leading-relaxed">
+          <p className="text-[#BABAAE] font-sans text-base max-w-xl leading-relaxed">
             Five lodging buildings sleep your entire wedding party on-site. From the 6,000 sq ft Lodge to the secluded Ohana House on its own 20-acre lake — everyone stays together.
           </p>
         </div>
@@ -110,7 +110,7 @@ export default function Lodging() {
         <section
           key={prop.slug}
           id={prop.slug}
-          className={`section ${i % 2 === 0 ? "bg-background" : "bg-[oklch(0.115_0.007_64)]"}`}
+          className={`section ${i % 2 === 0 ? "bg-background" : "bg-[#363330]"}`}
         >
           <div className="max-w-[1440px] mx-auto px-5 lg:px-10">
             <div className={`grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-start ${i % 2 !== 0 ? "lg:grid-flow-dense" : ""}`}>
@@ -167,7 +167,7 @@ export default function Lodging() {
       ))}
 
       {/* CTA */}
-      <section className="py-20 bg-[oklch(0.13_0.008_66)] text-center">
+      <section className="py-20 bg-[#2B2823] text-center">
         <div className="max-w-xl mx-auto px-6">
           <h2 className="font-serif text-3xl md:text-4xl text-white mb-5 italic font-light">
             Come and stay awhile.
@@ -175,7 +175,7 @@ export default function Lodging() {
           <p className="text-sm font-sans text-white/60 mb-8 leading-relaxed">
             Like the whole weekend.
           </p>
-          <Link href="/contact" className="inline-flex items-center justify-center px-10 py-4 bg-white text-[oklch(0.15_0.008_66)] text-xs tracking-[0.18em] uppercase font-sans font-medium hover:bg-white/90 transition-colors">
+          <Link href="/contact" className="inline-flex items-center justify-center px-10 py-4 bg-white text-[#2B2823] text-xs tracking-[0.18em] uppercase font-sans font-medium hover:bg-white/90 transition-colors">
             Book a Tour
           </Link>
         </div>

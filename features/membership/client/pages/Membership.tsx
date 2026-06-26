@@ -19,7 +19,7 @@ const LODGE   = "https://files.manuscdn.com/user_upload_by_module/session_file/3
 
 type MembershipTier = "Individual" | "Corporate" | "Not Sure Yet";
 
-const ACCENT = "oklch(0.58 0.065 145)";
+const ACCENT = "#6B7250";
 
 function useFadeUp(t = 0.12) {
   const ref = useRef<HTMLElement>(null);
@@ -307,13 +307,13 @@ export default function Membership() {
 
       {/* Active member shortcut banner */}
       {isActiveMember && (
-        <div className="bg-[oklch(0.13_0.007_64)] border-b border-[oklch(0.22_0.008_64)] px-5 lg:px-14 py-3 flex items-center justify-between gap-4">
-          <p className="text-[11px] tracking-[0.14em] uppercase font-sans text-[oklch(0.72_0.095_78)]">
+        <div className="bg-[#2B2823] border-b border-[#57544E] px-5 lg:px-14 py-3 flex items-center justify-between gap-4">
+          <p className="text-[11px] tracking-[0.14em] uppercase font-sans text-[#9B4D19]">
             You are an active member
           </p>
           <Link
             href="/portal"
-            className="text-[11px] tracking-[0.14em] uppercase font-sans font-medium border border-[oklch(0.72_0.095_78)] text-[oklch(0.72_0.095_78)] px-4 py-1.5 hover:bg-[oklch(0.72_0.095_78)] hover:text-[oklch(0.095_0.006_64)] transition-all duration-200 shrink-0"
+            className="text-[11px] tracking-[0.14em] uppercase font-sans font-medium border border-[#9B4D19] text-[#9B4D19] px-4 py-1.5 hover:bg-[#9B4D19] hover:text-[#2B2823] transition-all duration-200 shrink-0"
           >
             Go to Member Portal →
           </Link>
