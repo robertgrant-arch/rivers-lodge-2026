@@ -65,7 +65,7 @@ export const VENUES: LodgingVenue[] = [
     slug: "the-annex",
     title: "The Annex",
     teaser: "Four bedrooms, modern farmhouse design — steps from Rivers Barn.",
-    heroImg: "/img/annex-hero.jpg",
+    heroImg: "", /* TODO: upload annex-hero.jpg */
     heroAlt: "The Annex at Rivers Lodge",
     group: "stay",
     bedrooms: 4,
@@ -110,7 +110,7 @@ export const VENUES: LodgingVenue[] = [
     slug: "the-farmhouse",
     title: "The Farmhouse",
     teaser: "Classic Kansas farmhouse — comfortable, private, and full of character.",
-    heroImg: "/img/farmhouse-hero.jpg",
+    heroImg: "/brand/farmhouse%20interior%201.jpg",
     heroAlt: "The Farmhouse at Rivers Lodge",
     group: "stay",
     description: [
@@ -130,7 +130,7 @@ export const VENUES: LodgingVenue[] = [
     slug: "big-tine-house",
     title: "Big Tine House",
     teaser: "A spacious lodge-style house on the estate — ideal for large groups.",
-    heroImg: "/img/big-tine-house-hero.jpg",
+    heroImg: "", /* TODO: upload big-tine-house-hero.jpg */
     heroAlt: "Big Tine House at Rivers Lodge",
     group: "stay",
     description: [
@@ -149,7 +149,7 @@ export const VENUES: LodgingVenue[] = [
     slug: "trego-road",
     title: "Trego Road",
     teaser: "A secluded retreat at the property boundary — built for solitude.",
-    heroImg: "/img/trego-road-hero.jpg",
+    heroImg: "", /* TODO: upload trego-road-hero.jpg */
     heroAlt: "Trego Road property at Rivers Lodge",
     group: "stay",
     description: [
@@ -190,7 +190,7 @@ export const VENUES: LodgingVenue[] = [
     slug: "the-green-drake",
     title: "The Green Drake",
     teaser: "An intimate gathering space at the water's edge.",
-    heroImg: "/img/green-drake-hero.jpg",
+    heroImg: "", /* TODO: upload green-drake-hero.jpg */
     heroAlt: "The Green Drake at Rivers Lodge",
     group: "gather",
     capacity: "40 guests",
