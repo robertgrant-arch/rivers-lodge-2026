@@ -127,7 +127,7 @@ export const PURSUITS: Pursuit[] = [
     slug: "fishing",
     title: "Fishing",
     teaser: "Five private fisheries — world-class bass, walleye, and more.",
-    heroImg: "/img/fishing-hero.jpg",
+    heroImg: "/img/Pike.jpg",
     heroAlt: "Fishing on the Marais des Cygnes at Rivers Lodge",
     description: [
       "The Rivers Lodge fishing program is tightly managed and intentionally exclusive. Private access to the Marais des Cygnes river channel, two stocked lakes, and a series of backwater sloughs produces fishing that is rarely found anywhere in the Midwest — let alone one hour from Kansas City.",
@@ -135,8 +135,8 @@ export const PURSUITS: Pursuit[] = [
       "Guided trips include a knowledgeable river guide, all tackle and bait, and — for full-day bookings — a shore lunch prepared from the morning's catch. Kayak and wade-fishing access is available to members throughout the season without a guide.",
     ],
     galleryImgs: [
-      { src: "/img/Ohana%20Aerial.jpg", alt: "River and lake fisheries aerial view" },
-      { src: "/img/Ohana%20Firepit.jpg", alt: "Evening on the water at Rivers Lodge" },
+      { src: "/img/fishing%202.JPG", alt: "Trophy catch from the private fisheries" },
+      { src: "/img/Fishing%20net.jpg", alt: "Netting the catch on the water at Rivers Lodge" },
     ],
     season: [
       { label: "Bass",          value: "Apr – Oct (year-round for members)" },
