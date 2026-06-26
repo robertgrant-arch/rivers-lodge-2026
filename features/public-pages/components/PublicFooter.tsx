@@ -55,91 +55,88 @@ export default function PublicFooter() {
             </div>
           </div>
 
-          {/* ── Lane 1: Explore Membership ────────────────────────────── */}
+          {/* ── Lane 1: Events ────────────────────────────────────────── */}
+          <div>
+            <h4 className="text-[10px] tracking-[0.22em] uppercase font-sans font-medium text-[oklch(0.94_0.008_78)] mb-5">
+              Events
+            </h4>
+            <nav className="flex flex-col gap-3">
+              <Link href="/weddings" className="text-[12px] font-sans hover:text-[oklch(0.70_0.060_50)] transition-colors">
+                Weddings
+              </Link>
+              <Link href="/corporate" className="text-[12px] font-sans hover:text-[oklch(0.70_0.060_50)] transition-colors">
+                Corporate Events
+              </Link>
+              <Link href="/food-and-wine" className="text-[12px] font-sans hover:text-[oklch(0.70_0.060_50)] transition-colors">
+                Food &amp; Wine
+              </Link>
+              <Link href="/hunt" className="text-[12px] font-sans hover:text-[oklch(0.70_0.060_50)] transition-colors">
+                Hunt
+              </Link>
+              <Link href="/fish" className="text-[12px] font-sans hover:text-[oklch(0.70_0.060_50)] transition-colors">
+                Fish
+              </Link>
+            </nav>
+          </div>
+
+          {/* ── Lane 2: Lodging ───────────────────────────────────────── */}
+          <div>
+            <h4 className="text-[10px] tracking-[0.22em] uppercase font-sans font-medium text-[oklch(0.94_0.008_78)] mb-5">
+              Lodging
+            </h4>
+            <nav className="flex flex-col gap-3">
+              <Link href="/lodging#the-lodge" className="text-[12px] font-sans hover:text-[oklch(0.70_0.060_50)] transition-colors">
+                The Lodge
+              </Link>
+              <Link href="/lodging#riverhouse" className="text-[12px] font-sans hover:text-[oklch(0.70_0.060_50)] transition-colors">
+                Riverhouse Suites
+              </Link>
+              <Link href="/lodging#the-barn" className="text-[12px] font-sans hover:text-[oklch(0.70_0.060_50)] transition-colors">
+                The Barn
+              </Link>
+            </nav>
+          </div>
+
+          {/* ── Lane 3: Explore Membership ────────────────────────────── */}
           <div>
             <h4 className="text-[10px] tracking-[0.22em] uppercase font-sans font-medium text-[oklch(0.94_0.008_78)] mb-5">
               Explore Membership
             </h4>
             <nav className="flex flex-col gap-3">
               <Link href="/membership" className="text-[12px] font-sans hover:text-[oklch(0.58_0.065_145)] transition-colors">
-                Membership Overview
+                Membership Tiers
               </Link>
-              <Link href="/membership#apply" className="text-[12px] font-sans hover:text-[oklch(0.58_0.065_145)] transition-colors">
-                Apply
+              <Link href="/membership/benefits" className="text-[12px] font-sans hover:text-[oklch(0.58_0.065_145)] transition-colors">
+                Member Benefits
               </Link>
-              <Link href="/estate" className="text-[12px] font-sans hover:text-[oklch(0.58_0.065_145)] transition-colors">
-                The Estate
+              <Link href="/membership/faq" className="text-[12px] font-sans hover:text-[oklch(0.58_0.065_145)] transition-colors">
+                FAQ
               </Link>
             </nav>
           </div>
 
-          {/* ── Lane 2: Outdoor Pursuits ──────────────────────────────── */}
+          {/* ── Lane 4: About ─────────────────────────────────────────── */}
           <div>
             <h4 className="text-[10px] tracking-[0.22em] uppercase font-sans font-medium text-[oklch(0.94_0.008_78)] mb-5">
-              Outdoor Pursuits
+              About
             </h4>
             <nav className="flex flex-col gap-3">
-              <Link href="/hunt" className="text-[12px] font-sans hover:text-[oklch(0.58_0.065_145)] transition-colors">
-                Hunt
+              <Link href="/about" className="text-[12px] font-sans hover:text-[oklch(0.72_0.095_78)] transition-colors">
+                Our Story
               </Link>
-              <Link href="/fish" className="text-[12px] font-sans hover:text-[oklch(0.58_0.065_145)] transition-colors">
-                Fish
+              <Link href="/about/team" className="text-[12px] font-sans hover:text-[oklch(0.72_0.095_78)] transition-colors">
+                Meet the Team
+              </Link>
+              <Link href="/about/property" className="text-[12px] font-sans hover:text-[oklch(0.72_0.095_78)] transition-colors">
+                The Property
+              </Link>
+              <Link href="/contact" className="text-[12px] font-sans hover:text-[oklch(0.72_0.095_78)] transition-colors">
+                Contact
               </Link>
             </nav>
           </div>
 
-          {/* ── Lane 3: Food & Wine ───────────────────────────────────── */}
-          <div>
-            <h4 className="text-[10px] tracking-[0.22em] uppercase font-sans font-medium text-[oklch(0.94_0.008_78)] mb-5">
-              Food &amp; Wine
-            </h4>
-            <nav className="flex flex-col gap-3">
-              <Link href="/food-and-wine" className="text-[12px] font-sans hover:text-[oklch(0.72_0.095_78)] transition-colors">
-                Food &amp; Wine
-              </Link>
-              <Link href="/contact?type=dining" className="text-[12px] font-sans hover:text-[oklch(0.72_0.095_78)] transition-colors">
-                Dining Inquiry
-              </Link>
-            </nav>
-          </div>
-
-          {/* ── Lane 4: Weddings ─────────────────────────────────────── */}
-          <div>
-            <h4 className="text-[10px] tracking-[0.22em] uppercase font-sans font-medium text-[oklch(0.94_0.008_78)] mb-5">
-              Weddings
-            </h4>
-            <nav className="flex flex-col gap-3">
-              <Link href="/weddings" className="text-[12px] font-sans hover:text-[oklch(0.70_0.060_50)] transition-colors">
-                Weddings
-              </Link>
-              <Link href="/venues" className="text-[12px] font-sans hover:text-[oklch(0.70_0.060_50)] transition-colors">
-                Venue Spaces
-              </Link>
-              <Link href="/lodging" className="text-[12px] font-sans hover:text-[oklch(0.70_0.060_50)] transition-colors">
-                Lodging
-              </Link>
-            </nav>
-          </div>
-
-          {/* ── Lane 5: Corporate Events ─────────────────────────────── */}
-          <div>
-            <h4 className="text-[10px] tracking-[0.22em] uppercase font-sans font-medium text-[oklch(0.94_0.008_78)] mb-5">
-              Corporate Events
-            </h4>
-            <nav className="flex flex-col gap-3">
-              <Link href="/corporate" className="text-[12px] font-sans hover:text-[oklch(0.70_0.060_50)] transition-colors">
-                Corporate Outings
-              </Link>
-              <Link href="/corporate" className="text-[12px] font-sans hover:text-[oklch(0.70_0.060_50)] transition-colors">
-                Retreats
-              </Link>
-              <Link href="/contact?type=corporate" className="text-[12px] font-sans hover:text-[oklch(0.70_0.060_50)] transition-colors">
-                Plan a Meeting
-              </Link>
-            </nav>
-          </div>
-
-          {/* ── Lane 6: Gallery ──────────────────────────────────────── */}
+          {/* ── Lane 5: Gallery ──────────────────────────────────────── */}
           <div>
             <h4 className="text-[10px] tracking-[0.22em] uppercase font-sans font-medium text-[oklch(0.94_0.008_78)] mb-5">
               Gallery
@@ -151,16 +148,12 @@ export default function PublicFooter() {
             </nav>
           </div>
 
-          {/* ── Lane 7: Contact ──────────────────────────────────────── */}
+          {/* ── Lane 6: Member Access ─────────────────────────────────── */}
           <div>
             <h4 className="text-[10px] tracking-[0.22em] uppercase font-sans font-medium text-[oklch(0.94_0.008_78)] mb-5">
-              Contact
+              Member Access
             </h4>
             <nav className="flex flex-col gap-3">
-              <Link href="/contact" className="text-[12px] font-sans hover:text-[oklch(0.94_0.008_78)] transition-colors">
-                Contact Us
-              </Link>
-              {/* Member Login requires a full-page navigation to /api/oauth/start */}
               <a href={getLoginUrl()} className="text-[12px] font-sans hover:text-[oklch(0.94_0.008_78)] transition-colors">
                 Member Login
               </a>

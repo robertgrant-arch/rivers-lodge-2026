@@ -46,6 +46,13 @@ const FoodAndWine = lazy(() => import("@features/food-and-wine/client/pages/Food
 
 // Membership pages
 const Membership = lazy(() => import("@features/membership/client/pages/Membership"));
+const MembershipBenefits = lazy(() => import("@features/membership/client/pages/MembershipBenefits"));
+const MembershipFaq = lazy(() => import("@features/membership/client/pages/MembershipFaq"));
+
+// About pages
+const About = lazy(() => import("@features/about/client/pages/About"));
+const AboutTeam = lazy(() => import("@features/about/client/pages/AboutTeam"));
+const AboutProperty = lazy(() => import("@features/about/client/pages/AboutProperty"));
 
 // Inquiries
 const InquiryConfirmed = lazy(() => import("@features/inquiries/client/pages/InquiryConfirmed"));
@@ -124,6 +131,11 @@ function Router() {
         <Route path="/gallery" component={Gallery} />
         <Route path="/contact" component={Contact} />
         <Route path="/membership" component={Membership} />
+        <Route path="/membership/benefits" component={MembershipBenefits} />
+        <Route path="/membership/faq" component={MembershipFaq} />
+        <Route path="/about" component={About} />
+        <Route path="/about/team" component={AboutTeam} />
+        <Route path="/about/property" component={AboutProperty} />
         <Route path="/hunt" component={Hunt} />
         <Route path="/fish" component={Fish} />
 

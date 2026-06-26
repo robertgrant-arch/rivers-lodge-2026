@@ -67,9 +67,17 @@ export default function Fish() {
           <p className="font-sans text-white/65 max-w-lg leading-relaxed mb-10" style={{ fontSize: "0.9375rem" }}>
             The Marais des Cygnes, two private lakes, and a network of river sloughs — all within the estate boundary, available exclusively to members.
           </p>
-          <Link href="/membership" className="btn-outline" style={{ borderColor: "oklch(0.58 0.065 145)", color: "oklch(0.58 0.065 145)" }}>
-            Explore Membership
-          </Link>
+          <div className="flex flex-col sm:flex-row gap-4">
+            <Link href="/membership" className="btn-outline" style={{ borderColor: "oklch(0.58 0.065 145)", color: "oklch(0.58 0.065 145)" }}>
+              Explore Membership
+            </Link>
+            <Link href="/contact" className="btn-ghost">
+              Book a Trip
+            </Link>
+          </div>
+          <p className="font-sans text-white/50 mt-5 max-w-md leading-relaxed" style={{ fontSize: "0.8125rem" }}>
+            Open to the public — members receive priority booking and preferred rates.
+          </p>
         </div>
       </section>
 
