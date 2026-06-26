@@ -10,7 +10,7 @@ import StickyInquiryCTA from "@/components/StickyInquiryCTA";
 const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined;
 
 
-const HERO      = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/NuVfykZEURKLacpv.jpg";
+const HERO      = "/img/wedding%20hero.JPG";
 const CEREMONY  = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/qYCdMEPFXPqLETpW.jpg";
 const RECEPTION = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/gWfYLmNXrOoFKvTt.jpg";
 const BARN_INT  = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/SSdcPuhkHXDvzhtk.jpg";
@@ -237,8 +237,11 @@ export default function Weddings() {
       {/* Hero */}
       <section className="relative hero-full flex items-end pb-24 overflow-hidden">
         <div className="absolute inset-0">
-          <img src={HERO} alt="Wedding at Rivers Lodge" className="w-full h-full object-cover object-top" fetchPriority="high" />
-          <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, transparent 0%, oklch(0 0 0/0.10) 40%, oklch(0 0 0/0.78) 100%)" }} />
+          <div className="absolute inset-0 bg-[oklch(0.13_0.008_50)] flex items-center justify-center" aria-hidden="true">
+            <span className="text-[10px] tracking-[0.18em] uppercase font-sans text-white/40 select-none pointer-events-none">Wedding Hero Image</span>
+          </div>
+          <img src={HERO} alt="Wedding at Rivers Lodge" className="absolute inset-0 w-full h-full object-cover object-top" fetchPriority="high" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
+          <div className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(to bottom, transparent 0%, oklch(0 0 0/0.10) 40%, oklch(0 0 0/0.78) 100%)" }} />
         </div>
         <div className="relative z-10 max-w-[1440px] mx-auto px-5 lg:px-14 w-full">
           <div style={{ height: "1px", width: "2rem", backgroundColor: "oklch(0.70 0.060 50)", marginBottom: "1.25rem" }} />
@@ -276,14 +279,23 @@ export default function Weddings() {
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
-              <div className="col-span-2 aspect-[16/9] overflow-hidden">
-                <img src={CEREMONY} alt="Outdoor ceremony" className="w-full h-full object-cover" loading="lazy" />
+              <div className="col-span-2 aspect-[16/9] overflow-hidden relative">
+                <div className="absolute inset-0 bg-[oklch(0.13_0.008_50)] flex items-center justify-center" aria-hidden="true">
+                  <span className="text-[10px] tracking-[0.18em] uppercase font-sans text-white/40 select-none pointer-events-none">Wedding photo</span>
+                </div>
+                <img src="/img/wedding%20photo%201.jpg" alt="Outdoor wedding ceremony" className="absolute inset-0 w-full h-full object-cover" loading="lazy" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
               </div>
-              <div className="aspect-square overflow-hidden">
-                <img src={RECEPTION} alt="Reception" className="w-full h-full object-cover" loading="lazy" />
+              <div className="aspect-square overflow-hidden relative">
+                <div className="absolute inset-0 bg-[oklch(0.13_0.008_50)] flex items-center justify-center" aria-hidden="true">
+                  <span className="text-[10px] tracking-[0.18em] uppercase font-sans text-white/40 select-none pointer-events-none">Wedding photo</span>
+                </div>
+                <img src="/img/wedding%204.jpg" alt="Wedding reception" className="absolute inset-0 w-full h-full object-cover" loading="lazy" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
               </div>
-              <div className="aspect-square overflow-hidden">
-                <img src={AERIAL} alt="Aerial estate view" className="w-full h-full object-cover" loading="lazy" />
+              <div className="aspect-square overflow-hidden relative">
+                <div className="absolute inset-0 bg-[oklch(0.13_0.008_50)] flex items-center justify-center" aria-hidden="true">
+                  <span className="text-[10px] tracking-[0.18em] uppercase font-sans text-white/40 select-none pointer-events-none">Wedding photo</span>
+                </div>
+                <img src="/img/Wedding%205.jpg" alt="Wedding at Rivers Lodge" className="absolute inset-0 w-full h-full object-cover" loading="lazy" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
               </div>
             </div>
           </div>
