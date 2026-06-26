@@ -5,7 +5,7 @@ export default function PublicFooter() {
   return (
     <footer className="bg-[#201E1C] text-[#908B82]">
       {/* Gold rule at top */}
-      <div className="h-px bg-[#9B4D19/20]" />
+      <div className="h-px bg-[#9B4D19]/20" />
 
       <div className="max-w-[1440px] mx-auto px-5 lg:px-10 pt-16 pb-10 md:pt-20 md:pb-12">
         <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-8 md:gap-6 pb-14 md:pb-16 border-b border-[oklch(1_0_0/0.06)]">
@@ -55,31 +55,31 @@ export default function PublicFooter() {
             </div>
           </div>
 
-          {/* ── Lane 1: Weddings & Events ─────────────────────────────── */}
+          {/* ── Lane 1: Events ───────────────────────────────────────── */}
           <div>
             <h4 className="text-[10px] tracking-[0.22em] uppercase font-sans font-medium text-[#E0D3BD] mb-5">
-              Weddings &amp; Events
+              Events
             </h4>
             <nav className="flex flex-col gap-3">
               <Link href="/weddings" className="text-[12px] font-sans hover:text-[#9B4D19] transition-colors">
                 Weddings
               </Link>
-              <Link href="/corporate" className="text-[12px] font-sans hover:text-[#9B4D19] transition-colors">
+              <Link href="/corporate-events" className="text-[12px] font-sans hover:text-[#9B4D19] transition-colors">
                 Corporate Events
-              </Link>
-              <Link href="/outdoor-activities" className="text-[12px] font-sans hover:text-[#9B4D19] transition-colors">
-                Outdoor Pursuits
               </Link>
               <Link href="/food-and-wine" className="text-[12px] font-sans hover:text-[#9B4D19] transition-colors">
                 Food &amp; Wine
               </Link>
+              <Link href="/outdoor-activities" className="text-[12px] font-sans hover:text-[#9B4D19] transition-colors">
+                Outdoor Activities
+              </Link>
             </nav>
           </div>
 
-          {/* ── Lane 2: Lodging & Venues ──────────────────────────────── */}
+          {/* ── Lane 2: Lodging ──────────────────────────────────────── */}
           <div className="col-span-2 md:col-span-1">
             <h4 className="text-[10px] tracking-[0.22em] uppercase font-sans font-medium text-[#E0D3BD] mb-5">
-              Lodging &amp; Venues
+              Lodging
             </h4>
             <div className="grid grid-cols-2 gap-x-4 gap-y-3">
               <Link href="/lodging/the-lodge" className="text-[12px] font-sans hover:text-[#9B4D19] transition-colors">
@@ -100,11 +100,11 @@ export default function PublicFooter() {
               <Link href="/lodging/the-clubhouse" className="text-[12px] font-sans hover:text-[#9B4D19] transition-colors">
                 The Clubhouse
               </Link>
-              <Link href="/lodging/the-ohana" className="text-[12px] font-sans hover:text-[#9B4D19] transition-colors">
-                The Ohana
-              </Link>
               <Link href="/lodging/the-farmhouse" className="text-[12px] font-sans hover:text-[#9B4D19] transition-colors">
-                The Farmhouse
+                Farmhouse
+              </Link>
+              <Link href="/lodging/big-tine-house" className="text-[12px] font-sans hover:text-[#9B4D19] transition-colors">
+                Big Tine House
               </Link>
               <Link href="/lodging/trego-road" className="text-[12px] font-sans hover:text-[#9B4D19] transition-colors">
                 Trego Road
@@ -119,56 +119,32 @@ export default function PublicFooter() {
             </h4>
             <nav className="flex flex-col gap-3">
               <Link href="/membership" className="text-[12px] font-sans hover:text-[#6B7250] transition-colors">
-                Membership Tiers
+                Membership Overview
               </Link>
               <Link href="/membership/benefits" className="text-[12px] font-sans hover:text-[#6B7250] transition-colors">
-                Member Benefits
+                Benefits / Why Join
               </Link>
               <Link href="/membership/faq" className="text-[12px] font-sans hover:text-[#6B7250] transition-colors">
                 FAQ
               </Link>
-            </nav>
-          </div>
-
-          {/* ── Lane 4: About ─────────────────────────────────────────── */}
-          <div>
-            <h4 className="text-[10px] tracking-[0.22em] uppercase font-sans font-medium text-[#E0D3BD] mb-5">
-              About
-            </h4>
-            <nav className="flex flex-col gap-3">
-              <Link href="/about" className="text-[12px] font-sans hover:text-[#9B4D19] transition-colors">
-                Our Story
-              </Link>
-              <Link href="/about/team" className="text-[12px] font-sans hover:text-[#9B4D19] transition-colors">
-                Meet the Team
-              </Link>
-              <Link href="/about/property" className="text-[12px] font-sans hover:text-[#9B4D19] transition-colors">
-                The Property
-              </Link>
-              <Link href="/contact" className="text-[12px] font-sans hover:text-[#9B4D19] transition-colors">
-                Contact
+              <Link href="/membership/events" className="text-[12px] font-sans hover:text-[#6B7250] transition-colors">
+                Member Events
               </Link>
             </nav>
           </div>
 
-          {/* ── Lane 5: Gallery ──────────────────────────────────────── */}
-          <div>
+          {/* ── Lane 4: Utility ──────────────────────────────────────── */}
+          <div className="col-span-2 md:col-span-1">
             <h4 className="text-[10px] tracking-[0.22em] uppercase font-sans font-medium text-[#E0D3BD] mb-5">
-              Gallery
+              Explore
             </h4>
             <nav className="flex flex-col gap-3">
               <Link href="/gallery" className="text-[12px] font-sans hover:text-[#E0D3BD] transition-colors">
-                View Gallery
+                Gallery
               </Link>
-            </nav>
-          </div>
-
-          {/* ── Lane 6: Member Access ─────────────────────────────────── */}
-          <div>
-            <h4 className="text-[10px] tracking-[0.22em] uppercase font-sans font-medium text-[#E0D3BD] mb-5">
-              Member Access
-            </h4>
-            <nav className="flex flex-col gap-3">
+              <Link href="/contact" className="text-[12px] font-sans hover:text-[#E0D3BD] transition-colors">
+                Contact
+              </Link>
               <a href={getLoginUrl()} className="text-[12px] font-sans hover:text-[#E0D3BD] transition-colors">
                 Member Login
               </a>

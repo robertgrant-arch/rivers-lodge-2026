@@ -127,6 +127,25 @@ export const VENUES: LodgingVenue[] = [
     ],
   },
   {
+    slug: "big-tine-house",
+    title: "Big Tine House",
+    teaser: "A spacious lodge-style house on the estate — ideal for large groups.",
+    heroImg: "/img/big-tine-house-hero.jpg",
+    heroAlt: "Big Tine House at Rivers Lodge",
+    group: "stay",
+    description: [
+      "Big Tine House is a spacious lodge-style accommodation on the Rivers Lodge estate, designed for larger groups who want the full private-estate experience. Comfortable communal spaces, multiple bedrooms, and easy access to the property's hunting and fishing grounds make it a natural choice for member retreats and large family gatherings.",
+      "Contact us for current configuration, capacity details, and availability.",
+    ],
+    features: [
+      "Lodge-style layout",
+      "Large group capacity",
+      "Estate grounds access",
+      "Hunting & fishing proximity",
+      "Available for member retreats",
+    ],
+  },
+  {
     slug: "trego-road",
     title: "Trego Road",
     teaser: "A secluded retreat at the property boundary — built for solitude.",
