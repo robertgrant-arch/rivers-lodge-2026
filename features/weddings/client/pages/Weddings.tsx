@@ -40,7 +40,7 @@ const venues = [
   { name: "Riverhouse Suites", desc: "Four boutique suites on the river bank. Private porches, premium finishes, and unobstructed water views for the bridal party.", img: INTERIOR },
 ];
 
-const ACCENT = "oklch(0.70 0.060 50)";
+const ACCENT = "#9B4D19";
 
 function WeddingInquiryForm() {
   const turnstileRef = useRef<TurnstileInstance>(null);
@@ -232,19 +232,19 @@ export default function Weddings() {
   url="/weddings"
   structuredData={structuredData.weddingVenue()}
 />
-      <div style={{ "--track-accent": "oklch(0.70 0.060 50)" } as React.CSSProperties}>
+      <div style={{ "--track-accent": "#9B4D19" } as React.CSSProperties}>
 
       {/* Hero */}
       <section className="relative hero-full flex items-end pb-24 overflow-hidden">
         <div className="absolute inset-0">
-          <div className="absolute inset-0 bg-[oklch(0.13_0.008_50)] flex items-center justify-center" aria-hidden="true">
+          <div className="absolute inset-0 bg-[#363330] flex items-center justify-center" aria-hidden="true">
             <span className="text-[10px] tracking-[0.18em] uppercase font-sans text-white/40 select-none pointer-events-none">Wedding Hero Image</span>
           </div>
           <img src={HERO} alt="Wedding at Rivers Lodge" className="absolute inset-0 w-full h-full object-cover object-top" fetchPriority="high" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
           <div className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(to bottom, transparent 0%, oklch(0 0 0/0.10) 40%, oklch(0 0 0/0.78) 100%)" }} />
         </div>
         <div className="relative z-10 max-w-[1440px] mx-auto px-5 lg:px-14 w-full">
-          <div style={{ height: "1px", width: "2rem", backgroundColor: "oklch(0.70 0.060 50)", marginBottom: "1.25rem" }} />
+          <div style={{ height: "1px", width: "2rem", backgroundColor: "#9B4D19", marginBottom: "1.25rem" }} />
           <p className="eyebrow text-white/50 mb-4">Weddings</p>
           <h1 className="font-serif font-light text-white leading-[0.92] mb-6" style={{ fontSize: "clamp(2.75rem,6.5vw,5.5rem)" }}>
             Your wedding weekend.
@@ -254,7 +254,7 @@ export default function Weddings() {
             From intimate ceremonies on the River Lawn to grand receptions in the Rivers Barn — every wedding at the Lodge is exclusively yours. No other groups, no shared access.
           </p>
           <div className="flex flex-col sm:flex-row gap-4">
-            <a href="#inquire" className="btn-primary" style={{ backgroundColor: ACCENT, borderColor: ACCENT, color: "oklch(0.10 0.005 60)" }}>
+            <a href="#inquire" className="btn-primary" style={{ backgroundColor: ACCENT, borderColor: ACCENT, color: "#2B2823" }}>
               Begin Wedding Inquiry
             </a>
             <Link href="/lodging" className="btn-ghost">View Spaces &amp; Lodging</Link>
@@ -267,7 +267,7 @@ export default function Weddings() {
         <div className="max-w-[1440px] mx-auto px-5 lg:px-14">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-28 items-center">
             <div>
-              <div style={{ height: "1px", width: "2rem", backgroundColor: "oklch(0.70 0.060 50)", marginBottom: "1.25rem" }} />
+              <div style={{ height: "1px", width: "2rem", backgroundColor: "#9B4D19", marginBottom: "1.25rem" }} />
               <p className="eyebrow text-muted-brand mb-4">The Experience</p>
               <h2 className="font-serif font-light text-warm leading-tight mb-8" style={{ fontSize: "clamp(1.875rem,3.5vw,3rem)" }}>
                 Not a venue.
@@ -280,19 +280,19 @@ export default function Weddings() {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="col-span-2 aspect-[16/9] overflow-hidden relative">
-                <div className="absolute inset-0 bg-[oklch(0.13_0.008_50)] flex items-center justify-center" aria-hidden="true">
+                <div className="absolute inset-0 bg-[#363330] flex items-center justify-center" aria-hidden="true">
                   <span className="text-[10px] tracking-[0.18em] uppercase font-sans text-white/40 select-none pointer-events-none">Wedding photo</span>
                 </div>
                 <img src="/img/wedding%20photo%201.jpg" alt="Outdoor wedding ceremony" className="absolute inset-0 w-full h-full object-cover" loading="lazy" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
               </div>
               <div className="aspect-square overflow-hidden relative">
-                <div className="absolute inset-0 bg-[oklch(0.13_0.008_50)] flex items-center justify-center" aria-hidden="true">
+                <div className="absolute inset-0 bg-[#363330] flex items-center justify-center" aria-hidden="true">
                   <span className="text-[10px] tracking-[0.18em] uppercase font-sans text-white/40 select-none pointer-events-none">Wedding photo</span>
                 </div>
                 <img src="/img/wedding%204.jpg" alt="Wedding reception" className="absolute inset-0 w-full h-full object-cover" loading="lazy" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
               </div>
               <div className="aspect-square overflow-hidden relative">
-                <div className="absolute inset-0 bg-[oklch(0.13_0.008_50)] flex items-center justify-center" aria-hidden="true">
+                <div className="absolute inset-0 bg-[#363330] flex items-center justify-center" aria-hidden="true">
                   <span className="text-[10px] tracking-[0.18em] uppercase font-sans text-white/40 select-none pointer-events-none">Wedding photo</span>
                 </div>
                 <img src="/img/Wedding%205.jpg" alt="Wedding at Rivers Lodge" className="absolute inset-0 w-full h-full object-cover" loading="lazy" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
@@ -306,7 +306,7 @@ export default function Weddings() {
       <section className="section bg-surface">
         <div className="max-w-[1440px] mx-auto px-5 lg:px-14">
           <div className="max-w-3xl">
-            <blockquote className="pull-quote" style={{ borderLeftColor: "oklch(0.70 0.060 50)" }}>
+            <blockquote className="pull-quote" style={{ borderLeftColor: "#9B4D19" }}>
               "Every wedding at Rivers Lodge is exclusive. One couple, one weekend, one estate — entirely theirs."
             </blockquote>
           </div>
@@ -317,7 +317,7 @@ export default function Weddings() {
       <section ref={venuesRef as React.RefObject<HTMLDivElement>} className="fade-up section bg-background">
         <div className="max-w-[1440px] mx-auto px-5 lg:px-14">
           <div className="mb-14">
-            <div style={{ height: "1px", width: "2rem", backgroundColor: "oklch(0.70 0.060 50)", marginBottom: "1.25rem" }} />
+            <div style={{ height: "1px", width: "2rem", backgroundColor: "#9B4D19", marginBottom: "1.25rem" }} />
             <p className="eyebrow text-muted-brand mb-4">Ceremony &amp; Reception Spaces</p>
             <h2 className="font-serif font-light text-warm leading-tight" style={{ fontSize: "clamp(1.75rem,3vw,2.5rem)" }}>
               Every space is yours.
@@ -330,7 +330,7 @@ export default function Weddings() {
                   <img src={v.img} alt={v.name} className="w-full h-full object-cover" loading="lazy" />
                 </div>
                 <div className={`p-10 lg:p-14 flex flex-col justify-center ${i % 2 === 1 ? "md:[direction:ltr]" : ""}`}>
-                  <div style={{ height: "1px", width: "1.5rem", backgroundColor: "oklch(0.70 0.060 50)", marginBottom: "1rem" }} />
+                  <div style={{ height: "1px", width: "1.5rem", backgroundColor: "#9B4D19", marginBottom: "1rem" }} />
                   <h3 className="font-serif text-warm text-2xl mb-4">{v.name}</h3>
                   <p className="font-sans text-muted-brand text-sm leading-relaxed">{v.desc}</p>
                 </div>
@@ -345,12 +345,12 @@ export default function Weddings() {
         <section className="section bg-surface">
           <div className="max-w-[1440px] mx-auto px-5 lg:px-14">
             <div className="mb-14">
-              <div style={{ height: "1px", width: "2rem", backgroundColor: "oklch(0.70 0.060 50)", marginBottom: "1.25rem" }} />
+              <div style={{ height: "1px", width: "2rem", backgroundColor: "#9B4D19", marginBottom: "1.25rem" }} />
               <p className="eyebrow text-muted-brand">From Our Couples</p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-px bg-border">
               {testimonials.slice(0, 3).map((t: any) => (
-                <div key={t.id} className="testimonial-card bg-surface p-8 flex flex-col" style={{ borderTopColor: "oklch(0.70 0.060 50)" }}>
+                <div key={t.id} className="testimonial-card bg-surface p-8 flex flex-col" style={{ borderTopColor: "#9B4D19" }}>
                   <blockquote className="font-serif italic text-warm text-lg leading-relaxed flex-1 mb-6">"{t.quote}"</blockquote>
                   <div className="border-t border-border pt-4">
                     <p className="text-warm font-sans text-sm font-medium">{t.authorName}</p>

@@ -3,9 +3,9 @@ import { getLoginUrl } from "@features/auth/public";
 
 export default function PublicFooter() {
   return (
-    <footer className="bg-[oklch(0.075_0.005_64)] text-[oklch(0.55_0.012_70)]">
+    <footer className="bg-[#201E1C] text-[#908B82]">
       {/* Gold rule at top */}
-      <div className="h-px bg-[oklch(0.72_0.095_78)/20]" />
+      <div className="h-px bg-[#9B4D19/20]" />
 
       <div className="max-w-[1440px] mx-auto px-5 lg:px-10 pt-16 pb-10 md:pt-20 md:pb-12">
         <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-8 md:gap-6 pb-14 md:pb-16 border-b border-[oklch(1_0_0/0.06)]">
@@ -13,7 +13,7 @@ export default function PublicFooter() {
           {/* ── Brand ──────────────────────────────────────────────────── */}
           <div className="col-span-2 md:col-span-1">
             <div className="mb-5">
-              <div className="font-serif text-[1.375rem] text-[oklch(0.94_0.008_78)] leading-tight tracking-wide">
+              <div className="font-serif text-[1.375rem] text-[#E0D3BD] leading-tight tracking-wide">
                 Rivers Lodge
               </div>
               <div className="text-[9px] tracking-[0.24em] uppercase font-sans font-light opacity-50 mt-1">
@@ -33,7 +33,7 @@ export default function PublicFooter() {
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Instagram"
-                className="text-[oklch(0.55_0.012_70)] hover:text-[oklch(0.72_0.095_78)] transition-colors"
+                className="text-[#908B82] hover:text-[#9B4D19] transition-colors"
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                   <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
@@ -46,7 +46,7 @@ export default function PublicFooter() {
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Facebook"
-                className="text-[oklch(0.55_0.012_70)] hover:text-[oklch(0.72_0.095_78)] transition-colors"
+                className="text-[#908B82] hover:text-[#9B4D19] transition-colors"
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>
@@ -57,23 +57,23 @@ export default function PublicFooter() {
 
           {/* ── Lane 1: Events ────────────────────────────────────────── */}
           <div>
-            <h4 className="text-[10px] tracking-[0.22em] uppercase font-sans font-medium text-[oklch(0.94_0.008_78)] mb-5">
+            <h4 className="text-[10px] tracking-[0.22em] uppercase font-sans font-medium text-[#E0D3BD] mb-5">
               Events
             </h4>
             <nav className="flex flex-col gap-3">
-              <Link href="/weddings" className="text-[12px] font-sans hover:text-[oklch(0.70_0.060_50)] transition-colors">
+              <Link href="/weddings" className="text-[12px] font-sans hover:text-[#9B4D19] transition-colors">
                 Weddings
               </Link>
-              <Link href="/corporate" className="text-[12px] font-sans hover:text-[oklch(0.70_0.060_50)] transition-colors">
+              <Link href="/corporate" className="text-[12px] font-sans hover:text-[#9B4D19] transition-colors">
                 Corporate Events
               </Link>
-              <Link href="/food-and-wine" className="text-[12px] font-sans hover:text-[oklch(0.70_0.060_50)] transition-colors">
+              <Link href="/food-and-wine" className="text-[12px] font-sans hover:text-[#9B4D19] transition-colors">
                 Food &amp; Wine
               </Link>
-              <Link href="/hunt" className="text-[12px] font-sans hover:text-[oklch(0.70_0.060_50)] transition-colors">
+              <Link href="/hunt" className="text-[12px] font-sans hover:text-[#9B4D19] transition-colors">
                 Hunt
               </Link>
-              <Link href="/fish" className="text-[12px] font-sans hover:text-[oklch(0.70_0.060_50)] transition-colors">
+              <Link href="/fish" className="text-[12px] font-sans hover:text-[#9B4D19] transition-colors">
                 Fish
               </Link>
             </nav>
@@ -81,17 +81,17 @@ export default function PublicFooter() {
 
           {/* ── Lane 2: Lodging ───────────────────────────────────────── */}
           <div>
-            <h4 className="text-[10px] tracking-[0.22em] uppercase font-sans font-medium text-[oklch(0.94_0.008_78)] mb-5">
+            <h4 className="text-[10px] tracking-[0.22em] uppercase font-sans font-medium text-[#E0D3BD] mb-5">
               Lodging
             </h4>
             <nav className="flex flex-col gap-3">
-              <Link href="/lodging#the-lodge" className="text-[12px] font-sans hover:text-[oklch(0.70_0.060_50)] transition-colors">
+              <Link href="/lodging#the-lodge" className="text-[12px] font-sans hover:text-[#9B4D19] transition-colors">
                 The Lodge
               </Link>
-              <Link href="/lodging#riverhouse" className="text-[12px] font-sans hover:text-[oklch(0.70_0.060_50)] transition-colors">
+              <Link href="/lodging#riverhouse" className="text-[12px] font-sans hover:text-[#9B4D19] transition-colors">
                 Riverhouse Suites
               </Link>
-              <Link href="/lodging#the-barn" className="text-[12px] font-sans hover:text-[oklch(0.70_0.060_50)] transition-colors">
+              <Link href="/lodging#the-barn" className="text-[12px] font-sans hover:text-[#9B4D19] transition-colors">
                 The Barn
               </Link>
             </nav>
@@ -99,17 +99,17 @@ export default function PublicFooter() {
 
           {/* ── Lane 3: Explore Membership ────────────────────────────── */}
           <div>
-            <h4 className="text-[10px] tracking-[0.22em] uppercase font-sans font-medium text-[oklch(0.94_0.008_78)] mb-5">
+            <h4 className="text-[10px] tracking-[0.22em] uppercase font-sans font-medium text-[#E0D3BD] mb-5">
               Explore Membership
             </h4>
             <nav className="flex flex-col gap-3">
-              <Link href="/membership" className="text-[12px] font-sans hover:text-[oklch(0.58_0.065_145)] transition-colors">
+              <Link href="/membership" className="text-[12px] font-sans hover:text-[#6B7250] transition-colors">
                 Membership Tiers
               </Link>
-              <Link href="/membership/benefits" className="text-[12px] font-sans hover:text-[oklch(0.58_0.065_145)] transition-colors">
+              <Link href="/membership/benefits" className="text-[12px] font-sans hover:text-[#6B7250] transition-colors">
                 Member Benefits
               </Link>
-              <Link href="/membership/faq" className="text-[12px] font-sans hover:text-[oklch(0.58_0.065_145)] transition-colors">
+              <Link href="/membership/faq" className="text-[12px] font-sans hover:text-[#6B7250] transition-colors">
                 FAQ
               </Link>
             </nav>
@@ -117,20 +117,20 @@ export default function PublicFooter() {
 
           {/* ── Lane 4: About ─────────────────────────────────────────── */}
           <div>
-            <h4 className="text-[10px] tracking-[0.22em] uppercase font-sans font-medium text-[oklch(0.94_0.008_78)] mb-5">
+            <h4 className="text-[10px] tracking-[0.22em] uppercase font-sans font-medium text-[#E0D3BD] mb-5">
               About
             </h4>
             <nav className="flex flex-col gap-3">
-              <Link href="/about" className="text-[12px] font-sans hover:text-[oklch(0.72_0.095_78)] transition-colors">
+              <Link href="/about" className="text-[12px] font-sans hover:text-[#9B4D19] transition-colors">
                 Our Story
               </Link>
-              <Link href="/about/team" className="text-[12px] font-sans hover:text-[oklch(0.72_0.095_78)] transition-colors">
+              <Link href="/about/team" className="text-[12px] font-sans hover:text-[#9B4D19] transition-colors">
                 Meet the Team
               </Link>
-              <Link href="/about/property" className="text-[12px] font-sans hover:text-[oklch(0.72_0.095_78)] transition-colors">
+              <Link href="/about/property" className="text-[12px] font-sans hover:text-[#9B4D19] transition-colors">
                 The Property
               </Link>
-              <Link href="/contact" className="text-[12px] font-sans hover:text-[oklch(0.72_0.095_78)] transition-colors">
+              <Link href="/contact" className="text-[12px] font-sans hover:text-[#9B4D19] transition-colors">
                 Contact
               </Link>
             </nav>
@@ -138,11 +138,11 @@ export default function PublicFooter() {
 
           {/* ── Lane 5: Gallery ──────────────────────────────────────── */}
           <div>
-            <h4 className="text-[10px] tracking-[0.22em] uppercase font-sans font-medium text-[oklch(0.94_0.008_78)] mb-5">
+            <h4 className="text-[10px] tracking-[0.22em] uppercase font-sans font-medium text-[#E0D3BD] mb-5">
               Gallery
             </h4>
             <nav className="flex flex-col gap-3">
-              <Link href="/gallery" className="text-[12px] font-sans hover:text-[oklch(0.94_0.008_78)] transition-colors">
+              <Link href="/gallery" className="text-[12px] font-sans hover:text-[#E0D3BD] transition-colors">
                 View Gallery
               </Link>
             </nav>
@@ -150,14 +150,14 @@ export default function PublicFooter() {
 
           {/* ── Lane 6: Member Access ─────────────────────────────────── */}
           <div>
-            <h4 className="text-[10px] tracking-[0.22em] uppercase font-sans font-medium text-[oklch(0.94_0.008_78)] mb-5">
+            <h4 className="text-[10px] tracking-[0.22em] uppercase font-sans font-medium text-[#E0D3BD] mb-5">
               Member Access
             </h4>
             <nav className="flex flex-col gap-3">
-              <a href={getLoginUrl()} className="text-[12px] font-sans hover:text-[oklch(0.94_0.008_78)] transition-colors">
+              <a href={getLoginUrl()} className="text-[12px] font-sans hover:text-[#E0D3BD] transition-colors">
                 Member Login
               </a>
-              <Link href="/privacy" className="text-[12px] font-sans hover:text-[oklch(0.94_0.008_78)] transition-colors">
+              <Link href="/privacy" className="text-[12px] font-sans hover:text-[#E0D3BD] transition-colors">
                 Privacy Policy
               </Link>
             </nav>

@@ -8,7 +8,7 @@ import SEOHead from '@shared/components/SEOHead';
 import { trpc } from '@shared/lib/trpc';
 
 const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined;
-const CORPORATE_ACCENT = "oklch(0.70 0.060 50)";
+const CORPORATE_ACCENT = "#9B4D19";
 
 function useFadeUp(t = 0.12) {
   const ref = useRef<HTMLElement>(null);

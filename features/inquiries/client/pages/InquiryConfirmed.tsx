@@ -3,7 +3,7 @@ import { Link, useSearch } from "wouter";
 import PublicLayout from "@/components/PublicLayout";
 import SEOHead from '@shared/components/SEOHead';
 
-const GOLD = "oklch(0.72 0.12 72)";
+const GOLD = "#9B4D19";
 
 export default function InquiryConfirmed() {
   const search = useSearch();
@@ -101,10 +101,10 @@ export default function InquiryConfirmed() {
       />
 
       {/* ── Hero ──────────────────────────────────────────────────────────── */}
-      <section className="min-h-[50vh] flex items-center justify-center bg-[oklch(0.10_0.007_64)] relative overflow-hidden">
+      <section className="min-h-[50vh] flex items-center justify-center bg-[#2B2823] relative overflow-hidden">
         {/* Subtle background texture */}
         <div className="absolute inset-0 opacity-[0.03]"
-          style={{ backgroundImage: "radial-gradient(circle at 50% 50%, oklch(0.72 0.12 72) 0%, transparent 70%)" }} />
+          style={{ backgroundImage: "radial-gradient(circle at 50% 50%, #9B4D19 0%, transparent 70%)" }} />
 
         <div className="relative z-10 text-center px-5 max-w-2xl mx-auto">
           {/* Check mark */}
@@ -116,12 +116,12 @@ export default function InquiryConfirmed() {
           </div>
 
           <div className="h-px w-10 mx-auto mb-6" style={{ backgroundColor: GOLD }} />
-          <p className="eyebrow text-[oklch(0.55_0.012_70)] mb-4">{info.track}</p>
-          <h1 className="font-serif text-[oklch(0.94_0.008_78)] leading-tight mb-5"
+          <p className="eyebrow text-[#908B82] mb-4">{info.track}</p>
+          <h1 className="font-serif text-[#E0D3BD] leading-tight mb-5"
             style={{ fontSize: "clamp(2rem, 5vw, 3.5rem)" }}>
             {name ? `Thank you, ${name.split(" ")[0]}.` : "Thank you."}
           </h1>
-          <p className="font-sans text-[oklch(0.60_0.015_72)] text-base leading-relaxed">
+          <p className="font-sans text-[#BABAAE] text-base leading-relaxed">
             Your {info.label.toLowerCase()} has been received. We'll be in touch shortly.
           </p>
         </div>
@@ -132,7 +132,7 @@ export default function InquiryConfirmed() {
         <div className="max-w-[1440px] mx-auto px-5 lg:px-10">
           <div className="max-w-2xl mx-auto">
             <div className="h-px w-10 mb-8" style={{ backgroundColor: GOLD }} />
-            <h2 className="font-serif text-[oklch(0.94_0.008_78)] text-2xl md:text-3xl mb-8">
+            <h2 className="font-serif text-[#E0D3BD] text-2xl md:text-3xl mb-8">
               What happens next
             </h2>
 
@@ -143,7 +143,7 @@ export default function InquiryConfirmed() {
                     style={{ border: `1px solid ${GOLD}`, color: GOLD }}>
                     {i + 1}
                   </span>
-                  <p className="font-sans text-[oklch(0.65_0.015_72)] text-sm leading-relaxed pt-0.5">
+                  <p className="font-sans text-[#A8A29A] text-sm leading-relaxed pt-0.5">
                     {step}
                   </p>
                 </li>
@@ -151,8 +151,8 @@ export default function InquiryConfirmed() {
             </ol>
 
             {/* Direct contact */}
-            <div className="mt-12 pt-8 border-t border-[oklch(0.20_0.008_64)]">
-              <p className="font-sans text-[oklch(0.55_0.012_70)] text-sm mb-2">
+            <div className="mt-12 pt-8 border-t border-[#4E4B45]">
+              <p className="font-sans text-[#908B82] text-sm mb-2">
                 Questions in the meantime?
               </p>
               <a href={`mailto:${info.contact}`}
@@ -166,14 +166,14 @@ export default function InquiryConfirmed() {
       </section>
 
       {/* ── Return CTAs ───────────────────────────────────────────────────── */}
-      <section className="section bg-[oklch(0.115_0.007_64)]">
+      <section className="section bg-[#363330]">
         <div className="max-w-[1440px] mx-auto px-5 lg:px-10">
           <div className="max-w-xl mx-auto text-center">
             <div className="h-px w-10 mx-auto mb-8" style={{ backgroundColor: GOLD }} />
-            <h2 className="font-serif text-[oklch(0.94_0.008_78)] text-2xl md:text-3xl mb-4">
+            <h2 className="font-serif text-[#E0D3BD] text-2xl md:text-3xl mb-4">
               While you wait, explore the estate.
             </h2>
-            <p className="font-sans text-[oklch(0.60_0.015_72)] text-sm leading-relaxed mb-8">
+            <p className="font-sans text-[#BABAAE] text-sm leading-relaxed mb-8">
               Discover the spaces, accommodations, and experiences that make Rivers Lodge & Hunt Club unlike any other destination in the region.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">

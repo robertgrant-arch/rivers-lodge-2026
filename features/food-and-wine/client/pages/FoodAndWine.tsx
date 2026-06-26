@@ -3,7 +3,7 @@ import { Link } from "wouter";
 import PublicLayout from "@features/public-pages/components/PublicLayout";
 import SEOHead from '@shared/components/SEOHead';
 
-const ACCENT = "oklch(0.68 0.09 40)";
+const ACCENT = "#9B4D19";
 
 function useFadeUp(t = 0.12) {
   const ref = useRef<HTMLElement>(null);
@@ -24,11 +24,11 @@ function useFadeUp(t = 0.12) {
 function ImgPlaceholder({ aspectClass, label }: { aspectClass: string; label: string }) {
   return (
     <div
-      className={`${aspectClass} bg-[oklch(0.13_0.010_35)] flex items-center justify-center`}
+      className={`${aspectClass} bg-[#363330] flex items-center justify-center`}
       aria-label={label}
       role="img"
     >
-      <span className="text-[10px] tracking-[0.18em] uppercase font-sans text-[oklch(0.28_0.010_40)] select-none">
+      <span className="text-[10px] tracking-[0.18em] uppercase font-sans text-[#57544E] select-none">
         {label}
       </span>
     </div>
@@ -39,8 +39,8 @@ function ImgPlaceholder({ aspectClass, label }: { aspectClass: string; label: st
 function SafeImg({ src, alt, label, aspectClass }: { src: string; alt: string; label: string; aspectClass: string }) {
   return (
     <div className={`${aspectClass} relative`}>
-      <div className="absolute inset-0 bg-[oklch(0.13_0.010_35)] flex items-center justify-center" aria-hidden="true">
-        <span className="text-[10px] tracking-[0.18em] uppercase font-sans text-[oklch(0.28_0.010_40)] select-none pointer-events-none">
+      <div className="absolute inset-0 bg-[#363330] flex items-center justify-center" aria-hidden="true">
+        <span className="text-[10px] tracking-[0.18em] uppercase font-sans text-[#57544E] select-none pointer-events-none">
           {label}
         </span>
       </div>
@@ -74,7 +74,7 @@ export default function FoodAndWine() {
       <section className="relative hero-full flex items-end pb-24 overflow-hidden">
         <div className="absolute inset-0">
           {/* TODO: replace with hero food/wine photography */}
-          <div className="w-full h-full bg-[oklch(0.11_0.012_35)]" aria-hidden="true" />
+          <div className="w-full h-full bg-[#2B2823]" aria-hidden="true" />
           <div
             className="absolute inset-0"
             style={{ background: "linear-gradient(to bottom, transparent 0%, oklch(0 0 0/0.10) 40%, oklch(0 0 0/0.80) 100%)" }}
@@ -96,7 +96,7 @@ export default function FoodAndWine() {
           <Link
             href="/contact?type=dining"
             className="btn-primary"
-            style={{ backgroundColor: ACCENT, borderColor: ACCENT, color: "oklch(0.10 0.005 35)" }}
+            style={{ backgroundColor: ACCENT, borderColor: ACCENT, color: "#2B2823" }}
           >
             Inquire About Dining
           </Link>
@@ -231,7 +231,7 @@ export default function FoodAndWine() {
               <div key={item.title} className="bg-surface p-8 lg:p-10 flex flex-col">
                 <div style={{ height: "1px", width: "1.5rem", backgroundColor: ACCENT, marginBottom: "1rem" }} />
                 <h3 className="font-serif text-warm text-xl mb-4">{item.title}</h3>
-                <p className="font-sans text-muted-brand text-sm leading-relaxed italic text-[oklch(0.45_0.012_70)]">
+                <p className="font-sans text-muted-brand text-sm leading-relaxed italic text-[#7A766F]">
                   {item.desc}
                 </p>
               </div>
@@ -262,7 +262,7 @@ export default function FoodAndWine() {
               <Link
                 href="/contact?type=dining"
                 className="btn-primary"
-                style={{ backgroundColor: ACCENT, borderColor: ACCENT, color: "oklch(0.10 0.005 35)" }}
+                style={{ backgroundColor: ACCENT, borderColor: ACCENT, color: "#2B2823" }}
               >
                 Inquire About Dining
               </Link>

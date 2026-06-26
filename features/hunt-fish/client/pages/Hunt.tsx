@@ -3,7 +3,7 @@ import { Link } from "wouter";
 import PublicLayout from "../../../_shared/components/PublicLayout";
 import SEOHead from '@shared/components/SEOHead';
 
-const ACCENT = "oklch(0.58 0.065 145)";
+const ACCENT = "#6B7250";
 const HUNT_HERO = "/img/hunt-hero.jpg";
 
 function useFadeUp(t = 0.12) {
@@ -22,12 +22,12 @@ function useFadeUp(t = 0.12) {
 function ImgPlaceholder({ aspectClass, label }: { aspectClass: string; label: string }) {
   return (
     <div
-      className={`${aspectClass} bg-[oklch(0.13_0.008_70)] flex items-center justify-center`}
+      className={`${aspectClass} bg-[#363330] flex items-center justify-center`}
       aria-label={label}
       role="img"
     >
       {/* TODO: replace with real photography */}
-      <span className="text-[10px] tracking-[0.18em] uppercase font-sans text-[oklch(0.28_0.010_70)] select-none">
+      <span className="text-[10px] tracking-[0.18em] uppercase font-sans text-[#57544E] select-none">
         {label}
       </span>
     </div>
@@ -84,7 +84,7 @@ export default function Hunt() {
       <section className="relative hero-full flex items-end pb-24 overflow-hidden">
         <div className="absolute inset-0">
           {/* Placeholder — always in the DOM; visible until hunt-hero.jpg is added */}
-          <div className="absolute inset-0 bg-[oklch(0.17_0.012_70)] flex items-center justify-center" aria-hidden="true">
+          <div className="absolute inset-0 bg-[#2B2823] flex items-center justify-center" aria-hidden="true">
             <span className="text-[10px] tracking-[0.18em] uppercase font-sans text-white/40 select-none pointer-events-none">
               Hunt Hero Image
             </span>

@@ -27,7 +27,7 @@ export default function FAQAccordion({ items, accentColor = "var(--gold)", class
             >
               <span
                 className="font-serif text-base md:text-lg leading-snug transition-colors"
-                style={{ color: isOpen ? "oklch(0.94 0.008 78)" : "oklch(0.80 0.010 72)" }}
+                style={{ color: isOpen ? "#E0D3BD" : "#C8BCA9" }}
               >
                 {item.question}
               </span>
@@ -49,7 +49,7 @@ export default function FAQAccordion({ items, accentColor = "var(--gold)", class
               className="overflow-hidden transition-all duration-300 ease-in-out"
               style={{ maxHeight: isOpen ? "600px" : "0px" }}
             >
-              <p className="pt-4 pb-1 font-sans text-sm leading-relaxed text-[oklch(0.60_0.015_72)] max-w-2xl">
+              <p className="pt-4 pb-1 font-sans text-sm leading-relaxed text-[#BABAAE] max-w-2xl">
                 {item.answer}
               </p>
             </div>

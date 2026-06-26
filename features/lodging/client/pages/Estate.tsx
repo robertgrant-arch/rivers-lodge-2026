@@ -263,24 +263,24 @@ export default function Estate() {
         <div className="max-w-[1440px] mx-auto px-5 lg:px-14">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-border">
             <div className="bg-surface p-10 lg:p-14 flex flex-col">
-              <div className="h-px w-8 mb-6" style={{ backgroundColor: "oklch(0.70 0.060 50)" }} />
+              <div className="h-px w-8 mb-6" style={{ backgroundColor: "#9B4D19" }} />
               <p className="eyebrow text-muted-brand mb-3">Weddings &amp; Events</p>
               <h3 className="font-serif font-light text-warm text-2xl leading-tight mb-5">Host your event on the estate.</h3>
               <p className="font-sans text-muted-brand text-sm leading-relaxed mb-8 flex-1">
                 Destination weddings, corporate retreats, and private celebrations — exclusively yours for the weekend.
               </p>
-              <Link href="/events" className="btn-outline self-start" style={{ borderColor: "oklch(0.70 0.060 50)", color: "oklch(0.70 0.060 50)" }}>
+              <Link href="/events" className="btn-outline self-start" style={{ borderColor: "#9B4D19", color: "#9B4D19" }}>
                 Explore Events
               </Link>
             </div>
             <div className="bg-background p-10 lg:p-14 flex flex-col">
-              <div className="h-px w-8 mb-6" style={{ backgroundColor: "oklch(0.58 0.065 145)" }} />
+              <div className="h-px w-8 mb-6" style={{ backgroundColor: "#6B7250" }} />
               <p className="eyebrow text-muted-brand mb-3">Membership &amp; Outdoors</p>
               <h3 className="font-serif font-light text-warm text-2xl leading-tight mb-5">Access the land season after season.</h3>
               <p className="font-sans text-muted-brand text-sm leading-relaxed mb-8 flex-1">
                 Private hunting, fishing, and sporting access on 300 acres of managed Kansas land.
               </p>
-              <Link href="/outdoors" className="btn-outline self-start" style={{ borderColor: "oklch(0.58 0.065 145)", color: "oklch(0.58 0.065 145)" }}>
+              <Link href="/outdoors" className="btn-outline self-start" style={{ borderColor: "#6B7250", color: "#6B7250" }}>
                 Explore Membership
               </Link>
             </div>

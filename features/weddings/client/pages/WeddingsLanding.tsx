@@ -15,7 +15,7 @@ const LODGE_EXT  = "https://files.manuscdn.com/user_upload_by_module/session_fil
 const INTERIOR   = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/JcuUUmANmAAHItUn.jpg";
 const GROUNDS    = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/JbMIltWvczRWbDaw.jpg";
 
-const BLUSH = "oklch(0.70 0.060 50)";
+const BLUSH = "#9B4D19";
 
 const eventTypes = [
   {
@@ -66,14 +66,14 @@ export default function WeddingsLanding() {
           </div>
           <div className="relative z-10 max-w-[1440px] mx-auto px-5 lg:px-10 w-full">
             <div className="h-px w-10 mb-6" style={{ backgroundColor: BLUSH }} />
-            <p className="eyebrow text-[oklch(0.94_0.008_78)/55] mb-4">Weddings &amp; Events</p>
+            <p className="eyebrow text-[#E0D3BD/55] mb-4">Weddings &amp; Events</p>
             <h1
               className="font-serif font-light italic text-white leading-tight mb-6"
               style={{ fontSize: "clamp(2.5rem,6vw,5.5rem)" }}
             >
               Where every celebration<br />is exclusively yours.
             </h1>
-            <p className="text-[oklch(0.94_0.008_78)/75] font-sans text-base max-w-lg mb-10 leading-relaxed">
+            <p className="text-[#E0D3BD/75] font-sans text-base max-w-lg mb-10 leading-relaxed">
               The Rivers Lodge &amp; Hunt Club is a private estate — when you book, the entire property is yours. No other groups, no shared spaces, no distractions.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
@@ -93,17 +93,17 @@ export default function WeddingsLanding() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
               <div>
                 <div className="h-px w-10 mb-6" style={{ backgroundColor: BLUSH }} />
-                <p className="eyebrow text-[oklch(0.55_0.012_70)] mb-4">The Experience</p>
+                <p className="eyebrow text-[#908B82] mb-4">The Experience</p>
                 <h2
-                  className="font-serif text-[oklch(0.94_0.008_78)] leading-tight mb-6"
+                  className="font-serif text-[#E0D3BD] leading-tight mb-6"
                   style={{ fontSize: "clamp(1.75rem,3.5vw,2.75rem)" }}
                 >
                   An estate wedding unlike any other in the Midwest.
                 </h2>
-                <p className="text-[oklch(0.60_0.015_72)] font-sans text-base leading-relaxed mb-6">
+                <p className="text-[#BABAAE] font-sans text-base leading-relaxed mb-6">
                   Sixty minutes from Kansas City, the Rivers Lodge offers a complete destination wedding experience. Your guests arrive to 300 acres of Kansas landscape — river, woodland, and open sky — with no one else in sight.
                 </p>
-                <p className="text-[oklch(0.60_0.015_72)] font-sans text-base leading-relaxed mb-8">
+                <p className="text-[#BABAAE] font-sans text-base leading-relaxed mb-8">
                   The estate accommodates your entire wedding party on-site. Ceremony on the River Lawn. Reception in the Rivers Barn. After-party at the Clubhouse. Breakfast the next morning at The Lodge.
                 </p>
                 <Link href="/weddings" className="link-arrow">
@@ -129,13 +129,13 @@ export default function WeddingsLanding() {
         </section>
 
         {/* ── Event Types ───────────────────────────────────────────────── */}
-        <section className="section bg-[oklch(0.115_0.007_64)]">
+        <section className="section bg-[#363330]">
           <div className="max-w-[1440px] mx-auto px-5 lg:px-10">
             <div className="text-center mb-14">
               <div className="h-px w-10 mx-auto mb-6" style={{ backgroundColor: BLUSH }} />
-              <p className="eyebrow text-[oklch(0.55_0.012_70)] mb-3">Event Types</p>
+              <p className="eyebrow text-[#908B82] mb-3">Event Types</p>
               <h2
-                className="font-serif text-[oklch(0.94_0.008_78)] leading-tight"
+                className="font-serif text-[#E0D3BD] leading-tight"
                 style={{ fontSize: "clamp(1.75rem,3vw,2.5rem)" }}
               >
                 Every occasion, entirely private.
@@ -152,7 +152,7 @@ export default function WeddingsLanding() {
                     />
                   </div>
                   <p className="eyebrow mb-2" style={{ color: BLUSH, fontSize: "10px" }}>{et.label}</p>
-                  <p className="text-[oklch(0.60_0.015_72)] font-sans text-sm leading-relaxed">{et.desc}</p>
+                  <p className="text-[#BABAAE] font-sans text-sm leading-relaxed">{et.desc}</p>
                   <p className="link-arrow mt-3 text-[10px]">
                     Learn More
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
@@ -168,9 +168,9 @@ export default function WeddingsLanding() {
           <div className="max-w-[1440px] mx-auto px-5 lg:px-10">
             <div className="mb-14">
               <div className="h-px w-10 mb-6" style={{ backgroundColor: BLUSH }} />
-              <p className="eyebrow text-[oklch(0.55_0.012_70)] mb-3">Venue Spaces</p>
+              <p className="eyebrow text-[#908B82] mb-3">Venue Spaces</p>
               <h2
-                className="font-serif text-[oklch(0.94_0.008_78)] leading-tight max-w-lg"
+                className="font-serif text-[#E0D3BD] leading-tight max-w-lg"
                 style={{ fontSize: "clamp(1.75rem,3vw,2.5rem)" }}
               >
                 Four distinct spaces. One private estate.
@@ -182,9 +182,9 @@ export default function WeddingsLanding() {
                   <div className="aspect-[4/3] overflow-hidden mb-4">
                     <img src={v.image} alt={v.name} className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" loading="lazy" />
                   </div>
-                  <p className="text-[oklch(0.94_0.008_78)] font-sans text-sm font-medium mb-1">{v.name}</p>
-                  <p className="eyebrow text-[oklch(0.55_0.012_70)] mb-1" style={{ fontSize: "10px" }}>{v.type}</p>
-                  <p className="text-[oklch(0.55_0.012_70)] font-sans text-xs">{v.capacity}</p>
+                  <p className="text-[#E0D3BD] font-sans text-sm font-medium mb-1">{v.name}</p>
+                  <p className="eyebrow text-[#908B82] mb-1" style={{ fontSize: "10px" }}>{v.type}</p>
+                  <p className="text-[#908B82] font-sans text-xs">{v.capacity}</p>
                 </div>
               ))}
             </div>
@@ -198,7 +198,7 @@ export default function WeddingsLanding() {
         </section>
 
         {/* ── Capacity Data Strip ───────────────────────────────────────── */}
-        <div className="bg-[oklch(0.115_0.007_64)] border-y border-[oklch(0.22_0.008_64)]">
+        <div className="bg-[#363330] border-y border-[#57544E]">
           <div className="max-w-[1440px] mx-auto px-5 lg:px-10 py-10">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
               {[
@@ -209,7 +209,7 @@ export default function WeddingsLanding() {
               ].map((s) => (
                 <div key={s.label}>
                   <p className="font-serif text-3xl md:text-4xl leading-none mb-1" style={{ color: BLUSH }}>{s.value}</p>
-                  <p className="eyebrow text-[oklch(0.55_0.012_70)]" style={{ fontSize: "10px" }}>{s.label}</p>
+                  <p className="eyebrow text-[#908B82]" style={{ fontSize: "10px" }}>{s.label}</p>
                 </div>
               ))}
             </div>
@@ -222,10 +222,10 @@ export default function WeddingsLanding() {
             <div className="max-w-[1440px] mx-auto px-5 lg:px-10">
               <div className="max-w-2xl mx-auto text-center">
                 <div className="h-px w-10 mx-auto mb-8" style={{ backgroundColor: BLUSH }} />
-                <blockquote className="font-serif italic text-[oklch(0.94_0.008_78)] leading-relaxed mb-6" style={{ fontSize: "clamp(1.25rem,2.5vw,1.75rem)" }}>
+                <blockquote className="font-serif italic text-[#E0D3BD] leading-relaxed mb-6" style={{ fontSize: "clamp(1.25rem,2.5vw,1.75rem)" }}>
                   "{testimonials[0].quote}"
                 </blockquote>
-                <p className="eyebrow text-[oklch(0.55_0.012_70)]" style={{ fontSize: "10px" }}>
+                <p className="eyebrow text-[#908B82]" style={{ fontSize: "10px" }}>
                   {testimonials[0].authorName}
                   {testimonials[0].authorTitle ? ` — ${testimonials[0].authorTitle}` : ""}
                 </p>
@@ -239,14 +239,14 @@ export default function WeddingsLanding() {
           <div className="max-w-[1440px] mx-auto px-5 lg:px-10">
             <div className="text-center mb-10">
               <div className="h-px w-10 mx-auto mb-6" style={{ backgroundColor: BLUSH }} />
-              <p className="eyebrow text-[oklch(0.55_0.012_70)] mb-3">Check Availability</p>
-              <h2 className="font-serif text-[oklch(0.94_0.008_78)] text-3xl md:text-4xl leading-tight">
+              <p className="eyebrow text-[#908B82] mb-3">Check Availability</p>
+              <h2 className="font-serif text-[#E0D3BD] text-3xl md:text-4xl leading-tight">
                 Is your date available?
               </h2>
             </div>
             <div className="max-w-2xl mx-auto">
               <AvailabilityCalendar showLegend={true} />
-              <p className="text-center mt-6 font-sans text-[oklch(0.55_0.012_70)] text-sm">
+              <p className="text-center mt-6 font-sans text-[#908B82] text-sm">
                 Dates shown as unavailable are already reserved. Contact us to confirm your date.
               </p>
               <div className="flex justify-center mt-8">
@@ -260,8 +260,8 @@ export default function WeddingsLanding() {
           <div className="max-w-[1440px] mx-auto px-5 lg:px-10">
             <div className="text-center mb-14">
               <div className="h-px w-10 mx-auto mb-6" style={{ backgroundColor: BLUSH }} />
-              <p className="eyebrow text-[oklch(0.55_0.012_70)] mb-3">How It Works</p>
-              <h2 className="font-serif text-[oklch(0.94_0.008_78)] text-3xl md:text-4xl leading-tight">
+              <p className="eyebrow text-[#908B82] mb-3">How It Works</p>
+              <h2 className="font-serif text-[#E0D3BD] text-3xl md:text-4xl leading-tight">
                 From first inquiry to your perfect day.
               </h2>
             </div>
@@ -285,8 +285,8 @@ export default function WeddingsLanding() {
                       <div className="inline-flex items-center gap-3 mb-4">
                         <span className="font-serif text-5xl leading-none" style={{ color: BLUSH }}>{item.step}</span>
                       </div>
-                      <h3 className="font-serif text-2xl text-[oklch(0.94_0.008_78)] mb-3">{item.title}</h3>
-                      <p className={`font-sans text-sm text-[oklch(0.60_0.015_72)] leading-relaxed max-w-sm ${
+                      <h3 className="font-serif text-2xl text-[#E0D3BD] mb-3">{item.title}</h3>
+                      <p className={`font-sans text-sm text-[#BABAAE] leading-relaxed max-w-sm ${
                         item.side === "left" ? "ml-auto" : ""
                       }`}>{item.desc}</p>
                     </div>
@@ -301,13 +301,13 @@ export default function WeddingsLanding() {
         </section>
 
         {/* ── FAQ ────────────────────────────────────────────────────────────────────── */}
-        <section className="section bg-[oklch(0.115_0.007_64)]">
+        <section className="section bg-[#363330]">
           <div className="max-w-[1440px] mx-auto px-5 lg:px-10">
             <div className="max-w-3xl mx-auto">
               <div className="text-center mb-12">
                 <div className="h-px w-10 mx-auto mb-6" style={{ backgroundColor: BLUSH }} />
-                <p className="eyebrow text-[oklch(0.55_0.012_70)] mb-3">Common Questions</p>
-                <h2 className="font-serif text-[oklch(0.94_0.008_78)] text-3xl md:text-4xl leading-tight">
+                <p className="eyebrow text-[#908B82] mb-3">Common Questions</p>
+                <h2 className="font-serif text-[#E0D3BD] text-3xl md:text-4xl leading-tight">
                   Everything you need to know.
                 </h2>
               </div>
@@ -349,14 +349,14 @@ export default function WeddingsLanding() {
         </section>
 
         {/* ── Inquiry CTA ───────────────────────────────────────────────── */}
-        <section className="section bg-[oklch(0.115_0.007_64)]">
+        <section className="section bg-[#363330]">
           <div className="max-w-[1440px] mx-auto px-5 lg:px-10">
             <div className="max-w-xl mx-auto text-center">
               <div className="h-px w-10 mx-auto mb-6" style={{ backgroundColor: BLUSH }} />
-              <h2 className="font-serif text-[oklch(0.94_0.008_78)] text-3xl md:text-4xl leading-tight mb-5">
+              <h2 className="font-serif text-[#E0D3BD] text-3xl md:text-4xl leading-tight mb-5">
                 Ready to start planning?
               </h2>
-              <p className="text-[oklch(0.60_0.015_72)] font-sans text-sm leading-relaxed mb-8">
+              <p className="text-[#BABAAE] font-sans text-sm leading-relaxed mb-8">
                 We work with a limited number of events each year. Contact us to check availability and schedule a private tour of the estate.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
