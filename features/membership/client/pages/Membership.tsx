@@ -3,6 +3,7 @@ import { Link } from "wouter";
 import { Turnstile } from "@marsidev/react-turnstile";
 import type { TurnstileInstance } from "@marsidev/react-turnstile";
 import PublicLayout from "@/components/PublicLayout";
+import Picture from "@shared/components/Picture";
 import SEOHead, { structuredData } from '@shared/components/SEOHead';
 import { useAuth } from '@features/auth/public';
 import { trpc } from '@shared/lib/trpc';
@@ -323,7 +324,7 @@ export default function Membership() {
       {/* Hero */}
       <section className="relative hero-full flex items-end pb-24 overflow-hidden">
         <div className="absolute inset-0">
-          <img src={HERO} alt="Membership at Rivers Lodge" className="w-full h-full object-cover" fetchPriority="high" />
+          <img src={HERO} alt="Membership at Rivers Lodge" className="absolute inset-0 w-full h-full object-cover" fetchPriority="high" loading="eager" decoding="async" width={1920} height={1080} />
           <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, transparent 0%, oklch(0 0 0/0.12) 40%, oklch(0 0 0/0.82) 100%)" }} />
         </div>
         <div className="relative z-10 max-w-[1440px] mx-auto px-5 lg:px-14 w-full">
@@ -358,9 +359,14 @@ export default function Membership() {
                 <p>Membership is not just access to the land — it's membership in a community of people who take the land seriously. We look for members who share our values around conservation, ethical hunting, and long-term land stewardship.</p>
               </div>
             </div>
-            <div className="aspect-[4/3] overflow-hidden">
-              <img src={AERIAL} alt="Aerial view of the estate" className="w-full h-full object-cover" loading="lazy" />
-            </div>
+            <Picture
+              src={AERIAL}
+              alt="Aerial view of the estate"
+              className="aspect-[4/3] overflow-hidden"
+              sizes="(max-width: 1024px) 100vw, 50vw"
+              width={1200}
+              height={900}
+            />
           </div>
         </div>
       </section>

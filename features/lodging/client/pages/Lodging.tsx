@@ -2,6 +2,7 @@ import { Link } from "wouter";
 import PublicLayout from "../../../_shared/components/PublicLayout";
 import { trpc } from '@shared/lib/trpc';
 import SEOHead from '@shared/components/SEOHead';
+import Picture from "@shared/components/Picture";
 
 
 const FALLBACK_LODGING = [
@@ -116,18 +117,26 @@ export default function Lodging() {
             <div className={`grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-start ${i % 2 !== 0 ? "lg:grid-flow-dense" : ""}`}>
               {/* Images */}
               <div className={`grid grid-cols-3 gap-3 ${i % 2 !== 0 ? "lg:col-start-2" : ""}`}>
-                <div className="col-span-2 overflow-hidden aspect-[4/3] relative">
-                  <div className="absolute inset-0 bg-[#2B2823] flex items-center justify-center" aria-hidden="true">
-                    <span className="text-[10px] tracking-[0.18em] uppercase font-sans text-white/30 select-none">{prop.name}</span>
-                  </div>
-                  <img src={prop.img} alt={prop.name} className="absolute inset-0 w-full h-full object-cover hover:scale-105 transition-transform duration-700" loading="lazy" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
-                </div>
-                <div className="overflow-hidden aspect-[3/4] relative">
-                  <div className="absolute inset-0 bg-[#2B2823] flex items-center justify-center" aria-hidden="true">
-                    <span className="text-[10px] tracking-[0.18em] uppercase font-sans text-white/30 select-none">{prop.name} interior</span>
-                  </div>
-                  <img src={prop.img2} alt={`${prop.name} interior`} className="absolute inset-0 w-full h-full object-cover hover:scale-105 transition-transform duration-700" loading="lazy" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
-                </div>
+                <Picture
+                  src={prop.img}
+                  alt={prop.name}
+                  label={prop.name}
+                  className="col-span-2 overflow-hidden aspect-[4/3]"
+                  imgClassName="absolute inset-0 w-full h-full object-cover hover:scale-105 transition-transform duration-700"
+                  sizes="(max-width: 1024px) 66vw, 33vw"
+                  width={800}
+                  height={600}
+                />
+                <Picture
+                  src={prop.img2}
+                  alt={`${prop.name} interior`}
+                  label={`${prop.name} interior`}
+                  className="overflow-hidden aspect-[3/4]"
+                  imgClassName="absolute inset-0 w-full h-full object-cover hover:scale-105 transition-transform duration-700"
+                  sizes="(max-width: 1024px) 33vw, 16vw"
+                  width={480}
+                  height={640}
+                />
               </div>
 
               {/* Content */}

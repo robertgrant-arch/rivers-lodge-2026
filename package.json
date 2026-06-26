@@ -5,7 +5,7 @@
   "license": "MIT",
   "scripts": {
     "dev": "NODE_ENV=development tsx watch _core/server/app.ts",
-    "build": "vite build && esbuild _core/server/app.ts --platform=node --packages=external --bundle --format=esm --outfile=dist/index.js",
+    "build": "node scripts/generate-image-variants.mjs && vite build && esbuild _core/server/app.ts --platform=node --packages=external --bundle --format=esm --outfile=dist/index.js",
     "start": "NODE_ENV=production node dist/index.js",
     "check": "tsc --noEmit",
     "format": "prettier --write .",
@@ -109,6 +109,7 @@
     "pnpm": "^10.15.1",
     "postcss": "^8.4.47",
     "prettier": "^3.6.2",
+    "sharp": "^0.35.2",
     "supertest": "^7.2.2",
     "tailwindcss": "^4.1.14",
     "tsx": "^4.19.1",
