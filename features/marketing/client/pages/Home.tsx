@@ -6,8 +6,69 @@ import TestimonialsCarousel from "@/components/TestimonialsCarousel";
 import SEOHead, { structuredData } from '@shared/components/SEOHead';
 
 
+/* ── Hero slideshow ──────────────────────────────────────────────────────── */
+const HERO_SLIDES: { src: string; alt: string; label: string }[] = [
+  { src: "/img/hero-1.jpg", alt: "Rivers Lodge & Hunt Club — aerial view at golden hour",  label: "Hero Image 1" },
+  { src: "/img/hero-2.jpg", alt: "Timber Edge Clubhouse bar and lounge interior",           label: "Hero Image 2" },
+  { src: "/img/hero-3.jpg", alt: "Rivers Lodge & Hunt Club",                                label: "Hero Image 3" },
+  { src: "/img/hero-4.jpg", alt: "Rivers Lodge & Hunt Club",                                label: "Hero Image 4" },
+  { src: "/img/hero-5.jpg", alt: "Rivers Lodge & Hunt Club",                                label: "Hero Image 5" },
+];
+
+function HeroSlideshow() {
+  const [activeIdx, setActiveIdx] = useState(0);
+  const [reduced, setReduced] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setReduced(mq.matches);
+    if (mq.matches) return;
+    const id = setInterval(() => setActiveIdx(i => (i + 1) % HERO_SLIDES.length), 5000);
+    return () => clearInterval(id);
+  }, []);
+
+  return (
+    <div className="absolute inset-0">
+      {HERO_SLIDES.map((slide, i) => (
+        <div
+          key={slide.src}
+          className="absolute inset-0"
+          style={{
+            opacity: i === activeIdx ? 1 : 0,
+            transition: reduced ? "none" : "opacity 1.2s ease-in-out",
+            zIndex: i === activeIdx ? 1 : 0,
+          }}
+        >
+          {/* Placeholder — always in DOM as base layer */}
+          <div
+            className="absolute inset-0 bg-[oklch(0.17_0.012_70)] flex items-center justify-center"
+            aria-hidden="true"
+          >
+            <span className="text-[10px] tracking-[0.18em] uppercase font-sans text-white/40 select-none pointer-events-none">
+              {slide.label}
+            </span>
+          </div>
+          {/* Real photo — hides on 404 via onError */}
+          <img
+            src={slide.src}
+            alt={slide.alt}
+            className="absolute inset-0 w-full h-full object-cover object-center"
+            fetchPriority={i === 0 ? "high" : "low"}
+            onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+          />
+        </div>
+      ))}
+      {/* Scrim — sits above all slide layers, keeps text legible */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        aria-hidden="true"
+        style={{ background: "linear-gradient(to bottom, transparent 0%, oklch(0 0 0/0.15) 40%, oklch(0 0 0/0.72) 100%)", zIndex: 2 }}
+      />
+    </div>
+  );
+}
+
 /* ── Image constants ─────────────────────────────────────────────────────── */
-const HERO          = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/jPtEuiXynfNedkpV.jpg";
 const AERIAL_RIVER  = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/xZXSDWkpiCXfqsiU.jpg";
 const LODGE_EXT     = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/TdlSWCLWjUxbkCAY.jpg";
 const FIRE_PIT      = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/ueUiZmGhmnLKziOQ.jpg";
@@ -273,17 +334,7 @@ export default function Home() {
 
       {/* ── 01. Cinematic Hero ─────────────────────────────────────────── */}
       <section className="relative hero-full flex items-end pb-24 overflow-hidden">
-        <div className="absolute inset-0">
-          <img
-            src={HERO}
-            alt="Rivers Lodge & Hunt Club — aerial view at golden hour"
-            className="w-full h-full object-cover object-center"
-            fetchPriority="high"
-          />
-          <div className="absolute inset-0"
-            style={{ background: "linear-gradient(to bottom, transparent 0%, oklch(0 0 0/0.15) 40%, oklch(0 0 0/0.72) 100%)" }}
-          />
-        </div>
+        <HeroSlideshow />
 
         <div className="relative z-10 max-w-[1440px] mx-auto px-5 lg:px-14 w-full">
           <div className="gold-rule mb-5" />
