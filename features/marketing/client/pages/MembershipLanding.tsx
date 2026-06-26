@@ -20,13 +20,13 @@ const SAGE = "#6B7250";
 const experiences = [
   {
     label: "Hunt",
-    href: "/hunt",
+    href: "/outdoor-activities/whitetail",
     desc: "Managed whitetail, waterfowl, turkey, and sporting clays on 300 private acres.",
     image: GROUNDS,
   },
   {
     label: "Fish",
-    href: "/fish",
+    href: "/outdoor-activities/fishing",
     desc: "Five private fisheries — bass, crappie, catfish, and more along the Marais des Cygnes.",
     image: RIVER,
   },
