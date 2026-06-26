@@ -56,6 +56,7 @@ const FoodAndWine = lazy(() => import("@features/food-and-wine/client/pages/Food
 const Membership = lazy(() => import("@features/membership/client/pages/Membership"));
 const MembershipBenefits = lazy(() => import("@features/membership/client/pages/MembershipBenefits"));
 const MembershipFaq = lazy(() => import("@features/membership/client/pages/MembershipFaq"));
+const MembershipEvents = lazy(() => import("@features/membership/client/pages/MembershipEvents"));
 
 // About pages
 const About = lazy(() => import("@features/about/client/pages/About"));
@@ -136,6 +137,7 @@ function Router() {
         <Route path="/lodging" component={Lodging} />
         <Route path="/lodging/:slug">{(p) => <LodgingVenueDetail slug={p.slug ?? ""} />}</Route>
         <Route path="/corporate" component={Corporate} />
+        <Route path="/corporate-events" component={Corporate} />
         <Route path="/food-and-wine" component={FoodAndWine} />
         <Route path="/estate" component={Estate} />
         <Route path="/gallery" component={Gallery} />
@@ -143,6 +145,7 @@ function Router() {
         <Route path="/membership" component={Membership} />
         <Route path="/membership/benefits" component={MembershipBenefits} />
         <Route path="/membership/faq" component={MembershipFaq} />
+        <Route path="/membership/events" component={MembershipEvents} />
         <Route path="/about" component={About} />
         <Route path="/about/team" component={AboutTeam} />
         <Route path="/about/property" component={AboutProperty} />
