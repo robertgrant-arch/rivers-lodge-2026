@@ -177,7 +177,7 @@ export default function Home() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4">
             <Link href="/membership" className="btn-primary">Explore Membership</Link>
-            <Link href="/weddings" className="btn-ghost">Weddings &amp; Events</Link>
+            <Link href="/weddings-events" className="btn-ghost">Weddings &amp; Events</Link>
           </div>
         </div>
         <ScrollIndicator />
