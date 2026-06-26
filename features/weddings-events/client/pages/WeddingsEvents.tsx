@@ -6,7 +6,7 @@ import Picture from "@shared/components/Picture";
 
 const ACCENT = "#9B4D19";
 
-const HERO_IMG = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/aLRhjpmRWbewKvgx.jpg";
+const HERO_IMG = "/img/wedding%20hero.JPG";
 
 function useFadeUp(t = 0.12) {
   const ref = useRef<HTMLElement>(null);
@@ -28,7 +28,7 @@ const CATEGORIES = [
     label: "Weddings",
     href: "/weddings",
     desc: "Ceremonies, receptions, and full estate buyouts on 1,000 acres along the Marais des Cygnes. One venue. Every detail.",
-    img: "",
+    img: "/img/wedding%20hero.JPG",
     imgAlt: "Wedding ceremony at Rivers Lodge",
     eyebrow: "Celebrations",
   },
@@ -36,8 +36,8 @@ const CATEGORIES = [
     label: "Corporate Events",
     href: "/corporate",
     desc: "Executive retreats, team outings, client entertainment, and incentive travel. The estate handles groups from 10 to 250.",
-    img: "",
-    imgAlt: "Corporate event at Rivers Lodge",
+    img: "/img/Clubhouse%20Hero.jpg",
+    imgAlt: "Clubhouse and gathering spaces at Rivers Lodge",
     eyebrow: "Corporate",
   },
   {
@@ -52,8 +52,8 @@ const CATEGORIES = [
     label: "Food & Wine",
     href: "/food-and-wine",
     desc: "Chef-driven, land-to-table dining. Private dinners, tasting events, and custom menus built around the estate and the season.",
-    img: "",
-    imgAlt: "Food and wine at Rivers Lodge",
+    img: "/img/Cool%20Food%202.JPG",
+    imgAlt: "Chef-driven dining at Rivers Lodge",
     eyebrow: "Culinary",
   },
 ];
@@ -75,8 +75,8 @@ export default function WeddingsEvents() {
         <div className="absolute inset-0">
           <img
             src={HERO_IMG}
-            alt="Rivers Lodge estate"
-            className="absolute inset-0 w-full h-full object-cover"
+            alt="Wedding at Rivers Lodge"
+            className="absolute inset-0 w-full h-full object-cover object-top"
             fetchPriority="high"
             loading="eager"
             decoding="async"
