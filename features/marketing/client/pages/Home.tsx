@@ -8,8 +8,8 @@ import SEOHead, { structuredData } from '@shared/components/SEOHead';
 
 /* ── Hero slideshow ──────────────────────────────────────────────────────── */
 const HERO_SLIDES: { src: string; alt: string; label: string }[] = [
-  { src: "/img/hero-1.jpg", alt: "Rivers Lodge & Hunt Club — aerial view at golden hour",  label: "Hero Image 1" },
-  { src: "/img/hero-2.jpg", alt: "Timber Edge Clubhouse bar and lounge interior",           label: "Hero Image 2" },
+  { src: "/img/Ohana%20Aerial.jpg",    alt: "Rivers Lodge & Hunt Club — aerial view at golden hour", label: "Hero Image 1" },
+  { src: "/img/Clubhouse%20Home.jpg", alt: "Timber Edge Clubhouse bar and lounge interior",          label: "Hero Image 2" },
   { src: "/img/hero-3.jpg", alt: "Rivers Lodge & Hunt Club",                                label: "Hero Image 3" },
   { src: "/img/hero-4.jpg", alt: "Rivers Lodge & Hunt Club",                                label: "Hero Image 4" },
   { src: "/img/hero-5.jpg", alt: "Rivers Lodge & Hunt Club",                                label: "Hero Image 5" },
