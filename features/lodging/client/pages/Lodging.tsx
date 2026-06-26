@@ -13,8 +13,8 @@ const FALLBACK_LODGING = [
     bedrooms: 4,
     desc: "Our 6,000 square foot lodge has 4 bedrooms decorated by a prominent Kansas City designer and incorporates many aspects of history and outdoor pursuits from the area. The lodge has a full kitchen, large balcony, heated floors, heating/AC, and a large recreation room.",
     features: ["4 bedrooms", "6,000 sq ft", "Full kitchen", "Large balcony", "Heated floors", "Recreation room", "Kansas City designer interiors"],
-    img: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/TdlSWCLWjUxbkCAY.jpg",
-    img2: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/ooPGTJSHasHosVDF.jpg",
+    img: "",
+    img2: "",
   },
   {
     slug: "riverhouse-suites",
@@ -24,8 +24,8 @@ const FALLBACK_LODGING = [
     bedrooms: 4,
     desc: "The Riverhouse Suites were completed in 2022 and designed with luxury in mind. Each room is uniquely decorated and all rooms have their own bathrooms and individual heating/AC units.",
     features: ["4 private suites", "Private bath per suite", "Individual heating/AC", "Uniquely decorated rooms", "Luxury finishes", "Completed 2022"],
-    img: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/oyCUCsQLeEsyBufo.jpg",
-    img2: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/wswsJSxuUMvPOXez.jpg",
+    img: "",
+    img2: "",
   },
   {
     slug: "annex-bridal-suite",
@@ -35,8 +35,8 @@ const FALLBACK_LODGING = [
     bedrooms: 4,
     desc: "The Annex & Bridal Suite was completely remodeled in 2021. It has a modern farmhouse feel with a light and airy design. Just steps away from Rivers Barn, it is the perfect spot to spend the day getting ready for your big day. The Annex & Bridal Suite has 4 bedrooms and 3 bathrooms.",
     features: ["4 bedrooms", "3 bathrooms", "Steps from Rivers Barn", "Remodeled 2021", "Modern farmhouse feel", "Light and airy design"],
-    img: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/iIofWjQRmWLcfkoI.jpg",
-    img2: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/pNgYcBDkkMZrjPdg.jpg",
+    img: "",
+    img2: "",
   },
   {
     slug: "ohana-house",
@@ -46,8 +46,8 @@ const FALLBACK_LODGING = [
     bedrooms: 4,
     desc: "The Ohana House is located approximately 15 minutes from the main lodge. It has 4 bedrooms and bathrooms, a 20-acre lake, a gorgeous fire pit, and miles of nature trails. Enjoy fishing, canoeing, paddle boarding, hiking, or just laying on a hammock. The Ohana House can be rented as part of a corporate or wedding package, or is a perfect place for just a family getaway.",
     features: ["4 bedrooms & bathrooms", "20-acre private lake", "Gorgeous fire pit", "Miles of nature trails", "Fishing, canoeing, paddleboarding", "15 min from main lodge"],
-    img: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/aLRhjpmRWbewKvgx.jpg",
-    img2: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/jPtEuiXynfNedkpV.jpg",
+    img: "",
+    img2: "",
   },
   {
     slug: "the-farmhouse",
@@ -57,8 +57,8 @@ const FALLBACK_LODGING = [
     bedrooms: null,
     desc: "A classic Kansas farmhouse on the estate grounds. Comfortable, private, and full of character — ideal for overflow lodging, family groups, or guests who prefer a quieter corner of the property.",
     features: ["Private setting", "Classic farmhouse character", "Estate grounds", "Ideal for overflow", "Quiet and secluded", "Full amenities"],
-    img: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/FBhBBcKGLLMcZCZH.jpg",
-    img2: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/CWqFSDNCUymmKhkq.jpg",
+    img: "",
+    img2: "",
   },
 ];
 
@@ -76,8 +76,8 @@ export default function Lodging() {
         maxGuests: unit.maxGuests,
         desc: unit.longDescription ?? "",
         features: Array.isArray(unit.features) ? (unit.features as string[]) : [],
-        img: unit.heroImage ?? (Array.isArray(unit.galleryImages) ? (unit.galleryImages as string[])[0] : "") ?? "",
-        img2: Array.isArray(unit.galleryImages) ? ((unit.galleryImages as string[])[1] ?? (unit.galleryImages as string[])[0] ?? "") : "",
+        img: "",
+        img2: "",
       }))
     : FALLBACK_LODGING;
 
@@ -116,11 +116,17 @@ export default function Lodging() {
             <div className={`grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-start ${i % 2 !== 0 ? "lg:grid-flow-dense" : ""}`}>
               {/* Images */}
               <div className={`grid grid-cols-3 gap-3 ${i % 2 !== 0 ? "lg:col-start-2" : ""}`}>
-                <div className="col-span-2 overflow-hidden aspect-[4/3]">
-                  <img src={prop.img} alt={prop.name} className="w-full h-full object-cover hover:scale-105 transition-transform duration-700" loading="lazy" />
+                <div className="col-span-2 overflow-hidden aspect-[4/3] relative">
+                  <div className="absolute inset-0 bg-[#2B2823] flex items-center justify-center" aria-hidden="true">
+                    <span className="text-[10px] tracking-[0.18em] uppercase font-sans text-white/30 select-none">{prop.name}</span>
+                  </div>
+                  <img src={prop.img} alt={prop.name} className="absolute inset-0 w-full h-full object-cover hover:scale-105 transition-transform duration-700" loading="lazy" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
                 </div>
-                <div className="overflow-hidden aspect-[3/4]">
-                  <img src={prop.img2} alt={`${prop.name} interior`} className="w-full h-full object-cover hover:scale-105 transition-transform duration-700" loading="lazy" />
+                <div className="overflow-hidden aspect-[3/4] relative">
+                  <div className="absolute inset-0 bg-[#2B2823] flex items-center justify-center" aria-hidden="true">
+                    <span className="text-[10px] tracking-[0.18em] uppercase font-sans text-white/30 select-none">{prop.name} interior</span>
+                  </div>
+                  <img src={prop.img2} alt={`${prop.name} interior`} className="absolute inset-0 w-full h-full object-cover hover:scale-105 transition-transform duration-700" loading="lazy" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
                 </div>
               </div>
 
