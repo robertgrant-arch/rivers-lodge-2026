@@ -182,7 +182,7 @@ export default function PublicNav() {
           />
         )}
 
-        <div className="max-w-[1440px] mx-auto px-5 lg:px-10 flex items-center justify-between h-16 md:h-20">
+        <div className="max-w-[1440px] mx-auto px-4 xl:px-8 flex items-center h-16 md:h-20">
 
           {/* ── Wordmark ─────────────────────────────────────────────────── */}
           <Link href="/" className="flex flex-col leading-none text-[#E0D3BD] hover:opacity-80 transition-opacity shrink-0 z-10">
@@ -191,14 +191,14 @@ export default function PublicNav() {
           </Link>
 
           {/* ── Desktop Nav ──────────────────────────────────────────────── */}
-          <nav className="hidden lg:flex items-center gap-0.5">
+          <nav className="hidden xl:flex flex-1 items-center justify-center gap-0">
 
             {/* 1. Weddings & Events — clickable label + chevron */}
             <div ref={eventsRef} className="relative">
               <div className="flex items-center">
                 <Link
                   href="/weddings-events"
-                  className="px-3 py-2 text-[11px] tracking-[0.13em] uppercase font-sans font-medium transition-colors"
+                  className="px-2 py-2 text-[11px] tracking-[0.09em] uppercase font-sans font-medium whitespace-nowrap transition-colors"
                   style={{ color: activeColor(track === "events", ORANGE) }}
                   onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = ORANGE; }}
                   onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = activeColor(track === "events", ORANGE); }}
@@ -234,7 +234,7 @@ export default function PublicNav() {
               <div className="flex items-center">
                 <Link
                   href="/lodging"
-                  className="px-3 py-2 text-[11px] tracking-[0.13em] uppercase font-sans font-medium transition-colors"
+                  className="px-2 py-2 text-[11px] tracking-[0.09em] uppercase font-sans font-medium whitespace-nowrap transition-colors"
                   style={{ color: activeColor(track === "lodging", ORANGE) }}
                   onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = ORANGE; }}
                   onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = activeColor(track === "lodging", ORANGE); }}
@@ -282,7 +282,7 @@ export default function PublicNav() {
               <div className="flex items-center">
                 <Link
                   href="/membership"
-                  className={`px-3 py-2 text-[11px] tracking-[0.13em] uppercase font-sans font-medium transition-colors ${
+                  className={`px-2 py-2 text-[11px] tracking-[0.09em] uppercase font-sans font-medium whitespace-nowrap transition-colors ${
                     track === "membership" ? "text-[#6B7250]" : "text-[#E0D3BD] hover:text-[#6B7250]"
                   }`}
                 >
@@ -315,7 +315,7 @@ export default function PublicNav() {
               <div className="flex items-center">
                 <button
                   onClick={() => { setAboutOpen(!aboutOpen); setEventsOpen(false); setLodgingOpen(false); setMembershipOpen(false); }}
-                  className="flex items-center gap-1 px-3 py-2 text-[11px] tracking-[0.13em] uppercase font-sans font-medium text-[#E0D3BD] transition-colors"
+                  className="flex items-center gap-1 px-2 py-2 text-[11px] tracking-[0.09em] uppercase font-sans font-medium text-[#E0D3BD] whitespace-nowrap transition-colors"
                   style={{ color: activeColor(track === "about", GOLD) }}
                   onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = GOLD; }}
                   onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = activeColor(track === "about", GOLD); }}
@@ -341,7 +341,7 @@ export default function PublicNav() {
             {/* 5. Gallery */}
             <Link
               href="/gallery"
-              className="px-3 py-2 text-[11px] tracking-[0.13em] uppercase font-sans font-medium text-[#E0D3BD] hover:opacity-70 transition-opacity"
+              className="px-2 py-2 text-[11px] tracking-[0.09em] uppercase font-sans font-medium text-[#E0D3BD] whitespace-nowrap hover:opacity-70 transition-opacity"
             >
               Gallery
             </Link>
@@ -349,7 +349,7 @@ export default function PublicNav() {
           </nav>
 
           {/* ── Right CTA (Member Login) ──────────────────────────────────── */}
-          <div className="hidden lg:flex items-center gap-4 shrink-0">
+          <div className="hidden xl:flex items-center gap-4 flex-none">
             {isAuthenticated ? (
               <div className="relative" ref={userMenuRef}>
                 <button
@@ -393,7 +393,7 @@ export default function PublicNav() {
 
           {/* ── Mobile Hamburger ─────────────────────────────────────────── */}
           <button
-            className="lg:hidden p-2 text-[#E0D3BD] z-10"
+            className="xl:hidden p-2 text-[#E0D3BD] z-10 ml-auto"
             onClick={() => setMobileOpen(!mobileOpen)}
             aria-label="Toggle menu"
           >
@@ -404,7 +404,7 @@ export default function PublicNav() {
 
       {/* ── Mobile Full-Screen Overlay ──────────────────────────────────────── */}
       <div
-        className={`fixed inset-0 z-40 bg-background flex flex-col transition-all duration-400 lg:hidden ${
+        className={`fixed inset-0 z-40 bg-background flex flex-col transition-all duration-400 xl:hidden ${
           mobileOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
         }`}
       >
