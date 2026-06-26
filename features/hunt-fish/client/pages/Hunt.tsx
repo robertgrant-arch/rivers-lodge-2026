@@ -117,6 +117,9 @@ export default function Hunt() {
               Book a Trip
             </Link>
           </div>
+          <p className="font-sans text-white/50 mt-5 max-w-md leading-relaxed" style={{ fontSize: "0.8125rem" }}>
+            Open to the public — members receive priority booking and preferred rates.
+          </p>
         </div>
       </section>
 

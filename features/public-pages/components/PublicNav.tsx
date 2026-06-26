@@ -6,25 +6,47 @@ import { trpc } from '@shared/lib/trpc';
 
 const STAFF_ROLES = ["admin", "owner", "venue_sales", "events_manager", "membership_manager", "hunt_fish_ops", "hospitality", "staff", "finance"];
 
-type Track = "membership" | "outdoors" | "weddings" | "corporate" | null;
+type Track = "events" | "lodging" | "membership" | "about" | null;
 
 function getTrackFromPath(path: string): Track {
+  if (
+    path.startsWith("/weddings") || path.startsWith("/venues") ||
+    path.startsWith("/corporate") || path.startsWith("/food-and-wine") ||
+    path.startsWith("/hunt") || path.startsWith("/fish")
+  ) return "events";
+  if (path.startsWith("/lodging")) return "lodging";
   if (path.startsWith("/membership") || path.startsWith("/estate")) return "membership";
-  if (path.startsWith("/hunt") || path.startsWith("/fish")) return "outdoors";
-  if (path.startsWith("/weddings") || path.startsWith("/lodging") || path.startsWith("/venues")) return "weddings";
-  if (path.startsWith("/corporate")) return "corporate";
+  if (path.startsWith("/about") || path.startsWith("/contact")) return "about";
   return null;
 }
 
-const membershipDropdown = [
-  { label: "Membership Overview", href: "/membership", desc: "Benefits and how to join" },
-  { label: "Apply", href: "/membership#apply", desc: "Start your application" },
-  { label: "The Estate", href: "/estate", desc: "About the property" },
+const eventsDropdown = [
+  { label: "Weddings",        href: "/weddings",      desc: "Ceremonies & receptions on the estate" },
+  { label: "Corporate Events",href: "/corporate",     desc: "Retreats, outings & meetings" },
+  { label: "Food & Wine",     href: "/food-and-wine", desc: "Chef-driven, land-to-table dining" },
+  { label: "Hunt",            href: "/hunt",           desc: "Whitetail, waterfowl & more" },
+  { label: "Fish",            href: "/fish",           desc: "Five private fisheries" },
 ];
 
-const outdoorsDropdown = [
-  { label: "Hunt", href: "/hunt", desc: "Whitetail, waterfowl & more" },
-  { label: "Fish", href: "/fish", desc: "Five private fisheries" },
+const lodgingDropdown = [
+  { label: "The Lodge",         href: "/lodging#the-lodge", desc: "Main lodge accommodations" },
+  { label: "Riverhouse Suites", href: "/lodging#riverhouse", desc: "Suites on the Marais des Cygnes" },
+  { label: "The Barn",          href: "/lodging#the-barn",  desc: "Rustic event & lodging barn" },
+  { label: "Hunt",              href: "/hunt",               desc: "Whitetail, waterfowl & more" },
+  { label: "Fish",              href: "/fish",               desc: "Five private fisheries" },
+];
+
+const membershipDropdown = [
+  { label: "Membership Tiers", href: "/membership",          desc: "Compare membership options" },
+  { label: "Member Benefits",  href: "/membership/benefits", desc: "What membership includes" },
+  { label: "FAQ",              href: "/membership/faq",      desc: "Common questions answered" },
+];
+
+const aboutDropdown = [
+  { label: "Our Story",    href: "/about",          desc: "The history of Rivers Lodge" },
+  { label: "Meet the Team",href: "/about/team",     desc: "The people behind the lodge" },
+  { label: "The Property", href: "/about/property", desc: "The estate and its land" },
+  { label: "Contact",      href: "/contact",        desc: "Get in touch" },
 ];
 
 function getPortalHref(role?: string): string {
@@ -43,18 +65,66 @@ function getPortalLabel(role?: string): string {
   return "Member Portal";
 }
 
+const ORANGE = "oklch(0.70_0.060_50)";
+const SAGE   = "oklch(0.58_0.065_145)";
+const GOLD   = "oklch(0.72_0.095_78)";
+
+function desktopItemCls(active: boolean, color: string) {
+  return `px-3 py-2 text-[11px] tracking-[0.13em] uppercase font-sans font-medium transition-colors ${
+    active
+      ? `text-[${color}]`
+      : `text-[oklch(0.94_0.008_78)] hover:text-[${color}]`
+  }`;
+}
+
+type DropItem = { label: string; href: string; desc: string };
+
+function DropdownMenu({ items, accentColor }: { items: DropItem[]; accentColor: string }) {
+  return (
+    <div className="absolute top-full left-0 mt-1 w-64 bg-[oklch(0.115_0.007_64)] border border-[oklch(0.22_0.008_64)] shadow-2xl py-2 z-50">
+      {items.map((item) => (
+        <Link
+          key={item.href}
+          href={item.href}
+          className="flex flex-col px-5 py-3 hover:bg-[oklch(0.14_0.007_64)] transition-colors group"
+        >
+          <span
+            className="text-[11px] tracking-[0.12em] uppercase font-sans font-medium text-[oklch(0.94_0.008_78)] transition-colors"
+            style={{ "--hover-color": accentColor } as React.CSSProperties}
+          >
+            {item.label}
+          </span>
+          <span className="text-[11px] font-sans text-[oklch(0.55_0.012_70)] mt-0.5 normal-case tracking-normal">{item.desc}</span>
+        </Link>
+      ))}
+    </div>
+  );
+}
+
 export default function PublicNav() {
   const [location] = useLocation();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  // Desktop dropdowns
+  const [eventsOpen,     setEventsOpen]     = useState(false);
+  const [lodgingOpen,    setLodgingOpen]    = useState(false);
   const [membershipOpen, setMembershipOpen] = useState(false);
-  const [outdoorsOpen, setOutdoorsOpen] = useState(false);
+  const [aboutOpen,      setAboutOpen]      = useState(false);
+  const [userMenuOpen,   setUserMenuOpen]   = useState(false);
+
+  // Mobile accordions
+  const [mobileEventsOpen,     setMobileEventsOpen]     = useState(false);
+  const [mobileLodgingOpen,    setMobileLodgingOpen]    = useState(false);
   const [mobileMembershipOpen, setMobileMembershipOpen] = useState(false);
-  const [mobileOutdoorsOpen, setMobileOutdoorsOpen] = useState(false);
-  const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const userMenuRef = useRef<HTMLDivElement>(null);
+  const [mobileAboutOpen,      setMobileAboutOpen]      = useState(false);
+
+  const eventsRef     = useRef<HTMLDivElement>(null);
+  const lodgingRef    = useRef<HTMLDivElement>(null);
   const membershipRef = useRef<HTMLDivElement>(null);
-  const outdoorsRef = useRef<HTMLDivElement>(null);
+  const aboutRef      = useRef<HTMLDivElement>(null);
+  const userMenuRef   = useRef<HTMLDivElement>(null);
+
   const { user, isAuthenticated, logout } = useAuth();
 
   const memberStatus = trpc.membership.myStatus.useQuery(undefined, {
@@ -67,6 +137,13 @@ export default function PublicNav() {
   const track = getTrackFromPath(location);
   const isTransparent = !scrolled && !mobileOpen;
 
+  function closeAll() {
+    setEventsOpen(false);
+    setLodgingOpen(false);
+    setMembershipOpen(false);
+    setAboutOpen(false);
+  }
+
   useEffect(() => {
     const handler = () => setScrolled(window.scrollY > 60);
     window.addEventListener("scroll", handler, { passive: true });
@@ -75,21 +152,17 @@ export default function PublicNav() {
 
   useEffect(() => {
     setMobileOpen(false);
-    setMembershipOpen(false);
-    setOutdoorsOpen(false);
+    closeAll();
   }, [location]);
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
-      if (membershipRef.current && !membershipRef.current.contains(e.target as Node)) {
-        setMembershipOpen(false);
-      }
-      if (outdoorsRef.current && !outdoorsRef.current.contains(e.target as Node)) {
-        setOutdoorsOpen(false);
-      }
-      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
-        setUserMenuOpen(false);
-      }
+      const target = e.target as Node;
+      if (eventsRef.current     && !eventsRef.current.contains(target))     setEventsOpen(false);
+      if (lodgingRef.current    && !lodgingRef.current.contains(target))    setLodgingOpen(false);
+      if (membershipRef.current && !membershipRef.current.contains(target)) setMembershipOpen(false);
+      if (aboutRef.current      && !aboutRef.current.contains(target))      setAboutOpen(false);
+      if (userMenuRef.current   && !userMenuRef.current.contains(target))   setUserMenuOpen(false);
     }
     document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
@@ -104,12 +177,40 @@ export default function PublicNav() {
     ? "bg-transparent"
     : "bg-[oklch(0.095_0.006_64)/95] backdrop-blur-sm shadow-[0_1px_0_oklch(1_0_0/0.06)]";
 
+  const chevronCls = (open: boolean) =>
+    `transition-transform duration-200 ${open ? "rotate-180" : ""}`;
+
+  function DesktopDropdownTrigger({
+    label, isOpen, onToggle, activeColor, active,
+  }: {
+    label: string; isOpen: boolean; onToggle: () => void; activeColor: string; active: boolean;
+  }) {
+    const color = active ? activeColor : "oklch(0.94_0.008_78)";
+    const style: React.CSSProperties = active
+      ? { color: activeColor }
+      : {};
+    return (
+      <button
+        onClick={onToggle}
+        className="flex items-center gap-1 px-3 py-2 text-[11px] tracking-[0.13em] uppercase font-sans font-medium text-[oklch(0.94_0.008_78)] transition-colors"
+        style={style}
+        onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = activeColor; }}
+        onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = active ? activeColor : "oklch(0.94 0.008 78)"; }}
+        aria-expanded={isOpen}
+        aria-haspopup="true"
+      >
+        {label}
+        <ChevronDown size={11} className={chevronCls(isOpen)} />
+      </button>
+    );
+  }
+
   return (
     <>
-      <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${navBg}`}
-        style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}>
-
-        {/* Dark gradient scrim — sits behind nav content, in front of hero images */}
+      <header
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${navBg}`}
+        style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}
+      >
         {isTransparent && (
           <div
             aria-hidden="true"
@@ -130,13 +231,55 @@ export default function PublicNav() {
           {/* ── Wordmark ─────────────────────────────────────────────────── */}
           <Link href="/" className="flex flex-col leading-none text-[oklch(0.94_0.008_78)] hover:opacity-80 transition-opacity shrink-0 z-10">
             <span className="font-serif text-xl md:text-[1.375rem] tracking-wide">Rivers Lodge</span>
-            <span className="text-[9px] tracking-[0.24em] uppercase opacity-60 font-sans font-light mt-0.5">& Hunt Club</span>
+            <span className="text-[9px] tracking-[0.24em] uppercase opacity-60 font-sans font-light mt-0.5">&amp; Hunt Club</span>
           </Link>
 
           {/* ── Desktop Nav ──────────────────────────────────────────────── */}
           <nav className="hidden lg:flex items-center gap-0.5">
 
-            {/* 1. Explore Membership */}
+            {/* 1. Events ▾ */}
+            <div ref={eventsRef} className="relative">
+              <DesktopDropdownTrigger
+                label="Events"
+                isOpen={eventsOpen}
+                activeColor={ORANGE}
+                active={track === "events"}
+                onToggle={() => { setEventsOpen(!eventsOpen); setLodgingOpen(false); setMembershipOpen(false); setAboutOpen(false); }}
+              />
+              {eventsOpen && (
+                <div className="absolute top-full left-0 mt-1 w-64 bg-[oklch(0.115_0.007_64)] border border-[oklch(0.22_0.008_64)] shadow-2xl py-2 z-50">
+                  {eventsDropdown.map((item) => (
+                    <Link key={item.href} href={item.href} className="flex flex-col px-5 py-3 hover:bg-[oklch(0.14_0.007_64)] transition-colors group">
+                      <span className="text-[11px] tracking-[0.12em] uppercase font-sans font-medium text-[oklch(0.94_0.008_78)] group-hover:text-[oklch(0.70_0.060_50)] transition-colors">{item.label}</span>
+                      <span className="text-[11px] font-sans text-[oklch(0.55_0.012_70)] mt-0.5 normal-case tracking-normal">{item.desc}</span>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* 2. Lodging ▾ */}
+            <div ref={lodgingRef} className="relative">
+              <DesktopDropdownTrigger
+                label="Lodging"
+                isOpen={lodgingOpen}
+                activeColor={ORANGE}
+                active={track === "lodging"}
+                onToggle={() => { setLodgingOpen(!lodgingOpen); setEventsOpen(false); setMembershipOpen(false); setAboutOpen(false); }}
+              />
+              {lodgingOpen && (
+                <div className="absolute top-full left-0 mt-1 w-64 bg-[oklch(0.115_0.007_64)] border border-[oklch(0.22_0.008_64)] shadow-2xl py-2 z-50">
+                  {lodgingDropdown.map((item) => (
+                    <Link key={item.href} href={item.href} className="flex flex-col px-5 py-3 hover:bg-[oklch(0.14_0.007_64)] transition-colors group">
+                      <span className="text-[11px] tracking-[0.12em] uppercase font-sans font-medium text-[oklch(0.94_0.008_78)] group-hover:text-[oklch(0.70_0.060_50)] transition-colors">{item.label}</span>
+                      <span className="text-[11px] font-sans text-[oklch(0.55_0.012_70)] mt-0.5 normal-case tracking-normal">{item.desc}</span>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* 3. Explore Membership ▾ */}
             <div ref={membershipRef} className="relative">
               <div className="flex items-center">
                 <Link
@@ -148,23 +291,19 @@ export default function PublicNav() {
                   Explore Membership
                 </Link>
                 <button
-                  onClick={() => { setMembershipOpen(!membershipOpen); setOutdoorsOpen(false); }}
+                  onClick={() => { setMembershipOpen(!membershipOpen); setEventsOpen(false); setLodgingOpen(false); setAboutOpen(false); }}
                   aria-label="Open Explore Membership menu"
                   className={`p-1.5 -ml-1 transition-colors ${
                     track === "membership" ? "text-[oklch(0.58_0.065_145)]" : "text-[oklch(0.94_0.008_78)] hover:text-[oklch(0.58_0.065_145)]"
                   }`}
                 >
-                  <ChevronDown size={11} className={`transition-transform duration-200 ${membershipOpen ? "rotate-180" : ""}`} />
+                  <ChevronDown size={11} className={chevronCls(membershipOpen)} />
                 </button>
               </div>
               {membershipOpen && (
-                <div className="absolute top-full left-0 mt-1 w-64 bg-[oklch(0.115_0.007_64)] border border-[oklch(0.22_0.008_64)] shadow-2xl py-2">
+                <div className="absolute top-full left-0 mt-1 w-64 bg-[oklch(0.115_0.007_64)] border border-[oklch(0.22_0.008_64)] shadow-2xl py-2 z-50">
                   {membershipDropdown.map((item) => (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      className="flex flex-col px-5 py-3 hover:bg-[oklch(0.14_0.007_64)] transition-colors group"
-                    >
+                    <Link key={item.href} href={item.href} className="flex flex-col px-5 py-3 hover:bg-[oklch(0.14_0.007_64)] transition-colors group">
                       <span className="text-[11px] tracking-[0.12em] uppercase font-sans font-medium text-[oklch(0.94_0.008_78)] group-hover:text-[oklch(0.58_0.065_145)] transition-colors">{item.label}</span>
                       <span className="text-[11px] font-sans text-[oklch(0.55_0.012_70)] mt-0.5 normal-case tracking-normal">{item.desc}</span>
                     </Link>
@@ -173,36 +312,20 @@ export default function PublicNav() {
               )}
             </div>
 
-            {/* 2. Outdoor Pursuits */}
-            <div ref={outdoorsRef} className="relative">
-              <div className="flex items-center">
-                <Link
-                  href="/hunt"
-                  className={`px-3 py-2 text-[11px] tracking-[0.13em] uppercase font-sans font-medium transition-colors ${
-                    track === "outdoors" ? "text-[oklch(0.58_0.065_145)]" : "text-[oklch(0.94_0.008_78)] hover:text-[oklch(0.58_0.065_145)]"
-                  }`}
-                >
-                  Outdoor Pursuits
-                </Link>
-                <button
-                  onClick={() => { setOutdoorsOpen(!outdoorsOpen); setMembershipOpen(false); }}
-                  aria-label="Open Outdoor Pursuits menu"
-                  className={`p-1.5 -ml-1 transition-colors ${
-                    track === "outdoors" ? "text-[oklch(0.58_0.065_145)]" : "text-[oklch(0.94_0.008_78)] hover:text-[oklch(0.58_0.065_145)]"
-                  }`}
-                >
-                  <ChevronDown size={11} className={`transition-transform duration-200 ${outdoorsOpen ? "rotate-180" : ""}`} />
-                </button>
-              </div>
-              {outdoorsOpen && (
-                <div className="absolute top-full left-0 mt-1 w-56 bg-[oklch(0.115_0.007_64)] border border-[oklch(0.22_0.008_64)] shadow-2xl py-2">
-                  {outdoorsDropdown.map((item) => (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      className="flex flex-col px-5 py-3 hover:bg-[oklch(0.14_0.007_64)] transition-colors group"
-                    >
-                      <span className="text-[11px] tracking-[0.12em] uppercase font-sans font-medium text-[oklch(0.94_0.008_78)] group-hover:text-[oklch(0.58_0.065_145)] transition-colors">{item.label}</span>
+            {/* 4. About ▾ */}
+            <div ref={aboutRef} className="relative">
+              <DesktopDropdownTrigger
+                label="About"
+                isOpen={aboutOpen}
+                activeColor={GOLD}
+                active={track === "about"}
+                onToggle={() => { setAboutOpen(!aboutOpen); setEventsOpen(false); setLodgingOpen(false); setMembershipOpen(false); }}
+              />
+              {aboutOpen && (
+                <div className="absolute top-full left-0 mt-1 w-64 bg-[oklch(0.115_0.007_64)] border border-[oklch(0.22_0.008_64)] shadow-2xl py-2 z-50">
+                  {aboutDropdown.map((item) => (
+                    <Link key={item.href} href={item.href} className="flex flex-col px-5 py-3 hover:bg-[oklch(0.14_0.007_64)] transition-colors group">
+                      <span className="text-[11px] tracking-[0.12em] uppercase font-sans font-medium text-[oklch(0.94_0.008_78)] group-hover:text-[oklch(0.72_0.095_78)] transition-colors">{item.label}</span>
                       <span className="text-[11px] font-sans text-[oklch(0.55_0.012_70)] mt-0.5 normal-case tracking-normal">{item.desc}</span>
                     </Link>
                   ))}
@@ -210,35 +333,7 @@ export default function PublicNav() {
               )}
             </div>
 
-            {/* 3. Food & Wine */}
-            <Link
-              href="/food-and-wine"
-              className="px-3 py-2 text-[11px] tracking-[0.13em] uppercase font-sans font-medium text-[oklch(0.94_0.008_78)] hover:opacity-70 transition-opacity"
-            >
-              Food &amp; Wine
-            </Link>
-
-            {/* 4. Weddings */}
-            <Link
-              href="/weddings"
-              className={`px-3 py-2 text-[11px] tracking-[0.13em] uppercase font-sans font-medium transition-colors ${
-                track === "weddings" ? "text-[oklch(0.70_0.060_50)]" : "text-[oklch(0.94_0.008_78)] hover:text-[oklch(0.70_0.060_50)]"
-              }`}
-            >
-              Weddings
-            </Link>
-
-            {/* 5. Corporate Events */}
-            <Link
-              href="/corporate"
-              className={`px-3 py-2 text-[11px] tracking-[0.13em] uppercase font-sans font-medium transition-colors ${
-                track === "corporate" ? "text-[oklch(0.70_0.060_50)]" : "text-[oklch(0.94_0.008_78)] hover:text-[oklch(0.70_0.060_50)]"
-              }`}
-            >
-              Corporate Events
-            </Link>
-
-            {/* 6. Gallery */}
+            {/* 5. Gallery */}
             <Link
               href="/gallery"
               className="px-3 py-2 text-[11px] tracking-[0.13em] uppercase font-sans font-medium text-[oklch(0.94_0.008_78)] hover:opacity-70 transition-opacity"
@@ -246,16 +341,9 @@ export default function PublicNav() {
               Gallery
             </Link>
 
-            {/* 7. Contact */}
-            <Link
-              href="/contact"
-              className="px-3 py-2 text-[11px] tracking-[0.13em] uppercase font-sans font-medium text-[oklch(0.94_0.008_78)] hover:opacity-70 transition-opacity"
-            >
-              Contact
-            </Link>
           </nav>
 
-          {/* ── Right CTA ────────────────────────────────────────────────── */}
+          {/* ── Right CTA (Member Login) ──────────────────────────────────── */}
           <div className="hidden lg:flex items-center gap-4 shrink-0">
             {isAuthenticated ? (
               <div className="relative" ref={userMenuRef}>
@@ -265,7 +353,7 @@ export default function PublicNav() {
                 >
                   <User size={13} />
                   <span>{user?.name?.split(" ")[0] ?? getPortalLabel(user?.role)}</span>
-                  <ChevronDown size={11} className={`transition-transform duration-200 ${userMenuOpen ? "rotate-180" : ""}`} />
+                  <ChevronDown size={11} className={chevronCls(userMenuOpen)} />
                 </button>
                 {userMenuOpen && (
                   <div className="absolute right-0 top-full mt-1 w-52 bg-[oklch(0.115_0.007_64)] border border-[oklch(0.22_0.008_64)] shadow-2xl z-50">
@@ -318,6 +406,7 @@ export default function PublicNav() {
         <div className="h-16 md:h-20 shrink-0" />
 
         <div className="flex-1 overflow-y-auto px-6 py-8 flex flex-col gap-0">
+
           {/* Member Login — prominent at top */}
           <div className="pb-8 mb-8 border-b border-[oklch(0.22_0.008_64)]">
             {isAuthenticated ? (
@@ -351,8 +440,68 @@ export default function PublicNav() {
             )}
           </div>
 
-          {/* 1. Explore Membership */}
-          <div className="mb-6">
+          {/* 1. Events */}
+          <div className="mb-2">
+            <div className="flex items-center justify-between py-3">
+              <span className="text-[11px] tracking-[0.18em] uppercase font-sans font-medium text-[oklch(0.70_0.060_50)]">
+                Events
+              </span>
+              <button
+                onClick={() => setMobileEventsOpen(!mobileEventsOpen)}
+                aria-label="Toggle Events"
+                className="p-1 text-[oklch(0.60_0.015_72)]"
+              >
+                <ChevronDown size={14} className={chevronCls(mobileEventsOpen)} />
+              </button>
+            </div>
+            {mobileEventsOpen && (
+              <div className="pl-4 mt-1 flex flex-col gap-0 border-l border-[oklch(0.70_0.060_50)/30]">
+                {eventsDropdown.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setMobileOpen(false)}
+                    className="py-3 text-[oklch(0.94_0.008_78)] font-serif text-xl italic hover:text-[oklch(0.70_0.060_50)] transition-colors"
+                  >
+                    {item.label}
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* 2. Lodging */}
+          <div className="mb-2">
+            <div className="flex items-center justify-between py-3">
+              <span className="text-[11px] tracking-[0.18em] uppercase font-sans font-medium text-[oklch(0.70_0.060_50)]">
+                Lodging
+              </span>
+              <button
+                onClick={() => setMobileLodgingOpen(!mobileLodgingOpen)}
+                aria-label="Toggle Lodging"
+                className="p-1 text-[oklch(0.60_0.015_72)]"
+              >
+                <ChevronDown size={14} className={chevronCls(mobileLodgingOpen)} />
+              </button>
+            </div>
+            {mobileLodgingOpen && (
+              <div className="pl-4 mt-1 flex flex-col gap-0 border-l border-[oklch(0.70_0.060_50)/30]">
+                {lodgingDropdown.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setMobileOpen(false)}
+                    className="py-3 text-[oklch(0.94_0.008_78)] font-serif text-xl italic hover:text-[oklch(0.70_0.060_50)] transition-colors"
+                  >
+                    {item.label}
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* 3. Explore Membership */}
+          <div className="mb-2">
             <div className="flex items-center justify-between py-3">
               <Link
                 href="/membership"
@@ -366,7 +515,7 @@ export default function PublicNav() {
                 aria-label="Toggle Explore Membership"
                 className="p-1 text-[oklch(0.60_0.015_72)]"
               >
-                <ChevronDown size={14} className={`transition-transform duration-200 ${mobileMembershipOpen ? "rotate-180" : ""}`} />
+                <ChevronDown size={14} className={chevronCls(mobileMembershipOpen)} />
               </button>
             </div>
             {mobileMembershipOpen && (
@@ -385,32 +534,28 @@ export default function PublicNav() {
             )}
           </div>
 
-          {/* 2. Outdoor Pursuits */}
-          <div className="mb-6">
+          {/* 4. About */}
+          <div className="mb-2">
             <div className="flex items-center justify-between py-3">
-              <Link
-                href="/hunt"
-                onClick={() => setMobileOpen(false)}
-                className="text-[11px] tracking-[0.18em] uppercase font-sans font-medium text-[oklch(0.58_0.065_145)]"
-              >
-                Outdoor Pursuits
-              </Link>
+              <span className="text-[11px] tracking-[0.18em] uppercase font-sans font-medium text-[oklch(0.72_0.095_78)]">
+                About
+              </span>
               <button
-                onClick={() => setMobileOutdoorsOpen(!mobileOutdoorsOpen)}
-                aria-label="Toggle Outdoor Pursuits"
+                onClick={() => setMobileAboutOpen(!mobileAboutOpen)}
+                aria-label="Toggle About"
                 className="p-1 text-[oklch(0.60_0.015_72)]"
               >
-                <ChevronDown size={14} className={`transition-transform duration-200 ${mobileOutdoorsOpen ? "rotate-180" : ""}`} />
+                <ChevronDown size={14} className={chevronCls(mobileAboutOpen)} />
               </button>
             </div>
-            {mobileOutdoorsOpen && (
-              <div className="pl-4 mt-1 flex flex-col gap-0 border-l border-[oklch(0.58_0.065_145)/30]">
-                {outdoorsDropdown.map((item) => (
+            {mobileAboutOpen && (
+              <div className="pl-4 mt-1 flex flex-col gap-0 border-l border-[oklch(0.72_0.095_78)/30]">
+                {aboutDropdown.map((item) => (
                   <Link
                     key={item.href}
                     href={item.href}
                     onClick={() => setMobileOpen(false)}
-                    className="py-3 text-[oklch(0.94_0.008_78)] font-serif text-xl italic hover:text-[oklch(0.58_0.065_145)] transition-colors"
+                    className="py-3 text-[oklch(0.94_0.008_78)] font-serif text-xl italic hover:text-[oklch(0.72_0.095_78)] transition-colors"
                   >
                     {item.label}
                   </Link>
@@ -419,34 +564,7 @@ export default function PublicNav() {
             )}
           </div>
 
-          {/* 3. Food & Wine */}
-          <Link
-            href="/food-and-wine"
-            onClick={() => setMobileOpen(false)}
-            className="py-3 text-[oklch(0.94_0.008_78)] font-serif text-xl italic hover:text-[oklch(0.72_0.095_78)] transition-colors"
-          >
-            Food &amp; Wine
-          </Link>
-
-          {/* 4. Weddings */}
-          <Link
-            href="/weddings"
-            onClick={() => setMobileOpen(false)}
-            className="py-3 text-[oklch(0.94_0.008_78)] font-serif text-xl italic hover:text-[oklch(0.70_0.060_50)] transition-colors"
-          >
-            Weddings
-          </Link>
-
-          {/* 5. Corporate Events */}
-          <Link
-            href="/corporate"
-            onClick={() => setMobileOpen(false)}
-            className="py-3 text-[oklch(0.94_0.008_78)] font-serif text-xl italic hover:text-[oklch(0.70_0.060_50)] transition-colors"
-          >
-            Corporate Events
-          </Link>
-
-          {/* 6. Gallery */}
+          {/* 5. Gallery */}
           <Link
             href="/gallery"
             onClick={() => setMobileOpen(false)}
@@ -455,14 +573,6 @@ export default function PublicNav() {
             Gallery
           </Link>
 
-          {/* 7. Contact */}
-          <Link
-            href="/contact"
-            onClick={() => setMobileOpen(false)}
-            className="py-3 text-[oklch(0.94_0.008_78)] font-serif text-xl italic hover:text-[oklch(0.72_0.095_78)] transition-colors"
-          >
-            Contact
-          </Link>
         </div>
 
         <div className="px-6 py-6 border-t border-[oklch(0.22_0.008_64)]">
