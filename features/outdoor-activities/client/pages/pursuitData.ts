@@ -127,7 +127,7 @@ export const PURSUITS: Pursuit[] = [
     slug: "fishing",
     title: "Fishing",
     teaser: "Five private fisheries — world-class bass, walleye, and more.",
-    heroImg: "/brand/fishing%201.jpg",
+    heroImg: "/img/Fishing%20net.jpg",
     heroAlt: "Fishing on the Marais des Cygnes at Rivers Lodge",
     description: [
       "The Rivers Lodge fishing program is tightly managed and intentionally exclusive. Private access to the Marais des Cygnes river channel, two stocked lakes, and a series of backwater sloughs produces fishing that is rarely found anywhere in the Midwest — let alone one hour from Kansas City.",
