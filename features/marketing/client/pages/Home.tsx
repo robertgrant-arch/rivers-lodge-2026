@@ -273,11 +273,10 @@ export default function Home() {
                 className="font-serif font-light text-warm leading-tight mb-6"
                 style={{ fontSize: "clamp(1.875rem,3.5vw,3rem)" }}
               >
-                For those who hunt, fish, and live on the land.
+                More than a hunt club.
               </h2>
-              {/* TODO: Bill to finalize this paragraph (~40-55 words) */}
               <p className="font-sans text-muted-brand leading-relaxed mb-10" style={{ fontSize: "0.9375rem" }}>
-                Managed whitetail, waterfowl, and upland bird hunting. Five private fisheries. Sporting clays and a community of members who share a deep respect for the land. A limited number of memberships are available each season.
+                Exclusive member events throughout the year — guest chef dinners, private concerts, game dinners, and seasonal celebrations — alongside managed Hunting and Fishing on thousands of acres. A small, intentional membership with access to the full estate.
               </p>
               <Link href="/membership" className="btn-ghost" style={{ borderColor: "#6B7250", color: "#6B7250" }}>Explore Membership</Link>
             </div>
