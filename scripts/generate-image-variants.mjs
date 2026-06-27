@@ -4,6 +4,9 @@
  * Produces AVIF and WebP versions of every image in client/public/img/ and
  * client/public/brand/ at 480/768/1200/1920w.  Originals are never modified.
  * Output files live beside originals; already-generated files are skipped.
+ *
+ * Concurrency is capped at MAX_CONCURRENT Sharp jobs to prevent OOM on
+ * memory-constrained CI/build hosts (e.g. Render Starter at 512 MB).
  */
 
 import { createRequire } from "module";
@@ -21,11 +24,32 @@ const DIRS = [
 
 const WIDTHS = [480, 768, 1200, 1920];
 const FORMATS = ["avif", "webp"];
+const MAX_CONCURRENT = 3;
 
 // Extensions we process
 const SOURCE_EXTS = new Set([".jpg", ".jpeg", ".png", ".webp", ".tiff", ".tif"]);
 // Extensions we never overwrite (don't re-process generated variants)
 const VARIANT_RE = /-\d+w\.(avif|webp)$/i;
+
+// Simple semaphore: at most MAX_CONCURRENT thunks run at once.
+function makeSemaphore(limit) {
+  let active = 0;
+  const queue = [];
+  function next() {
+    if (active >= limit || queue.length === 0) return;
+    active++;
+    const { thunk, resolve, reject } = queue.shift();
+    thunk().then(resolve, reject).finally(() => { active--; next(); });
+  }
+  return function run(thunk) {
+    return new Promise((resolve, reject) => {
+      queue.push({ thunk, resolve, reject });
+      next();
+    });
+  };
+}
+
+const sem = makeSemaphore(MAX_CONCURRENT);
 
 async function processFile(filePath) {
   const ext = path.extname(filePath).toLowerCase();
@@ -55,16 +79,18 @@ async function processFile(filePath) {
       tasks.push(
         fs.access(outPath)
           .then(() => null) // already exists, skip
-          .catch(async () => {
-            const s = sharp(filePath).resize(w, null, { withoutEnlargement: true });
-            if (fmt === "avif") {
-              s.avif({ quality: 72, effort: 4 });
-            } else {
-              s.webp({ quality: 82 });
-            }
-            await s.toFile(outPath);
-            return outPath;
-          })
+          .catch(() =>
+            sem(async () => {
+              const s = sharp(filePath).resize(w, null, { withoutEnlargement: true });
+              if (fmt === "avif") {
+                s.avif({ quality: 72, effort: 4 });
+              } else {
+                s.webp({ quality: 82 });
+              }
+              await s.toFile(outPath);
+              return outPath;
+            })
+          )
       );
     }
   }
