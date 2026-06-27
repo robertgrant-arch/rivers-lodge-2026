@@ -7,7 +7,7 @@ import FAQAccordion from "@/components/FAQAccordion";
 
 
 /* ── Images ──────────────────────────────────────────────────────────────── */
-const HERO       = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/gWfYLmNXrOoFKvTt.jpg";
+const HERO       = "/img/Ohana%20Dock.jpg";
 const BARN_INT   = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/ooPGTJSHasHosVDF.jpg";
 const CEREMONY   = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/NuVfykZEURKLacpv.jpg";
 const RECEPTION  = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/SSdcPuhkHXDvzhtk.jpg";
@@ -61,7 +61,7 @@ export default function WeddingsLanding() {
         {/* ── Hero ─────────────────────────────────────────────────────── */}
         <section className="relative h-[90vh] min-h-[560px] flex items-end pb-20 overflow-hidden">
           <div className="absolute inset-0">
-            <img src={HERO} alt="Wedding at Rivers Lodge" className="w-full h-full object-cover" />
+            <img src={HERO} alt="The Ohana dock at Rivers Lodge" className="w-full h-full object-cover" />
             <div className="absolute inset-0 bg-gradient-to-b from-black/5 via-black/20 to-black/80" />
           </div>
           <div className="relative z-10 max-w-[1440px] mx-auto px-5 lg:px-10 w-full">
