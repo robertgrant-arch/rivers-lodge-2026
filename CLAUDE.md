@@ -5,6 +5,12 @@
 **Hosting:** Render.com (Node, Oregon region)
 **Deploy trigger:** `git commit --allow-empty -m "chore: trigger Render production deploy (...)" && git push origin main`
 
+## Standing session rule
+
+**Generate or confirm CLAUDE.md and OPERATOR.md before making any code changes.**
+At the start of every session: confirm both files are present and current, then proceed with engineering work.
+Quick reference for day-to-day work: see `OPERATOR.md`.
+
 ---
 
 ## How this repo is organized
