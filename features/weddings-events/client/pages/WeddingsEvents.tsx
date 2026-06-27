@@ -6,7 +6,7 @@ import Picture from "@shared/components/Picture";
 
 const ACCENT = "#9B4D19";
 
-const HERO_IMG = "/img/wedding%20hero.JPG";
+const HERO_IMG = "/img/Ohana%20Dock.jpg";
 
 function useFadeUp(t = 0.12) {
   const ref = useRef<HTMLElement>(null);
@@ -52,7 +52,7 @@ const CATEGORIES = [
     label: "Food & Wine",
     href: "/food-and-wine",
     desc: "Chef-driven, land-to-table dining. Private dinners, tasting events, and custom menus built around the estate and the season.",
-    img: "/img/Cool%20Food%202.JPG",
+    img: "/img/ChefSwethaSelect30617-1200w.avif",
     imgAlt: "Chef-driven dining at Rivers Lodge",
     eyebrow: "Culinary",
   },
