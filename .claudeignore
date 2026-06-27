@@ -1,0 +1,57 @@
+# Build output
+dist/
+dist-server/
+.vite/
+*.tsbuildinfo
+
+# Dependencies
+node_modules/
+
+# Logs
+*.log
+logs/
+npm-debug.log*
+pnpm-debug.log*
+
+# Database migrations / snapshots
+drizzle/meta/
+
+# Environment / secrets — never read these
+.env
+.env.local
+.env.*.local
+
+# OS artifacts
+.DS_Store
+Thumbs.db
+*.DS_Store
+
+# Editor artifacts
+.idea/
+*.swp
+*.swo
+.vscode/settings.json
+*.orig
+
+# Test output / coverage
+coverage/
+.vitest/
+__snapshots__/
+
+# Render build artifacts
+.render-buildpacks.json
+
+# Debug / Manus tooling
+client/public/__manus__/
+
+# Patches (rarely relevant to code tasks)
+patches/
+
+# Generated type declaration maps
+*.d.ts.map
+
+# Temporary / scratch files
+*.tmp
+*.bak
+tmp/
+scratch/
