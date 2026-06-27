@@ -5,12 +5,12 @@ import SEOHead from '@shared/components/SEOHead';
 import StickyInquiryCTA from "@/components/StickyInquiryCTA";
 
 
-const HERO     = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/ydbhfuDouoqRGsqW.jpg";
-const BARN     = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/GEBYbBimoPflfefP.jpg";
-const GROUNDS  = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/RNvGygATwGRMluZa.jpg";
-const AERIAL   = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/jPtEuiXynfNedkpV.jpg";
-const LODGE    = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/TdlSWCLWjUxbkCAY.jpg";
-const INTERIOR = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/JcuUUmANmAAHItUn.jpg";
+const HERO     = "/brand/Corporate%20Event%201.jpg";
+const BARN     = "/img/barn%20shot.jpg";
+const GROUNDS  = "/img/Ohana%20Aerial.jpg";
+const AERIAL   = "/img/Ohana%20Aerial.jpg";
+const LODGE    = "/img/Main%20Lodge.jpg";
+const INTERIOR = "/brand/clubhouse%204.jpg";
 
 function useFadeUp(t = 0.12) {
   const ref = useRef<HTMLElement>(null);

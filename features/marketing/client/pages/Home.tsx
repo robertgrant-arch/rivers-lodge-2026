@@ -9,8 +9,8 @@ const HERO_SLIDES: { src: string; alt: string; label: string }[] = [
   { src: "/img/Ohana%20Aerial.jpg",    alt: "Rivers Lodge & Hunt Club — aerial view at golden hour", label: "Hero Image 1" },
   { src: "/img/Clubhouse%20Home.jpg",  alt: "Timber Edge Clubhouse bar and lounge interior",         label: "Hero Image 2" },
   { src: "/img/hero%203.jpg",          alt: "Rivers Lodge & Hunt Club",                              label: "Hero Image 3" },
-  { src: "/img/hero-4.jpg",            alt: "Rivers Lodge & Hunt Club",                              label: "Hero Image 4" },
-  { src: "/img/hero-5.jpg",            alt: "Rivers Lodge & Hunt Club",                              label: "Hero Image 5" },
+  { src: "/brand/clubhouse%204.jpg",    alt: "Rivers Lodge & Hunt Club",                              label: "Hero Image 4" },
+  { src: "/brand/clubhouse%20exterior.jpg", alt: "Rivers Lodge & Hunt Club exterior",                label: "Hero Image 5" },
 ];
 
 function HeroSlideshow() {
