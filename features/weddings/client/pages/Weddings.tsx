@@ -238,10 +238,19 @@ export default function Weddings() {
       {/* Hero */}
       <section className="relative hero-full flex items-end pb-24 overflow-hidden">
         <div className="absolute inset-0">
-          <div className="absolute inset-0 bg-[#363330] flex items-center justify-center" aria-hidden="true">
-            <span className="text-[10px] tracking-[0.18em] uppercase font-sans text-white/40 select-none pointer-events-none">Wedding Hero Image</span>
-          </div>
-          <img src={HERO} alt="Wedding at Rivers Lodge" className="absolute inset-0 w-full h-full object-cover object-top" fetchPriority="high" loading="eager" decoding="async" width={1920} height={1080} onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
+          <Picture
+            src={HERO}
+            alt="Wedding at Rivers Lodge"
+            label="Wedding Hero Image"
+            className="absolute inset-0 w-full h-full"
+            imgClassName="absolute inset-0 w-full h-full object-cover object-top"
+            fetchPriority="high"
+            loading="eager"
+            decoding="async"
+            width={1920}
+            height={1080}
+            sizes="100vw"
+          />
           <div className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(to bottom, transparent 0%, oklch(0 0 0/0.10) 40%, oklch(0 0 0/0.78) 100%)" }} />
         </div>
         <div className="relative z-10 max-w-[1440px] mx-auto px-5 lg:px-14 w-full">

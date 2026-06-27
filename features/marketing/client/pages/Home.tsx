@@ -37,24 +37,18 @@ function HeroSlideshow() {
             zIndex: i === activeIdx ? 1 : 0,
           }}
         >
-          <div
-            className="absolute inset-0 bg-[#2B2823] flex items-center justify-center"
-            aria-hidden="true"
-          >
-            <span className="text-[10px] tracking-[0.18em] uppercase font-sans text-white/40 select-none pointer-events-none">
-              {slide.label}
-            </span>
-          </div>
-          <img
+          <Picture
             src={slide.src}
             alt={slide.alt}
-            className="absolute inset-0 w-full h-full object-cover object-center"
+            label={slide.label}
+            className="absolute inset-0 w-full h-full"
+            imgClassName="absolute inset-0 w-full h-full object-cover object-center"
             fetchPriority={i === 0 ? "high" : "low"}
             loading={i === 0 ? "eager" : "lazy"}
             decoding="async"
             width={1920}
             height={1080}
-            onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+            sizes="100vw"
           />
         </div>
       ))}
@@ -118,26 +112,6 @@ function useFadeUp(threshold = 0.12) {
     return () => obs.disconnect();
   }, [threshold]);
   return ref;
-}
-
-/* ── Safe image (placeholder base layer + real img on top) ──────────────── */
-function SafeImg({ src, alt, label, className }: { src: string; alt: string; label: string; className?: string }) {
-  return (
-    <div className={`relative ${className ?? ""}`}>
-      <div className="absolute inset-0 bg-[#363330] flex items-center justify-center" aria-hidden="true">
-        <span className="text-[10px] tracking-[0.18em] uppercase font-sans text-white/30 select-none pointer-events-none">
-          {label}
-        </span>
-      </div>
-      <img
-        src={src}
-        alt={alt}
-        className="absolute inset-0 w-full h-full object-cover"
-        loading="lazy"
-        onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
-      />
-    </div>
-  );
 }
 
 /* ── Main Component ──────────────────────────────────────────────────────── */

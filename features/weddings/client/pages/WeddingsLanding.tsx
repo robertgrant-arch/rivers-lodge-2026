@@ -4,6 +4,7 @@ import { trpc } from '@shared/lib/trpc';
 import SEOHead, { structuredData } from '@shared/components/SEOHead';
 import AvailabilityCalendar from "@/components/AvailabilityCalendar";
 import FAQAccordion from "@/components/FAQAccordion";
+import Picture from "@shared/components/Picture";
 
 
 /* ── Images ──────────────────────────────────────────────────────────────── */
@@ -61,7 +62,18 @@ export default function WeddingsLanding() {
         {/* ── Hero ─────────────────────────────────────────────────────── */}
         <section className="relative h-[90vh] min-h-[560px] flex items-end pb-20 overflow-hidden">
           <div className="absolute inset-0">
-            <img src={HERO} alt="The Ohana dock at Rivers Lodge" className="w-full h-full object-cover" />
+            <Picture
+              src={HERO}
+              alt="The Ohana dock at Rivers Lodge"
+              className="absolute inset-0 w-full h-full"
+              imgClassName="absolute inset-0 w-full h-full object-cover"
+              fetchPriority="high"
+              loading="eager"
+              decoding="async"
+              width={1920}
+              height={1080}
+              sizes="100vw"
+            />
             <div className="absolute inset-0 bg-gradient-to-b from-black/5 via-black/20 to-black/80" />
           </div>
           <div className="relative z-10 max-w-[1440px] mx-auto px-5 lg:px-10 w-full">

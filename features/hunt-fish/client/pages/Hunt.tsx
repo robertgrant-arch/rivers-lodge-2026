@@ -2,6 +2,7 @@ import { useRef, useEffect } from "react";
 import { Link } from "wouter";
 import PublicLayout from "../../../_shared/components/PublicLayout";
 import SEOHead from '@shared/components/SEOHead';
+import Picture from "@shared/components/Picture";
 
 const ACCENT = "#6B7250";
 const HUNT_HERO = "/img/hunt-hero.jpg";
@@ -83,19 +84,18 @@ export default function Hunt() {
       {/* ── Hero ─────────────────────────────────────────────────────── */}
       <section className="relative hero-full flex items-end pb-24 overflow-hidden">
         <div className="absolute inset-0">
-          {/* Placeholder — always in the DOM; visible until hunt-hero.jpg is added */}
-          <div className="absolute inset-0 bg-[#2B2823] flex items-center justify-center" aria-hidden="true">
-            <span className="text-[10px] tracking-[0.18em] uppercase font-sans text-white/40 select-none pointer-events-none">
-              Hunt Hero Image
-            </span>
-          </div>
-          {/* Real photo — absolutely positioned on top; hidden via onError until the file exists */}
-          <img
+          <Picture
             src={HUNT_HERO}
             alt="Hunt and outdoor pursuits at Rivers Lodge"
-            className="absolute inset-0 w-full h-full object-cover"
+            label="Hunt Hero Image"
+            className="absolute inset-0 w-full h-full"
+            imgClassName="absolute inset-0 w-full h-full object-cover"
             fetchPriority="high"
-            onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+            loading="eager"
+            decoding="async"
+            width={1920}
+            height={1080}
+            sizes="100vw"
           />
           <div className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(to bottom, transparent 0%, oklch(0 0 0/0.12) 40%, oklch(0 0 0/0.82) 100%)" }} />
         </div>
@@ -158,9 +158,17 @@ export default function Hunt() {
             {pursuits.map((p) => (
               <div key={p.title} className="bg-surface overflow-hidden">
                 {p.img ? (
-                  <div className="aspect-[4/3] w-full overflow-hidden">
-                    <img src={p.img} alt={p.imgLabel} className="w-full h-full object-cover" loading="lazy" />
-                  </div>
+                  <Picture
+                    src={p.img}
+                    alt={p.imgLabel}
+                    className="aspect-[4/3] w-full overflow-hidden"
+                    imgClassName="absolute inset-0 w-full h-full object-cover"
+                    loading="lazy"
+                    decoding="async"
+                    width={600}
+                    height={450}
+                    sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                  />
                 ) : (
                   /* TODO: replace with real pursuit photography */
                   <ImgPlaceholder aspectClass="aspect-[4/3] w-full" label={p.imgLabel} />
