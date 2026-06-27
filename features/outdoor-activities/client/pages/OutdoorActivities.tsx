@@ -36,21 +36,18 @@ export default function OutdoorActivities() {
       {/* Hero */}
       <section className="relative hero-full flex items-end pb-24 overflow-hidden">
         <div className="absolute inset-0">
-          <div className="absolute inset-0 bg-[#2B2823] flex items-center justify-center" aria-hidden="true">
-            <span className="text-[10px] tracking-[0.18em] uppercase font-sans text-white/30 select-none pointer-events-none">
-              Outdoor Activities
-            </span>
-          </div>
-          <img
+          <Picture
             src="/img/3C0A0165.jpg"
             alt="Outdoor pursuits at Rivers Lodge & Hunt Club"
-            className="absolute inset-0 w-full h-full object-cover"
+            label="Outdoor Activities"
+            className="absolute inset-0 w-full h-full"
+            imgClassName="absolute inset-0 w-full h-full object-cover"
             fetchPriority="high"
             loading="eager"
             decoding="async"
             width={1920}
             height={1080}
-            onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+            sizes="100vw"
           />
           <div
             className="absolute inset-0 pointer-events-none"

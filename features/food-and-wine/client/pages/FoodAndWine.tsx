@@ -2,6 +2,7 @@ import { useRef, useEffect } from "react";
 import { Link } from "wouter";
 import PublicLayout from "@features/public-pages/components/PublicLayout";
 import SEOHead from '@shared/components/SEOHead';
+import Picture from "@shared/components/Picture";
 
 const ACCENT = "#9B4D19";
 
@@ -31,26 +32,6 @@ function ImgPlaceholder({ aspectClass, label }: { aspectClass: string; label: st
       <span className="text-[10px] tracking-[0.18em] uppercase font-sans text-[#57544E] select-none">
         {label}
       </span>
-    </div>
-  );
-}
-
-/* Safe image — placeholder always in DOM as base layer; real <img> hides on 404 */
-function SafeImg({ src, alt, label, aspectClass }: { src: string; alt: string; label: string; aspectClass: string }) {
-  return (
-    <div className={`${aspectClass} relative`}>
-      <div className="absolute inset-0 bg-[#363330] flex items-center justify-center" aria-hidden="true">
-        <span className="text-[10px] tracking-[0.18em] uppercase font-sans text-[#57544E] select-none pointer-events-none">
-          {label}
-        </span>
-      </div>
-      <img
-        src={src}
-        alt={alt}
-        className="absolute inset-0 w-full h-full object-cover"
-        loading="lazy"
-        onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
-      />
     </div>
   );
 }
@@ -126,7 +107,18 @@ export default function FoodAndWine() {
                 </p>
               </div>
             </div>
-            <SafeImg src="/img/chef%20casey.jpg" alt="Chef Casey" label="Chef Casey portrait" aspectClass="aspect-[3/4] overflow-hidden w-full max-w-md mx-auto lg:mx-0" />
+            <Picture
+              src="/img/chef%20casey.jpg"
+              alt="Chef Casey"
+              label="Chef Casey portrait"
+              className="aspect-[3/4] overflow-hidden w-full max-w-md mx-auto lg:mx-0"
+              imgClassName="absolute inset-0 w-full h-full object-cover"
+              loading="lazy"
+              decoding="async"
+              width={600}
+              height={800}
+              sizes="(max-width: 1024px) 100vw, 40vw"
+            />
           </div>
         </div>
       </section>
@@ -153,10 +145,43 @@ export default function FoodAndWine() {
             {/* Image collage */}
             <div className="grid grid-cols-2 gap-3 order-last lg:order-first">
               <div className="col-span-2 overflow-hidden">
-                <SafeImg src="/img/ChefSwethaSelect30617.jpg" alt="Farm-to-table food at Rivers Lodge" label="Garden or farm-to-table food" aspectClass="aspect-[16/9] w-full" />
+                <Picture
+                  src="/img/ChefSwethaSelect30617.jpg"
+                  alt="Farm-to-table food at Rivers Lodge"
+                  label="Garden or farm-to-table food"
+                  className="aspect-[16/9] w-full"
+                  imgClassName="absolute inset-0 w-full h-full object-cover"
+                  loading="lazy"
+                  decoding="async"
+                  width={800}
+                  height={450}
+                  sizes="(max-width: 768px) 100vw, 50vw"
+                />
               </div>
-              <SafeImg src="/img/Cool%20Food%202.JPG" alt="Locally sourced ingredients" label="Locally sourced ingredients" aspectClass="aspect-square overflow-hidden" />
-              <SafeImg src="/img/food%202.jpg" alt="On-property garden produce" label="On-property garden" aspectClass="aspect-square overflow-hidden" />
+              <Picture
+                src="/img/Cool%20Food%202.JPG"
+                alt="Locally sourced ingredients"
+                label="Locally sourced ingredients"
+                className="aspect-square overflow-hidden"
+                imgClassName="absolute inset-0 w-full h-full object-cover"
+                loading="lazy"
+                decoding="async"
+                width={400}
+                height={400}
+                sizes="(max-width: 768px) 50vw, 25vw"
+              />
+              <Picture
+                src="/img/food%202.jpg"
+                alt="On-property garden produce"
+                label="On-property garden"
+                className="aspect-square overflow-hidden"
+                imgClassName="absolute inset-0 w-full h-full object-cover"
+                loading="lazy"
+                decoding="async"
+                width={400}
+                height={400}
+                sizes="(max-width: 768px) 50vw, 25vw"
+              />
             </div>
 
             <div>

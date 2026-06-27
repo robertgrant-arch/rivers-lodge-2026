@@ -334,7 +334,18 @@ export default function Membership() {
       {/* Hero */}
       <section className="relative hero-full flex items-end pb-24 overflow-hidden">
         <div className="absolute inset-0">
-          <img src={HERO} alt="Membership at Rivers Lodge" className="absolute inset-0 w-full h-full object-cover" fetchPriority="high" loading="eager" decoding="async" width={1920} height={1080} />
+          <Picture
+            src={HERO}
+            alt="Membership at Rivers Lodge"
+            className="absolute inset-0 w-full h-full"
+            imgClassName="absolute inset-0 w-full h-full object-cover"
+            fetchPriority="high"
+            loading="eager"
+            decoding="async"
+            width={1920}
+            height={1080}
+            sizes="100vw"
+          />
           <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, transparent 0%, oklch(0 0 0/0.12) 40%, oklch(0 0 0/0.82) 100%)" }} />
         </div>
         <div className="relative z-10 max-w-[1440px] mx-auto px-5 lg:px-14 w-full">
