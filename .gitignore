@@ -111,3 +111,13 @@ temp/
 
 # Manus version file (auto-generated, not part of source)
 client/public/__manus__/version.json
+
+# Generated image variants (produced by scripts/generate-image-variants.mjs at build time)
+client/public/**/*-480w.avif
+client/public/**/*-480w.webp
+client/public/**/*-768w.avif
+client/public/**/*-768w.webp
+client/public/**/*-1200w.avif
+client/public/**/*-1200w.webp
+client/public/**/*-1920w.avif
+client/public/**/*-1920w.webp
