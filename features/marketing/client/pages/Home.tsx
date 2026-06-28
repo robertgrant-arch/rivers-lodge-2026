@@ -147,7 +147,7 @@ export default function Home() {
             className="font-sans text-white/70 max-w-lg mb-10 leading-relaxed"
             style={{ fontSize: "clamp(0.9375rem,1.2vw,1.0625rem)" }}
           >
-            A private estate on the Marais des Cygnes. A destination wedding venue one hour from Kansas City — and a private membership club for those who hunt, fish, and live on the land.
+            A private estate on the Marais des Cygnes — one hour south of Kansas City. A destination wedding venue, a working hunt club, and a membership for those who live by the land and the season.
           </p>
           <div className="flex flex-col sm:flex-row gap-4">
             <Link href="/membership" className="btn-primary">Explore Membership</Link>
@@ -179,11 +179,10 @@ export default function Home() {
                 className="font-serif font-light text-warm leading-tight mb-6"
                 style={{ fontSize: "clamp(1.875rem,3.5vw,3rem)" }}
               >
-                A private estate on the Marais des Cygnes.
+                Thousands of acres. One event at a time.
               </h2>
-              {/* TODO: Bill to finalize this paragraph (~40-55 words) */}
               <p className="font-sans text-muted-brand leading-relaxed mb-10" style={{ fontSize: "0.9375rem" }}>
-                Thousands of acres of managed timber, river bottom, and open fields along the Marais des Cygnes — one hour south of Kansas City. The Rivers Lodge is a working land estate available exclusively, one event or one membership at a time.
+                Managed timber, river bottom, and open fields along the Marais des Cygnes. The Rivers Lodge is a working land estate — available exclusively, to one group at a time. Whether you arrive for a wedding weekend or a season of hunting, the entire property is yours.
               </p>
               <Link href="/about/property" className="btn-ghost">Discover the Property</Link>
             </div>
@@ -203,11 +202,10 @@ export default function Home() {
                 className="font-serif font-light text-warm leading-tight mb-6"
                 style={{ fontSize: "clamp(1.875rem,3.5vw,3rem)" }}
               >
-                Weddings, retreats, and weekends made private.
+                From ceremonies to corporate retreats — entirely yours.
               </h2>
-              {/* TODO: Bill to finalize this paragraph (~40-55 words) */}
               <p className="font-sans text-muted-brand leading-relaxed mb-10" style={{ fontSize: "0.9375rem" }}>
-                From intimate river-lawn ceremonies to grand receptions in the Rivers Barn, every gathering at the Lodge is exclusively yours. No shared access, no strangers — just your people, your weekend, your estate.
+                From intimate ceremonies on the River Lawn to grand receptions in the Rivers Barn, every gathering at the Lodge is yours alone. No overlapping events, no shared grounds — the estate clears for your group from arrival to departure.
               </p>
               <Link href="/lodging" className="btn-ghost" style={{ borderColor: "#9B4D19", color: "#9B4D19" }}>Plan Your Stay</Link>
             </div>
@@ -247,10 +245,10 @@ export default function Home() {
                 className="font-serif font-light text-warm leading-tight mb-6"
                 style={{ fontSize: "clamp(1.875rem,3.5vw,3rem)" }}
               >
-                More than a hunt club.
+                A private club shaped by land and season.
               </h2>
               <p className="font-sans text-muted-brand leading-relaxed mb-10" style={{ fontSize: "0.9375rem" }}>
-                Exclusive member events throughout the year — guest chef dinners, private concerts, game dinners, and seasonal celebrations — alongside managed Hunting and Fishing on thousands of acres. A small, intentional membership with access to the full estate.
+                Managed hunting and fishing across thousands of private acres, alongside guest chef dinners, private concerts, game dinners, and seasonal celebrations. An intentional membership — small by design — with access to the full estate and the community around it.
               </p>
               <Link href="/membership" className="btn-ghost" style={{ borderColor: "#6B7250", color: "#6B7250" }}>Explore Membership</Link>
             </div>

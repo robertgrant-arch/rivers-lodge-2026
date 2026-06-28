@@ -100,7 +100,7 @@ export default function WeddingsEvents() {
             <br /><em className="italic font-light">Every occasion.</em>
           </h1>
           <p className="font-sans text-white/65 max-w-xl leading-relaxed" style={{ fontSize: "0.9375rem" }}>
-            A private estate on the Marais des Cygnes — built for weddings, corporate retreats, outdoor pursuits, and intimate culinary experiences. One hour south of Kansas City.
+            The Rivers Lodge hosts one occasion at a time — so every wedding, retreat, and gathering receives the full breadth of the estate. One hour south of Kansas City.
           </p>
         </div>
       </section>
@@ -118,7 +118,7 @@ export default function WeddingsEvents() {
               className="font-serif font-light text-warm leading-tight"
               style={{ fontSize: "clamp(1.75rem,3vw,2.5rem)" }}
             >
-              What brings you here?
+              The estate, at your discretion.
             </h2>
           </div>
 
@@ -182,7 +182,7 @@ export default function WeddingsEvents() {
               Ready to see the estate?
             </h2>
             <p className="font-sans text-muted-brand leading-relaxed mb-10" style={{ fontSize: "0.9375rem" }}>
-              Whether you're planning a wedding, a corporate retreat, a hunting trip, or just want to understand what's available — get in touch and we'll walk you through it.
+              Whether you're planning a wedding weekend, a corporate retreat, or a private hunt — reach out and we'll arrange a private tour of the estate.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               <Link href="/contact" className="btn-outline" style={{ borderColor: ACCENT, color: ACCENT }}>
