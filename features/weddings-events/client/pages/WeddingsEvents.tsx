@@ -27,7 +27,7 @@ const CATEGORIES = [
   {
     label: "Weddings",
     href: "/weddings",
-    desc: "Ceremonies, receptions, and full estate buyouts on 1,000 acres along the Marais des Cygnes. One venue. Every detail.",
+    desc: "Ceremonies, receptions, and immersive wedding weekends along the Marais des Cygnes. One venue, entirely yours from rehearsal to farewell.",
     img: "/img/wedding%20hero.JPG",
     imgAlt: "Wedding ceremony at Rivers Lodge",
     eyebrow: "Celebrations",
@@ -35,7 +35,7 @@ const CATEGORIES = [
   {
     label: "Corporate Events",
     href: "/corporate",
-    desc: "Executive retreats, team outings, client entertainment, and incentive travel. The estate handles groups from 10 to 250.",
+    desc: "Executive retreats, client entertainment, and leadership off-sites on a private estate. Groups from 10 to 250, fully accommodated.",
     img: "/img/Clubhouse%20Hero.jpg",
     imgAlt: "Clubhouse and gathering spaces at Rivers Lodge",
     eyebrow: "Corporate",
@@ -113,7 +113,7 @@ export default function WeddingsEvents() {
         <div className="max-w-[1440px] mx-auto px-5 lg:px-14">
           <div className="mb-14">
             <div style={{ height: "1px", width: "2rem", backgroundColor: ACCENT, marginBottom: "1.25rem" }} />
-            <p className="eyebrow text-muted-brand mb-4">Explore</p>
+            <p className="eyebrow text-muted-brand mb-4">What We Host</p>
             <h2
               className="font-serif font-light text-warm leading-tight"
               style={{ fontSize: "clamp(1.75rem,3vw,2.5rem)" }}
