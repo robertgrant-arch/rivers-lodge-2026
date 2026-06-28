@@ -22,11 +22,12 @@ function isLocal(src: string) {
   return src.startsWith("/img/") || src.startsWith("/brand/");
 }
 
-function buildSrcset(src: string, fmt: "avif" | "webp"): string {
+function buildSrcset(src: string, fmt: "avif" | "webp", maxWidth?: number): string {
   // src may be URL-encoded, e.g. "/img/Ohana%20Aerial.jpg"
   const lastDot = src.lastIndexOf(".");
   const base = lastDot >= 0 ? src.slice(0, lastDot) : src;
-  return WIDTHS.map((w) => `${base}-${w}w.${fmt} ${w}w`).join(", ");
+  const widths = maxWidth ? WIDTHS.filter((w) => w <= maxWidth) : WIDTHS;
+  return widths.map((w) => `${base}-${w}w.${fmt} ${w}w`).join(", ");
 }
 
 function defaultSizes() {
@@ -93,12 +94,12 @@ export default function Picture({
           <picture>
             <source
               type="image/avif"
-              srcSet={buildSrcset(src, "avif")}
+              srcSet={buildSrcset(src, "avif", width)}
               sizes={sizes ?? defaultSizes()}
             />
             <source
               type="image/webp"
-              srcSet={buildSrcset(src, "webp")}
+              srcSet={buildSrcset(src, "webp", width)}
               sizes={sizes ?? defaultSizes()}
             />
             <img
