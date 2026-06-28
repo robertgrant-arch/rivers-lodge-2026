@@ -49,7 +49,7 @@ export default function Fish() {
   description="Private bass, crappie, and catfish fishing on four exclusive fisheries at The Rivers Lodge in La Cygne, Kansas. Member and guided access."
   url="/fish"
 />
-      <div style={{ "--track-accent": "oklch(0.58 0.065 145)" } as React.CSSProperties}>
+      <div style={{ "--track-accent": "#6B7250" } as React.CSSProperties}>
 
       {/* Hero */}
       <section className="relative hero-full flex items-end pb-24 overflow-hidden">
@@ -58,7 +58,7 @@ export default function Fish() {
           <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, transparent 0%, oklch(0 0 0/0.12) 40%, oklch(0 0 0/0.82) 100%)" }} />
         </div>
         <div className="relative z-10 max-w-[1440px] mx-auto px-5 lg:px-14 w-full">
-          <div style={{ height: "1px", width: "2rem", backgroundColor: "oklch(0.58 0.065 145)", marginBottom: "1.25rem" }} />
+          <div style={{ height: "1px", width: "2rem", backgroundColor: "#6B7250", marginBottom: "1.25rem" }} />
           <p className="eyebrow text-white/50 mb-4">Fish</p>
           <h1 className="font-serif font-light text-white leading-[0.92] mb-6" style={{ fontSize: "clamp(2.75rem,6.5vw,5.5rem)" }}>
             Five private fisheries.
@@ -67,9 +67,17 @@ export default function Fish() {
           <p className="font-sans text-white/65 max-w-lg leading-relaxed mb-10" style={{ fontSize: "0.9375rem" }}>
             The Marais des Cygnes, two private lakes, and a network of river sloughs — all within the estate boundary, available exclusively to members.
           </p>
-          <Link href="/membership" className="btn-outline" style={{ borderColor: "oklch(0.58 0.065 145)", color: "oklch(0.58 0.065 145)" }}>
-            Explore Membership
-          </Link>
+          <div className="flex flex-col sm:flex-row gap-4">
+            <Link href="/membership" className="btn-outline" style={{ borderColor: "#6B7250", color: "#6B7250" }}>
+              Explore Membership
+            </Link>
+            <Link href="/contact" className="btn-ghost">
+              Book a Trip
+            </Link>
+          </div>
+          <p className="font-sans text-white/50 mt-5 max-w-md leading-relaxed" style={{ fontSize: "0.8125rem" }}>
+            Open to the public — members receive priority booking and preferred rates.
+          </p>
         </div>
       </section>
 
@@ -77,7 +85,7 @@ export default function Fish() {
       <section ref={fisheriesRef as React.RefObject<HTMLDivElement>} className="fade-up section bg-background">
         <div className="max-w-[1440px] mx-auto px-5 lg:px-14">
           <div className="mb-14">
-            <div style={{ height: "1px", width: "2rem", backgroundColor: "oklch(0.58 0.065 145)", marginBottom: "1.25rem" }} />
+            <div style={{ height: "1px", width: "2rem", backgroundColor: "#6B7250", marginBottom: "1.25rem" }} />
             <p className="eyebrow text-muted-brand mb-4">The Fisheries</p>
             <h2 className="font-serif font-light text-warm leading-tight" style={{ fontSize: "clamp(1.75rem,3vw,2.5rem)" }}>
               Private water. Year-round access.
@@ -90,7 +98,7 @@ export default function Fish() {
                   <img src={f.img} alt={f.name} className="w-full h-full object-cover" loading="lazy" />
                 </div>
                 <div className={`p-10 lg:p-14 flex flex-col justify-center ${i % 2 === 1 ? "md:[direction:ltr]" : ""}`}>
-                  <div style={{ height: "1px", width: "1.5rem", backgroundColor: "oklch(0.58 0.065 145)", marginBottom: "1rem" }} />
+                  <div style={{ height: "1px", width: "1.5rem", backgroundColor: "#6B7250", marginBottom: "1rem" }} />
                   <h3 className="font-serif text-warm text-2xl mb-4">{f.name}</h3>
                   <p className="font-sans text-muted-brand text-sm leading-relaxed">{f.desc}</p>
                 </div>
@@ -104,7 +112,7 @@ export default function Fish() {
       <section ref={speciesRef as React.RefObject<HTMLDivElement>} className="fade-up section bg-surface">
         <div className="max-w-[1440px] mx-auto px-5 lg:px-14">
           <div className="mb-12">
-            <div style={{ height: "1px", width: "2rem", backgroundColor: "oklch(0.58 0.065 145)", marginBottom: "1.25rem" }} />
+            <div style={{ height: "1px", width: "2rem", backgroundColor: "#6B7250", marginBottom: "1.25rem" }} />
             <p className="eyebrow text-muted-brand mb-4">Species & Season Guide</p>
             <h2 className="font-serif font-light text-warm leading-tight" style={{ fontSize: "clamp(1.75rem,3vw,2.5rem)" }}>
               When to fish, and how.
@@ -140,15 +148,15 @@ export default function Fish() {
                         style={{
                           left: `${left}%`,
                           width: `${width}%`,
-                          background: "oklch(0.58 0.065 145 / 0.75)",
-                          borderLeft: "2px solid oklch(0.58 0.065 145)",
+                          background: "rgba(107, 114, 80, 0.75)",
+                          borderLeft: "2px solid #6B7250",
                         }}
                       />
                       {[1,2,3,4,5,6,7,8,9,10,11].map((m) => (
                         <div
                           key={m}
                           className="absolute top-0 bottom-0 w-px"
-                          style={{ left: `${(m/12)*100}%`, background: "oklch(0.22 0.008 64)" }}
+                          style={{ left: `${(m/12)*100}%`, background: "#57544E" }}
                         />
                       ))}
                     </div>
@@ -165,7 +173,7 @@ export default function Fish() {
       <section ref={ctaRef as React.RefObject<HTMLDivElement>} className="fade-up section bg-background">
         <div className="max-w-[1440px] mx-auto px-5 lg:px-14">
           <div className="max-w-2xl">
-            <div style={{ height: "1px", width: "2rem", backgroundColor: "oklch(0.58 0.065 145)", marginBottom: "1.25rem" }} />
+            <div style={{ height: "1px", width: "2rem", backgroundColor: "#6B7250", marginBottom: "1.25rem" }} />
             <p className="eyebrow text-muted-brand mb-4">Membership Required</p>
             <h2 className="font-serif font-light text-warm leading-tight mb-6" style={{ fontSize: "clamp(1.875rem,3.5vw,3rem)" }}>
               Fishing access is exclusive to members.
@@ -174,10 +182,10 @@ export default function Fish() {
               A limited number of memberships are available each season. If you're interested in joining, we'd like to hear from you.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
-              <Link href="/membership" className="btn-outline" style={{ borderColor: "oklch(0.58 0.065 145)", color: "oklch(0.58 0.065 145)" }}>
+              <Link href="/membership" className="btn-outline" style={{ borderColor: "#6B7250", color: "#6B7250" }}>
                 Explore Membership
               </Link>
-              <Link href="/hunt" className="btn-ghost">View Hunting</Link>
+              <Link href="/outdoor-activities" className="btn-ghost">View All Pursuits</Link>
             </div>
           </div>
         </div>

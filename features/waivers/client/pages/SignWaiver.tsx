@@ -43,7 +43,7 @@ export default function SignWaiver() {
   // ── Loading ──────────────────────────────────────────────────────────────────
   if (waiverQuery.isLoading) {
     return (
-      <div className="min-h-screen bg-[oklch(0.97_0.008_80)] flex items-center justify-center">
+      <div className="min-h-screen bg-[#F5EEE2] flex items-center justify-center">
         <div className="flex flex-col items-center gap-3 text-muted-foreground">
           <Loader2 className="w-8 h-8 animate-spin" />
           <p className="text-sm">Loading waiver…</p>
@@ -56,7 +56,7 @@ export default function SignWaiver() {
   if (waiverQuery.error) {
     const isAlreadySigned = waiverQuery.error.message.toLowerCase().includes("already signed");
     return (
-      <div className="min-h-screen bg-[oklch(0.97_0.008_80)] flex items-center justify-center px-4">
+      <div className="min-h-screen bg-[#F5EEE2] flex items-center justify-center px-4">
         <Card className="max-w-md w-full">
           <CardContent className="pt-8 pb-8 text-center space-y-4">
             {isAlreadySigned ? (
@@ -90,7 +90,7 @@ export default function SignWaiver() {
   // ── Success ──────────────────────────────────────────────────────────────────
   if (signed) {
     return (
-      <div className="min-h-screen bg-[oklch(0.97_0.008_80)] flex items-center justify-center px-4">
+      <div className="min-h-screen bg-[#F5EEE2] flex items-center justify-center px-4">
         <Card className="max-w-md w-full">
           <CardContent className="pt-8 pb-8 text-center space-y-4">
             <CheckCircle className="w-14 h-14 text-green-500 mx-auto" />
@@ -117,12 +117,12 @@ export default function SignWaiver() {
   const waiverContent = template?.bodyText ?? `By signing this document, you acknowledge and agree to the terms and conditions set forth by Rivers Lodge & Hunt Club. You understand and accept all risks associated with the activities at the property, including but not limited to hunting, fishing, equestrian activities, and use of all facilities. You release Rivers Lodge & Hunt Club, its owners, employees, and agents from any liability for injury, loss, or damage arising from your participation in any activities on the property.`;
 
   return (
-    <div className="min-h-screen bg-[oklch(0.97_0.008_80)] py-12 px-4">
+    <div className="min-h-screen bg-[#F5EEE2] py-12 px-4">
       <div className="max-w-2xl mx-auto space-y-6">
         {/* Header */}
         <div className="text-center space-y-2">
           <div className="flex items-center justify-center gap-2 mb-4">
-            <FileText className="w-6 h-6 text-[oklch(0.55_0.080_78)]" />
+            <FileText className="w-6 h-6 text-[#9B4D19]" />
             <span className="text-sm font-medium tracking-widest uppercase text-muted-foreground">
               Rivers Lodge &amp; Hunt Club
             </span>
@@ -173,7 +173,7 @@ export default function SignWaiver() {
                 type="checkbox"
                 checked={agreed}
                 onChange={(e) => setAgreed(e.target.checked)}
-                className="mt-0.5 w-4 h-4 rounded border-border accent-[oklch(0.55_0.080_78)]"
+                className="mt-0.5 w-4 h-4 rounded border-border accent-[#9B4D19]"
               />
               <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors">
                 I have read and understand the waiver above, and I agree to its terms and conditions. I confirm that I am 18 years of age or older, or am the legal guardian of the minor named in this waiver.
@@ -183,7 +183,7 @@ export default function SignWaiver() {
             <Button
               onClick={handleSign}
               disabled={signMutation.isPending || !signatoryName.trim() || !agreed}
-              className="w-full bg-[oklch(0.35_0.060_78)] hover:bg-[oklch(0.30_0.060_78)] text-white"
+              className="w-full bg-[#7A3A10] hover:bg-[#682F0D] text-white"
               size="lg"
             >
               {signMutation.isPending ? (

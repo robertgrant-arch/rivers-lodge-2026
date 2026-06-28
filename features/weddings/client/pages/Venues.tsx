@@ -135,13 +135,13 @@ export default function Venues() {
       ))}
 
       {/* CTA */}
-      <section className="py-20 bg-[oklch(0.13_0.008_66)] text-center">
+      <section className="py-20 bg-[#2B2823] text-center">
         <div className="max-w-xl mx-auto px-6">
           <h2 className="font-serif text-3xl md:text-4xl text-white mb-5 italic font-light">Ready to see the spaces?</h2>
           <p className="text-sm font-sans text-white/60 mb-8 leading-relaxed">
             The best way to understand Rivers Lodge is to walk it. Book a private tour — no pressure, no presentation.
           </p>
-          <Link href="/contact" className="inline-flex items-center justify-center px-10 py-4 bg-white text-[oklch(0.15_0.008_66)] text-xs tracking-[0.18em] uppercase font-sans font-medium hover:bg-white/90 transition-colors">
+          <Link href="/contact" className="inline-flex items-center justify-center px-10 py-4 bg-white text-[#2B2823] text-xs tracking-[0.18em] uppercase font-sans font-medium hover:bg-white/90 transition-colors">
             Book a Private Tour
           </Link>
         </div>

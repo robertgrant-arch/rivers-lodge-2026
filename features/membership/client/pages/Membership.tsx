@@ -3,6 +3,7 @@ import { Link } from "wouter";
 import { Turnstile } from "@marsidev/react-turnstile";
 import type { TurnstileInstance } from "@marsidev/react-turnstile";
 import PublicLayout from "@/components/PublicLayout";
+import Picture from "@shared/components/Picture";
 import SEOHead, { structuredData } from '@shared/components/SEOHead';
 import { useAuth } from '@features/auth/public';
 import { trpc } from '@shared/lib/trpc';
@@ -11,15 +12,12 @@ const STAFF_ROLES_M = ["admin", "owner", "venue_sales", "events_manager", "membe
 
 const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined;
 
-const HERO    = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/xZXSDWkpiCXfqsiU.jpg";
-const AERIAL  = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/jPtEuiXynfNedkpV.jpg";
-const RIVER   = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/aLRhjpmRWbewKvgx.jpg";
-const GROUNDS = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/RNvGygATwGRMluZa.jpg";
-const LODGE   = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/TdlSWCLWjUxbkCAY.jpg";
+const HERO   = "/img/Ohana%20Aerial.jpg"; /* TODO: replace with dedicated membership hero once uploaded */
+const AERIAL = "/img/Ohana%20Aerial.jpg";
 
 type MembershipTier = "Individual" | "Corporate" | "Not Sure Yet";
 
-const ACCENT = "oklch(0.58 0.065 145)";
+const ACCENT = "#6B7250";
 
 function useFadeUp(t = 0.12) {
   const ref = useRef<HTMLElement>(null);
@@ -34,28 +32,41 @@ function useFadeUp(t = 0.12) {
 }
 
 const benefits = [
-  { title: "Hunting Access",       desc: "Full access to 300 acres of managed whitetail, waterfowl, turkey, and upland hunting. Guided hunts available." },
-  { title: "Fishing Access",       desc: "The Marais des Cygnes, two private lakes, and river sloughs — year-round fishing for bass, catfish, crappie, and bluegill." },
-  { title: "Sporting Clays",       desc: "Private sporting clays course on the property. Open to members and their guests." },
-  { title: "Clubhouse Access",     desc: "Full bar, dining, and meeting space available to members throughout the season." },
-  { title: "Lodging Priority",     desc: "Members receive priority booking on the Lodge, Riverhouse Suites, and Annex." },
-  { title: "Guest Privileges",     desc: "Bring guests to the property for hunting, fishing, and sporting days." },
-  { title: "Land Management Input","desc": "Members are part of the conversation about how the land is managed from season to season." },
-  { title: "Community",            desc: "A small group of members who share a deep respect for the land and the way it's used." },
+  { title: "Private Events",         desc: "Exclusive member events throughout the year — concerts, chef tours, estate parties, and seasonal gatherings." },
+  { title: "Guided Hunting",         desc: "Guided whitetail, waterfowl, turkey, and upland hunts with dedicated hunt managers and full field support." },
+  { title: "DIY Hunting Access",     desc: "Self-guided access to the property's timber, food plots, river bottom, and blinds on your own schedule." },
+  { title: "Guided Fishing",         desc: "Guided trips on the Marais des Cygnes, private lakes, and river sloughs for bass, catfish, crappie, and bluegill." },
+  { title: "DIY Fishing Access",     desc: "Unrestricted member access to all water on the property — fish when you want, how you want." },
+  { title: "Lodging Priority",       desc: "Priority booking on The Lodge, Riverhouse Suites, The Annex, and all other estate accommodations." },
+  { title: "Land Access & Updates",  desc: "Year-round land access and seasonal stewardship updates — stay connected to the property between visits." },
+  { title: "Guest Privileges",       desc: "Bring guests onto the property for hunting, fishing, sporting days, and member events." },
 ];
 
 const tiers = [
   {
     name: "Individual" as MembershipTier,
-    price: "Contact for pricing",
-    desc: "One designated member with all lodge benefits, unlimited guest days, annual member events, and guided and DIY hunting and fishing access.",
-    features: ["One designated member", "All lodge benefits", "Unlimited guest days", "Annual member events", "Guided and DIY hunting and fishing access"],
+    desc: "One designated member with full access to hunting, fishing, private events, and estate amenities.",
+    features: [
+      "Private events — concerts, chef tours, parties",
+      "Guided and DIY Hunting access",
+      "Guided and DIY Fishing access",
+      "Land access & stewardship updates",
+      "Lodging priority booking",
+      "Guest privileges",
+    ],
   },
   {
     name: "Corporate" as MembershipTier,
-    price: "Contact for pricing",
-    desc: "Three designated members with all lodge benefits, unlimited guest days, annual member events, and guided and DIY hunting and fishing access.",
-    features: ["Three designated members", "All lodge benefits", "Unlimited guest days", "Annual member events", "Guided and DIY hunting and fishing access"],
+    desc: "Three designated members — ideal for companies who want to entertain clients and reward teams on the estate.",
+    features: [
+      "Three designated members",
+      "Private events — concerts, chef tours, parties",
+      "Guided and DIY Hunting access",
+      "Guided and DIY Fishing access",
+      "Land access & stewardship updates",
+      "Lodging priority booking",
+      "Guest privileges",
+    ],
   },
 ];
 
@@ -307,13 +318,13 @@ export default function Membership() {
 
       {/* Active member shortcut banner */}
       {isActiveMember && (
-        <div className="bg-[oklch(0.13_0.007_64)] border-b border-[oklch(0.22_0.008_64)] px-5 lg:px-14 py-3 flex items-center justify-between gap-4">
-          <p className="text-[11px] tracking-[0.14em] uppercase font-sans text-[oklch(0.72_0.095_78)]">
+        <div className="bg-[#2B2823] border-b border-[#57544E] px-5 lg:px-14 py-3 flex items-center justify-between gap-4">
+          <p className="text-[11px] tracking-[0.14em] uppercase font-sans text-[#9B4D19]">
             You are an active member
           </p>
           <Link
             href="/portal"
-            className="text-[11px] tracking-[0.14em] uppercase font-sans font-medium border border-[oklch(0.72_0.095_78)] text-[oklch(0.72_0.095_78)] px-4 py-1.5 hover:bg-[oklch(0.72_0.095_78)] hover:text-[oklch(0.095_0.006_64)] transition-all duration-200 shrink-0"
+            className="text-[11px] tracking-[0.14em] uppercase font-sans font-medium border border-[#9B4D19] text-[#9B4D19] px-4 py-1.5 hover:bg-[#9B4D19] hover:text-[#2B2823] transition-all duration-200 shrink-0"
           >
             Go to Member Portal →
           </Link>
@@ -323,7 +334,18 @@ export default function Membership() {
       {/* Hero */}
       <section className="relative hero-full flex items-end pb-24 overflow-hidden">
         <div className="absolute inset-0">
-          <img src={HERO} alt="Membership at Rivers Lodge" className="w-full h-full object-cover" fetchPriority="high" />
+          <Picture
+            src={HERO}
+            alt="Membership at Rivers Lodge"
+            className="absolute inset-0 w-full h-full"
+            imgClassName="absolute inset-0 w-full h-full object-cover"
+            fetchPriority="high"
+            loading="eager"
+            decoding="async"
+            width={1920}
+            height={1080}
+            sizes="100vw"
+          />
           <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, transparent 0%, oklch(0 0 0/0.12) 40%, oklch(0 0 0/0.82) 100%)" }} />
         </div>
         <div className="relative z-10 max-w-[1440px] mx-auto px-5 lg:px-14 w-full">
@@ -350,17 +372,22 @@ export default function Membership() {
               <div style={{ height: "1px", width: "2rem", backgroundColor: ACCENT, marginBottom: "1.25rem" }} />
               <p className="eyebrow text-muted-brand mb-4">The Philosophy</p>
               <h2 className="font-serif font-light text-warm leading-tight mb-8" style={{ fontSize: "clamp(1.875rem,3.5vw,3rem)" }}>
-                Membership is
-                <br /><em className="italic">by invitation.</em>
+                Land, community,
+                <br /><em className="italic">and the way it's used.</em>
               </h2>
               <div className="space-y-5 font-sans text-muted-brand leading-relaxed" style={{ fontSize: "0.9375rem" }}>
-                <p>The Rivers Lodge membership is intentionally small. We limit the number of members to ensure the land is never over-pressured, the experience is never crowded, and the community remains one where everyone knows each other.</p>
-                <p>Membership is not just access to the land — it's membership in a community of people who take the land seriously. We look for members who share our values around conservation, ethical hunting, and long-term land stewardship.</p>
+                <p>Rivers Lodge membership is built around the land — Hunting, Fishing, private events, and a community of people who take long-term stewardship seriously. Members get unrestricted access to thousands of acres of managed Kansas and Missouri property, priority lodging, and an exclusive calendar of concerts, chef tours, estate parties, and seasonal gatherings.</p>
+                <p>We keep the membership intentionally small. The land is never over-pressured, the experience is never crowded, and the community remains one where everyone knows each other. Membership is by invitation.</p>
               </div>
             </div>
-            <div className="aspect-[4/3] overflow-hidden">
-              <img src={AERIAL} alt="Aerial view of the estate" className="w-full h-full object-cover" loading="lazy" />
-            </div>
+            <Picture
+              src={AERIAL}
+              alt="Aerial view of the estate"
+              className="aspect-[4/3] overflow-hidden"
+              sizes="(max-width: 1024px) 100vw, 50vw"
+              width={1200}
+              height={900}
+            />
           </div>
         </div>
       </section>
@@ -410,10 +437,9 @@ export default function Membership() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-border">
             {tiers.map((tier) => (
-              <div key={tier.name} className={`p-8 lg:p-10 flex flex-col ${tier.featured ? "bg-surface" : "bg-background"}`}
-                style={tier.featured ? { borderTop: `2px solid ${ACCENT}` } : {}}>
-                <p className="eyebrow text-muted-brand mb-3" style={{ fontSize: "10px" }}>{tier.name}</p>
-                <p className="font-serif text-warm text-2xl mb-4">{tier.price}</p>
+              <div key={tier.name} className="p-8 lg:p-10 flex flex-col bg-background">
+                <div style={{ height: "1px", width: "2rem", backgroundColor: ACCENT, marginBottom: "1.25rem" }} />
+                <h3 className="font-serif font-light text-warm leading-tight mb-4" style={{ fontSize: "clamp(1.875rem,3.5vw,3rem)" }}>{tier.name}</h3>
                 <p className="font-sans text-muted-brand text-sm leading-relaxed mb-6">{tier.desc}</p>
                 <ul className="space-y-2 flex-1 mb-8">
                   {tier.features.map((f) => (

@@ -3,14 +3,15 @@ import { Link } from "wouter";
 import PublicLayout from "../../../_shared/components/PublicLayout";
 import SEOHead from '@shared/components/SEOHead';
 import StickyInquiryCTA from "@/components/StickyInquiryCTA";
+import Picture from "@shared/components/Picture";
 
 
-const HERO     = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/ydbhfuDouoqRGsqW.jpg";
-const BARN     = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/GEBYbBimoPflfefP.jpg";
-const GROUNDS  = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/RNvGygATwGRMluZa.jpg";
-const AERIAL   = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/jPtEuiXynfNedkpV.jpg";
-const LODGE    = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/TdlSWCLWjUxbkCAY.jpg";
-const INTERIOR = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/JcuUUmANmAAHItUn.jpg";
+const HERO     = "/brand/Corporate%20Event%201.jpg";
+const BARN     = "/img/barn%20shot.jpg";
+const GROUNDS  = "/img/Ohana%20Aerial.jpg";
+const AERIAL   = "/img/Ohana%20Aerial.jpg";
+const LODGE    = "/img/Main%20Lodge.jpg";
+const INTERIOR = "/brand/clubhouse%204.jpg";
 
 function useFadeUp(t = 0.12) {
   const ref = useRef<HTMLElement>(null);
@@ -51,12 +52,23 @@ export default function Corporate() {
   description="Private corporate retreats, team-building hunts, and executive events at The Rivers Lodge — a world-class venue in La Cygne, Kansas."
   url="/corporate"
 />
-      <div style={{ "--track-accent": "oklch(0.70 0.060 50)" } as React.CSSProperties}>
+      <div style={{ "--track-accent": "#9B4D19" } as React.CSSProperties}>
 
       {/* Hero */}
       <section className="relative hero-full flex items-end pb-24 overflow-hidden">
         <div className="absolute inset-0">
-          <img src={HERO} alt="Corporate events at Rivers Lodge" className="w-full h-full object-cover" fetchPriority="high" />
+          <Picture
+            src={HERO}
+            alt="Corporate events at Rivers Lodge"
+            className="absolute inset-0 w-full h-full"
+            imgClassName="absolute inset-0 w-full h-full object-cover"
+            fetchPriority="high"
+            loading="eager"
+            decoding="async"
+            width={1920}
+            height={1080}
+            sizes="100vw"
+          />
           <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, transparent 0%, oklch(0 0 0/0.12) 40%, oklch(0 0 0/0.80) 100%)" }} />
         </div>
         <div className="relative z-10 max-w-[1440px] mx-auto px-5 lg:px-14 w-full">
@@ -89,9 +101,17 @@ export default function Corporate() {
                 <p>The estate accommodates groups from 10 to 300. The Lodge sleeps 20 overnight guests. The Rivers Barn seats 256 for formal dinners. The Clubhouse provides private meeting space. And the 300 acres provide the programming.</p>
               </div>
             </div>
-            <div className="aspect-[4/3] overflow-hidden">
-              <img src={BARN} alt="Rivers Barn exterior at dusk" className="w-full h-full object-cover" loading="lazy" />
-            </div>
+            <Picture
+              src={BARN}
+              alt="Rivers Barn exterior at dusk"
+              className="aspect-[4/3] overflow-hidden w-full"
+              imgClassName="absolute inset-0 w-full h-full object-cover"
+              loading="lazy"
+              decoding="async"
+              width={800}
+              height={600}
+              sizes="(max-width: 1024px) 100vw, 50vw"
+            />
           </div>
         </div>
       </section>
@@ -109,11 +129,19 @@ export default function Corporate() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-border">
             {eventTypes.map((e) => (
               <div key={e.title} className="bg-surface overflow-hidden">
-                <div className="aspect-[16/9] overflow-hidden">
-                  <img src={e.img} alt={e.title} className="w-full h-full object-cover" loading="lazy" />
-                </div>
+                <Picture
+                  src={e.img}
+                  alt={e.title}
+                  className="aspect-[16/9] overflow-hidden"
+                  imgClassName="absolute inset-0 w-full h-full object-cover"
+                  loading="lazy"
+                  decoding="async"
+                  width={800}
+                  height={450}
+                  sizes="(max-width: 768px) 100vw, 50vw"
+                />
                 <div className="p-8">
-                  <div className="h-px w-6 mb-4" style={{ backgroundColor: "oklch(0.70 0.060 50)" }} />
+                  <div className="h-px w-6 mb-4" style={{ backgroundColor: "#9B4D19" }} />
                   <h3 className="font-serif text-warm text-xl mb-3">{e.title}</h3>
                   <p className="font-sans text-muted-brand text-sm leading-relaxed">{e.desc}</p>
                 </div>

@@ -7,6 +7,23 @@ import { createRoot } from "react-dom/client";
 import superjson from "superjson";
 import App from "./App";
 import "./index.css";
+import { isChunkLoadError, tryRecoverFromChunkError, handleBfcacheRestore } from '@shared/lib/chunkErrorRecovery';
+
+// Global safety net for stale-chunk errors that escape the React error boundary
+// (e.g. unhandledrejection from a lazy import() called outside of Suspense).
+window.addEventListener("unhandledrejection", (event) => {
+  if (isChunkLoadError(event.reason)) {
+    tryRecoverFromChunkError();
+  }
+});
+window.addEventListener("error", (event) => {
+  if (isChunkLoadError(event.error ?? event.message)) {
+    tryRecoverFromChunkError();
+  }
+});
+window.addEventListener("pageshow", (event) => {
+  if (event.persisted) handleBfcacheRestore();
+});
 
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY as string;
 
@@ -56,7 +73,7 @@ const trpcClient = trpc.createClient({
 });
 
 createRoot(document.getElementById("root")!).render(
-  <ClerkProvider publishableKey={PUBLISHABLE_KEY ?? ""} afterSignInUrl="/portal" afterSignUpUrl="/portal">
+  <ClerkProvider publishableKey={PUBLISHABLE_KEY ?? ""} afterSignInUrl="/portal">
     <trpc.Provider client={trpcClient} queryClient={queryClient}>
       <QueryClientProvider client={queryClient}>
         <App />

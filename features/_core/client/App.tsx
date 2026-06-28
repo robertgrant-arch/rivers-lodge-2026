@@ -1,10 +1,11 @@
 import { Suspense, lazy } from "react";
-import { SignIn, SignUp } from "@clerk/clerk-react";
+import { SignIn } from "@clerk/clerk-react";
 import { Toaster } from '@shared/ui/sonner';
 import { TooltipProvider } from '@shared/ui/tooltip';
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "../../_shared/components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import { useScrollToTop } from '@shared/hooks/useScrollToTop';
 // Layout components — must be sync (used by every /ops page simultaneously)
 import PortalLayout from "../../admin/client/components/PortalLayout";
 
@@ -29,19 +30,38 @@ const WeddingsLanding = lazy(() => import("@features/weddings/client/pages/Weddi
 const Weddings = lazy(() => import("@features/weddings/client/pages/Weddings"));
 const Venues = lazy(() => import("@features/weddings/client/pages/Venues"));
 
-// Hunt & Fish pages
+// Hunt & Fish pages (kept for backwards-compat; /hunt and /fish 301-redirect server-side)
 const Hunt = lazy(() => import("@features/hunt-fish/client/pages/Hunt"));
 const Fish = lazy(() => import("@features/hunt-fish/client/pages/Fish"));
+
+// Outdoor Activities hub + detail pages
+const OutdoorActivities = lazy(() => import("@features/outdoor-activities/client/pages/OutdoorActivities"));
+const PursuitDetail = lazy(() => import("@features/outdoor-activities/client/pages/PursuitDetail"));
 
 // Lodging pages
 const Lodging = lazy(() => import("@features/lodging/client/pages/Lodging"));
 const Estate = lazy(() => import("@features/lodging/client/pages/Estate"));
+const LodgingVenueDetail = lazy(() => import("@features/lodging/client/pages/LodgingVenueDetail"));
+
+// Weddings & Events hub
+const WeddingsEvents = lazy(() => import("@features/weddings-events/client/pages/WeddingsEvents"));
 
 // Corporate pages
 const Corporate = lazy(() => import("@features/corporate/client/pages/Corporate"));
 
+// Food & Wine page
+const FoodAndWine = lazy(() => import("@features/food-and-wine/client/pages/FoodAndWine"));
+
 // Membership pages
 const Membership = lazy(() => import("@features/membership/client/pages/Membership"));
+const MembershipBenefits = lazy(() => import("@features/membership/client/pages/MembershipBenefits"));
+const MembershipFaq = lazy(() => import("@features/membership/client/pages/MembershipFaq"));
+const MembershipEvents = lazy(() => import("@features/membership/client/pages/MembershipEvents"));
+
+// About pages
+const About = lazy(() => import("@features/about/client/pages/About"));
+const AboutTeam = lazy(() => import("@features/about/client/pages/AboutTeam"));
+const AboutProperty = lazy(() => import("@features/about/client/pages/AboutProperty"));
 
 // Inquiries
 const InquiryConfirmed = lazy(() => import("@features/inquiries/client/pages/InquiryConfirmed"));
@@ -93,18 +113,19 @@ function RouteLoader() {
       role="status"
       aria-label="Loading page"
     >
-      <div className="w-8 h-8 border-2 border-[oklch(0.72_0.095_78)] border-t-transparent rounded-full animate-spin" />
+      <div className="w-8 h-8 border-2 border-[#9B4D19] border-t-transparent rounded-full animate-spin" />
     </div>
   );
 }
 
 function Router() {
+  useScrollToTop();
   return (
     <Suspense fallback={<RouteLoader />}>
       <Switch>
         {/* Auth pages — rendered by Clerk */}
-        <Route path="/sign-in">{() => <div className="min-h-screen flex items-center justify-center bg-background"><SignIn routing="path" path="/sign-in" afterSignInUrl="/portal" /></div>}</Route>
-        <Route path="/sign-up">{() => <div className="min-h-screen flex items-center justify-center bg-background"><SignUp routing="path" path="/sign-up" afterSignUpUrl="/portal" /></div>}</Route>
+        <Route path="/sign-in">{() => <div className="min-h-screen flex items-center justify-center bg-background"><SignIn routing="path" path="/sign-in" afterSignInUrl="/portal" signUpUrl="" appearance={{ elements: { footer: "hidden", footerAction: "hidden", footerActionLink: "hidden" } }} /></div>}</Route>
+        <Route path="/sign-up">{() => { window.location.replace("/sign-in"); return null; }}</Route>
 
         {/* Public */}
         <Route path="/" component={Home} />
@@ -112,14 +133,28 @@ function Router() {
         <Route path="/outdoors" component={MembershipLanding} />
         <Route path="/weddings" component={Weddings} />
         <Route path="/venues" component={Venues} />
+        <Route path="/weddings-events" component={WeddingsEvents} />
         <Route path="/lodging" component={Lodging} />
+        <Route path="/lodging/:slug">{(p) => <LodgingVenueDetail slug={p.slug ?? ""} />}</Route>
         <Route path="/corporate" component={Corporate} />
+        <Route path="/corporate-events" component={Corporate} />
+        <Route path="/food-and-wine" component={FoodAndWine} />
         <Route path="/estate" component={Estate} />
         <Route path="/gallery" component={Gallery} />
         <Route path="/contact" component={Contact} />
         <Route path="/membership" component={Membership} />
-        <Route path="/hunt" component={Hunt} />
-        <Route path="/fish" component={Fish} />
+        <Route path="/membership/benefits" component={MembershipBenefits} />
+        <Route path="/membership/faq" component={MembershipFaq} />
+        <Route path="/membership/events" component={MembershipEvents} />
+        <Route path="/about" component={About} />
+        <Route path="/about/team" component={AboutTeam} />
+        <Route path="/about/property" component={AboutProperty} />
+        {/* Outdoor Activities hub + pursuit detail pages */}
+        <Route path="/outdoor-activities" component={OutdoorActivities} />
+        <Route path="/outdoor-activities/:slug">{(p) => <PursuitDetail slug={p.slug ?? ""} />}</Route>
+        {/* Legacy /hunt and /fish — client-side redirect fallback (server sends 301 first) */}
+        <Route path="/hunt">{() => { if (typeof window !== "undefined") window.location.replace("/outdoor-activities/whitetail"); return null; }}</Route>
+        <Route path="/fish">{() => { if (typeof window !== "undefined") window.location.replace("/outdoor-activities/fishing"); return null; }}</Route>
 
         {/* Gated */}
         <Route path="/portal" component={MemberPortal} />

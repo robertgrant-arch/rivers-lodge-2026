@@ -53,105 +53,134 @@
   --color-blush-muted: var(--blush-muted);
   --color-surface: var(--surface);
   --color-surface-raised: var(--surface-raised);
+  /* Font stacks — powers font-sans and font-serif Tailwind utilities */
+  --font-family-sans:   'Montserrat', system-ui, sans-serif;
+  --font-family-serif:  'Crimson Text', Georgia, serif;
+  --font-family-mono:   ui-monospace, SFMono-Regular, Menlo, monospace;
+  /* RL primitive palette — enables bg-rl-night, text-rl-clay, etc. */
+  --color-rl-night: var(--rl-night);
+  --color-rl-grass: var(--rl-grass);
+  --color-rl-sand:  var(--rl-sand);
+  --color-rl-river: var(--rl-river);
+  --color-rl-sage:  var(--rl-sage);
+  --color-rl-clay:  var(--rl-clay);
 }
 
 /* ─── Rivers Lodge Brand Design System ─────────────────────────────────────── */
 :root {
   --radius: 0.125rem; /* Near-square corners — architectural, not rounded */
 
+  /* ── Primitive brand palette ────────────────────────────────────────────── */
+  --rl-night:  #2B2823;   /* warm near-black   — primary background */
+  --rl-grass:  #6B7250;   /* olive green        — primary brand / membership */
+  --rl-sand:   #E0D3BD;   /* warm cream         — primary text on dark */
+  --rl-river:  #576276;   /* slate blue         — secondary accent */
+  --rl-sage:   #BABAAE;   /* muted sage gray    — tertiary / muted text */
+  --rl-clay:   #9B4D19;   /* rust / orange      — CTA / hunter accent */
+
+  /* ── Semantic aliases ───────────────────────────────────────────────────── */
+  --color-bg:             var(--rl-night);
+  --color-bg-alt:         #363330;
+  --color-surface-token:  #423F3B;
+  --color-text:           var(--rl-sand);
+  --color-text-on-light:  var(--rl-night);
+  --color-muted-token:    var(--rl-sage);
+  --color-accent-token:   var(--rl-clay);
+  --color-secondary-token:var(--rl-grass);
+
   /* Dark theme is the primary brand theme */
-  --background:       oklch(0.095 0.006 64);   /* #0d0d0d equivalent */
-  --foreground:       oklch(0.94 0.008 78);    /* #f0ece4 warm white */
-  --card:             oklch(0.115 0.007 64);   /* #141414 */
-  --card-foreground:  oklch(0.94 0.008 78);
-  --popover:          oklch(0.115 0.007 64);
-  --popover-foreground: oklch(0.94 0.008 78);
-  --primary:          oklch(0.94 0.008 78);    /* warm white */
-  --primary-foreground: oklch(0.095 0.006 64);
-  --secondary:        oklch(0.14 0.007 64);    /* #1c1c1c */
-  --secondary-foreground: oklch(0.94 0.008 78);
-  --muted:            oklch(0.14 0.007 64);
-  --muted-foreground: oklch(0.60 0.015 72);    /* #8a8478 */
-  --accent:           oklch(0.14 0.007 64);
-  --accent-foreground: oklch(0.94 0.008 78);
+  --background:       #2B2823;
+  --foreground:       #E0D3BD;
+  --card:             #363330;
+  --card-foreground:  #E0D3BD;
+  --popover:          #363330;
+  --popover-foreground: #E0D3BD;
+  --primary:          #E0D3BD;
+  --primary-foreground: #2B2823;
+  --secondary:        #423F3B;
+  --secondary-foreground: #E0D3BD;
+  --muted:            #423F3B;
+  --muted-foreground: #BABAAE;
+  --accent:           #423F3B;
+  --accent-foreground: #E0D3BD;
   --destructive:      oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.985 0 0);
-  --border:           oklch(0.22 0.008 64);    /* #2a2a2a */
-  --input:            oklch(0.20 0.008 64);
-  --ring:             oklch(0.72 0.095 78);    /* gold ring */
+  --border:           #57544E;
+  --input:            #4E4B45;
+  --ring:             #9B4D19;
 
-  /* Brand accent tokens */
-  --gold:             oklch(0.72 0.095 78);    /* #c9a96e */
-  --gold-muted:       oklch(0.72 0.095 78 / 0.15);
-  --sage:             oklch(0.58 0.065 145);   /* #7a8c72 */
-  --sage-muted:       oklch(0.58 0.065 145 / 0.15);
-  --blush:            oklch(0.70 0.060 50);    /* #c4a08a */
-  --blush-muted:      oklch(0.70 0.060 50 / 0.15);
+  /* Brand accent tokens (legacy names kept for backward compat) */
+  --gold:             #9B4D19;   /* Clay — primary CTA accent */
+  --gold-muted:       color-mix(in srgb, #9B4D19 15%, transparent);
+  --sage:             #6B7250;   /* Grass — membership / hunt-fish accent */
+  --sage-muted:       color-mix(in srgb, #6B7250 15%, transparent);
+  --blush:            #9B4D19;   /* Clay — weddings accent (same as gold) */
+  --blush-muted:      color-mix(in srgb, #9B4D19 15%, transparent);
 
   /* Surface tokens */
-  --surface:          oklch(0.115 0.007 64);   /* #141414 */
-  --surface-raised:   oklch(0.14 0.007 64);    /* #1c1c1c */
+  --surface:          #363330;
+  --surface-raised:   #423F3B;
 
   /* Sidebar (portal) */
-  --sidebar:          oklch(0.085 0.006 64);
-  --sidebar-foreground: oklch(0.90 0.008 80);
-  --sidebar-primary:  oklch(0.72 0.095 78);
-  --sidebar-primary-foreground: oklch(0.095 0.006 64);
-  --sidebar-accent:   oklch(0.14 0.007 64);
-  --sidebar-accent-foreground: oklch(0.90 0.008 80);
+  --sidebar:          #201E1C;
+  --sidebar-foreground: #D8CCBA;
+  --sidebar-primary:  #9B4D19;
+  --sidebar-primary-foreground: #2B2823;
+  --sidebar-accent:   #423F3B;
+  --sidebar-accent-foreground: #D8CCBA;
   --sidebar-border:   oklch(1 0 0 / 10%);
-  --sidebar-ring:     oklch(0.72 0.095 78);
+  --sidebar-ring:     #9B4D19;
 
   /* Charts */
-  --chart-1: oklch(0.72 0.095 78);
-  --chart-2: oklch(0.58 0.065 145);
-  --chart-3: oklch(0.60 0.015 74);
-  --chart-4: oklch(0.94 0.008 78);
-  --chart-5: oklch(0.35 0.012 70);
+  --chart-1: #9B4D19;
+  --chart-2: #6B7250;
+  --chart-3: #BABAAE;
+  --chart-4: #E0D3BD;
+  --chart-5: #57544E;
 }
 
 /* Dark class mirrors :root since we're dark-first */
 .dark {
-  --background:       oklch(0.095 0.006 64);
-  --foreground:       oklch(0.94 0.008 78);
-  --card:             oklch(0.115 0.007 64);
-  --card-foreground:  oklch(0.94 0.008 78);
-  --popover:          oklch(0.115 0.007 64);
-  --popover-foreground: oklch(0.94 0.008 78);
-  --primary:          oklch(0.94 0.008 78);
-  --primary-foreground: oklch(0.095 0.006 64);
-  --secondary:        oklch(0.14 0.007 64);
-  --secondary-foreground: oklch(0.94 0.008 78);
-  --muted:            oklch(0.14 0.007 64);
-  --muted-foreground: oklch(0.60 0.015 72);
-  --accent:           oklch(0.14 0.007 64);
-  --accent-foreground: oklch(0.94 0.008 78);
+  --background:       #2B2823;
+  --foreground:       #E0D3BD;
+  --card:             #363330;
+  --card-foreground:  #E0D3BD;
+  --popover:          #363330;
+  --popover-foreground: #E0D3BD;
+  --primary:          #E0D3BD;
+  --primary-foreground: #2B2823;
+  --secondary:        #423F3B;
+  --secondary-foreground: #E0D3BD;
+  --muted:            #423F3B;
+  --muted-foreground: #BABAAE;
+  --accent:           #423F3B;
+  --accent-foreground: #E0D3BD;
   --destructive:      oklch(0.704 0.191 22.216);
   --destructive-foreground: oklch(0.985 0 0);
-  --border:           oklch(0.22 0.008 64);
-  --input:            oklch(0.20 0.008 64);
-  --ring:             oklch(0.72 0.095 78);
-  --gold:             oklch(0.72 0.095 78);
-  --gold-muted:       oklch(0.72 0.095 78 / 0.15);
-  --sage:             oklch(0.58 0.065 145);
-  --sage-muted:       oklch(0.58 0.065 145 / 0.15);
-  --blush:            oklch(0.70 0.060 50);
-  --blush-muted:      oklch(0.70 0.060 50 / 0.15);
-  --surface:          oklch(0.115 0.007 64);
-  --surface-raised:   oklch(0.14 0.007 64);
-  --sidebar:          oklch(0.085 0.006 64);
-  --sidebar-foreground: oklch(0.90 0.008 80);
-  --sidebar-primary:  oklch(0.72 0.095 78);
-  --sidebar-primary-foreground: oklch(0.095 0.006 64);
-  --sidebar-accent:   oklch(0.14 0.007 64);
-  --sidebar-accent-foreground: oklch(0.90 0.008 80);
+  --border:           #57544E;
+  --input:            #4E4B45;
+  --ring:             #9B4D19;
+  --gold:             #9B4D19;
+  --gold-muted:       color-mix(in srgb, #9B4D19 15%, transparent);
+  --sage:             #6B7250;
+  --sage-muted:       color-mix(in srgb, #6B7250 15%, transparent);
+  --blush:            #9B4D19;
+  --blush-muted:      color-mix(in srgb, #9B4D19 15%, transparent);
+  --surface:          #363330;
+  --surface-raised:   #423F3B;
+  --sidebar:          #201E1C;
+  --sidebar-foreground: #D8CCBA;
+  --sidebar-primary:  #9B4D19;
+  --sidebar-primary-foreground: #2B2823;
+  --sidebar-accent:   #423F3B;
+  --sidebar-accent-foreground: #D8CCBA;
   --sidebar-border:   oklch(1 0 0 / 10%);
-  --sidebar-ring:     oklch(0.72 0.095 78);
-  --chart-1: oklch(0.72 0.095 78);
-  --chart-2: oklch(0.58 0.065 145);
-  --chart-3: oklch(0.60 0.015 74);
-  --chart-4: oklch(0.94 0.008 78);
-  --chart-5: oklch(0.35 0.012 70);
+  --sidebar-ring:     #9B4D19;
+  --chart-1: #9B4D19;
+  --chart-2: #6B7250;
+  --chart-3: #BABAAE;
+  --chart-4: #E0D3BD;
+  --chart-5: #57544E;
 }
 
 /* ─── Track Accent System ───────────────────────────────────────────────────── */
@@ -176,17 +205,35 @@
   }
   body {
     @apply bg-background text-foreground;
-    font-family: 'Inter', system-ui, sans-serif;
+    font-family: 'Crimson Text', Georgia, serif;
     font-size: 16px;
     line-height: 1.6;
   }
 
-  /* Serif display type — Cormorant Garamond */
-  h1, h2, h3, h4, h5, h6 {
-    font-family: 'Cormorant Garamond', Georgia, serif;
+  /* H1 + H3: Montserrat ALL CAPS — structural, label-style */
+  h1, h3 {
+    font-family: 'Montserrat', system-ui, sans-serif;
     font-weight: 400;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    line-height: 1.1;
+  }
+
+  /* H2: Crimson Text italic — editorial, warm */
+  h2 {
+    font-family: 'Crimson Text', Georgia, serif;
+    font-weight: 400;
+    font-style: italic;
     letter-spacing: -0.01em;
     line-height: 1.1;
+  }
+
+  /* H4–H6: Montserrat — sub-labels */
+  h4, h5, h6 {
+    font-family: 'Montserrat', system-ui, sans-serif;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    line-height: 1.2;
   }
 
   /* Cursor helpers */
@@ -242,9 +289,9 @@
 
   /* Eyebrow / label — uppercase tracked sans */
   .eyebrow {
-    font-family: 'Inter', system-ui, sans-serif;
+    font-family: 'Montserrat', system-ui, sans-serif;
     font-size: 0.6875rem;   /* 11px */
-    font-weight: 500;
+    font-weight: 400;
     letter-spacing: 0.18em;
     text-transform: uppercase;
     line-height: 1.4;
@@ -252,8 +299,8 @@
 
   /* Display serif — large editorial headings */
   .display {
-    font-family: 'Cormorant Garamond', Georgia, serif;
-    font-weight: 300;
+    font-family: 'Crimson Text', Georgia, serif;
+    font-weight: 400;
     font-style: italic;
     line-height: 1.05;
     letter-spacing: -0.02em;
@@ -261,32 +308,32 @@
 
   /* Section heading — upright serif */
   .heading {
-    font-family: 'Cormorant Garamond', Georgia, serif;
-    font-weight: 500;
+    font-family: 'Crimson Text', Georgia, serif;
+    font-weight: 400;
     line-height: 1.15;
     letter-spacing: -0.01em;
   }
 
   /* Body copy — generous line height */
   .body-copy {
-    font-family: 'Inter', system-ui, sans-serif;
+    font-family: 'Crimson Text', Georgia, serif;
     font-size: 1rem;
     font-weight: 400;
     line-height: 1.8;
-    color: oklch(0.78 0.010 74);
+    color: #BABAAE;
   }
 
   /* ── CTA Button Styles ──────────────────────────────────────────────────── */
 
-  /* Primary gold-fill button */
+  /* Primary clay-fill button */
   .btn-primary {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     padding: 0.875rem 2.25rem;
     background-color: var(--gold);
-    color: oklch(0.095 0.006 64);
-    font-family: 'Inter', system-ui, sans-serif;
+    color: #E0D3BD;
+    font-family: 'Montserrat', system-ui, sans-serif;
     font-size: 0.6875rem;
     font-weight: 500;
     letter-spacing: 0.16em;
@@ -299,7 +346,7 @@
     opacity: 0.88;
   }
 
-  /* Outlined gold button */
+  /* Outlined clay button */
   .btn-outline {
     display: inline-flex;
     align-items: center;
@@ -307,7 +354,7 @@
     padding: 0.875rem 2.25rem;
     background-color: transparent;
     color: var(--gold);
-    font-family: 'Inter', system-ui, sans-serif;
+    font-family: 'Montserrat', system-ui, sans-serif;
     font-size: 0.6875rem;
     font-weight: 500;
     letter-spacing: 0.16em;
@@ -318,7 +365,7 @@
   }
   .btn-outline:hover {
     background-color: var(--gold);
-    color: oklch(0.095 0.006 64);
+    color: #E0D3BD;
   }
 
   /* Ghost white button (for dark hero overlays) */
@@ -328,19 +375,19 @@
     justify-content: center;
     padding: 0.875rem 2.25rem;
     background-color: transparent;
-    color: oklch(0.94 0.008 78);
-    font-family: 'Inter', system-ui, sans-serif;
+    color: #E0D3BD;
+    font-family: 'Montserrat', system-ui, sans-serif;
     font-size: 0.6875rem;
     font-weight: 500;
     letter-spacing: 0.16em;
     text-transform: uppercase;
-    border: 1px solid oklch(0.94 0.008 78 / 0.5);
+    border: 1px solid rgba(224, 211, 189, 0.5);
     transition: background-color 200ms ease, border-color 200ms ease;
     white-space: nowrap;
   }
   .btn-ghost:hover {
     background-color: oklch(1 0 0 / 0.08);
-    border-color: oklch(0.94 0.008 78 / 0.8);
+    border-color: rgba(224, 211, 189, 0.8);
   }
 
   /* Text link with animated underline */
@@ -348,7 +395,7 @@
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
-    font-family: 'Inter', system-ui, sans-serif;
+    font-family: 'Montserrat', system-ui, sans-serif;
     font-size: 0.6875rem;
     font-weight: 500;
     letter-spacing: 0.14em;
@@ -486,12 +533,12 @@
     gap: 0.375rem;
   }
   .field label {
-    font-family: 'Inter', system-ui, sans-serif;
+    font-family: 'Montserrat', system-ui, sans-serif;
     font-size: 0.6875rem;
     font-weight: 500;
     letter-spacing: 0.12em;
     text-transform: uppercase;
-    color: oklch(0.60 0.015 72);
+    color: #BABAAE;
     transition: color 200ms ease;
   }
   .field input,
@@ -500,9 +547,9 @@
     width: 100%;
     background-color: transparent;
     border: none;
-    border-bottom: 1px solid oklch(0.28 0.008 64);
-    color: oklch(0.94 0.008 78);
-    font-family: 'Inter', system-ui, sans-serif;
+    border-bottom: 1px solid #57544E;
+    color: #E0D3BD;
+    font-family: 'Crimson Text', Georgia, serif;
     font-size: 0.9375rem;
     padding: 0.625rem 0;
     outline: none;
@@ -521,21 +568,21 @@
   }
   .field input::placeholder,
   .field textarea::placeholder {
-    color: oklch(0.40 0.010 70);
+    color: #6B6760;
   }
   .field select option {
-    background-color: oklch(0.14 0.007 64);
-    color: oklch(0.94 0.008 78);
+    background-color: #423F3B;
+    color: #E0D3BD;
   }
 
   /* ── Pull quote ─────────────────────────────────────────────────────────── */
   .pull-quote {
-    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-family: 'Crimson Text', Georgia, serif;
     font-style: italic;
-    font-weight: 300;
+    font-weight: 400;
     font-size: clamp(1.5rem, 3vw, 2.25rem);
     line-height: 1.35;
-    color: oklch(0.94 0.008 78);
+    color: #E0D3BD;
     border-left: 2px solid var(--track-accent, var(--gold));
     padding-left: 1.75rem;
     margin: 0;
@@ -559,19 +606,19 @@
     gap: 0.375rem;
   }
   .stat-item .stat-value {
-    font-family: 'Cormorant Garamond', Georgia, serif;
-    font-weight: 300;
+    font-family: 'Crimson Text', Georgia, serif;
+    font-weight: 400;
     font-size: clamp(2rem, 4vw, 3.25rem);
     line-height: 1;
     color: var(--track-accent, var(--gold));
   }
   .stat-item .stat-label {
-    font-family: 'Inter', system-ui, sans-serif;
+    font-family: 'Montserrat', system-ui, sans-serif;
     font-size: 0.625rem;
     font-weight: 500;
     letter-spacing: 0.18em;
     text-transform: uppercase;
-    color: oklch(0.55 0.012 70);
+    color: #908B82;
   }
 
   /* ── Card image overlay — no scale on hover (per design system) ─────────── */
@@ -599,7 +646,7 @@
 
 /* ─── Utility Layer ─────────────────────────────────────────────────────────── */
 @layer utilities {
-  /* Gold text */
+  /* Gold / clay text */
   .text-gold { color: var(--gold); }
   .text-sage { color: var(--sage); }
   .text-blush { color: var(--blush); }
@@ -611,9 +658,9 @@
   /* Border gold */
   .border-gold { border-color: var(--gold); }
 
-  /* Muted text */
-  .text-muted-brand { color: oklch(0.60 0.015 72); }
+  /* Muted text — RL Sage (#BABAAE) */
+  .text-muted-brand { color: #BABAAE; }
 
-  /* Warm white */
-  .text-warm { color: oklch(0.94 0.008 78); }
+  /* Warm cream text — RL Sand (#E0D3BD) */
+  .text-warm { color: #E0D3BD; }
 }

@@ -13,45 +13,39 @@ logs/
 npm-debug.log*
 pnpm-debug.log*
 
-# Database migrations / snapshots
+# Database
+*.db
+*.sqlite
+*.sqlite3
 drizzle/meta/
 
-# Environment / secrets — never read these
+# Environment / secrets
 .env
 .env.local
 .env.*.local
 
-# OS artifacts
+# OS
 .DS_Store
 Thumbs.db
-*.DS_Store
 
-# Editor artifacts
+# Editor
 .idea/
 *.swp
 *.swo
 .vscode/settings.json
-*.orig
 
 # Test output / coverage
 coverage/
 .vitest/
-__snapshots__/
 
-# Render build artifacts
+# Render / deployment artifacts
 .render-buildpacks.json
 
-# Debug / Manus tooling
+# Debug tooling
 client/public/__manus__/
 
 # Patches (rarely relevant to code tasks)
 patches/
 
-# Generated type declaration maps
+# Generated type files
 *.d.ts.map
-
-# Temporary / scratch files
-*.tmp
-*.bak
-tmp/
-scratch/

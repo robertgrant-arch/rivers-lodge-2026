@@ -2,6 +2,7 @@ import { Link } from "wouter";
 import PublicLayout from "../../../_shared/components/PublicLayout";
 import { trpc } from '@shared/lib/trpc';
 import SEOHead from '@shared/components/SEOHead';
+import Picture from "@shared/components/Picture";
 
 
 const FALLBACK_LODGING = [
@@ -13,8 +14,8 @@ const FALLBACK_LODGING = [
     bedrooms: 4,
     desc: "Our 6,000 square foot lodge has 4 bedrooms decorated by a prominent Kansas City designer and incorporates many aspects of history and outdoor pursuits from the area. The lodge has a full kitchen, large balcony, heated floors, heating/AC, and a large recreation room.",
     features: ["4 bedrooms", "6,000 sq ft", "Full kitchen", "Large balcony", "Heated floors", "Recreation room", "Kansas City designer interiors"],
-    img: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/TdlSWCLWjUxbkCAY.jpg",
-    img2: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/ooPGTJSHasHosVDF.jpg",
+    img: "/img/Main%20Lodge.jpg",
+    img2: "/img/main%20lodge%20inside.jpg",
   },
   {
     slug: "riverhouse-suites",
@@ -24,8 +25,8 @@ const FALLBACK_LODGING = [
     bedrooms: 4,
     desc: "The Riverhouse Suites were completed in 2022 and designed with luxury in mind. Each room is uniquely decorated and all rooms have their own bathrooms and individual heating/AC units.",
     features: ["4 private suites", "Private bath per suite", "Individual heating/AC", "Uniquely decorated rooms", "Luxury finishes", "Completed 2022"],
-    img: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/oyCUCsQLeEsyBufo.jpg",
-    img2: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/wswsJSxuUMvPOXez.jpg",
+    img: "/img/Riverhouse%20Suite.jpg",
+    img2: "/img/Riverhouse%20Suite%201.jpg",
   },
   {
     slug: "annex-bridal-suite",
@@ -35,8 +36,8 @@ const FALLBACK_LODGING = [
     bedrooms: 4,
     desc: "The Annex & Bridal Suite was completely remodeled in 2021. It has a modern farmhouse feel with a light and airy design. Just steps away from Rivers Barn, it is the perfect spot to spend the day getting ready for your big day. The Annex & Bridal Suite has 4 bedrooms and 3 bathrooms.",
     features: ["4 bedrooms", "3 bathrooms", "Steps from Rivers Barn", "Remodeled 2021", "Modern farmhouse feel", "Light and airy design"],
-    img: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/iIofWjQRmWLcfkoI.jpg",
-    img2: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/pNgYcBDkkMZrjPdg.jpg",
+    img: "/img/annex-hero.jpg",
+    img2: "",
   },
   {
     slug: "ohana-house",
@@ -46,8 +47,8 @@ const FALLBACK_LODGING = [
     bedrooms: 4,
     desc: "The Ohana House is located approximately 15 minutes from the main lodge. It has 4 bedrooms and bathrooms, a 20-acre lake, a gorgeous fire pit, and miles of nature trails. Enjoy fishing, canoeing, paddle boarding, hiking, or just laying on a hammock. The Ohana House can be rented as part of a corporate or wedding package, or is a perfect place for just a family getaway.",
     features: ["4 bedrooms & bathrooms", "20-acre private lake", "Gorgeous fire pit", "Miles of nature trails", "Fishing, canoeing, paddleboarding", "15 min from main lodge"],
-    img: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/aLRhjpmRWbewKvgx.jpg",
-    img2: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/jPtEuiXynfNedkpV.jpg",
+    img: "/img/Ohana%20Aerial.jpg",
+    img2: "/img/Ohana%20Firepit.jpg",
   },
   {
     slug: "the-farmhouse",
@@ -57,8 +58,8 @@ const FALLBACK_LODGING = [
     bedrooms: null,
     desc: "A classic Kansas farmhouse on the estate grounds. Comfortable, private, and full of character — ideal for overflow lodging, family groups, or guests who prefer a quieter corner of the property.",
     features: ["Private setting", "Classic farmhouse character", "Estate grounds", "Ideal for overflow", "Quiet and secluded", "Full amenities"],
-    img: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/FBhBBcKGLLMcZCZH.jpg",
-    img2: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/CWqFSDNCUymmKhkq.jpg",
+    img: "/img/farmhouse-hero.jpg",
+    img2: "",
   },
 ];
 
@@ -76,8 +77,8 @@ export default function Lodging() {
         maxGuests: unit.maxGuests,
         desc: unit.longDescription ?? "",
         features: Array.isArray(unit.features) ? (unit.features as string[]) : [],
-        img: unit.heroImage ?? (Array.isArray(unit.galleryImages) ? (unit.galleryImages as string[])[0] : "") ?? "",
-        img2: Array.isArray(unit.galleryImages) ? ((unit.galleryImages as string[])[1] ?? (unit.galleryImages as string[])[0] ?? "") : "",
+        img: "",
+        img2: "",
       }))
     : FALLBACK_LODGING;
 
@@ -92,14 +93,14 @@ export default function Lodging() {
       <section className="pt-32 pb-16 md:pt-40 md:pb-20 bg-background">
         <div className="max-w-[1440px] mx-auto px-5 lg:px-10">
           <div className="gold-rule" />
-          <p className="eyebrow text-[oklch(0.55_0.012_70)] mb-4">On-Site Lodging</p>
+          <p className="eyebrow text-[#908B82] mb-4">On-Site Lodging</p>
           <h1
-            className="font-serif font-light italic text-[oklch(0.94_0.008_78)] leading-tight mb-6"
+            className="font-serif font-light italic text-[#E0D3BD] leading-tight mb-6"
             style={{ fontSize: "clamp(2.5rem,5vw,4.5rem)" }}
           >
             Stay on the estate.<br />All weekend.
           </h1>
-          <p className="text-[oklch(0.60_0.015_72)] font-sans text-base max-w-xl leading-relaxed">
+          <p className="text-[#BABAAE] font-sans text-base max-w-xl leading-relaxed">
             Five lodging buildings sleep your entire wedding party on-site. From the 6,000 sq ft Lodge to the secluded Ohana House on its own 20-acre lake — everyone stays together.
           </p>
         </div>
@@ -110,18 +111,32 @@ export default function Lodging() {
         <section
           key={prop.slug}
           id={prop.slug}
-          className={`section ${i % 2 === 0 ? "bg-background" : "bg-[oklch(0.115_0.007_64)]"}`}
+          className={`section ${i % 2 === 0 ? "bg-background" : "bg-[#363330]"}`}
         >
           <div className="max-w-[1440px] mx-auto px-5 lg:px-10">
             <div className={`grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-start ${i % 2 !== 0 ? "lg:grid-flow-dense" : ""}`}>
               {/* Images */}
               <div className={`grid grid-cols-3 gap-3 ${i % 2 !== 0 ? "lg:col-start-2" : ""}`}>
-                <div className="col-span-2 overflow-hidden aspect-[4/3]">
-                  <img src={prop.img} alt={prop.name} className="w-full h-full object-cover hover:scale-105 transition-transform duration-700" loading="lazy" />
-                </div>
-                <div className="overflow-hidden aspect-[3/4]">
-                  <img src={prop.img2} alt={`${prop.name} interior`} className="w-full h-full object-cover hover:scale-105 transition-transform duration-700" loading="lazy" />
-                </div>
+                <Picture
+                  src={prop.img}
+                  alt={prop.name}
+                  label={prop.name}
+                  className="col-span-2 overflow-hidden aspect-[4/3]"
+                  imgClassName="absolute inset-0 w-full h-full object-cover hover:scale-105 transition-transform duration-700"
+                  sizes="(max-width: 1024px) 66vw, 33vw"
+                  width={800}
+                  height={600}
+                />
+                <Picture
+                  src={prop.img2}
+                  alt={`${prop.name} interior`}
+                  label={`${prop.name} interior`}
+                  className="overflow-hidden aspect-[3/4]"
+                  imgClassName="absolute inset-0 w-full h-full object-cover hover:scale-105 transition-transform duration-700"
+                  sizes="(max-width: 1024px) 33vw, 16vw"
+                  width={480}
+                  height={640}
+                />
               </div>
 
               {/* Content */}
@@ -167,7 +182,7 @@ export default function Lodging() {
       ))}
 
       {/* CTA */}
-      <section className="py-20 bg-[oklch(0.13_0.008_66)] text-center">
+      <section className="py-20 bg-[#2B2823] text-center">
         <div className="max-w-xl mx-auto px-6">
           <h2 className="font-serif text-3xl md:text-4xl text-white mb-5 italic font-light">
             Come and stay awhile.
@@ -175,7 +190,7 @@ export default function Lodging() {
           <p className="text-sm font-sans text-white/60 mb-8 leading-relaxed">
             Like the whole weekend.
           </p>
-          <Link href="/contact" className="inline-flex items-center justify-center px-10 py-4 bg-white text-[oklch(0.15_0.008_66)] text-xs tracking-[0.18em] uppercase font-sans font-medium hover:bg-white/90 transition-colors">
+          <Link href="/contact" className="inline-flex items-center justify-center px-10 py-4 bg-white text-[#2B2823] text-xs tracking-[0.18em] uppercase font-sans font-medium hover:bg-white/90 transition-colors">
             Book a Tour
           </Link>
         </div>

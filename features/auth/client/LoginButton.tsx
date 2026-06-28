@@ -11,7 +11,7 @@ export function LoginButton({ className, children }: LoginButtonProps) {
       <button
         className={
           className ??
-          "text-[11px] tracking-[0.15em] uppercase font-sans font-medium border border-[oklch(0.72_0.095_78)] text-[oklch(0.72_0.095_78)] px-5 py-2.5 hover:bg-[oklch(0.72_0.095_78)] hover:text-[oklch(0.095_0.006_64)] transition-all duration-200"
+          "text-[11px] tracking-[0.15em] uppercase font-sans font-medium border border-[#9B4D19] text-[#9B4D19] px-5 py-2.5 hover:bg-[#9B4D19] hover:text-[#2B2823] transition-all duration-200"
         }
       >
         {children ?? "Member Login"}

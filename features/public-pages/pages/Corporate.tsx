@@ -51,7 +51,7 @@ export default function Corporate() {
   description="Private corporate retreats, team-building hunts, and executive events at The Rivers Lodge — a world-class venue in La Cygne, Kansas."
   url="/corporate"
 />
-      <div style={{ "--track-accent": "oklch(0.70 0.060 50)" } as React.CSSProperties}>
+      <div style={{ "--track-accent": "#9B4D19" } as React.CSSProperties}>
 
       {/* Hero */}
       <section className="relative hero-full flex items-end pb-24 overflow-hidden">
@@ -113,7 +113,7 @@ export default function Corporate() {
                   <img src={e.img} alt={e.title} className="w-full h-full object-cover" loading="lazy" />
                 </div>
                 <div className="p-8">
-                  <div className="h-px w-6 mb-4" style={{ backgroundColor: "oklch(0.70 0.060 50)" }} />
+                  <div className="h-px w-6 mb-4" style={{ backgroundColor: "#9B4D19" }} />
                   <h3 className="font-serif text-warm text-xl mb-3">{e.title}</h3>
                   <p className="font-sans text-muted-brand text-sm leading-relaxed">{e.desc}</p>
                 </div>

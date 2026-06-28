@@ -12,7 +12,7 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
       {/* Skip-to-content for keyboard / screen reader users */}
       <a
         href="#main-content"
-        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[9999] focus:px-4 focus:py-2 focus:text-sm focus:font-sans focus:bg-[var(--gold)] focus:text-[oklch(0.12_0.015_66)] focus:outline-none"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[9999] focus:px-4 focus:py-2 focus:text-sm focus:font-sans focus:bg-[var(--gold)] focus:text-[#2B2823] focus:outline-none"
       >
         Skip to main content
       </a>

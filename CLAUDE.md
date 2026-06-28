@@ -1,45 +1,40 @@
-# Rivers Lodge & Hunt Club — Claude Master Guide
+# Rivers Lodge & Hunt Club — Master Workspace Guide
 
 **Canonical project root:** `/home/user/rivers-lodge-2026`
-**Single source of truth** for Claude Desktop, Claude Code CLI, and IDE sessions.
-**Quick operator reference:** `OPERATOR.md`
-**Session state / handoff:** `context/session-summary.md`
+**This directory is the single source of truth** for Claude Desktop, terminal Claude, and IDE work.
+**Quick operator reference:** see `OPERATOR.md`
 
 ---
 
-## Standing session rules
+## Standing session rule
 
-1. **On session start:** read `context/session-summary.md` if it exists. It contains the current project state, active workstreams, and next steps.
-2. **Before any code changes:** confirm `CLAUDE.md` and `OPERATOR.md` are present and current.
-3. **On "wrap up":** update `context/session-summary.md` — see the Wrap-Up Protocol section below.
+**Before any code changes:** confirm both `CLAUDE.md` and `OPERATOR.md` are present and current.
+Then proceed with engineering work.
 
 ---
 
-## Project overview
+## Repo purpose
 
-Full-stack TypeScript web application for The Rivers Lodge & Hunt Club — a private estate in La Cygne, Kansas. Serves as the public marketing site, member portal, and internal operations platform for weddings, lodging, hunting/fishing, and membership management.
+Full-stack TypeScript web application for The Rivers Lodge & Hunt Club — a private estate
+in La Cygne, Kansas. Serves as the public marketing site, member portal, and internal
+operations platform for weddings, lodging, hunting/fishing, and membership management.
 
-**Live URL:** deployed on Render.com (auto-deploys from `main`)
+**Live deployment:** Render.com (auto-deploys from `main`)
 **Deploy trigger:**
 ```bash
-git commit --allow-empty -m "chore: trigger Render production deploy (<description> — PR #N)" && git push origin main
+git commit --allow-empty -m "chore: trigger Render production deploy (...)" && git push origin main
 ```
 
 ---
 
-## Stack
+## Architecture overview
 
-| Layer | Technology |
-|---|---|
-| Frontend | React 19 + Wouter (routing) + Tailwind CSS v4 |
-| Backend | Express 4 + tRPC 11 (type-safe RPC) |
-| Database | MySQL via Drizzle ORM |
-| Auth | Clerk v5 (OAuth + sessions + roles) |
-| Client bundler | Vite 7 |
-| Server bundler | esbuild |
-| Testing | Vitest + Testing Library |
-| Package manager | pnpm |
-| Hosting | Render.com |
+React 19 SPA (Vite) + Express backend + tRPC API + Drizzle ORM + MySQL.
+Auth via Clerk. Hosted on Render.
+
+**Vertical slice pattern:** every product area is a self-contained folder under `features/`.
+Each slice owns its DB schema, tRPC router, and React pages. Cross-slice imports are only
+allowed through each feature's `public.ts` barrel file — enforced by ESLint `plugin-boundaries`.
 
 ---
 
@@ -48,104 +43,106 @@ git commit --allow-empty -m "chore: trigger Render production deploy (<descripti
 ```
 /home/user/rivers-lodge-2026/
 │
-├── CLAUDE.md                  ← master guide (this file)
-├── OPERATOR.md                ← quick operator cheat sheet
-├── .claudeignore              ← files Claude skips
-├── .claude/settings.json      ← Claude Code project permissions
-├── context/
-│   └── session-summary.md     ← live handoff state (read on every session start)
+├── CLAUDE.md              ← this file — master workspace guide
+├── OPERATOR.md            ← quick operator cheat sheet
+├── .claudeignore          ← files Claude skips (build output, secrets, etc.)
+├── .claude/settings.json  ← Claude Code project permissions
 │
-├── features/                  ← ALL application code (vertical slices)
-│   ├── _core/
-│   │   ├── server/app.ts      ← Express entry point
-│   │   ├── server/router.ts   ← Root tRPC router (mounts all feature routers)
-│   │   ├── server/db.ts       ← Drizzle ORM client
-│   │   ├── server/env.ts      ← Env var schema (add new vars here first)
+├── features/              ← ALL application code (vertical slices)
+│   ├── _core/             ← Infrastructure: Express app, tRPC factory, DB client
+│   │   ├── server/app.ts  ← Express entry point
+│   │   ├── server/router.ts ← Root tRPC router (mounts all feature routers)
+│   │   ├── server/db.ts   ← Drizzle ORM client
+│   │   ├── server/env.ts  ← Env var schema (add new vars here first)
 │   │   └── client/
-│   │       ├── App.tsx        ← Wouter router — ALL routes registered here
-│   │       ├── main.tsx       ← React DOM entry
-│   │       └── index.css      ← Tailwind @theme, brand tokens, component classes
-│   ├── _shared/
-│   │   ├── ui/                ← 50+ shadcn/ui primitives
-│   │   ├── components/        ← SEOHead, DashboardLayout, Picture, etc.
-│   │   ├── hooks/             ← useMobile, useScrollAnimation, etc.
-│   │   └── lib/trpc.ts        ← Type-safe tRPC client + React Query hooks
-│   ├── public-pages/
-│   │   └── components/
-│   │       ├── PublicNav.tsx       ← site navigation
-│   │       ├── PublicFooter.tsx    ← footer
-│   │       └── PublicLayout.tsx    ← public page wrapper
+│   │       ├── App.tsx    ← Wouter router (ALL routes defined here)
+│   │       ├── main.tsx   ← React DOM entry
+│   │       └── index.css  ← Tailwind @theme, brand tokens, component classes
 │   │
-│   ├── marketing/             ← /  /gallery  /contact  /privacy  /outdoors
-│   ├── weddings/              ← /events  /weddings  /venues
-│   ├── lodging/               ← /lodging  /estate
-│   ├── membership/            ← /membership  /membership/benefits  /membership/faq
-│   ├── hunt-fish/             ← /hunt  /fish
-│   ├── about/                 ← /about  /about/team  /about/property
-│   ├── corporate/             ← /corporate
-│   ├── food-and-wine/         ← /food-and-wine
-│   ├── inquiries/             ← /inquiry-confirmed + InquiryForm + StickyInquiryCTA
-│   ├── waivers/               ← /sign-waiver/:token + PDF generation
-│   ├── auth/                  ← /sign-in + Clerk session management
-│   ├── portal/                ← /portal  /portal/my-bookings  /portal/properties
-│   ├── booking-engine/        ← availability engine (embedded in portal)
-│   ├── trips/                 ← hunt/fish slot calendar
-│   ├── admin/                 ← /ops/* staff operations portal
-│   ├── cms/                   ← FAQ, testimonials, gallery (DB-backed)
-│   ├── messages/              ← member ↔ staff concierge messaging
-│   ├── reports/               ← /ops/field-reports  /ops/newsletter
-│   ├── updates/               ← seasonal field updates
-│   └── property-booking/      ← self-service hunt property booking
+│   ├── _shared/           ← Shared UI: shadcn/ui primitives, hooks, tRPC client
+│   │   ├── ui/            ← 50+ Radix-wrapped primitives (Button, Dialog, etc.)
+│   │   ├── components/    ← Composite components (SEOHead, DashboardLayout, etc.)
+│   │   ├── hooks/         ← useMobile, useScrollAnimation, etc.
+│   │   └── lib/trpc.ts    ← Type-safe tRPC client + React Query hooks
+│   │
+│   ├── public-pages/      ← Shared public layout components
+│   │   └── components/
+│   │       ├── PublicNav.tsx      ← Site navigation (dropdowns, mobile, portal link)
+│   │       ├── PublicFooter.tsx   ← Footer
+│   │       └── PublicLayout.tsx   ← Wrapper for all public pages
+│   │
+│   ├── marketing/         ← / · /gallery · /contact · /privacy · /outdoors
+│   ├── weddings/          ← /events · /weddings · /venues
+│   ├── lodging/           ← /lodging · /estate
+│   ├── membership/        ← /membership · /membership/benefits · /membership/faq
+│   ├── hunt-fish/         ← /hunt · /fish
+│   ├── about/             ← /about · /about/team · /about/property
+│   ├── corporate/         ← /corporate
+│   ├── food-and-wine/     ← /food-and-wine
+│   ├── inquiries/         ← /inquiry-confirmed · InquiryForm · StickyInquiryCTA
+│   ├── waivers/           ← /sign-waiver/:token · PDF generation
+│   ├── auth/              ← /sign-in · Clerk session management
+│   ├── portal/            ← /portal · /portal/my-bookings · /portal/properties
+│   ├── booking-engine/    ← Availability engine (embedded in portal)
+│   ├── trips/             ← Hunt/fish slot calendar
+│   ├── admin/             ← /ops/* staff operations portal
+│   ├── cms/               ← FAQ, testimonials, gallery (DB-backed)
+│   ├── messages/          ← Member ↔ staff concierge messaging
+│   ├── reports/           ← /ops/field-reports · /ops/newsletter
+│   ├── updates/           ← Seasonal field updates
+│   └── property-booking/  ← Self-service hunt property booking
 │
 ├── client/
-│   ├── index.html             ← Vite SPA entry + Google Fonts links
+│   ├── index.html         ← Vite SPA entry point
 │   └── public/
-│       ├── img/               ← photography assets (NEVER delete)
-│       └── brand/             ← logo variants (1.png–13.png)
+│       ├── img/           ← Photography assets (NEVER delete)
+│       └── brand/         ← Logo variants (1.png–13.png)
 │
-├── server/                    ← legacy test stubs only (real server in _core)
-├── scripts/                   ← build/utility scripts
-├── docs/                      ← architecture documentation
-├── package.json               ← pnpm workspace + scripts
-├── vite.config.ts             ← Vite + path aliases (@core, @shared, @features)
-├── drizzle.config.ts          ← ORM config
-├── render.yaml                ← Render hosting service definition
+├── server/                ← Legacy test stubs only (real server is in _core)
+├── scripts/               ← Build/utility scripts
+├── docs/                  ← Architecture documentation
+│
+├── package.json           ← pnpm workspace + scripts
+├── vite.config.ts         ← Vite + path aliases (@core, @shared, @features)
+├── drizzle.config.ts      ← ORM config
+├── render.yaml            ← Render hosting service definition
 ├── tsconfig.json
-└── eslint.config.js           ← plugin-boundaries enforces vertical slice rules
+└── eslint.config.js       ← plugin-boundaries enforces vertical slice rules
 ```
 
 ---
 
-## Feature → route map
+## Feature → route ownership
 
-| Feature | Routes | Auth |
+| Feature | Public routes | Auth required |
 |---|---|---|
-| `marketing` | `/` `/gallery` `/contact` `/privacy` | Public |
-| `weddings` | `/events` `/weddings` `/venues` | Public |
-| `lodging` | `/lodging` `/estate` | Public |
-| `membership` | `/membership` `/membership/benefits` `/membership/faq` | Public |
-| `hunt-fish` | `/hunt` `/fish` | Public |
-| `about` | `/about` `/about/team` `/about/property` | Public |
-| `corporate` | `/corporate` | Public |
-| `food-and-wine` | `/food-and-wine` | Public |
-| `inquiries` | `/inquiry-confirmed` | Public |
-| `waivers` | `/sign-waiver/:token` | Public |
-| `auth` | `/sign-in` `/sign-up` | — |
+| `marketing` | `/` `/gallery` `/contact` `/privacy` | No |
+| `weddings` | `/events` `/weddings` `/venues` | No |
+| `lodging` | `/lodging` `/estate` | No |
+| `membership` | `/membership` `/membership/benefits` `/membership/faq` | No |
+| `hunt-fish` | `/hunt` `/fish` | No |
+| `about` | `/about` `/about/team` `/about/property` | No |
+| `corporate` | `/corporate` | No |
+| `food-and-wine` | `/food-and-wine` | No |
+| `inquiries` | `/inquiry-confirmed` | No |
+| `waivers` | `/sign-waiver/:token` | No |
+| `auth` | `/sign-in` `/sign-up` | No |
 | `portal` | `/portal` `/portal/my-bookings` `/portal/properties` | Member |
 | `admin` | `/ops/*` (15+ sub-routes) | Staff role |
 
 ---
 
-## Design system
+## Styling & design system
 
-**File:** `features/_core/client/index.css`
+**Tailwind CSS v4** — CSS-first config. No `tailwind.config.js`.
+All theme customization lives in `features/_core/client/index.css`.
 
-### Brand color tokens
+### Brand tokens (defined in `:root`)
 
-| CSS var | Hex | Role |
+| Token | Hex | Role |
 |---|---|---|
 | `--rl-night` / `--background` | `#2B2823` | Primary background |
-| `--rl-sand` / `--foreground` | `#E0D3BD` | Primary text on dark |
+| `--rl-sand` / `--foreground` | `#E0D3BD` | Primary text (on dark) |
 | `--rl-clay` / `--gold` | `#9B4D19` | CTA / primary accent |
 | `--rl-grass` / `--sage` | `#6B7250` | Membership / hunt-fish accent |
 | `--rl-sage` | `#BABAAE` | Muted text |
@@ -154,19 +151,54 @@ git commit --allow-empty -m "chore: trigger Render production deploy (<descripti
 | `--surface-raised` | `#423F3B` | Elevated surface |
 | `--border` | `#57544E` | Dividers |
 
-### Fonts
+### Fonts (Google Fonts — loaded in `client/index.html`)
 
 | Family | Weights | Usage |
 |---|---|---|
-| Montserrat | 400, 500, 600 | H1, H3, eyebrows, buttons |
-| Crimson Text | 400, 400 italic | H2, body copy, pull quotes |
+| Montserrat | 400, 500, 600 | H1, H3, eyebrows, buttons, labels |
+| Crimson Text | 400, 400 italic | H2, body, pull quotes |
 
-**Hierarchy:** H1/H3 → Montserrat uppercase (letter-spacing 0.08em) · H2 → Crimson Text italic · Body → Crimson Text
+**Typography hierarchy:**
+- H1 / H3 → Montserrat, uppercase, `letter-spacing: 0.08em`
+- H2 → Crimson Text, italic
+- Body → Crimson Text
+- Eyebrows / buttons → Montserrat, uppercase, tracked
 
-### Named component classes
+### Tailwind utilities (defined in `index.css`)
 `.eyebrow` `.btn-primary` `.btn-outline` `.btn-ghost` `.link-arrow`
-`.section` `.gold-rule` `.fade-up` `.text-warm` `.text-muted-brand`
-`.bg-surface` `.bg-surface-raised`
+`.section` `.gold-rule` `.fade-up` `.body-copy` `.pull-quote`
+`.text-warm` `.text-muted-brand` `.bg-surface` `.bg-surface-raised`
+
+---
+
+## Coding conventions
+
+### Vertical slice law
+```
+✅  import { HuntFishAvailabilityCalendar } from 'features/trips/client/public'
+✅  import { trpc } from '@shared/lib/trpc'
+❌  import something from 'features/trips/client/components/HuntFishCalendar'
+❌  import something from 'features/booking-engine/server/router'
+```
+
+### File naming
+- Components: `PascalCase.tsx`
+- Utilities/hooks: `camelCase.ts`
+- Routes: kebab-case URLs (`/membership/benefits`)
+
+### Import aliases (vite.config.ts)
+```typescript
+@core     → features/_core
+@shared   → features/_shared
+@features → features
+```
+
+### New feature checklist
+1. Create `features/<name>/` folder
+2. Add `schema.ts` (if DB), `types.ts`, `public.ts`
+3. Add `server/router.ts` and mount in `features/_core/server/router.ts`
+4. Add page components to `client/pages/`
+5. Register routes in `features/_core/client/App.tsx`
 
 ### Safe image placeholder pattern
 ```tsx
@@ -177,7 +209,8 @@ git commit --allow-empty -m "chore: trigger Render production deploy (<descripti
     </span>
   </div>
   <img
-    src={src} alt={alt}
+    src={src}
+    alt={alt}
     className="absolute inset-0 w-full h-full object-cover"
     loading="lazy"
     onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
@@ -187,41 +220,10 @@ git commit --allow-empty -m "chore: trigger Render production deploy (<descripti
 
 ---
 
-## Coding conventions
-
-### Vertical slice law
-```
-✅  import { X } from 'features/trips/client/public'       ← barrel only
-✅  import { trpc } from '@shared/lib/trpc'
-❌  import X from 'features/trips/client/components/X'     ← bypass public.ts
-❌  import X from 'features/booking-engine/server/router'  ← server in client
-```
-
-### File naming
-- Components: `PascalCase.tsx`
-- Utilities / hooks: `camelCase.ts`
-- Routes: kebab-case URLs
-
-### Import aliases (vite.config.ts)
-```
-@core     → features/_core
-@shared   → features/_shared
-@features → features
-```
-
-### New feature checklist
-1. Create `features/<name>/` folder
-2. Add `schema.ts` (if DB), `types.ts`, `public.ts`
-3. Add `server/router.ts`, mount in `features/_core/server/router.ts`
-4. Add pages to `client/pages/`
-5. Register routes in `features/_core/client/App.tsx`
-
----
-
 ## Commands
 
 ```bash
-pnpm dev        # local dev — Vite + Express watch mode
+pnpm dev        # local dev (Vite + Express watch mode)
 pnpm build      # production build
 pnpm test       # Vitest unit tests
 pnpm lint       # ESLint — run before every PR
@@ -233,7 +235,7 @@ pnpm db:push    # push Drizzle schema to DB
 ## Git & deployment workflow
 
 ```bash
-# 1. Feature branch — never commit to main directly
+# 1. Feature branch — never commit straight to main
 git checkout -b claude/<feature-name>
 
 # 2. Stage specific files, commit, push
@@ -241,7 +243,7 @@ git add features/path/to/file.tsx
 git commit -m "feat: describe the change"
 git push -u origin claude/<feature-name>
 
-# 3. Open PR → squash merge (GitHub MCP tools or UI)
+# 3. Open PR → squash merge (GitHub MCP tools or GitHub UI)
 
 # 4. Pull and trigger Render deploy
 git checkout main && git pull origin main
@@ -260,29 +262,16 @@ git push origin main
 
 ---
 
-## Wrap-up protocol
+## Environment variables
 
-**Trigger phrase: "wrap up"**
+Managed in the Render dashboard. Schema validated in `features/_core/server/env.ts`.
+Add new vars there first, then set values in Render.
 
-When I say "wrap up", do the following before ending the session:
-
-1. Update `context/session-summary.md` with:
-   - **Completed this session** — bullet list of what was done, with PR numbers if applicable
-   - **In progress / pending** — anything started but not finished
-   - **Key decisions** — architectural or content choices made
-   - **Blockers** — anything waiting on external input
-   - **Recommended next command** — exact shell command or file to open next session
-   - **Recommended next file** — the most important file to review or edit next
-   - **Last updated** — date/time
-
-2. Commit `context/session-summary.md`:
-   ```bash
-   git add context/session-summary.md
-   git commit -m "chore: update session summary"
-   git push origin main
-   ```
-
-3. Confirm the commit was pushed.
+Key vars:
+- `DATABASE_URL` — MySQL connection string
+- `CLERK_SECRET_KEY`, `VITE_CLERK_PUBLISHABLE_KEY` — auth
+- `VITE_ANALYTICS_ENDPOINT`, `VITE_ANALYTICS_WEBSITE_ID` — Umami
+- `VITE_APP_TITLE` — "The Rivers Lodge & Hunt Club"
 
 ---
 
@@ -294,8 +283,6 @@ When I say "wrap up", do the following before ending the session:
 | #27 | Homepage simplification — hero + 3 teasers |
 | #28 | Brand standards — Montserrat + Crimson Text, RL color palette tokens site-wide |
 | #29 | Remove images from /lodging and /gallery (source files preserved) |
-| #43 | Site-wide image performance hardening (`<Picture>` + srcset + cache headers) |
-| #44 | Fix: swap Fishing pursuit card image |
 
 ---
 
@@ -306,11 +293,10 @@ When I say "wrap up", do the following before ending the session:
 | Homepage | `features/marketing/client/pages/Home.tsx` |
 | Membership tiers | `features/membership/client/pages/Membership.tsx` |
 | Membership FAQ | `features/membership/client/pages/MembershipFaq.tsx` |
-| Weddings / Events | `features/weddings/client/pages/WeddingsLanding.tsx` |
-| Lodging properties | `features/lodging/client/pages/Lodging.tsx` |
+| Weddings/Events | `features/weddings/client/pages/WeddingsLanding.tsx` |
+| Lodging properties | `features/lodging/client/pages/Lodging.tsx` (FALLBACK_LODGING at top) |
 | Nav / footer | `features/public-pages/components/PublicNav.tsx` |
 | Brand tokens / fonts | `features/_core/client/index.css` |
 | Add a new route | `features/_core/client/App.tsx` |
 | Deployment config | `render.yaml` |
 | Photography | `client/public/img/` |
-| Session state | `context/session-summary.md` |

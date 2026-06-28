@@ -1,6 +1,7 @@
 import { cn } from '@shared/lib/utils';
 import { AlertTriangle, RotateCcw } from "lucide-react";
 import { Component, ReactNode } from "react";
+import { isChunkLoadError, tryRecoverFromChunkError } from '@shared/lib/chunkErrorRecovery';
 
 interface Props {
   children: ReactNode;
@@ -18,6 +19,12 @@ class ErrorBoundary extends Component<Props, State> {
   }
 
   static getDerivedStateFromError(error: Error): State {
+    // For stale-chunk errors, attempt a one-time silent reload.
+    // If the reload fires, this component never finishes mounting so no UI flash.
+    // If the cooldown guard is active, fall through to the normal error screen.
+    if (isChunkLoadError(error)) {
+      tryRecoverFromChunkError();
+    }
     return { hasError: true, error };
   }
 
