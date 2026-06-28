@@ -80,6 +80,36 @@ export default function LodgingVenueDetail({ slug }: { slug: string }) {
         </div>
       </section>
 
+      {/* Gallery */}
+      <section className="section bg-surface">
+        <div className="max-w-[1440px] mx-auto px-5 lg:px-14">
+          <div className="mb-10">
+            <div style={{ height: "1px", width: "2rem", backgroundColor: ACCENT, marginBottom: "1.25rem" }} />
+            <p className="eyebrow text-muted-brand">Gallery</p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-px bg-border">
+            {venue.galleryImgs.map((img, i) => (
+              <div key={i} className="aspect-[4/3] overflow-hidden bg-[#2B2823] relative flex items-center justify-center">
+                {img.src ? (
+                  <img
+                    src={img.src}
+                    alt={img.alt}
+                    className="absolute inset-0 w-full h-full object-cover"
+                    loading="lazy"
+                    decoding="async"
+                    onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+                  />
+                ) : (
+                  <span className="text-[10px] tracking-[0.18em] uppercase font-sans text-white/30 select-none pointer-events-none">
+                    Photo {i + 1}
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Details */}
       <section
         ref={contentRef as React.RefObject<HTMLDivElement>}

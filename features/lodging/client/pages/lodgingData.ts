@@ -1,3 +1,8 @@
+export interface GalleryImg {
+  src: string;
+  alt: string;
+}
+
 export interface LodgingVenue {
   slug: string;
   title: string;
@@ -10,6 +15,7 @@ export interface LodgingVenue {
   capacity?: string;
   description: string[];
   features: string[];
+  galleryImgs: GalleryImg[];
 }
 
 export const VENUES: LodgingVenue[] = [
@@ -37,6 +43,14 @@ export const VENUES: LodgingVenue[] = [
       "Billiards & bar",
       "Kansas City designer interiors",
     ],
+    galleryImgs: [
+      { src: "", alt: "The Lodge — Photo 1" },
+      { src: "", alt: "The Lodge — Photo 2" },
+      { src: "", alt: "The Lodge — Photo 3" },
+      { src: "", alt: "The Lodge — Photo 4" },
+      { src: "", alt: "The Lodge — Photo 5" },
+      { src: "", alt: "The Lodge — Photo 6" },
+    ],
   },
   {
     slug: "riverhouse-suites",
@@ -60,6 +74,14 @@ export const VENUES: LodgingVenue[] = [
       "River views",
       "Completed 2022",
     ],
+    galleryImgs: [
+      { src: "", alt: "Riverhouse Suites — Photo 1" },
+      { src: "", alt: "Riverhouse Suites — Photo 2" },
+      { src: "", alt: "Riverhouse Suites — Photo 3" },
+      { src: "", alt: "Riverhouse Suites — Photo 4" },
+      { src: "", alt: "Riverhouse Suites — Photo 5" },
+      { src: "", alt: "Riverhouse Suites — Photo 6" },
+    ],
   },
   {
     slug: "the-annex",
@@ -81,6 +103,14 @@ export const VENUES: LodgingVenue[] = [
       "Remodeled 2021",
       "Modern farmhouse aesthetic",
       "Bridal suite configuration available",
+    ],
+    galleryImgs: [
+      { src: "", alt: "The Annex — Photo 1" },
+      { src: "", alt: "The Annex — Photo 2" },
+      { src: "", alt: "The Annex — Photo 3" },
+      { src: "", alt: "The Annex — Photo 4" },
+      { src: "", alt: "The Annex — Photo 5" },
+      { src: "", alt: "The Annex — Photo 6" },
     ],
   },
   {
@@ -105,6 +135,14 @@ export const VENUES: LodgingVenue[] = [
       "15 min from main lodge",
       "Standalone or package rental",
     ],
+    galleryImgs: [
+      { src: "", alt: "The Ohana — Photo 1" },
+      { src: "", alt: "The Ohana — Photo 2" },
+      { src: "", alt: "The Ohana — Photo 3" },
+      { src: "", alt: "The Ohana — Photo 4" },
+      { src: "", alt: "The Ohana — Photo 5" },
+      { src: "", alt: "The Ohana — Photo 6" },
+    ],
   },
   {
     slug: "the-farmhouse",
@@ -125,6 +163,14 @@ export const VENUES: LodgingVenue[] = [
       "Original hardwood floors",
       "Front porch with field views",
     ],
+    galleryImgs: [
+      { src: "", alt: "The Farmhouse — Photo 1" },
+      { src: "", alt: "The Farmhouse — Photo 2" },
+      { src: "", alt: "The Farmhouse — Photo 3" },
+      { src: "", alt: "The Farmhouse — Photo 4" },
+      { src: "", alt: "The Farmhouse — Photo 5" },
+      { src: "", alt: "The Farmhouse — Photo 6" },
+    ],
   },
   {
     slug: "big-tine-house",
@@ -144,6 +190,14 @@ export const VENUES: LodgingVenue[] = [
       "Hunting & fishing proximity",
       "Available for member retreats",
     ],
+    galleryImgs: [
+      { src: "", alt: "Big Tine House — Photo 1" },
+      { src: "", alt: "Big Tine House — Photo 2" },
+      { src: "", alt: "Big Tine House — Photo 3" },
+      { src: "", alt: "Big Tine House — Photo 4" },
+      { src: "", alt: "Big Tine House — Photo 5" },
+      { src: "", alt: "Big Tine House — Photo 6" },
+    ],
   },
   {
     slug: "trego-road",
@@ -162,6 +216,14 @@ export const VENUES: LodgingVenue[] = [
       "Surrounded by timber",
       "Ideal for hunting camps",
       "Member favorite",
+    ],
+    galleryImgs: [
+      { src: "", alt: "Trego Road — Photo 1" },
+      { src: "", alt: "Trego Road — Photo 2" },
+      { src: "", alt: "Trego Road — Photo 3" },
+      { src: "", alt: "Trego Road — Photo 4" },
+      { src: "", alt: "Trego Road — Photo 5" },
+      { src: "", alt: "Trego Road — Photo 6" },
     ],
   },
   {
@@ -185,6 +247,14 @@ export const VENUES: LodgingVenue[] = [
       "Adjacent bridal suite (The Annex)",
       "Ceremony & reception capable",
     ],
+    galleryImgs: [
+      { src: "", alt: "The Barn — Photo 1" },
+      { src: "", alt: "The Barn — Photo 2" },
+      { src: "", alt: "The Barn — Photo 3" },
+      { src: "", alt: "The Barn — Photo 4" },
+      { src: "", alt: "The Barn — Photo 5" },
+      { src: "", alt: "The Barn — Photo 6" },
+    ],
   },
   {
     slug: "the-green-drake",
@@ -206,6 +276,14 @@ export const VENUES: LodgingVenue[] = [
       "Intimate atmosphere",
       "Ideal for dinners & off-sites",
     ],
+    galleryImgs: [
+      { src: "", alt: "The Green Drake — Photo 1" },
+      { src: "", alt: "The Green Drake — Photo 2" },
+      { src: "", alt: "The Green Drake — Photo 3" },
+      { src: "", alt: "The Green Drake — Photo 4" },
+      { src: "", alt: "The Green Drake — Photo 5" },
+      { src: "", alt: "The Green Drake — Photo 6" },
+    ],
   },
   {
     slug: "the-clubhouse",
@@ -224,6 +302,14 @@ export const VENUES: LodgingVenue[] = [
       "Trophy room",
       "Outfitter prep area",
       "Private use by arrangement",
+    ],
+    galleryImgs: [
+      { src: "", alt: "The Clubhouse — Photo 1" },
+      { src: "", alt: "The Clubhouse — Photo 2" },
+      { src: "", alt: "The Clubhouse — Photo 3" },
+      { src: "", alt: "The Clubhouse — Photo 4" },
+      { src: "", alt: "The Clubhouse — Photo 5" },
+      { src: "", alt: "The Clubhouse — Photo 6" },
     ],
   },
 ];
