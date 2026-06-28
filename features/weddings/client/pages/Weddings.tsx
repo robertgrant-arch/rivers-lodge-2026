@@ -288,33 +288,33 @@ export default function Weddings() {
                 <p>We work with a limited number of couples each year to ensure every wedding receives the full attention of our team. The result is a weekend that feels less like an event and more like a private gathering on land that belongs to you — at least for those three days.</p>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-3 gap-2">
               <Picture
                 src="/img/wedding%20photo%201.jpg"
                 alt="Outdoor wedding ceremony"
                 label="Wedding photo"
-                className="col-span-2 aspect-[16/9] overflow-hidden"
-                sizes="(max-width: 1024px) 100vw, 50vw"
-                width={1200}
-                height={675}
+                className="aspect-[3/4] overflow-hidden"
+                sizes="(max-width: 1024px) 33vw, 17vw"
+                width={600}
+                height={800}
               />
               <Picture
                 src="/img/wedding%204.jpg"
                 alt="Wedding reception"
                 label="Wedding photo"
-                className="aspect-square overflow-hidden"
-                sizes="(max-width: 1024px) 50vw, 25vw"
-                width={768}
-                height={768}
+                className="aspect-[3/4] overflow-hidden"
+                sizes="(max-width: 1024px) 33vw, 17vw"
+                width={600}
+                height={800}
               />
               <Picture
                 src="/img/Wedding%205.jpg"
                 alt="Wedding at Rivers Lodge"
                 label="Wedding photo"
-                className="aspect-square overflow-hidden"
-                sizes="(max-width: 1024px) 50vw, 25vw"
-                width={768}
-                height={768}
+                className="aspect-[3/4] overflow-hidden"
+                sizes="(max-width: 1024px) 33vw, 17vw"
+                width={600}
+                height={800}
               />
             </div>
           </div>
