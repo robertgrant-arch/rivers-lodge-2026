@@ -117,16 +117,16 @@ export default function PursuitDetail({ slug }: Props) {
             </div>
             <div className={pursuit.galleryImgs.length === 1 ? "grid gap-px bg-border grid-cols-1" : "grid gap-px bg-border grid-cols-1 sm:grid-cols-2"}>
               {pursuit.galleryImgs.map((img, i) => (
-                <Picture
-                  key={i}
-                  src={img.src}
-                  alt={img.alt}
-                  className="aspect-[16/9] overflow-hidden"
-                  imgStyle={img.objectPosition ? { objectPosition: img.objectPosition } : undefined}
-                  sizes="(max-width: 640px) 100vw, 50vw"
-                  width={1200}
-                  height={675}
-                />
+                <div key={i} className="bg-[#2B2823]">
+                  <img
+                    src={img.src}
+                    alt={img.alt}
+                    className="w-full h-auto block"
+                    loading="lazy"
+                    decoding="async"
+                    onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+                  />
+                </div>
               ))}
             </div>
           </div>
