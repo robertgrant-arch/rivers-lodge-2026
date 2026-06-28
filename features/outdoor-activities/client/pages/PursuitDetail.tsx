@@ -91,55 +91,15 @@ export default function PursuitDetail({ slug }: Props) {
         </div>
       </section>
 
-      {/* Description + Season sidebar */}
+      {/* Description */}
       <section className="section bg-background">
         <div className="max-w-[1440px] mx-auto px-5 lg:px-14">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 lg:gap-20">
-
-            {/* Long-form description */}
-            <div className="lg:col-span-2">
-              <div style={{ height: "1px", width: "2rem", backgroundColor: ACCENT, marginBottom: "1.25rem" }} />
-              <p className="eyebrow text-muted-brand mb-4">{pursuit.title}</p>
-              <div className="space-y-5 font-sans text-muted-brand leading-relaxed" style={{ fontSize: "0.9375rem" }}>
-                {pursuit.description.map((para, i) => (
-                  <p key={i}>{para}</p>
-                ))}
-              </div>
-            </div>
-
-            {/* Season / regulations sidebar */}
-            <aside>
-              {/* Seasons */}
-              <div className="bg-surface p-7 mb-px">
-                <div style={{ height: "1px", width: "1.5rem", backgroundColor: ACCENT, marginBottom: "1rem" }} />
-                <h3 className="font-serif text-warm text-lg mb-5">Season Guide</h3>
-                <div className="space-y-3">
-                  {pursuit.season.map((s) => (
-                    <div key={s.label} className="flex items-start justify-between gap-4">
-                      <span className="font-sans text-sm text-muted-brand shrink-0">{s.label}</span>
-                      <span className="font-sans text-sm text-warm text-right">{s.value}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Regulations */}
-              <div className="bg-surface p-7">
-                <div style={{ height: "1px", width: "1.5rem", backgroundColor: ACCENT, marginBottom: "1rem" }} />
-                <h3 className="font-serif text-warm text-lg mb-5">Key Regulations</h3>
-                <ul className="space-y-2">
-                  {pursuit.regulations.map((r) => (
-                    <li key={r} className="flex items-start gap-2.5 font-sans text-sm text-muted-brand">
-                      <span style={{ color: ACCENT, flexShrink: 0, marginTop: "2px" }}>—</span>
-                      {r}
-                    </li>
-                  ))}
-                </ul>
-                <p className="mt-5 font-sans text-[11px] text-muted-brand/60 leading-relaxed">
-                  Regulations reflect current Kansas Wildlife & Parks guidelines. Verify current-season rules at ksoutdoors.com before your trip.
-                </p>
-              </div>
-            </aside>
+          <div style={{ height: "1px", width: "2rem", backgroundColor: ACCENT, marginBottom: "1.25rem" }} />
+          <p className="eyebrow text-muted-brand mb-4">{pursuit.title}</p>
+          <div className="max-w-3xl space-y-5 font-sans text-muted-brand leading-relaxed" style={{ fontSize: "0.9375rem" }}>
+            {pursuit.description.map((para, i) => (
+              <p key={i}>{para}</p>
+            ))}
           </div>
         </div>
       </section>
