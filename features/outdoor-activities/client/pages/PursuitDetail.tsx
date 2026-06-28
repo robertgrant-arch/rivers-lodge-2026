@@ -122,6 +122,7 @@ export default function PursuitDetail({ slug }: Props) {
                   src={img.src}
                   alt={img.alt}
                   className="aspect-[16/9] overflow-hidden"
+                  imgClassName={`absolute inset-0 w-full h-full object-cover${img.objectPosition ? ` [object-position:${img.objectPosition}]` : ""}`}
                   sizes="(max-width: 640px) 100vw, 50vw"
                   width={1200}
                   height={675}

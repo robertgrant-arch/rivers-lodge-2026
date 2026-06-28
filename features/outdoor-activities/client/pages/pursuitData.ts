@@ -5,7 +5,7 @@ export interface Pursuit {
   heroImg: string;
   heroAlt: string;
   description: string[];
-  galleryImgs: { src: string; alt: string }[];
+  galleryImgs: { src: string; alt: string; objectPosition?: string }[];
   season: { label: string; value: string }[];
   regulations: string[];
 }
@@ -135,7 +135,7 @@ export const PURSUITS: Pursuit[] = [
       "Guided trips include a knowledgeable river guide, all tackle and bait, and — for full-day bookings — a shore lunch prepared from the morning's catch. Kayak and wade-fishing access is available to members throughout the season without a guide.",
     ],
     galleryImgs: [
-      { src: "/img/fishing%202.JPG", alt: "Trophy catch from the private fisheries" },
+      { src: "/img/fishing%202.JPG", alt: "Trophy catch from the private fisheries", objectPosition: "center 30%" },
       { src: "/img/Fishing%20net.jpg", alt: "Netting the catch on the water at Rivers Lodge" },
     ],
     season: [
