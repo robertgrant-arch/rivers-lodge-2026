@@ -47,6 +47,7 @@ export interface PictureProps {
   fetchPriority?: "high" | "low" | "auto";
   decoding?: "async" | "sync" | "auto";
   sizes?: string;
+  imgStyle?: React.CSSProperties;
 }
 
 export default function Picture({
@@ -55,6 +56,7 @@ export default function Picture({
   label,
   className,
   imgClassName = "absolute inset-0 w-full h-full object-cover",
+  imgStyle,
   width,
   height,
   loading = "lazy",
@@ -103,6 +105,7 @@ export default function Picture({
               src={src}
               alt={alt}
               className={imgClassName}
+              style={imgStyle}
               width={width}
               height={height}
               loading={loading}
@@ -116,6 +119,7 @@ export default function Picture({
             src={src}
             alt={alt}
             className={imgClassName}
+            style={imgStyle}
             width={width}
             height={height}
             loading={loading}
