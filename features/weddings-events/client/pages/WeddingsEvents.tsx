@@ -27,7 +27,7 @@ const CATEGORIES = [
   {
     label: "Weddings",
     href: "/weddings",
-    desc: "Ceremonies, receptions, and full estate buyouts on 1,000 acres along the Marais des Cygnes. One venue. Every detail.",
+    desc: "Ceremonies, receptions, and immersive wedding weekends along the Marais des Cygnes. One venue, entirely yours from rehearsal to farewell.",
     img: "/img/wedding%20hero.JPG",
     imgAlt: "Wedding ceremony at Rivers Lodge",
     eyebrow: "Celebrations",
@@ -35,7 +35,7 @@ const CATEGORIES = [
   {
     label: "Corporate Events",
     href: "/corporate",
-    desc: "Executive retreats, team outings, client entertainment, and incentive travel. The estate handles groups from 10 to 250.",
+    desc: "Executive retreats, client entertainment, and leadership off-sites on a private estate. Groups from 10 to 250, fully accommodated.",
     img: "/img/Clubhouse%20Hero.jpg",
     imgAlt: "Clubhouse and gathering spaces at Rivers Lodge",
     eyebrow: "Corporate",
@@ -100,7 +100,7 @@ export default function WeddingsEvents() {
             <br /><em className="italic font-light">Every occasion.</em>
           </h1>
           <p className="font-sans text-white/65 max-w-xl leading-relaxed" style={{ fontSize: "0.9375rem" }}>
-            A private estate on the Marais des Cygnes — built for weddings, corporate retreats, outdoor pursuits, and intimate culinary experiences. One hour south of Kansas City.
+            The Rivers Lodge hosts one occasion at a time — so every wedding, retreat, and gathering receives the full breadth of the estate. One hour south of Kansas City.
           </p>
         </div>
       </section>
@@ -113,12 +113,12 @@ export default function WeddingsEvents() {
         <div className="max-w-[1440px] mx-auto px-5 lg:px-14">
           <div className="mb-14">
             <div style={{ height: "1px", width: "2rem", backgroundColor: ACCENT, marginBottom: "1.25rem" }} />
-            <p className="eyebrow text-muted-brand mb-4">Explore</p>
+            <p className="eyebrow text-muted-brand mb-4">What We Host</p>
             <h2
               className="font-serif font-light text-warm leading-tight"
               style={{ fontSize: "clamp(1.75rem,3vw,2.5rem)" }}
             >
-              What brings you here?
+              The estate, at your discretion.
             </h2>
           </div>
 
@@ -182,7 +182,7 @@ export default function WeddingsEvents() {
               Ready to see the estate?
             </h2>
             <p className="font-sans text-muted-brand leading-relaxed mb-10" style={{ fontSize: "0.9375rem" }}>
-              Whether you're planning a wedding, a corporate retreat, a hunting trip, or just want to understand what's available — get in touch and we'll walk you through it.
+              Whether you're planning a wedding weekend, a corporate retreat, or a private hunt — reach out and we'll arrange a private tour of the estate.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               <Link href="/contact" className="btn-outline" style={{ borderColor: ACCENT, color: ACCENT }}>

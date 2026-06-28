@@ -28,7 +28,7 @@ const eventTypes = [
   {
     label: "Corporate Outings",
     href: "/corporate",
-    desc: "Retreats, team building, and client entertainment on a private estate.",
+    desc: "Executive retreats, client entertainment, and leadership off-sites on a private estate.",
     image: GROUNDS,
   },
   {
@@ -86,7 +86,7 @@ export default function WeddingsLanding() {
               Where every celebration<br />is exclusively yours.
             </h1>
             <p className="text-[#E0D3BD/75] font-sans text-base max-w-lg mb-10 leading-relaxed">
-              The Rivers Lodge &amp; Hunt Club is a private estate — when you book, the entire property is yours. No other groups, no shared spaces, no distractions.
+              The Rivers Lodge &amp; Hunt Club is a private estate. When you book, every space on the property is reserved for your celebration alone — from arrival to the last goodbye.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               <Link href="/weddings" className="btn-primary">
@@ -110,16 +110,16 @@ export default function WeddingsLanding() {
                   className="font-serif text-[#E0D3BD] leading-tight mb-6"
                   style={{ fontSize: "clamp(1.75rem,3.5vw,2.75rem)" }}
                 >
-                  An estate wedding unlike any other in the Midwest.
+                  An estate devoted to one couple at a time.
                 </h2>
                 <p className="text-[#BABAAE] font-sans text-base leading-relaxed mb-6">
-                  Sixty minutes from Kansas City, the Rivers Lodge offers a complete destination wedding experience. Your guests arrive to 300 acres of Kansas landscape — river, woodland, and open sky — with no one else in sight.
+                  The Rivers Lodge offers a complete destination wedding experience across 300 acres of Kansas landscape — river, woodland, and open sky. Your guests arrive to a private estate prepared entirely for them, with no one else in sight.
                 </p>
                 <p className="text-[#BABAAE] font-sans text-base leading-relaxed mb-8">
                   The estate accommodates your entire wedding party on-site. Ceremony on the River Lawn. Reception in the Rivers Barn. After-party at the Clubhouse. Breakfast the next morning at The Lodge.
                 </p>
                 <Link href="/weddings" className="link-arrow">
-                  See Wedding Packages
+                  Explore the Experience
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
                 </Link>
               </div>
@@ -253,7 +253,7 @@ export default function WeddingsLanding() {
               <div className="h-px w-10 mx-auto mb-6" style={{ backgroundColor: BLUSH }} />
               <p className="eyebrow text-[#908B82] mb-3">Check Availability</p>
               <h2 className="font-serif text-[#E0D3BD] text-3xl md:text-4xl leading-tight">
-                Is your date available?
+                Reserve your date.
               </h2>
             </div>
             <div className="max-w-2xl mx-auto">
@@ -274,7 +274,7 @@ export default function WeddingsLanding() {
               <div className="h-px w-10 mx-auto mb-6" style={{ backgroundColor: BLUSH }} />
               <p className="eyebrow text-[#908B82] mb-3">How It Works</p>
               <h2 className="font-serif text-[#E0D3BD] text-3xl md:text-4xl leading-tight">
-                From first inquiry to your perfect day.
+                From first conversation to your wedding day.
               </h2>
             </div>
             <div className="relative">
@@ -369,7 +369,7 @@ export default function WeddingsLanding() {
                 Ready to start planning?
               </h2>
               <p className="text-[#BABAAE] font-sans text-sm leading-relaxed mb-8">
-                We work with a limited number of events each year. Contact us to check availability and schedule a private tour of the estate.
+                We host a limited number of events each year to ensure every celebration receives the full attention of the estate. Contact us to check availability for your date and arrange a private tour.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Link href="/contact?type=wedding" className="btn-primary">
