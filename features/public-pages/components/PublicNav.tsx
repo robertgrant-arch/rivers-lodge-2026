@@ -171,7 +171,7 @@ export default function PublicNav() {
           </Link>
 
           {/* ── Desktop Nav ──────────────────────────────────────────────── */}
-          <nav className="hidden lg:flex flex-1 items-center justify-center gap-0">
+          <nav className="hidden min-[1000px]:flex flex-1 items-center justify-center gap-0">
 
             {/* 1. Events ▾ */}
             <div ref={eventsRef} className="relative">
@@ -280,7 +280,7 @@ export default function PublicNav() {
           </nav>
 
           {/* ── Right CTA (Member Login) ──────────────────────────────────── */}
-          <div className="hidden lg:flex items-center gap-4 flex-none">
+          <div className="hidden min-[1000px]:flex items-center gap-4 flex-none">
             {isAuthenticated ? (
               <div className="relative" ref={userMenuRef}>
                 <button
@@ -324,7 +324,7 @@ export default function PublicNav() {
 
           {/* ── Mobile Hamburger ─────────────────────────────────────────── */}
           <button
-            className="lg:hidden p-2 text-[#E0D3BD] z-10 ml-auto"
+            className="min-[1000px]:hidden p-2 text-[#E0D3BD] z-10 ml-auto"
             onClick={() => setMobileOpen(!mobileOpen)}
             aria-label="Toggle menu"
           >
@@ -335,7 +335,7 @@ export default function PublicNav() {
 
       {/* ── Mobile Full-Screen Overlay ──────────────────────────────────────── */}
       <div
-        className={`fixed inset-0 z-40 bg-background flex flex-col transition-all duration-400 lg:hidden ${
+        className={`fixed inset-0 z-40 bg-background flex flex-col transition-all duration-400 min-[1000px]:hidden ${
           mobileOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
         }`}
       >
