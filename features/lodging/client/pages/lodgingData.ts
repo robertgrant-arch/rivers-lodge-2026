@@ -79,8 +79,6 @@ export const VENUES: LodgingVenue[] = [
       { src: "/brand/Riverhouse outdoors.jpg", alt: "Riverhouse Suites — Photo 2" },
       { src: "/brand/riverhouse 3 jpg.jpg", alt: "Riverhouse Suites — Photo 3" },
       { src: "/brand/riverhouse 5.jpg", alt: "Riverhouse Suites — Photo 4" },
-      { src: "", alt: "Riverhouse Suites — Photo 5" },
-      { src: "", alt: "Riverhouse Suites — Photo 6" },
     ],
   },
   {
