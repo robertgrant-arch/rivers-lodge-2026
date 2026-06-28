@@ -115,7 +115,7 @@ export default function PursuitDetail({ slug }: Props) {
               <div style={{ height: "1px", width: "2rem", backgroundColor: ACCENT, marginBottom: "1.25rem" }} />
               <p className="eyebrow text-muted-brand">Gallery</p>
             </div>
-            <div className={`grid gap-px bg-border ${pursuit.galleryImgs.length === 1 ? "grid-cols-1" : "grid-cols-1 sm:grid-cols-2"}`}>
+            <div className={pursuit.galleryImgs.length === 1 ? "grid gap-px bg-border grid-cols-1" : "grid gap-px bg-border grid-cols-1 sm:grid-cols-2"}>
               {pursuit.galleryImgs.map((img, i) => (
                 <Picture
                   key={i}
