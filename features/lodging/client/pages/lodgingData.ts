@@ -162,12 +162,12 @@ export const VENUES: LodgingVenue[] = [
       "Front porch with field views",
     ],
     galleryImgs: [
-      { src: "", alt: "The Farmhouse — Photo 1" },
-      { src: "", alt: "The Farmhouse — Photo 2" },
-      { src: "", alt: "The Farmhouse — Photo 3" },
-      { src: "", alt: "The Farmhouse — Photo 4" },
-      { src: "", alt: "The Farmhouse — Photo 5" },
-      { src: "", alt: "The Farmhouse — Photo 6" },
+      { src: "/brand/farmhouse-1-gallery.jpg", alt: "The Farmhouse — Photo 1" },
+      { src: "/brand/farmhouse-2-gallery.jpg", alt: "The Farmhouse — Photo 2" },
+      { src: "/brand/farmhouse-3-gallery.jpg", alt: "The Farmhouse — Photo 3" },
+      { src: "/brand/farmhouse-4-gallery.jpg", alt: "The Farmhouse — Photo 4" },
+      { src: "/brand/farmhouse-5-gallery.jpg", alt: "The Farmhouse — Photo 5" },
+      { src: "/brand/farmhouse-6-gallery.jpg", alt: "The Farmhouse — Photo 6" },
     ],
   },
   {
