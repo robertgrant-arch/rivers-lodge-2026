@@ -25,11 +25,14 @@ function useFadeUp(t = 0.12) {
   return ref;
 }
 
+const CORP_RETREAT = "/brand/corporate%20clubhouse%20.JPG";
+const CORP_ENTERTAIN = "/brand/corporate%204.jpg";
+
 const eventTypes = [
-  { title: "Corporate Retreats",    desc: "Multi-day team retreats with lodging, dining, and curated outdoor programming. The Lodge sleeps up to 20; the Barn accommodates 300 for evening events.", img: LODGE },
-  { title: "Executive Meetings",    desc: "Private meeting space in the Clubhouse for boards, leadership teams, and strategy sessions — away from the office, on the land.", img: INTERIOR },
-  { title: "Client Entertainment",  desc: "Hunting days, fishing excursions, sporting clays, and private dinners. The most memorable client entertainment is the kind that can't be replicated.", img: GROUNDS },
-  { title: "Team-Building Days",    desc: "Guided outdoor experiences — from clay shooting to river fishing — that build genuine connection without a single trust fall.", img: AERIAL },
+  { title: "Corporate Retreats",    desc: "Multi-day team retreats with lodging, dining, and curated outdoor programming. The Lodge sleeps up to 20; the Barn accommodates 300 for evening events.", img: CORP_RETREAT,   alt: "Corporate retreat at the Clubhouse" },
+  { title: "Executive Meetings",    desc: "Private meeting space in the Clubhouse for boards, leadership teams, and strategy sessions — away from the office, on the land.", img: INTERIOR,       alt: "Executive meetings at Rivers Lodge" },
+  { title: "Client Entertainment",  desc: "Hunting days, fishing excursions, sporting clays, and private dinners. The most memorable client entertainment is the kind that can't be replicated.", img: CORP_ENTERTAIN, alt: "Client entertainment at Rivers Lodge" },
+  { title: "Team-Building Days",    desc: "Guided outdoor experiences — from clay shooting to river fishing — that build genuine connection without a single trust fall.", img: AERIAL,          alt: "Team-building days at Rivers Lodge" },
 ];
 
 const capacities = [
@@ -131,7 +134,7 @@ export default function Corporate() {
               <div key={e.title} className="bg-surface overflow-hidden">
                 <Picture
                   src={e.img}
-                  alt={e.title}
+                  alt={e.alt}
                   className="aspect-[16/9] overflow-hidden"
                   imgClassName="absolute inset-0 w-full h-full object-cover"
                   loading="lazy"
