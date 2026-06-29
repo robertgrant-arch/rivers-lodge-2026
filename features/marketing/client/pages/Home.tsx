@@ -11,6 +11,7 @@ const HERO_SLIDES: { src: string; alt: string; label: string }[] = [
   { src: "/img/hero%203.jpg",          alt: "Rivers Lodge & Hunt Club",                              label: "Hero Image 3" },
   { src: "/brand/clubhouse%204.jpg",    alt: "Rivers Lodge & Hunt Club",                              label: "Hero Image 4" },
   { src: "/brand/clubhouse%20exterior.jpg", alt: "Rivers Lodge & Hunt Club exterior",                label: "Hero Image 5" },
+  { src: "/img/weddinghero-1-homepage.avif", alt: "Wedding celebration at Rivers Lodge",             label: "Hero Image 6" },
 ];
 
 function HeroSlideshow() {
