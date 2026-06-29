@@ -233,7 +233,7 @@ export default function Weddings() {
         <div className="absolute inset-0">
           <Picture
             src={HERO}
-            alt="Wedding at Rivers Lodge"
+            alt="Wedding ceremony at Rivers Lodge & Hunt Club"
             label="Wedding Hero Image"
             className="absolute inset-0 w-full h-full"
             imgClassName="absolute inset-0 w-full h-full object-cover object-top"
