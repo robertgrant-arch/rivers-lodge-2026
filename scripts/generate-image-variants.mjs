@@ -24,7 +24,7 @@ const DIRS = [
 
 const WIDTHS = [480, 768, 1200, 1920];
 const FORMATS = ["avif", "webp"];
-const MAX_CONCURRENT = 3;
+const MAX_CONCURRENT = 2;
 
 // Extensions we process
 const SOURCE_EXTS = new Set([".jpg", ".jpeg", ".png", ".webp", ".tiff", ".tif"]);
@@ -83,12 +83,15 @@ async function processFile(filePath) {
             sem(async () => {
               const s = sharp(filePath).resize(w, null, { withoutEnlargement: true });
               if (fmt === "avif") {
-                s.avif({ quality: 72, effort: 4 });
+                s.avif({ quality: 68, effort: 2 });
               } else {
                 s.webp({ quality: 82 });
               }
               await s.toFile(outPath);
               return outPath;
+            }).catch((err) => {
+              console.warn(`  ⚠ failed: ${path.basename(outPath)} — ${err.message}`);
+              return null;
             })
           )
       );
