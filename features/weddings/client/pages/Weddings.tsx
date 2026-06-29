@@ -11,15 +11,7 @@ import StickyInquiryCTA from "@/components/StickyInquiryCTA";
 const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined;
 
 
-const HERO      = "/img/wedding%20hero.JPG";
-const CEREMONY  = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/qYCdMEPFXPqLETpW.jpg";
-const RECEPTION = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/gWfYLmNXrOoFKvTt.jpg";
-const BARN_INT  = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/SSdcPuhkHXDvzhtk.jpg";
-const GROUNDS   = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/RNvGygATwGRMluZa.jpg";
-const AERIAL    = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/xZXSDWkpiCXfqsiU.jpg";
-const RIVER_LWN = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/JbMIltWvczRWbDaw.jpg";
-const LODGE     = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/TdlSWCLWjUxbkCAY.jpg";
-const INTERIOR  = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/JcuUUmANmAAHItUn.jpg";
+const HERO = "/img/wedding%20hero.JPG";
 
 function useFadeUp(t = 0.12) {
   const ref = useRef<HTMLElement>(null);
@@ -34,11 +26,11 @@ function useFadeUp(t = 0.12) {
 }
 
 const venues = [
-  { name: "River Lawn",       desc: "An open lawn between the Lodge and the Marais des Cygnes — the estate's most dramatic outdoor ceremony site. Seats up to 200.", img: RIVER_LWN },
-  { name: "Rivers Barn",      desc: "6,000 sq ft of open timber-frame space. Accommodates up to 300 guests for ceremonies and receptions. Full catering kitchen.", img: BARN_INT },
-  { name: "Timber Edge",      desc: "A ceremony space framed by old-growth timber on the river corridor. Intimate, shaded, and unlike anything else in the region.", img: GROUNDS },
-  { name: "The Lodge",        desc: "The main residence sleeps up to 20 overnight guests. Available exclusively to the wedding party for the full weekend.", img: LODGE },
-  { name: "Riverhouse Suites", desc: "Four boutique suites on the river bank. Private porches, premium finishes, and unobstructed water views for the bridal party.", img: INTERIOR },
+  { name: "River Lawn",        desc: "An open lawn between the Lodge and the Marais des Cygnes — the estate's most dramatic outdoor ceremony site. Seats up to 200." },
+  { name: "Rivers Barn",       desc: "6,000 sq ft of open timber-frame space. Accommodates up to 300 guests for ceremonies and receptions. Full catering kitchen." },
+  { name: "Timber Edge",       desc: "A ceremony space framed by old-growth timber on the river corridor. Intimate, shaded, and unlike anything else in the region." },
+  { name: "The Lodge",         desc: "The main residence sleeps up to 20 overnight guests. Available exclusively to the wedding party for the full weekend." },
+  { name: "Riverhouse Suites", desc: "Four boutique suites on the river bank. Private porches, premium finishes, and unobstructed water views for the bridal party." },
 ];
 
 const ACCENT = "#9B4D19";
@@ -275,47 +267,16 @@ export default function Weddings() {
       {/* Intro */}
       <section className="section bg-background">
         <div className="max-w-[1440px] mx-auto px-5 lg:px-14">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-28 items-center">
-            <div>
-              <div style={{ height: "1px", width: "2rem", backgroundColor: "#9B4D19", marginBottom: "1.25rem" }} />
-              <p className="eyebrow text-muted-brand mb-4">The Experience</p>
-              <h2 className="font-serif font-light text-warm leading-tight mb-8" style={{ fontSize: "clamp(1.875rem,3.5vw,3rem)" }}>
-                Not a venue.
-                <br /><em className="italic">A private estate.</em>
-              </h2>
-              <div className="space-y-5 font-sans text-muted-brand leading-relaxed" style={{ fontSize: "0.9375rem" }}>
-                <p>When you book a wedding at Rivers Lodge, you book the entire estate. Your guests are the only guests. The Lodge, the Barn, the Riverhouse Suites, and the grounds are yours for the weekend.</p>
-                <p>We work with a limited number of couples each year to ensure every wedding receives the full attention of our team. The result is a weekend that feels less like an event and more like a private gathering on land that belongs to you — at least for those three days.</p>
-              </div>
-            </div>
-            <div className="grid grid-cols-3 gap-2">
-              <Picture
-                src="/img/wedding%20photo%201.jpg"
-                alt="Outdoor wedding ceremony"
-                label="Wedding photo"
-                className="aspect-[3/4] overflow-hidden"
-                sizes="(max-width: 1024px) 33vw, 17vw"
-                width={600}
-                height={800}
-              />
-              <Picture
-                src="/img/wedding%204.jpg"
-                alt="Wedding reception"
-                label="Wedding photo"
-                className="aspect-[3/4] overflow-hidden"
-                sizes="(max-width: 1024px) 33vw, 17vw"
-                width={600}
-                height={800}
-              />
-              <Picture
-                src="/img/Wedding%205.jpg"
-                alt="Wedding at Rivers Lodge"
-                label="Wedding photo"
-                className="aspect-[3/4] overflow-hidden"
-                sizes="(max-width: 1024px) 33vw, 17vw"
-                width={600}
-                height={800}
-              />
+          <div className="max-w-2xl">
+            <div style={{ height: "1px", width: "2rem", backgroundColor: "#9B4D19", marginBottom: "1.25rem" }} />
+            <p className="eyebrow text-muted-brand mb-4">The Experience</p>
+            <h2 className="font-serif font-light text-warm leading-tight mb-8" style={{ fontSize: "clamp(1.875rem,3.5vw,3rem)" }}>
+              Not a venue.
+              <br /><em className="italic">A private estate.</em>
+            </h2>
+            <div className="space-y-5 font-sans text-muted-brand leading-relaxed" style={{ fontSize: "0.9375rem" }}>
+              <p>When you book a wedding at Rivers Lodge, you book the entire estate. Your guests are the only guests. The Lodge, the Barn, the Riverhouse Suites, and the grounds are yours for the weekend.</p>
+              <p>We work with a limited number of couples each year to ensure every wedding receives the full attention of our team. The result is a weekend that feels less like an event and more like a private gathering on land that belongs to you — at least for those three days.</p>
             </div>
           </div>
         </div>
@@ -343,21 +304,11 @@ export default function Weddings() {
             </h2>
           </div>
           <div className="space-y-px bg-border">
-            {venues.map((v, i) => (
-              <div key={v.name} className={`grid grid-cols-1 md:grid-cols-2 bg-background ${i % 2 === 1 ? "md:[direction:rtl]" : ""}`}>
-                <Picture
-                  src={v.img}
-                  alt={v.name}
-                  className={`aspect-[4/3] overflow-hidden ${i % 2 === 1 ? "md:[direction:ltr]" : ""}`}
-                  sizes="(max-width: 768px) 100vw, 50vw"
-                  width={800}
-                  height={600}
-                />
-                <div className={`p-10 lg:p-14 flex flex-col justify-center ${i % 2 === 1 ? "md:[direction:ltr]" : ""}`}>
-                  <div style={{ height: "1px", width: "1.5rem", backgroundColor: "#9B4D19", marginBottom: "1rem" }} />
-                  <h3 className="font-serif text-warm text-2xl mb-4">{v.name}</h3>
-                  <p className="font-sans text-muted-brand text-sm leading-relaxed">{v.desc}</p>
-                </div>
+            {venues.map((v) => (
+              <div key={v.name} className="bg-background p-10 lg:p-14">
+                <div style={{ height: "1px", width: "1.5rem", backgroundColor: "#9B4D19", marginBottom: "1rem" }} />
+                <h3 className="font-serif text-warm text-2xl mb-4">{v.name}</h3>
+                <p className="font-sans text-muted-brand text-sm leading-relaxed">{v.desc}</p>
               </div>
             ))}
           </div>
