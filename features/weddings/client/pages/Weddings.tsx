@@ -9,6 +9,7 @@ import SEOHead, { structuredData } from '@shared/components/SEOHead';
 import StickyInquiryCTA from "@/components/StickyInquiryCTA";
 
 const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined;
+// redeploy: refresh weddings page bundle (images removed) 2026-06-29
 
 
 const HERO = "/img/wedding%20hero.JPG";
