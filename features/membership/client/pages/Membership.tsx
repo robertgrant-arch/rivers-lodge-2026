@@ -384,6 +384,8 @@ export default function Membership() {
               src={AERIAL}
               alt="Aerial view of the estate"
               className="aspect-[4/3] overflow-hidden"
+              loading="lazy"
+              decoding="async"
               sizes="(max-width: 1024px) 100vw, 50vw"
               width={1200}
               height={900}

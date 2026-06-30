@@ -125,14 +125,14 @@ export default function WeddingsLanding() {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="aspect-[3/4] overflow-hidden">
-                  <img src={CEREMONY} alt="Outdoor ceremony" className="w-full h-full object-cover" loading="lazy" />
+                  <img src={CEREMONY} alt="Outdoor ceremony" className="w-full h-full object-cover" loading="lazy" decoding="async" width={800} height={1067} />
                 </div>
                 <div className="flex flex-col gap-3 pt-8">
                   <div className="aspect-square overflow-hidden">
-                    <img src={RECEPTION} alt="Reception tables" className="w-full h-full object-cover" loading="lazy" />
+                    <img src={RECEPTION} alt="Reception tables" className="w-full h-full object-cover" loading="lazy" decoding="async" width={800} height={800} />
                   </div>
                   <div className="aspect-square overflow-hidden">
-                    <img src={BARN_INT} alt="Rivers Barn interior" className="w-full h-full object-cover" loading="lazy" />
+                    <img src={BARN_INT} alt="Rivers Barn interior" className="w-full h-full object-cover" loading="lazy" decoding="async" width={800} height={800} />
                   </div>
                 </div>
               </div>
@@ -161,6 +161,10 @@ export default function WeddingsLanding() {
                       src={et.image}
                       alt={et.label}
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      loading="lazy"
+                      decoding="async"
+                      width={800}
+                      height={600}
                     />
                   </div>
                   <p className="eyebrow mb-2" style={{ color: BLUSH, fontSize: "10px" }}>{et.label}</p>
@@ -192,7 +196,7 @@ export default function WeddingsLanding() {
               {venues.map((v) => (
                 <div key={v.name} className="w-[300px] md:w-[360px] shrink-0">
                   <div className="aspect-[4/3] overflow-hidden mb-4">
-                    <img src={v.image} alt={v.name} className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" loading="lazy" />
+                    <img src={v.image} alt={v.name} className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" loading="lazy" decoding="async" width={800} height={600} />
                   </div>
                   <p className="text-[#E0D3BD] font-sans text-sm font-medium mb-1">{v.name}</p>
                   <p className="eyebrow text-[#908B82] mb-1" style={{ fontSize: "10px" }}>{v.type}</p>

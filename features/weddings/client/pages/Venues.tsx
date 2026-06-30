@@ -94,6 +94,11 @@ export default function Venues() {
                   src={venue.img}
                   alt={venue.name}
                   className="w-full h-full object-cover hover:scale-105 transition-transform duration-700"
+                  loading="lazy"
+                  decoding="async"
+                  width={800}
+                  height={600}
+                  sizes="(max-width: 1024px) 100vw, 50vw"
                 />
               </div>
               <div className={i % 2 !== 0 ? "lg:col-start-1 lg:row-start-1" : ""}>

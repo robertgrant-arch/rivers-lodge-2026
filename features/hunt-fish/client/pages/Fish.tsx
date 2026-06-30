@@ -54,7 +54,7 @@ export default function Fish() {
       {/* Hero */}
       <section className="relative hero-full flex items-end pb-24 overflow-hidden">
         <div className="absolute inset-0">
-          <img src={HERO} alt="Fishing at Rivers Lodge" className="w-full h-full object-cover" fetchPriority="high" />
+          <img src={HERO} alt="Fishing at Rivers Lodge" className="w-full h-full object-cover" fetchPriority="high" loading="eager" decoding="async" width={1920} height={1080} sizes="100vw" />
           <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, transparent 0%, oklch(0 0 0/0.12) 40%, oklch(0 0 0/0.82) 100%)" }} />
         </div>
         <div className="relative z-10 max-w-[1440px] mx-auto px-5 lg:px-14 w-full">
@@ -95,7 +95,7 @@ export default function Fish() {
             {fisheries.map((f, i) => (
               <div key={f.name} className={`grid grid-cols-1 md:grid-cols-2 bg-background ${i % 2 === 1 ? "md:[direction:rtl]" : ""}`}>
                 <div className={`aspect-[4/3] overflow-hidden ${i % 2 === 1 ? "md:[direction:ltr]" : ""}`}>
-                  <img src={f.img} alt={f.name} className="w-full h-full object-cover" loading="lazy" />
+                  <img src={f.img} alt={f.name} className="w-full h-full object-cover" loading="lazy" decoding="async" width={800} height={600} sizes="(max-width: 768px) 100vw, 50vw" />
                 </div>
                 <div className={`p-10 lg:p-14 flex flex-col justify-center ${i % 2 === 1 ? "md:[direction:ltr]" : ""}`}>
                   <div style={{ height: "1px", width: "1.5rem", backgroundColor: "#6B7250", marginBottom: "1rem" }} />

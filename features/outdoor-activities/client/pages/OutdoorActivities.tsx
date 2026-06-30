@@ -134,6 +134,8 @@ export default function OutdoorActivities() {
                   label={pursuit.title}
                   className="aspect-[4/3] overflow-hidden"
                   imgClassName="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                  loading="lazy"
+                  decoding="async"
                   sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                   width={800}
                   height={600}
@@ -190,6 +192,8 @@ export default function OutdoorActivities() {
               alt="Rivers Lodge estate aerial view"
               label="Estate aerial"
               className="aspect-[4/3] overflow-hidden w-full"
+              loading="lazy"
+              decoding="async"
               sizes="(max-width: 1024px) 100vw, 50vw"
               width={1200}
               height={900}

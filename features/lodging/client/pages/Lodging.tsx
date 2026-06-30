@@ -123,6 +123,8 @@ export default function Lodging() {
                   label={prop.name}
                   className="col-span-2 overflow-hidden aspect-[4/3]"
                   imgClassName="absolute inset-0 w-full h-full object-cover hover:scale-105 transition-transform duration-700"
+                  loading="lazy"
+                  decoding="async"
                   sizes="(max-width: 1024px) 66vw, 33vw"
                   width={800}
                   height={600}
@@ -133,6 +135,8 @@ export default function Lodging() {
                   label={`${prop.name} interior`}
                   className="overflow-hidden aspect-[3/4]"
                   imgClassName="absolute inset-0 w-full h-full object-cover hover:scale-105 transition-transform duration-700"
+                  loading="lazy"
+                  decoding="async"
                   sizes="(max-width: 1024px) 33vw, 16vw"
                   width={480}
                   height={640}
