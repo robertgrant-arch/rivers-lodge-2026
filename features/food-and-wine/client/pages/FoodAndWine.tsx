@@ -55,7 +55,7 @@ export default function FoodAndWine() {
       <section className="relative hero-full flex items-end pb-24 overflow-hidden">
         <div className="absolute inset-0">
           {/* TODO: replace with hero food/wine photography */}
-          <ImgPlaceholder aspectClass="w-full h-full" label="Food & Wine Hero Image" />
+          <Picture src="/img/food-2-hero.jpg" alt="Chef-driven food and wine at Rivers Lodge" label="Food & Wine Hero Image" className="absolute inset-0 w-full h-full" imgClassName="absolute inset-0 w-full h-full object-cover" loading="eager" decoding="async" width={1920} height={1080} sizes="100vw" />
           <div
             className="absolute inset-0"
             style={{ background: "linear-gradient(to bottom, transparent 0%, oklch(0 0 0/0.10) 40%, oklch(0 0 0/0.80) 100%)" }}
@@ -146,7 +146,7 @@ export default function FoodAndWine() {
             <div className="grid grid-cols-2 gap-3 order-last lg:order-first">
               <div className="col-span-2 overflow-hidden">
                 <Picture
-                  src="/img/ChefSwethaSelect30617.jpg"
+                  src="/img/food-1-gallery.jpg"
                   alt="Farm-to-table food at Rivers Lodge"
                   label="Garden or farm-to-table food"
                   className="aspect-[16/9] w-full"
