@@ -49,7 +49,7 @@ export const VENUES: LodgingVenue[] = [
       { src: "/img/lodge-3-gallery.jpg", alt: "The Lodge — Photo 3" },
       { src: "/img/lodge-6-gallery.jpg", alt: "The Lodge — Photo 4" },
       { src: "/img/lodge-8-gallery.jpg", alt: "The Lodge — Photo 5" },
-      { src: "/img/main lodge inside.jpg", alt: "The Lodge — Photo 6" },
+      { src: "/img/main%20lodge%20inside.jpg", alt: "The Lodge — Photo 6" },
     ],
   },
   {
@@ -134,12 +134,12 @@ export const VENUES: LodgingVenue[] = [
       "Standalone or package rental",
     ],
     galleryImgs: [
-      { src: "/img/Ohana Dock.jpg", alt: "The Ohana — Photo 1" },
-      { src: "/img/Ohana Firepit.jpg", alt: "The Ohana — Photo 2" },
-      { src: "/img/Ohana House Dining.jpg", alt: "The Ohana — Photo 3" },
-      { src: "/img/Ohana Kitchen.jpg", alt: "The Ohana — Photo 4" },
-      { src: "/img/Ohana Master.jpg", alt: "The Ohana — Photo 5" },
-      { src: "/img/Ohana Aerial.jpg", alt: "The Ohana — Photo 6" },
+      { src: "/img/Ohana%20Dock.jpg", alt: "The Ohana — Photo 1" },
+      { src: "/img/Ohana%20Firepit.jpg", alt: "The Ohana — Photo 2" },
+      { src: "/img/Ohana%20House%20Dining.jpg", alt: "The Ohana — Photo 3" },
+      { src: "/img/Ohana%20Kitchen.jpg", alt: "The Ohana — Photo 4" },
+      { src: "/img/Ohana%20Master.jpg", alt: "The Ohana — Photo 5" },
+      { src: "/img/Ohana%20Aerial.jpg", alt: "The Ohana — Photo 6" },
     ],
   },
   {
