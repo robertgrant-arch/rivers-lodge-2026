@@ -55,7 +55,7 @@ export default function FoodAndWine() {
       <section className="relative hero-full flex items-end pb-24 overflow-hidden">
         <div className="absolute inset-0">
           {/* TODO: replace with hero food/wine photography */}
-          <div className="w-full h-full bg-[#2B2823]" aria-hidden="true" />
+          <ImgPlaceholder aspectClass="w-full h-full" label="Food & Wine Hero Image" />
           <div
             className="absolute inset-0"
             style={{ background: "linear-gradient(to bottom, transparent 0%, oklch(0 0 0/0.10) 40%, oklch(0 0 0/0.80) 100%)" }}
