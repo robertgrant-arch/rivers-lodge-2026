@@ -5,11 +5,13 @@ import mysql from "mysql2/promise";
 import { users } from "../features/auth/schema";
 import { eq } from "drizzle-orm";
 
-const email = process.env.ADMIN_EMAIL;
-const tempPassword = process.env.ADMIN_TEMP_PASSWORD;
+// Accept either CLI args or env vars
+const email = (process.argv[2] ?? process.env.ADMIN_EMAIL ?? "").toLowerCase();
+const password = process.argv[3] ?? process.env.ADMIN_TEMP_PASSWORD ?? "";
 
-if (!email || !tempPassword) {
-  console.error("ADMIN_EMAIL and ADMIN_TEMP_PASSWORD must be set");
+if (!email || !password) {
+  console.error("Usage: pnpm tsx scripts/seed-admin.ts <email> <password>");
+  console.error("       Or set ADMIN_EMAIL and ADMIN_TEMP_PASSWORD env vars.");
   process.exit(1);
 }
 
@@ -22,23 +24,26 @@ if (!databaseUrl) {
 const pool = mysql.createPool({ uri: databaseUrl });
 const db = drizzle(pool);
 
-const passwordHash = await hash(tempPassword, { type: 2 }); // argon2id
+const passwordHash = await hash(password, { type: 2 }); // argon2id
 
-const existing = await db.select().from(users).where(eq(users.email, email.toLowerCase())).limit(1);
+const existing = await db.select({ id: users.id }).from(users).where(eq(users.email, email)).limit(1);
 
 if (existing.length > 0) {
-  console.log(`Admin user ${email} already exists, skipping.`);
+  await db.update(users)
+    .set({ passwordHash, role: "admin", status: "active", mustChangePassword: false })
+    .where(eq(users.email, email));
+  console.log(`Updated ${email} → admin / active.`);
 } else {
   await db.insert(users).values({
     id: crypto.randomUUID(),
-    email: email.toLowerCase(),
+    email,
     passwordHash,
     role: "admin",
     status: "active",
-    mustChangePassword: true,
+    mustChangePassword: false,
     createdAt: new Date(),
   });
-  console.log(`Admin user ${email} created.`);
+  console.log(`Created admin user ${email}.`);
 }
 
 await pool.end();
