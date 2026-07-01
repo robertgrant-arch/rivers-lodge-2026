@@ -27,11 +27,11 @@ function useFadeUp(t = 0.12) {
 }
 
 const venues = [
-  { name: "River Lawn",        desc: "An open lawn between the Lodge and the Marais des Cygnes — the estate's most dramatic outdoor ceremony site. Seats up to 200." },
-  { name: "Rivers Barn",       desc: "6,000 sq ft of open timber-frame space. Accommodates up to 300 guests for ceremonies and receptions. Full catering kitchen." },
-  { name: "Timber Edge",       desc: "A ceremony space framed by old-growth timber on the river corridor. Intimate, shaded, and unlike anything else in the region." },
-  { name: "The Lodge",         desc: "The main residence sleeps up to 20 overnight guests. Available exclusively to the wedding party for the full weekend." },
-  { name: "Riverhouse Suites", desc: "Four boutique suites on the river bank. Private porches, premium finishes, and unobstructed water views for the bridal party." },
+  { name: "River Lawn",     desc: "An open lawn between the Lodge and the Marais des Cygnes — the estate's most dramatic outdoor ceremony site. Seats up to 200." },
+  { name: "Rivers Barn",    desc: "6,000 sq ft of open timber-frame space. Accommodates up to 300 guests for ceremonies and receptions. Full catering kitchen." },
+  { name: "Timber Edge",    desc: "A ceremony space framed by old-growth timber on the river corridor. Intimate, shaded, and unlike anything else in the region." },
+  { name: "The Clubhouse",  desc: "A refined indoor gathering space for wedding weekend hosting, cocktail hours, private dinners, and smaller celebrations." },
+  { name: "The Pavilion",   desc: "An open-air setting that adds flexibility for ceremonies, cocktail hours, dinners, or relaxed outdoor receptions." },
 ];
 
 const ACCENT = "#9B4D19";
@@ -276,7 +276,7 @@ export default function Weddings() {
               <br /><em className="italic">A private estate.</em>
             </h2>
             <div className="space-y-5 font-sans text-muted-brand leading-relaxed" style={{ fontSize: "0.9375rem" }}>
-              <p>When you book a wedding at Rivers Lodge, you book the entire estate. Your guests are the only guests. The Lodge, the Barn, the Riverhouse Suites, and the grounds are yours for the weekend.</p>
+              <p>When you book a wedding at Rivers Lodge, you book the entire estate. Your guests are the only guests. The ceremony lawns, Rivers Barn, Timber Edge, and your reserved lodging are all exclusively yours for the weekend.</p>
               <p>We work with a limited number of couples each year to ensure every wedding receives the full attention of our team. The result is a weekend that feels less like an event and more like a private gathering on land that belongs to you — at least for those three days.</p>
             </div>
           </div>
