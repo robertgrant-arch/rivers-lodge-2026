@@ -1,8 +1,19 @@
 import { Link } from "wouter";
 import PublicLayout from "@features/public-pages/components/PublicLayout";
 import { trpc } from '@shared/lib/trpc';
-import Picture from "@shared/components/Picture";
 import SEOHead from "@shared/components/SEOHead";
+
+function ImgPlaceholder({ label, aspect = "aspect-[16/9]" }: { label: string; aspect?: string }) {
+  return (
+    <div className={`relative ${aspect} overflow-hidden w-full bg-[#2B2823]`}>
+      <div className="absolute inset-0 flex items-center justify-center" aria-hidden="true">
+        <span className="text-[10px] tracking-[0.18em] uppercase font-sans text-white/30 select-none pointer-events-none">
+          {label}
+        </span>
+      </div>
+    </div>
+  );
+}
 
 const FALLBACK_VENUES = [
   {
@@ -12,8 +23,7 @@ const FALLBACK_VENUES = [
     capacity: { ceremony: null, reception: 256 },
     desc: "Designed by a prominent Kansas City architect, Rivers Barn is modern farmhouse — a blank slate that lets a bride and groom or corporate group give it whatever feel they desire. The barn features two large patios, two fireplaces, air-conditioning, an indoor/outdoor bar, and separate luxury bathrooms. The space accommodates up to 256 guests.",
     details: ["Up to 256 guests", "Two large patios", "Two fireplaces", "Air-conditioning", "Indoor/outdoor bar", "Separate luxury bathrooms"],
-    hero: "/img/barn%20shot.jpg",
-    supporting: ["/img/wedding%20hero.JPG", "/img/wedding%204.jpg", "/img/wedding%20photo%201.jpg"],
+    supportingCount: 3,
   },
   {
     slug: "clubhouse",
@@ -22,8 +32,7 @@ const FALLBACK_VENUES = [
     capacity: { ceremony: null, reception: null },
     desc: "The Clubhouse is an additional space on the estate often used as a rehearsal dinner space, cocktail hour space, or intimate wedding ceremony location. Its warm, character-filled interior makes it the natural gathering point before and after the main event.",
     details: ["Rehearsal dinner space", "Cocktail hour space", "Intimate ceremony option", "Warm interior character", "Adjacent to Rivers Barn", "Full bar"],
-    hero: "/img/Clubhouse%20Hero.jpg",
-    supporting: ["/img/Clubhouse%20Home.jpg"],
+    supportingCount: 1,
   },
   {
     slug: "river-lawn",
@@ -32,8 +41,7 @@ const FALLBACK_VENUES = [
     capacity: { ceremony: 200, reception: null },
     desc: "A level grass expanse overlooking the Marais des Cygnes. Ceremonies on River Lawn feel like they belong to the land itself — open sky, the river, and nothing competing with the moment. The native landscaping throughout the property footprint provides ample space for wedding party and guest photography.",
     details: ["Overlooks Marais des Cygnes", "Level grass expanse", "Native landscaping", "Outdoor ceremony setting", "Golden-hour photography", "Open-air and unobstructed"],
-    hero: "/img/wedding%20photo%201.jpg",
-    supporting: ["/img/wedding%204.jpg", "/img/Wedding%205.jpg"],
+    supportingCount: 2,
   },
   {
     slug: "timber-edge",
@@ -42,8 +50,7 @@ const FALLBACK_VENUES = [
     capacity: { ceremony: 120, reception: null },
     desc: "Where the open field meets the old-growth timber line along the river. Timber Edge offers a naturally framed ceremony space with dappled light and a sense of enclosure that no constructed venue can replicate. The raw materials of the land — mature trees, native grasses, and the river — do all the work.",
     details: ["Old-growth timber backdrop", "Natural framing", "Dappled light", "Intimate atmosphere", "Along the river", "Up to 120 ceremony guests"],
-    hero: "/img/wedding%20hero.JPG",
-    supporting: ["/img/wedding%204.jpg"],
+    supportingCount: 1,
   },
   {
     slug: "pavilion",
@@ -52,8 +59,7 @@ const FALLBACK_VENUES = [
     capacity: { ceremony: null, reception: 200 },
     desc: "A covered outdoor structure on the north side of Rivers Barn, featuring a ceiling of string lighting perfect for an ancillary bar cart and dance floor under the stars. The Pavilion extends the event footprint of Rivers Barn and is ideal for cocktail receptions, outdoor dancing, and overflow entertaining.",
     details: ["String-light ceiling", "North side of Rivers Barn", "Dance floor under the stars", "Bar cart setup", "Cocktail reception space", "Up to 200 guests"],
-    hero: "/img/Wedding%205.jpg",
-    supporting: ["/img/wedding%20photo%201.jpg"],
+    supportingCount: 1,
   },
 ];
 
@@ -64,33 +70,22 @@ type VenueProp = {
   capacity: { ceremony: number | null; reception: number | null };
   desc: string;
   details: string[];
-  hero: string;
-  supporting: string[];
+  supportingCount: number;
 };
-
-const fallbackBySlug = Object.fromEntries(FALLBACK_VENUES.map(v => [v.slug, v]));
 
 export default function Venues() {
   const { data: cmsSpaces } = trpc.cms.getEventSpaces.useQuery();
 
   const venues: VenueProp[] = (cmsSpaces && cmsSpaces.length > 0)
-    ? cmsSpaces.map((space) => {
-        const fb = fallbackBySlug[space.slug];
-        const cmsHero = space.heroImage ?? (Array.isArray(space.galleryImages) ? (space.galleryImages as string[])[0] : "") ?? "";
-        const cmsGallery: string[] = Array.isArray(space.galleryImages) ? (space.galleryImages as string[]) : [];
-        const hero = cmsHero || fb?.hero || "";
-        const supporting = cmsGallery.length > 1 ? cmsGallery.slice(1) : fb?.supporting ?? [];
-        return {
-          slug: space.slug,
-          name: space.name,
-          type: space.indoorOutdoor === "indoor" ? "Indoor" : space.indoorOutdoor === "outdoor" ? "Outdoor" : "Indoor / Outdoor",
-          capacity: { ceremony: space.capacitySeated, reception: space.capacityReception },
-          desc: space.longDescription ?? space.shortDescription ?? "",
-          details: Array.isArray(space.features) ? (space.features as string[]) : [],
-          hero,
-          supporting,
-        };
-      })
+    ? cmsSpaces.map((space) => ({
+        slug: space.slug,
+        name: space.name,
+        type: space.indoorOutdoor === "indoor" ? "Indoor" : space.indoorOutdoor === "outdoor" ? "Outdoor" : "Indoor / Outdoor",
+        capacity: { ceremony: space.capacitySeated, reception: space.capacityReception },
+        desc: space.longDescription ?? space.shortDescription ?? "",
+        details: Array.isArray(space.features) ? (space.features as string[]) : [],
+        supportingCount: 0,
+      }))
     : FALLBACK_VENUES;
 
   return (
@@ -124,40 +119,23 @@ export default function Venues() {
         >
           <div className="max-w-[1440px] mx-auto px-6 lg:px-10">
 
-            {/* Hero image */}
-            <Picture
-              src={venue.hero}
-              alt={venue.name}
-              label={venue.name}
-              className="w-full overflow-hidden aspect-[16/9] mb-3"
-              imgClassName="absolute inset-0 w-full h-full object-cover"
-              loading="lazy"
-              decoding="async"
-              sizes="(max-width: 1440px) 100vw, 1440px"
-              width={1440}
-              height={810}
-            />
+            {/* Hero placeholder */}
+            <div className="mb-3">
+              <ImgPlaceholder label={`${venue.name} — Hero`} aspect="aspect-[16/9]" />
+            </div>
 
-            {/* Supporting images row */}
-            {venue.supporting.length > 0 && (
+            {/* Supporting placeholders */}
+            {venue.supportingCount > 0 && (
               <div className={`grid gap-3 mb-10 ${
-                venue.supporting.length === 1 ? "grid-cols-2" :
-                venue.supporting.length === 2 ? "grid-cols-2" :
+                venue.supportingCount === 1 ? "grid-cols-2" :
+                venue.supportingCount === 2 ? "grid-cols-2" :
                 "grid-cols-3"
               }`}>
-                {venue.supporting.map((src, j) => (
-                  <Picture
+                {Array.from({ length: venue.supportingCount }).map((_, j) => (
+                  <ImgPlaceholder
                     key={j}
-                    src={src}
-                    alt={`${venue.name} detail`}
-                    label={`${venue.name} detail`}
-                    className="overflow-hidden aspect-[4/3]"
-                    imgClassName="absolute inset-0 w-full h-full object-cover hover:scale-105 transition-transform duration-700"
-                    loading="lazy"
-                    decoding="async"
-                    sizes="(max-width: 768px) 50vw, 33vw"
-                    width={600}
-                    height={450}
+                    label={`${venue.name} — Detail ${j + 1}`}
+                    aspect="aspect-[4/3]"
                   />
                 ))}
               </div>

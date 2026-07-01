@@ -2,8 +2,18 @@ import { Link } from "wouter";
 import PublicLayout from "../../../_shared/components/PublicLayout";
 import { trpc } from '@shared/lib/trpc';
 import SEOHead from '@shared/components/SEOHead';
-import Picture from "@shared/components/Picture";
 
+function ImgPlaceholder({ label, aspect = "aspect-[16/9]" }: { label: string; aspect?: string }) {
+  return (
+    <div className={`relative ${aspect} overflow-hidden w-full bg-[#2B2823]`}>
+      <div className="absolute inset-0 flex items-center justify-center" aria-hidden="true">
+        <span className="text-[10px] tracking-[0.18em] uppercase font-sans text-white/30 select-none pointer-events-none">
+          {label}
+        </span>
+      </div>
+    </div>
+  );
+}
 
 const FALLBACK_LODGING = [
   {
@@ -14,8 +24,7 @@ const FALLBACK_LODGING = [
     bedrooms: 4,
     desc: "Our 6,000 square foot lodge has 4 bedrooms decorated by a prominent Kansas City designer and incorporates many aspects of history and outdoor pursuits from the area. The lodge has a full kitchen, large balcony, heated floors, heating/AC, and a large recreation room.",
     features: ["4 bedrooms", "6,000 sq ft", "Full kitchen", "Large balcony", "Heated floors", "Recreation room", "Kansas City designer interiors"],
-    hero: "/img/Main%20Lodge.jpg",
-    supporting: ["/img/main%20lodge%20inside.jpg", "/img/lodge-1-gallery.jpg", "/img/lodge-2-gallery.jpg"],
+    supportingCount: 3,
   },
   {
     slug: "riverhouse-suites",
@@ -25,8 +34,7 @@ const FALLBACK_LODGING = [
     bedrooms: 4,
     desc: "The Riverhouse Suites were completed in 2022 and designed with luxury in mind. Each room is uniquely decorated and all rooms have their own bathrooms and individual heating/AC units.",
     features: ["4 private suites", "Private bath per suite", "Individual heating/AC", "Uniquely decorated rooms", "Luxury finishes", "Completed 2022"],
-    hero: "/img/Riverhouse%20Suite.jpg",
-    supporting: ["/img/Riverhouse%20Suite%201.jpg"],
+    supportingCount: 1,
   },
   {
     slug: "annex-bridal-suite",
@@ -36,8 +44,7 @@ const FALLBACK_LODGING = [
     bedrooms: 4,
     desc: "The Annex & Bridal Suite was completely remodeled in 2021. It has a modern farmhouse feel with a light and airy design. Just steps away from Rivers Barn, it is the perfect spot to spend the day getting ready for your big day. The Annex & Bridal Suite has 4 bedrooms and 3 bathrooms.",
     features: ["4 bedrooms", "3 bathrooms", "Steps from Rivers Barn", "Remodeled 2021", "Modern farmhouse feel", "Light and airy design"],
-    hero: "/img/lodge-1-hero.jpg", // PLACEHOLDER — upload annex-hero.jpg to replace
-    supporting: [],
+    supportingCount: 0,
   },
   {
     slug: "ohana-house",
@@ -47,8 +54,7 @@ const FALLBACK_LODGING = [
     bedrooms: 4,
     desc: "The Ohana House is located approximately 15 minutes from the main lodge. It has 4 bedrooms and bathrooms, a 20-acre lake, a gorgeous fire pit, and miles of nature trails. Enjoy fishing, canoeing, paddle boarding, hiking, or just laying on a hammock. The Ohana House can be rented as part of a corporate or wedding package, or is a perfect place for just a family getaway.",
     features: ["4 bedrooms & bathrooms", "20-acre private lake", "Gorgeous fire pit", "Miles of nature trails", "Fishing, canoeing, paddleboarding", "15 min from main lodge"],
-    hero: "/img/Ohana%20Aerial.jpg",
-    supporting: ["/img/Ohana%20Firepit.jpg", "/img/Ohana%20House%20Dining.jpg", "/img/Ohana%20Kitchen.jpg"],
+    supportingCount: 3,
   },
   {
     slug: "the-farmhouse",
@@ -58,8 +64,7 @@ const FALLBACK_LODGING = [
     bedrooms: null,
     desc: "A classic Kansas farmhouse on the estate grounds. Comfortable, private, and full of character — ideal for overflow lodging, family groups, or guests who prefer a quieter corner of the property.",
     features: ["Private setting", "Classic farmhouse character", "Estate grounds", "Ideal for overflow", "Quiet and secluded", "Full amenities"],
-    hero: "/img/hero%203.jpg", // PLACEHOLDER — upload farmhouse-hero.jpg to replace
-    supporting: [],
+    supportingCount: 0,
   },
 ];
 
@@ -72,39 +77,24 @@ type LodgingProp = {
   maxGuests?: number | null;
   desc: string;
   features: string[];
-  hero: string;
-  supporting: string[];
+  supportingCount: number;
 };
-
-const fallbackBySlug = Object.fromEntries(FALLBACK_LODGING.map(u => [u.slug, u]));
 
 export default function Lodging() {
   const { data: cmsUnits } = trpc.cms.getLodgingUnits.useQuery();
 
   const lodgingProperties: LodgingProp[] = (cmsUnits && cmsUnits.length > 0)
-    ? cmsUnits.map((unit) => {
-        const fb = fallbackBySlug[unit.slug];
-        const cmsHero: string = (unit as { heroImage?: string | null }).heroImage || "";
-        const cmsGallery: string[] = Array.isArray((unit as { galleryImages?: unknown }).galleryImages)
-          ? ((unit as { galleryImages: string[] }).galleryImages)
-          : [];
-        const hero = cmsHero || (cmsGallery.length > 0 ? cmsGallery[0] : "") || fb?.hero || "";
-        const supporting = cmsGallery.length > 1
-          ? cmsGallery.slice(1)
-          : fb?.supporting ?? [];
-        return {
-          slug: unit.slug,
-          name: unit.name,
-          tagline: unit.shortDescription ?? "",
-          sqft: unit.squareFootage ? `${unit.squareFootage.toLocaleString()} sq ft` : null,
-          bedrooms: unit.bedrooms,
-          maxGuests: unit.maxGuests,
-          desc: unit.longDescription ?? "",
-          features: Array.isArray(unit.features) ? (unit.features as string[]) : [],
-          hero,
-          supporting,
-        };
-      })
+    ? cmsUnits.map((unit) => ({
+        slug: unit.slug,
+        name: unit.name,
+        tagline: unit.shortDescription ?? "",
+        sqft: unit.squareFootage ? `${unit.squareFootage.toLocaleString()} sq ft` : null,
+        bedrooms: unit.bedrooms,
+        maxGuests: unit.maxGuests,
+        desc: unit.longDescription ?? "",
+        features: Array.isArray(unit.features) ? (unit.features as string[]) : [],
+        supportingCount: 0,
+      }))
     : FALLBACK_LODGING;
 
   return (
@@ -178,40 +168,23 @@ export default function Lodging() {
           >
             <div className="max-w-[1440px] mx-auto px-5 lg:px-10">
 
-              {/* Hero image */}
-              <Picture
-                src={prop.hero}
-                alt={prop.name}
-                label={prop.name}
-                className="w-full overflow-hidden aspect-[16/9] mb-3"
-                imgClassName="absolute inset-0 w-full h-full object-cover"
-                loading="lazy"
-                decoding="async"
-                sizes="(max-width: 1440px) 100vw, 1440px"
-                width={1440}
-                height={810}
-              />
+              {/* Hero placeholder */}
+              <div className="mb-3">
+                <ImgPlaceholder label={`${prop.name} — Hero`} aspect="aspect-[16/9]" />
+              </div>
 
-              {/* Supporting images row */}
-              {prop.supporting.length > 0 && (
+              {/* Supporting placeholders */}
+              {prop.supportingCount > 0 && (
                 <div className={`grid gap-3 mb-10 ${
-                  prop.supporting.length === 1 ? "grid-cols-2" :
-                  prop.supporting.length === 2 ? "grid-cols-2" :
+                  prop.supportingCount === 1 ? "grid-cols-2" :
+                  prop.supportingCount === 2 ? "grid-cols-2" :
                   "grid-cols-3"
                 }`}>
-                  {prop.supporting.map((src, j) => (
-                    <Picture
+                  {Array.from({ length: prop.supportingCount }).map((_, j) => (
+                    <ImgPlaceholder
                       key={j}
-                      src={src}
-                      alt={`${prop.name} detail`}
-                      label={`${prop.name} detail`}
-                      className={`overflow-hidden aspect-[4/3] ${prop.supporting.length === 1 ? "col-span-1" : ""}`}
-                      imgClassName="absolute inset-0 w-full h-full object-cover hover:scale-105 transition-transform duration-700"
-                      loading="lazy"
-                      decoding="async"
-                      sizes="(max-width: 768px) 50vw, 33vw"
-                      width={600}
-                      height={450}
+                      label={`${prop.name} — Detail ${j + 1}`}
+                      aspect="aspect-[4/3]"
                     />
                   ))}
                 </div>
