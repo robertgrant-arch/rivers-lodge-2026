@@ -2,8 +2,6 @@ import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { generateAndStoreWaiverPdf } from "@features/waivers/public";
 import { publicProcedure, protectedProcedure, router } from "../../_core/server/trpc";
-import { drizzle } from "drizzle-orm/node-postgres";
-import { Pool } from "pg";
 import { eq, desc, and, gte, lte, sql, or, like, lt } from "drizzle-orm";
 import {
   weddingBookings,
@@ -38,15 +36,9 @@ import { randomBytes, createHash } from "crypto";
 import { invites } from "@features/auth/schema";
 import { sendInviteEmail, sendPasswordResetNotification } from "@core/server/mailer";
 import { ENV } from "@core/server/env";
+import { getPortalDb } from "@core/server/db";
 
-function getDb() {
-  const url = process.env.DATABASE_URL;
-  if (!url) throw new Error("DATABASE_URL not set");
-  const ssl = url.includes("render.com") || process.env.NODE_ENV === "production"
-    ? { rejectUnauthorized: false }
-    : undefined;
-  return drizzle(new Pool({ connectionString: url, ssl }));
-}
+const getDb = getPortalDb;
 
 // ─── Portal Role Guards ───────────────────────────────────────────────────────
 const STAFF_ROLES = ["admin", "member"] as const;
@@ -94,20 +86,31 @@ async function logAudit(params: {
 const dashboardRouter = router({
   kpis: portalProcedure.query(async () => {
     const db = getDb();
-    const [weddingCount] = await db.select({ count: sql<number>`count(*)` })
-      .from(weddingBookings).where(eq(weddingBookings.status, "confirmed"));
-    const [corporateCount] = await db.select({ count: sql<number>`count(*)` })
-      .from(corporateBookings).where(eq(corporateBookings.status, "confirmed"));
-    const [huntCount] = await db.select({ count: sql<number>`count(*)` })
-      .from(huntFishBookings).where(eq(huntFishBookings.status, "confirmed"));
-    const [memberCount] = await db.select({ count: sql<number>`count(*)` })
-      .from(members).where(eq(members.active, true));
-    const [inquiryCount] = await db.select({ count: sql<number>`count(*)` })
-      .from(inquiries).where(eq(inquiries.status, "new"));
-    const [weddingRevenue] = await db.select({ total: sql<string>`COALESCE(SUM(contractValue), 0)` })
-      .from(weddingBookings).where(eq(weddingBookings.status, "confirmed"));
-    const [corporateRevenue] = await db.select({ total: sql<string>`COALESCE(SUM(contractValue), 0)` })
-      .from(corporateBookings).where(eq(corporateBookings.status, "confirmed"));
+    // Run all count/sum queries concurrently — they are independent.
+    const [
+      [weddingCount],
+      [corporateCount],
+      [huntCount],
+      [memberCount],
+      [inquiryCount],
+      [weddingRevenue],
+      [corporateRevenue],
+    ] = await Promise.all([
+      db.select({ count: sql<number>`count(*)` })
+        .from(weddingBookings).where(eq(weddingBookings.status, "confirmed")),
+      db.select({ count: sql<number>`count(*)` })
+        .from(corporateBookings).where(eq(corporateBookings.status, "confirmed")),
+      db.select({ count: sql<number>`count(*)` })
+        .from(huntFishBookings).where(eq(huntFishBookings.status, "confirmed")),
+      db.select({ count: sql<number>`count(*)` })
+        .from(members).where(eq(members.active, true)),
+      db.select({ count: sql<number>`count(*)` })
+        .from(inquiries).where(eq(inquiries.status, "new")),
+      db.select({ total: sql<string>`COALESCE(SUM(contractValue), 0)` })
+        .from(weddingBookings).where(eq(weddingBookings.status, "confirmed")),
+      db.select({ total: sql<string>`COALESCE(SUM(contractValue), 0)` })
+        .from(corporateBookings).where(eq(corporateBookings.status, "confirmed")),
+    ]);
     return {
       confirmedWeddings: weddingCount.count,
       confirmedCorporate: corporateCount.count,
@@ -120,24 +123,25 @@ const dashboardRouter = router({
 
   recentActivity: portalProcedure.query(async () => {
     const db = getDb();
-    const recentWeddings = await db.select().from(weddingBookings)
-      .orderBy(desc(weddingBookings.createdAt)).limit(5);
-    const recentCorporate = await db.select().from(corporateBookings)
-      .orderBy(desc(corporateBookings.createdAt)).limit(5);
-    const recentInquiries = await db.select().from(inquiries)
-      .orderBy(desc(inquiries.createdAt)).limit(5);
+    const [recentWeddings, recentCorporate, recentInquiries] = await Promise.all([
+      db.select().from(weddingBookings).orderBy(desc(weddingBookings.createdAt)).limit(5),
+      db.select().from(corporateBookings).orderBy(desc(corporateBookings.createdAt)).limit(5),
+      db.select().from(inquiries).orderBy(desc(inquiries.createdAt)).limit(5),
+    ]);
     return { recentWeddings, recentCorporate, recentInquiries };
   }),
 
   upcomingEvents: portalProcedure.query(async () => {
     const db = getDb();
     const today = new Date().toISOString().split("T")[0];
-    const upcoming = await db.select().from(weddingBookings)
-      .where(and(sql`${weddingBookings.weddingDate} >= ${today}`, eq(weddingBookings.status, "confirmed")))
-      .orderBy(weddingBookings.weddingDate).limit(10);
-    const upcomingCorp = await db.select().from(corporateBookings)
-      .where(and(sql`${corporateBookings.arrivalDate} >= ${today}`, eq(corporateBookings.status, "confirmed")))
-      .orderBy(corporateBookings.arrivalDate).limit(10);
+    const [upcoming, upcomingCorp] = await Promise.all([
+      db.select().from(weddingBookings)
+        .where(and(sql`${weddingBookings.weddingDate} >= ${today}`, eq(weddingBookings.status, "confirmed")))
+        .orderBy(weddingBookings.weddingDate).limit(10),
+      db.select().from(corporateBookings)
+        .where(and(sql`${corporateBookings.arrivalDate} >= ${today}`, eq(corporateBookings.status, "confirmed")))
+        .orderBy(corporateBookings.arrivalDate).limit(10),
+    ]);
     return { weddings: upcoming, corporate: upcomingCorp };
   }),
 

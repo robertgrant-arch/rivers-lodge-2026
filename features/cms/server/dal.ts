@@ -1,6 +1,5 @@
 import { eq, desc, and } from "drizzle-orm";
-import { drizzle } from "drizzle-orm/node-postgres";
-import { Pool } from "pg";
+import { getPortalDb } from "@core/server/db";
 import {
   cmsAmenities,
   cmsLodgingUnits,
@@ -22,12 +21,7 @@ import {
   InsertCmsMemberContent,
 } from '@features/cms/schema';
 
-function getDb() {
-  const url = process.env.DATABASE_URL;
-  if (!url) throw new Error("DATABASE_URL not set");
-  const ssl = url.includes("render.com") || process.env.NODE_ENV === "production" ? { rejectUnauthorized: false } : undefined;
-  return drizzle(new Pool({ connectionString: url, ssl }));
-}
+const getDb = getPortalDb;
 
 // ─── CMS: Amenities ───────────────────────────────────────────────────────────
 

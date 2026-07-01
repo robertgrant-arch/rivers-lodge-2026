@@ -57,6 +57,24 @@ export function getDb(): Promise<DrizzleDb | null> {
   return _dbPromise;
 }
 
+// ─── Shared synchronous pool for portal/admin routers ─────────────────────────
+// A single process-wide connection pool reused across every portal query.
+// (Previously each router created a new Pool per query — a new TLS handshake and
+// a leaked connection on every call, which exhausted Render's connection limit
+// and made the admin portal slow. This memoizes one pool for all of them.)
+let _portalDb: DrizzleDb | null = null;
+
+export function getPortalDb(): DrizzleDb {
+  if (_portalDb) return _portalDb;
+  const url = process.env.DATABASE_URL ?? ENV.databaseUrl;
+  if (!url) throw new Error("DATABASE_URL not set");
+  const ssl = url.includes("render.com") || process.env.NODE_ENV === "production"
+    ? { rejectUnauthorized: false }
+    : undefined;
+  _portalDb = drizzle(new Pool({ connectionString: url, ssl, max: 10 })) as unknown as DrizzleDb;
+  return _portalDb;
+}
+
 export async function checkDbHealth(): Promise<boolean> {
   await getDb();
   if (!_pool) return false;
