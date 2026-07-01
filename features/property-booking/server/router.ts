@@ -80,31 +80,33 @@ async function updateInventory(
   date: string,
   delta: number, // +1 for booking, -1 for cancellation
 ) {
-  // Upsert the inventory row if it doesn't exist, then increment
-  await db!.execute(sql`
-    INSERT INTO property_date_inventory (propertyId, date, capacity, bookedCount, status, version, updatedAt)
-    SELECT ${propertyId}, ${date},
-      COALESCE((SELECT maxHunters FROM hunting_properties WHERE id = ${propertyId}), 2),
-      0, 'open', 0, ${now()}
-    WHERE NOT EXISTS (
-      SELECT 1 FROM property_date_inventory WHERE propertyId = ${propertyId} AND date = ${date}
-    )
-  `);
-
-  await db!.execute(sql`
-    UPDATE property_date_inventory
-    SET
-      bookedCount = GREATEST(0, bookedCount + ${delta}),
-      status = CASE
-        WHEN GREATEST(0, bookedCount + ${delta}) = 0 THEN 'open'
-        WHEN GREATEST(0, bookedCount + ${delta}) >= capacity THEN 'full'
-        WHEN GREATEST(0, bookedCount + ${delta}) >= FLOOR(capacity * 0.75) THEN 'partial'
-        ELSE 'open'
-      END,
-      version = version + 1,
-      updatedAt = ${now()}
-    WHERE propertyId = ${propertyId} AND date = ${date}
-  `);
+  // Read current capacity + booked count, compute the new state, then upsert.
+  // (Was raw MySQL `ON DUPLICATE KEY UPDATE` with unquoted camelCase columns —
+  // invalid on Postgres. Uses the (propertyId, date) unique index for conflict.)
+  const [prop] = await db!
+    .select({ maxHunters: huntingProperties.maxHunters })
+    .from(huntingProperties)
+    .where(eq(huntingProperties.id, propertyId))
+    .limit(1);
+  const capacity = prop?.maxHunters ?? 2;
+  const [existing] = await db!
+    .select({ bookedCount: propertyDateInventory.bookedCount })
+    .from(propertyDateInventory)
+    .where(and(eq(propertyDateInventory.propertyId, propertyId), eq(propertyDateInventory.date, date)))
+    .limit(1);
+  const newBooked = Math.max(0, (existing?.bookedCount ?? 0) + delta);
+  const status: "open" | "full" | "partial" =
+    newBooked === 0 ? "open"
+      : newBooked >= capacity ? "full"
+        : newBooked >= Math.floor(capacity * 0.75) ? "partial"
+          : "open";
+  await db!
+    .insert(propertyDateInventory)
+    .values({ propertyId, date, capacity, bookedCount: newBooked, status, version: 0, updatedAt: now() })
+    .onConflictDoUpdate({
+      target: [propertyDateInventory.propertyId, propertyDateInventory.date],
+      set: { capacity, bookedCount: newBooked, status, version: sql`${propertyDateInventory.version} + 1`, updatedAt: now() },
+    });
 }
 
 /** Get a member record for the current user, throwing if not found */
@@ -1056,18 +1058,28 @@ export const propertyBookingRouter = router({
             createdAt: now(),
           } as any);
 
-          // Update inventory status for blocked dates
+          // Mark every day in the range as blocked in one batched upsert.
+          // (Was a per-day loop of raw MySQL `ON DUPLICATE KEY UPDATE` — an N+1
+          // that is also invalid on Postgres.)
           if (input.propertyId) {
-            let d = new Date(input.startDate);
+            const rows: Array<typeof propertyDateInventory.$inferInsert> = [];
             const e = new Date(input.endDate);
-            while (d <= e) {
-              const dateStr = d.toISOString().split("T")[0];
-              await db.execute(sql`
-                INSERT INTO property_date_inventory (propertyId, date, capacity, bookedCount, status, version, updatedAt)
-                VALUES (${input.propertyId}, ${dateStr}, 0, 0, 'blocked', 0, ${now()})
-                ON DUPLICATE KEY UPDATE status = 'blocked', version = version + 1, updatedAt = ${now()}
-              `);
-              d.setDate(d.getDate() + 1);
+            for (let d = new Date(input.startDate); d <= e; d.setDate(d.getDate() + 1)) {
+              rows.push({
+                propertyId: input.propertyId,
+                date: d.toISOString().split("T")[0],
+                capacity: 0,
+                bookedCount: 0,
+                status: "blocked",
+                version: 0,
+                updatedAt: now(),
+              });
+            }
+            if (rows.length > 0) {
+              await db.insert(propertyDateInventory).values(rows).onConflictDoUpdate({
+                target: [propertyDateInventory.propertyId, propertyDateInventory.date],
+                set: { status: "blocked", version: sql`${propertyDateInventory.version} + 1`, updatedAt: now() },
+              });
             }
           }
 

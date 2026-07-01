@@ -6,7 +6,11 @@ if (!connectionString) {
 }
 
 export default defineConfig({
-  schema: "./_core/db/schema.ts",
+  // Complete barrel — includes portal, booking-engine, and property-booking
+  // tables. (The old ./schema.ts barrel only listed 9 feature schemas, so
+  // drizzle-kit push never created the ops/property tables and every admin
+  // page that queried them failed to load.)
+  schema: "./_core/db/index.ts",
   out: "./_core/db/migrations",
   dialect: "postgresql",
   dbCredentials: {
