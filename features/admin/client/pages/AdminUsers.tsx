@@ -64,7 +64,7 @@ interface UserRecord {
 function StatusDot({ status }: { status: UserStatus }) {
   const colorMap: Record<UserStatus, string> = {
     active: "bg-[#6B7250]",
-    invited: "bg-amber-400",
+    invited: "bg-[#9B4D19]",
     disabled: "bg-[#57544E]",
   };
   const labelMap: Record<UserStatus, string> = {
@@ -203,7 +203,7 @@ function ConfirmDialog({
             onClick={onConfirm}
             className={
               destructive
-                ? "bg-red-900/80 hover:bg-red-900 text-[#E0D3BD] font-sans text-xs tracking-[0.1em] uppercase rounded-none"
+                ? "bg-[#57544E] hover:bg-[#423F3B] text-[#E0D3BD] font-sans text-xs tracking-[0.1em] uppercase rounded-none"
                 : "bg-[#9B4D19] hover:bg-[#7a3c14] text-[#E0D3BD] font-sans text-xs tracking-[0.1em] uppercase rounded-none"
             }
           >
@@ -325,7 +325,7 @@ function InvitationsTab() {
         </div>
 
         {inviteMutation.isError && (
-          <p className="text-sm text-red-400">{inviteMutation.error.message}</p>
+          <p className="font-sans text-xs text-[#BABAAE] border border-[#57544E] px-3 py-2 bg-[#363330]">{inviteMutation.error.message}</p>
         )}
 
         {inviteUrl && (
@@ -384,7 +384,7 @@ function InvitationsTab() {
                     variant="outline"
                     size="sm"
                     onClick={() => setRevokeTarget(user)}
-                    className="border-[#57544E] text-[#BABAAE] hover:border-red-800 hover:text-red-400 rounded-none font-sans text-xs tracking-[0.08em] uppercase h-8 px-3"
+                    className="border-[#57544E] text-[#BABAAE] hover:border-[#57544E] hover:text-[#E0D3BD] rounded-none font-sans text-xs tracking-[0.08em] uppercase h-8 px-3"
                   >
                     <UserX className="w-3 h-3 mr-1.5" />
                     Revoke
@@ -607,7 +607,7 @@ function UsersTab() {
                       {user.email}
                     </span>
                     {isCurrentUser && (
-                      <span className="font-sans text-[10px] tracking-[0.1em] uppercase text-[#576276] shrink-0">
+                      <span className="font-sans text-[10px] tracking-[0.1em] uppercase text-[#BABAAE] shrink-0">
                         you
                       </span>
                     )}
@@ -695,7 +695,7 @@ function UsersTab() {
                         ) : (
                           !isCurrentUser && (
                             <DropdownMenuItem
-                              className="font-sans text-xs tracking-[0.06em] cursor-pointer focus:bg-[#423F3B] focus:text-red-400 text-red-400 gap-2"
+                              className="font-sans text-xs tracking-[0.06em] cursor-pointer focus:bg-[#423F3B] focus:text-[#BABAAE] text-[#BABAAE] gap-2"
                               onClick={() =>
                                 setPendingAction({ type: "disable", user })
                               }

@@ -54,10 +54,10 @@ const DAY_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 type EventKind = 'wedding' | 'corporate' | 'hunt_fish' | 'blocked';
 
 const EVENT_CONFIG: Record<EventKind, { label: string; dot: string; text: string }> = {
-  wedding:    { label: 'Wedding',    dot: '#be123c', text: 'text-[#be123c]' },
-  corporate:  { label: 'Corporate',  dot: '#0369a1', text: 'text-[#0369a1]' },
-  hunt_fish:  { label: 'Hunt/Fish',  dot: '#b45309', text: 'text-[#b45309]' },
-  blocked:    { label: 'Hold/Block', dot: '#57544E', text: 'text-[#BABAAE]'  },
+  wedding:    { label: 'Wedding',    dot: '#9B4D19', text: 'text-[#9B4D19]' },
+  corporate:  { label: 'Corporate',  dot: '#576276', text: 'text-[#576276]' },
+  hunt_fish:  { label: 'Hunt/Fish',  dot: '#6B7250', text: 'text-[#6B7250]' },
+  blocked:    { label: 'Hold/Block', dot: '#57544E', text: 'text-[#BABAAE]' },
 };
 
 type FilterKey = EventKind | 'all';
@@ -287,7 +287,7 @@ function EventDetailModal({ event, onClose, onUnblocked }: DetailModalProps) {
               <Button
                 variant="outline"
                 onClick={() => setConfirming(true)}
-                className="border-[#57544E] text-[#BABAAE] hover:border-red-700 hover:text-red-400 rounded-none bg-transparent font-sans text-xs tracking-[0.1em] uppercase"
+                className="border-[#57544E] text-[#BABAAE] hover:border-[#57544E] hover:text-[#E0D3BD] rounded-none bg-transparent font-sans text-xs tracking-[0.1em] uppercase"
               >
                 Remove / Unblock
               </Button>
@@ -305,7 +305,7 @@ function EventDetailModal({ event, onClose, onUnblocked }: DetailModalProps) {
               <Button
                 onClick={() => unblockMutation.mutate({ id: Number(event.id) })}
                 disabled={unblockMutation.isPending}
-                className="bg-red-900 hover:bg-red-800 text-[#E0D3BD] rounded-none font-sans text-xs tracking-[0.1em] uppercase"
+                className="bg-[#57544E] hover:bg-[#423F3B] text-[#E0D3BD] rounded-none font-sans text-xs tracking-[0.1em] uppercase"
               >
                 {unblockMutation.isPending ? 'Removing...' : 'Confirm Remove'}
               </Button>

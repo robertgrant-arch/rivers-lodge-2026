@@ -160,8 +160,8 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
         <Sidebar className="border-r border-sidebar-border" style={{ "--sidebar-width": "260px" } as React.CSSProperties}>
           <SidebarHeader className="px-4 py-4 border-b border-sidebar-border">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded bg-sidebar-primary flex items-center justify-center flex-shrink-0">
-                <Shield className="w-4 h-4 text-sidebar-primary-foreground" />
+              <div className="w-8 h-8 bg-[#9B4D19] flex items-center justify-center flex-shrink-0">
+                <Shield className="w-4 h-4 text-[#E0D3BD]" />
               </div>
               <div className="min-w-0">
                 <p className="text-sm font-semibold text-sidebar-foreground truncate">Operations Portal</p>
@@ -182,7 +182,7 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
                     return (
                       <SidebarMenuItem key={item.path}>
                         <SidebarMenuButton asChild isActive={isActive} className="w-full">
-                          <Link href={item.path} className="flex items-center gap-3 px-3 py-2 rounded-md text-sm">
+                          <Link href={item.path} className="flex items-center gap-3 px-3 py-2 text-sm">
                             <item.icon className="w-4 h-4 flex-shrink-0" />
                             <span>{item.label}</span>
                           </Link>
@@ -205,7 +205,7 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
                       isActive={location === adminNavItem.path || location.startsWith(adminNavItem.path)}
                       className="w-full"
                     >
-                      <Link href={adminNavItem.path} className="flex items-center gap-3 px-3 py-2 rounded-md text-sm">
+                      <Link href={adminNavItem.path} className="flex items-center gap-3 px-3 py-2 text-sm">
                         <adminNavItem.icon className="w-4 h-4 flex-shrink-0" />
                         <span>{adminNavItem.label}</span>
                       </Link>
@@ -219,9 +219,9 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
           <SidebarFooter className="px-3 py-3 border-t border-sidebar-border">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-3 w-full px-2 py-2 rounded-md hover:bg-sidebar-accent transition-colors text-left">
+                <button className="flex items-center gap-3 w-full px-2 py-2 hover:bg-sidebar-accent transition-colors text-left">
                   <Avatar className="w-8 h-8 flex-shrink-0">
-                    <AvatarFallback className="bg-sidebar-primary text-sidebar-primary-foreground text-xs font-semibold">
+                    <AvatarFallback className="bg-[#9B4D19] text-[#E0D3BD] text-xs font-semibold">
                       {initials}
                     </AvatarFallback>
                   </Avatar>
@@ -259,7 +259,7 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
               <Button
                 variant="outline"
                 size="sm"
-                className="gap-1.5 text-xs h-8 border-amber-600/40 text-amber-500 hover:bg-amber-600/10 hover:text-amber-400 hover:border-amber-500/60"
+                className="gap-1.5 text-xs h-8 border-[#57544E] text-[#BABAAE] hover:border-[#9B4D19] hover:text-[#E0D3BD] rounded-none font-sans tracking-[0.06em] uppercase"
                 disabled={previewLoading}
                 onClick={async () => {
                   setPreviewLoading(true);
