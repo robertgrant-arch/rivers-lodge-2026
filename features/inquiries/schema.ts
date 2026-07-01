@@ -1,4 +1,5 @@
 import {
+  index,
   integer,
   pgEnum,
   pgTable,
@@ -21,7 +22,10 @@ export const inquiries = pgTable("inquiries", {
   message: text("message"),
   status: inquiryStatusEnum("status").notNull().default("new"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-});
+}, (t) => [
+  index("inq_status_idx").on(t.status),
+  index("inq_created_at_idx").on(t.createdAt),
+]);
 
 export type Inquiry = typeof inquiries.$inferSelect;
 export type InsertInquiry = typeof inquiries.$inferInsert;

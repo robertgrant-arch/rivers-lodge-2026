@@ -1,4 +1,5 @@
 import {
+  index,
   pgEnum,
   pgTable,
   text,
@@ -19,7 +20,10 @@ export const users = pgTable("users", {
   mustChangePassword: boolean("must_change_password").notNull().default(true),
   createdAt: timestamp("created_at").notNull().$default(() => new Date()),
   lastLoginAt: timestamp("last_login_at"),
-});
+}, (t) => [
+  index("users_role_idx").on(t.role),
+  index("users_status_idx").on(t.status),
+]);
 
 export const invites = pgTable("invites", {
   id: varchar("id", { length: 36 }).primaryKey().$default(() => crypto.randomUUID()),
@@ -28,14 +32,19 @@ export const invites = pgTable("invites", {
   expiresAt: timestamp("expires_at").notNull(),
   acceptedAt: timestamp("accepted_at"),
   createdBy: varchar("created_by", { length: 36 }),
-});
+}, (t) => [
+  index("invites_user_idx").on(t.userId),
+  index("invites_token_hash_idx").on(t.tokenHash),
+]);
 
 export const sessions = pgTable("sessions", {
   id: varchar("id", { length: 36 }).primaryKey().$default(() => crypto.randomUUID()),
   userId: varchar("user_id", { length: 36 }).notNull(),
   expiresAt: timestamp("expires_at").notNull(),
   createdAt: timestamp("created_at").notNull().$default(() => new Date()),
-});
+}, (t) => [
+  index("sessions_user_idx").on(t.userId),
+]);
 
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;

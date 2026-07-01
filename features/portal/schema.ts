@@ -3,6 +3,7 @@ import {
   boolean,
   date,
   decimal,
+  index,
   integer,
   pgEnum,
   pgTable,
@@ -98,7 +99,12 @@ export const weddingBookings = pgTable("wedding_bookings", {
   notes: text("notes"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().$onUpdate(() => new Date()).notNull(),
-});
+}, (t) => [
+  index("wb_status_idx").on(t.status),
+  index("wb_wedding_date_idx").on(t.weddingDate),
+  index("wb_contact_email_idx").on(t.contactEmail),
+  index("wb_created_at_idx").on(t.createdAt),
+]);
 export type WeddingBooking = typeof weddingBookings.$inferSelect;
 export type InsertWeddingBooking = typeof weddingBookings.$inferInsert;
 
@@ -132,7 +138,12 @@ export const corporateBookings = pgTable("corporate_bookings", {
   notes: text("notes"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().$onUpdate(() => new Date()).notNull(),
-});
+}, (t) => [
+  index("cb_status_idx").on(t.status),
+  index("cb_arrival_date_idx").on(t.arrivalDate),
+  index("cb_contact_email_idx").on(t.contactEmail),
+  index("cb_created_at_idx").on(t.createdAt),
+]);
 export type CorporateBooking = typeof corporateBookings.$inferSelect;
 export type InsertCorporateBooking = typeof corporateBookings.$inferInsert;
 
@@ -160,7 +171,12 @@ export const huntFishBookings = pgTable("hunt_fish_bookings", {
   notes: text("notes"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().$onUpdate(() => new Date()).notNull(),
-});
+}, (t) => [
+  index("hfb_status_idx").on(t.status),
+  index("hfb_booking_date_idx").on(t.bookingDate),
+  index("hfb_guide_user_idx").on(t.guideUserId),
+  index("hfb_created_at_idx").on(t.createdAt),
+]);
 export type HuntFishBooking = typeof huntFishBookings.$inferSelect;
 export type InsertHuntFishBooking = typeof huntFishBookings.$inferInsert;
 
@@ -176,7 +192,10 @@ export const harvestRecords = pgTable("harvest_records", {
   guideNotes: text("guideNotes"),
   harvestDate: date("harvestDate").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-});
+}, (t) => [
+  index("hrec_booking_idx").on(t.huntFishBookingId),
+  index("hrec_species_idx").on(t.species),
+]);
 export type HarvestRecord = typeof harvestRecords.$inferSelect;
 export type InsertHarvestRecord = typeof harvestRecords.$inferInsert;
 
@@ -212,7 +231,10 @@ export const portalBlockedDates = pgTable("portal_blocked_dates", {
   scopeTarget: varchar("scopeTarget", { length: 100 }),
   createdByUserId: varchar("createdByUserId", { length: 36 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-});
+}, (t) => [
+  index("pbd_start_date_idx").on(t.startDate),
+  index("pbd_end_date_idx").on(t.endDate),
+]);
 export type PortalBlockedDate = typeof portalBlockedDates.$inferSelect;
 export type InsertPortalBlockedDate = typeof portalBlockedDates.$inferInsert;
 
@@ -241,7 +263,9 @@ export const portalDocuments = pgTable("portal_documents", {
   version: integer("version").default(1),
   notes: text("notes"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-});
+}, (t) => [
+  index("pdoc_entity_idx").on(t.linkedEntityType, t.linkedEntityId),
+]);
 export type PortalDocument = typeof portalDocuments.$inferSelect;
 
 // ─── Waiver Templates ─────────────────────────────────────────────────────────
@@ -277,7 +301,10 @@ export const portalWaivers = pgTable("portal_waivers", {
   isMinor: boolean("isMinor").default(false),
   guardianName: varchar("guardianName", { length: 255 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-});
+}, (t) => [
+  index("pw_status_idx").on(t.status),
+  index("pw_linked_booking_idx").on(t.linkedBookingType, t.linkedBookingId),
+]);
 export type PortalWaiver = typeof portalWaivers.$inferSelect;
 
 // ─── Portal Audit Log ─────────────────────────────────────────────────────────
@@ -310,7 +337,10 @@ export const portalNotifications = pgTable("portal_notifications", {
   entityId: integer("entityId"),
   read: boolean("read").notNull().default(false),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-});
+}, (t) => [
+  index("pn_recipient_read_idx").on(t.recipientUserId, t.read),
+  index("pn_created_at_idx").on(t.createdAt),
+]);
 export type PortalNotification = typeof portalNotifications.$inferSelect;
 
 // ─── Portal Tasks ─────────────────────────────────────────────────────────────
@@ -329,7 +359,9 @@ export const portalTasks = pgTable("portal_tasks", {
   completedAt: timestamp("completedAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().$onUpdate(() => new Date()).notNull(),
-});
+}, (t) => [
+  index("ptask_assignee_status_idx").on(t.assignedToUserId, t.status),
+]);
 export type PortalTask = typeof portalTasks.$inferSelect;
 
 // ─── Portal Notes / Timeline ──────────────────────────────────────────────────
@@ -343,5 +375,8 @@ export const portalNotes = pgTable("portal_notes", {
   body: text("body").notNull(),
   internal: boolean("internal").notNull().default(true),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-});
+}, (t) => [
+  index("pnote_entity_idx").on(t.entityType, t.entityId),
+  index("pnote_created_at_idx").on(t.createdAt),
+]);
 export type PortalNote = typeof portalNotes.$inferSelect;

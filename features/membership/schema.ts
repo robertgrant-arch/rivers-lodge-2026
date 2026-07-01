@@ -1,6 +1,7 @@
 import {
   boolean,
   date,
+  index,
   integer,
   pgEnum,
   pgTable,
@@ -24,7 +25,10 @@ export const membershipApplications = pgTable("membership_applications", {
   message: text("message"),
   status: applicationStatusEnum("status").notNull().default("pending"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-});
+}, (t) => [
+  index("ma_status_idx").on(t.status),
+  index("ma_created_at_idx").on(t.createdAt),
+]);
 
 export type MembershipApplication = typeof membershipApplications.$inferSelect;
 export type InsertMembershipApplication = typeof membershipApplications.$inferInsert;
@@ -40,7 +44,12 @@ export const members = pgTable("members", {
   notes: text("notes"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().$onUpdate(() => new Date()).notNull(),
-});
+}, (t) => [
+  index("mem_user_idx").on(t.userId),
+  index("mem_active_idx").on(t.active),
+  index("mem_tier_idx").on(t.tier),
+  index("mem_created_at_idx").on(t.createdAt),
+]);
 
 export type Member = typeof members.$inferSelect;
 export type InsertMember = typeof members.$inferInsert;
