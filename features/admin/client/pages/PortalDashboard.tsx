@@ -1,243 +1,259 @@
-import { Badge } from '@shared/ui/badge';
-import { Button } from '@shared/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@shared/ui/card';
 import { Skeleton } from '@shared/ui/skeleton';
+import { Separator } from '@shared/ui/separator';
 import { trpc } from '@shared/lib/trpc';
-import {
-  AlertCircle,
-  BarChart3,
-  Building2,
-  Calendar,
-  CheckCircle2,
-  DollarSign,
-  Fish,
-  Heart,
-  Target,
-  Users,
-} from "lucide-react";
-import { Link } from "wouter";
+import { Link } from 'wouter';
 
-function formatCurrency(val: string | number) {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(Number(val));
+// ─── helpers ────────────────────────────────────────────────────────────────
+
+function todayLabel() {
+  return new Date().toLocaleDateString('en-US', {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+  });
 }
 
-function formatDate(d: string | Date | null | undefined) {
-  if (!d) return "—";
-  return new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+function formatEventDate(d: string | Date | null | undefined) {
+  if (!d) return '—';
+  return new Date(d).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
 }
 
-const STATUS_COLORS: Record<string, string> = {
-  inquiry: "bg-blue-100 text-blue-800",
-  contacted: "bg-yellow-100 text-yellow-800",
-  site_visit: "bg-purple-100 text-purple-800",
-  proposal_sent: "bg-orange-100 text-orange-800",
-  contract_out: "bg-amber-100 text-amber-800",
-  confirmed: "bg-green-100 text-green-800",
-  completed: "bg-gray-100 text-gray-700",
-  cancelled: "bg-red-100 text-red-800",
-};
+function eventTypeLabel(type: string | undefined) {
+  if (!type) return 'Event';
+  return type
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
 
-function StatusBadge({ status }: { status: string }) {
-  const cls = STATUS_COLORS[status] ?? "bg-gray-100 text-gray-700";
+// ─── sub-components ─────────────────────────────────────────────────────────
+
+function GoldRule() {
+  return <div className="h-px bg-[#9B4D19]/40 mt-1 mb-4" />;
+}
+
+function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${cls}`}>
-      {status.replace(/_/g, " ")}
-    </span>
+    <p className="font-sans tracking-[0.12em] uppercase text-xs text-[#BABAAE]">
+      {children}
+    </p>
   );
 }
 
+interface StatCardProps {
+  label: string;
+  value: number | string | undefined;
+  context?: string;
+  loading?: boolean;
+}
+
+function StatCard({ label, value, context, loading }: StatCardProps) {
+  return (
+    <div className="bg-[#363330] border border-[#57544E] p-5 flex flex-col gap-2">
+      <p className="font-sans tracking-[0.12em] uppercase text-xs text-[#BABAAE]">
+        {label}
+      </p>
+      {loading ? (
+        <Skeleton className="h-9 w-20 bg-[#423F3B]" />
+      ) : (
+        <p className="font-sans text-3xl font-semibold text-[#E0D3BD] leading-none">
+          {value ?? '—'}
+        </p>
+      )}
+      {context && (
+        <p className="font-sans text-xs text-[#BABAAE]">{context}</p>
+      )}
+    </div>
+  );
+}
+
+function ArrowLink({ href, children }: { href: string; children: React.ReactNode }) {
+  return (
+    <Link
+      href={href}
+      className="group inline-flex items-center gap-1.5 font-sans text-xs tracking-[0.08em] uppercase text-[#BABAAE] hover:text-[#E0D3BD] transition-colors"
+    >
+      {children}
+      <span className="transition-transform group-hover:translate-x-0.5">→</span>
+    </Link>
+  );
+}
+
+// ─── main component ──────────────────────────────────────────────────────────
+
 export default function PortalDashboard() {
   const kpisQuery = trpc.portal.dashboard.kpis.useQuery();
-  const activityQuery = trpc.portal.dashboard.recentActivity.useQuery();
+  const memberStatsQuery = trpc.portal.membership.stats.useQuery();
+  const usersQuery = trpc.portal.users.list.useQuery({ search: '' });
   const upcomingQuery = trpc.portal.dashboard.upcomingEvents.useQuery();
-  const notifQuery = trpc.portal.dashboard.notifications.useQuery();
-  const markAllRead = trpc.portal.dashboard.markAllNotificationsRead.useMutation({
-    onSuccess: () => notifQuery.refetch(),
-  });
 
   const kpis = kpisQuery.data;
-  const activity = activityQuery.data;
-  const upcoming = upcomingQuery.data;
-  const notifications = notifQuery.data ?? [];
+  const memberStats = memberStatsQuery.data;
+  const users = usersQuery.data ?? [];
+  const upcomingData = upcomingQuery.data;
+  const upcomingEvents = upcomingData
+    ? [
+        ...(upcomingData.weddings ?? []).map((e: any) => ({ id: e.id, date: e.weddingDate, type: 'wedding', name: e.coupleName ?? e.title })),
+        ...(upcomingData.corporate ?? []).map((e: any) => ({ id: e.id, date: e.arrivalDate, type: 'corporate', name: e.title ?? e.groupName })),
+      ].sort((a, b) => String(a.date ?? '').localeCompare(String(b.date ?? '')))
+    : [];
+
+  const pendingInvites = Array.isArray(users)
+    ? users.filter((u: { status?: string }) => u.status === 'invited').length
+    : 0;
+
+  const statsLoading =
+    kpisQuery.isLoading || memberStatsQuery.isLoading || usersQuery.isLoading;
+  const upcomingLoading = upcomingQuery.isLoading;
+
+  const anyError =
+    kpisQuery.isError || memberStatsQuery.isError || usersQuery.isError || upcomingQuery.isError;
 
   return (
-    <div className="p-6 space-y-6 max-w-7xl mx-auto">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Operations Dashboard</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            {new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })}
+    <div className="min-h-screen bg-background px-6 py-10 max-w-5xl mx-auto">
+      {/* ── Page header ── */}
+      <div className="mb-8">
+        <p className="font-sans tracking-[0.12em] uppercase text-xs text-[#BABAAE] mb-1">
+          Operations
+        </p>
+        <h1 className="font-sans text-2xl font-medium tracking-tight text-[#E0D3BD]">
+          Dashboard
+        </h1>
+        <p className="font-sans text-sm text-[#BABAAE] mt-1">{todayLabel()}</p>
+      </div>
+
+      {/* ── Error banner ── */}
+      {anyError && (
+        <div className="mb-6 bg-[#363330] border border-[#9B4D19]/50 px-4 py-3">
+          <p className="font-sans text-xs text-[#BABAAE]">
+            Some data could not be loaded. Please refresh or contact support if the issue persists.
           </p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" asChild>
-            <Link href="/ops/calendar"><Calendar className="w-4 h-4 mr-2" />Calendar</Link>
-          </Button>
-          <Button variant="outline" size="sm" asChild>
-            <Link href="/ops/reports"><BarChart3 className="w-4 h-4 mr-2" />Reports</Link>
-          </Button>
-        </div>
+      )}
+
+      {/* ── Stat cards ── */}
+      <div className="mb-1">
+        <SectionLabel>Overview</SectionLabel>
+        <GoldRule />
       </div>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-        {[
-          { label: "Confirmed Weddings", value: kpis?.confirmedWeddings, icon: Heart, color: "text-pink-600", href: "/ops/weddings" },
-          { label: "Corporate Events", value: kpis?.confirmedCorporate, icon: Building2, color: "text-blue-600", href: "/ops/corporate" },
-          { label: "Hunt/Fish Bookings", value: kpis?.confirmedHuntFish, icon: Target, color: "text-amber-600", href: "/ops/hunt-fish" },
-          { label: "Active Members", value: kpis?.activeMembers, icon: Users, color: "text-green-600", href: "/ops/membership" },
-          { label: "New Inquiries", value: kpis?.newInquiries, icon: AlertCircle, color: "text-orange-600", href: "/ops/weddings" },
-          { label: "Confirmed Revenue", value: kpis ? formatCurrency(kpis.totalConfirmedRevenue) : null, icon: DollarSign, color: "text-emerald-600", href: "/ops/reports" },
-        ].map((kpi) => (
-          <Card key={kpi.label} className="hover:shadow-md transition-shadow cursor-pointer">
-            <Link href={kpi.href}>
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-xs text-muted-foreground font-medium leading-tight">{kpi.label}</p>
-                  <kpi.icon className={`w-4 h-4 ${kpi.color}`} />
-                </div>
-                {kpisQuery.isLoading ? (
-                  <Skeleton className="h-7 w-16" />
-                ) : (
-                  <p className="text-2xl font-bold text-foreground">{kpi.value ?? 0}</p>
-                )}
-              </CardContent>
-            </Link>
-          </Card>
-        ))}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-10">
+        <StatCard
+          label="Total Members"
+          value={memberStats?.total}
+          context="All membership tiers"
+          loading={statsLoading}
+        />
+        <StatCard
+          label="Active Members"
+          value={memberStats?.active ?? kpis?.activeMembers}
+          context={
+            memberStats?.pendingRenewal != null
+              ? `${memberStats.pendingRenewal} pending renewal`
+              : undefined
+          }
+          loading={statsLoading}
+        />
+        <StatCard
+          label="Pending Invites"
+          value={usersQuery.isLoading ? undefined : pendingInvites}
+          context="Awaiting account setup"
+          loading={usersQuery.isLoading}
+        />
+        <StatCard
+          label="Upcoming Events"
+          value={upcomingLoading ? undefined : upcomingEvents.length}
+          context="Confirmed bookings"
+          loading={upcomingLoading}
+        />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Upcoming Events */}
-        <div className="lg:col-span-2 space-y-4">
-          <Card>
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-base font-semibold">Upcoming Confirmed Events</CardTitle>
-                <Button variant="ghost" size="sm" asChild>
-                  <Link href="/ops/calendar">View Calendar</Link>
-                </Button>
+      {/* ── Upcoming events ── */}
+      <div className="mb-1">
+        <SectionLabel>Upcoming Events</SectionLabel>
+        <GoldRule />
+      </div>
+
+      <div className="bg-[#363330] border border-[#57544E] mb-10">
+        {upcomingLoading ? (
+          <div className="divide-y divide-[#57544E]">
+            {[0, 1, 2, 3, 4].map((i) => (
+              <div key={i} className="px-5 py-4 flex items-center gap-4">
+                <Skeleton className="h-4 w-24 bg-[#423F3B]" />
+                <Skeleton className="h-4 w-16 bg-[#423F3B]" />
+                <Skeleton className="h-4 w-40 bg-[#423F3B]" />
               </div>
-            </CardHeader>
-            <CardContent className="p-0">
-              {upcomingQuery.isLoading ? (
-                <div className="p-4 space-y-3">
-                  {[1, 2, 3].map(i => <Skeleton key={i} className="h-12 w-full" />)}
-                </div>
-              ) : (
-                <div className="divide-y divide-border">
-                  {[
-                    ...(upcoming?.weddings ?? []).map(w => ({
-                      type: "Wedding",
-                      icon: Heart,
-                      color: "text-pink-600",
-                      label: w.coupleName,
-                      date: w.weddingDate,
-                      status: w.status,
-                      href: `/ops/weddings/${w.id}`,
-                    })),
-                    ...(upcoming?.corporate ?? []).map(c => ({
-                      type: "Corporate",
-                      icon: Building2,
-                      color: "text-blue-600",
-                      label: c.companyName,
-                      date: c.arrivalDate,
-                      status: c.status,
-                      href: `/ops/corporate/${c.id}`,
-                    })),
-                  ]
-                    .sort((a, b) => new Date(a.date ?? 0).getTime() - new Date(b.date ?? 0).getTime())
-                    .slice(0, 8)
-                    .map((ev, i) => (
-                      <Link key={i} href={ev.href} className="flex items-center gap-4 px-4 py-3 hover:bg-muted/50 transition-colors">
-                        <div className={`w-8 h-8 rounded-full bg-muted flex items-center justify-center flex-shrink-0`}>
-                          <ev.icon className={`w-4 h-4 ${ev.color}`} />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-foreground truncate">{ev.label}</p>
-                          <p className="text-xs text-muted-foreground">{ev.type} · {formatDate(ev.date)}</p>
-                        </div>
-                        <StatusBadge status={ev.status ?? "confirmed"} />
-                      </Link>
-                    ))}
-                  {!upcoming?.weddings?.length && !upcoming?.corporate?.length && (
-                    <div className="px-4 py-8 text-center text-sm text-muted-foreground">
-                      No upcoming confirmed events
+            ))}
+          </div>
+        ) : upcomingEvents.length === 0 ? (
+          <div className="px-5 py-10 text-center">
+            <p className="font-sans text-sm text-[#BABAAE]">No upcoming events on the books.</p>
+            <p className="font-sans text-xs text-[#BABAAE]/60 mt-1">
+              Confirmed bookings will appear here.
+            </p>
+          </div>
+        ) : (
+          <div>
+            {upcomingEvents.slice(0, 5).map(
+              (
+                event: {
+                  id?: string | number;
+                  date?: string | Date | null;
+                  type?: string;
+                  name?: string;
+                  label?: string;
+                },
+                idx: number,
+              ) => (
+                <div key={event.id ?? idx}>
+                  <div className="px-5 py-4 flex items-start gap-5 hover:bg-[#423F3B]/50 transition-colors">
+                    {/* Date column */}
+                    <div className="w-28 flex-shrink-0">
+                      <p className="font-sans text-xs text-[#BABAAE]">
+                        {formatEventDate(event.date)}
+                      </p>
                     </div>
+
+                    {/* Type column */}
+                    <div className="w-32 flex-shrink-0">
+                      <span className="font-sans text-xs tracking-[0.08em] uppercase text-[#BABAAE]">
+                        {eventTypeLabel(event.type)}
+                      </span>
+                    </div>
+
+                    {/* Name */}
+                    <div className="flex-1 min-w-0">
+                      <p className="font-sans text-sm text-[#E0D3BD] truncate">
+                        {event.name ?? event.label ?? 'Unnamed Event'}
+                      </p>
+                    </div>
+                  </div>
+                  {idx < Math.min(upcomingEvents.length, 5) - 1 && (
+                    <Separator className="bg-[#57544E]/50" />
                   )}
                 </div>
-              )}
-            </CardContent>
-          </Card>
+              ),
+            )}
+          </div>
+        )}
+      </div>
 
-          {/* Recent Activity */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base font-semibold">Recent Inquiries</CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
-              {activityQuery.isLoading ? (
-                <div className="p-4 space-y-3">
-                  {[1, 2, 3].map(i => <Skeleton key={i} className="h-10 w-full" />)}
-                </div>
-              ) : (
-                <div className="divide-y divide-border">
-                  {(activity?.recentInquiries ?? []).slice(0, 5).map((inq) => (
-                    <div key={inq.id} className="flex items-center gap-4 px-4 py-3">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-foreground truncate">{inq.name}</p>
-                        <p className="text-xs text-muted-foreground">{inq.type} · {formatDate(inq.createdAt)}</p>
-                      </div>
-                      <StatusBadge status={inq.status ?? "new"} />
-                    </div>
-                  ))}
-                  {!activity?.recentInquiries?.length && (
-                    <div className="px-4 py-6 text-center text-sm text-muted-foreground">No recent inquiries</div>
-                  )}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+      {/* ── Quick navigation ── */}
+      <div className="mb-1">
+        <SectionLabel>Quick Access</SectionLabel>
+        <GoldRule />
+      </div>
 
-        {/* Notifications Panel */}
-        <div>
-          <Card className="h-full">
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-base font-semibold">Notifications</CardTitle>
-                {notifications.length > 0 && (
-                  <Button variant="ghost" size="sm" onClick={() => markAllRead.mutate()} className="text-xs">
-                    Mark all read
-                  </Button>
-                )}
-              </div>
-            </CardHeader>
-            <CardContent className="p-0">
-              {notifQuery.isLoading ? (
-                <div className="p-4 space-y-3">
-                  {[1, 2, 3].map(i => <Skeleton key={i} className="h-12 w-full" />)}
-                </div>
-              ) : notifications.length > 0 ? (
-                <div className="divide-y divide-border max-h-96 overflow-y-auto">
-                  {notifications.map((n) => (
-                    <div key={n.id} className="px-4 py-3">
-                      <p className="text-sm font-medium text-foreground">{n.title}</p>
-                      {n.body && <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{n.body}</p>}
-                      <p className="text-xs text-muted-foreground mt-1">{formatDate(n.createdAt)}</p>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="px-4 py-8 text-center">
-                  <CheckCircle2 className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-                  <p className="text-sm text-muted-foreground">All caught up</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+      <div className="flex flex-col sm:flex-row gap-4 sm:gap-8">
+        <ArrowLink href="/ops/calendar">Calendar</ArrowLink>
+        <ArrowLink href="/ops/membership">Members</ArrowLink>
+        <ArrowLink href="/ops/users">Invitations</ArrowLink>
+        <ArrowLink href="/ops/weddings">Weddings</ArrowLink>
+        <ArrowLink href="/ops/field-reports">Field Reports</ArrowLink>
       </div>
     </div>
   );

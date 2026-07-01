@@ -1,20 +1,81 @@
 import { useState, useCallback } from "react";
-import { Button } from '@shared/ui/button';
-import { Card, CardContent } from '@shared/ui/card';
-import { Skeleton } from '@shared/ui/skeleton';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@shared/ui/tabs';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@shared/ui/dialog';
-import { Input } from '@shared/ui/input';
-import { Label } from '@shared/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@shared/ui/select';
-import { Textarea } from '@shared/ui/textarea';
-import { trpc } from '@shared/lib/trpc';
-import { Mail, Shield, Plus, Search, User, ChevronRight, X } from "lucide-react";
+import { Button } from "@shared/ui/button";
+import { Skeleton } from "@shared/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@shared/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@shared/ui/dialog";
+import { Input } from "@shared/ui/input";
+import { Label } from "@shared/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@shared/ui/select";
+import { Textarea } from "@shared/ui/textarea";
+import { trpc } from "@shared/lib/trpc";
+import { Plus, Search, User, ChevronRight, X } from "lucide-react";
 import { toast } from "sonner";
 
 function formatDate(d: string | Date | null | undefined) {
   if (!d) return "—";
   return new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+}
+
+// ─── Status dot ──────────────────────────────────────────────────────────────
+function StatusDot({ active }: { active: boolean }) {
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      <span
+        className="inline-block w-1.5 h-1.5 rounded-full flex-shrink-0"
+        style={{ backgroundColor: active ? "#6B7250" : "#57544E" }}
+      />
+      <span className="font-sans text-xs text-[#BABAAE]">
+        {active ? "Active" : "Inactive"}
+      </span>
+    </span>
+  );
+}
+
+// ─── Filter chip ─────────────────────────────────────────────────────────────
+function FilterChip({
+  label,
+  selected,
+  onClick,
+}: {
+  label: string;
+  selected: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={[
+        "px-3 py-1 font-sans text-xs tracking-[0.08em] uppercase border transition-colors",
+        selected
+          ? "border-[#9B4D19] text-[#9B4D19] bg-[#9B4D19]/10"
+          : "border-[#57544E] text-[#BABAAE] hover:border-[#9B4D19] hover:text-[#9B4D19]",
+      ].join(" ")}
+    >
+      {label}
+    </button>
+  );
+}
+
+// ─── Stat card ───────────────────────────────────────────────────────────────
+function StatCard({
+  label,
+  value,
+  loading,
+}: {
+  label: string;
+  value: number;
+  loading: boolean;
+}) {
+  return (
+    <div className="bg-[#363330] border border-[#57544E] p-5">
+      {loading ? (
+        <Skeleton className="h-8 w-16 mb-2 bg-[#423F3B]" />
+      ) : (
+        <p className="font-sans text-3xl font-semibold text-[#E0D3BD]">{value}</p>
+      )}
+      <p className="font-sans text-xs tracking-[0.12em] uppercase text-[#BABAAE] mt-1">{label}</p>
+    </div>
+  );
 }
 
 // ─── Add Member Dialog ────────────────────────────────────────────────────────
@@ -29,7 +90,7 @@ function AddMemberDialog({ open, onClose }: { open: boolean; onClose: () => void
   const [renewalDate, setRenewalDate] = useState("");
   const [notes, setNotes] = useState("");
 
-  const searchQuery2 = trpc.portal.membership.searchUsers.useQuery(
+  const searchResults = trpc.portal.membership.searchUsers.useQuery(
     { query: debouncedQuery },
     { enabled: debouncedQuery.length >= 2 }
   );
@@ -46,9 +107,14 @@ function AddMemberDialog({ open, onClose }: { open: boolean; onClose: () => void
   });
 
   function resetForm() {
-    setSearchQuery(""); setDebouncedQuery(""); setSelectedUser(null);
-    setTier("standard"); setMemberNumber(""); setNotes("");
-    setJoinDate(new Date().toISOString().split("T")[0]); setRenewalDate("");
+    setSearchQuery("");
+    setDebouncedQuery("");
+    setSelectedUser(null);
+    setTier("standard");
+    setMemberNumber("");
+    setNotes("");
+    setJoinDate(new Date().toISOString().split("T")[0]);
+    setRenewalDate("");
   }
 
   const handleSearch = useCallback((v: string) => {
@@ -69,58 +135,64 @@ function AddMemberDialog({ open, onClose }: { open: boolean; onClose: () => void
     });
   };
 
+  const inputCls =
+    "bg-[#2B2823] border border-[#57544E] text-[#E0D3BD] placeholder-[#57544E] font-sans text-sm focus:outline-none focus:ring-1 focus:ring-[#9B4D19] focus:border-[#9B4D19] rounded-none";
+  const labelCls = "font-sans text-xs tracking-[0.1em] uppercase text-[#BABAAE]";
+
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) { onClose(); resetForm(); } }}>
-      <DialogContent className="max-w-lg">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Plus className="w-5 h-5 text-emerald-600" />
+      <DialogContent className="max-w-lg bg-[#363330] border border-[#57544E] rounded-none p-0 gap-0">
+        <DialogHeader className="px-6 py-5 border-b border-[#57544E]">
+          <DialogTitle className="font-sans text-base font-medium tracking-[0.06em] uppercase text-[#E0D3BD] flex items-center gap-2">
+            <Plus className="w-4 h-4 text-[#9B4D19]" />
             Add New Member
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-5 py-2">
+        <div className="space-y-5 px-6 py-5">
           {/* User Search */}
           <div className="space-y-2">
-            <Label>Link to Existing User Account <span className="text-red-500">*</span></Label>
+            <Label className={labelCls}>
+              Link to Existing User Account <span className="text-[#9B4D19]">*</span>
+            </Label>
             {selectedUser ? (
-              <div className="flex items-center justify-between p-3 rounded-lg border border-emerald-200 bg-emerald-50">
+              <div
+                className="flex items-center justify-between p-3 border border-[#6B7250] bg-[#6B7250]/10"
+              >
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center">
-                    <User className="w-4 h-4 text-emerald-700" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-foreground">{selectedUser.email ?? "—"}</p>
-                  </div>
+                  <User className="w-4 h-4 text-[#BABAAE]" />
+                  <p className="font-sans text-sm text-[#E0D3BD]">{selectedUser.email}</p>
                 </div>
-                <button onClick={() => setSelectedUser(null)} className="text-muted-foreground hover:text-foreground">
+                <button
+                  onClick={() => setSelectedUser(null)}
+                  className="text-[#BABAAE] hover:text-[#E0D3BD]"
+                >
                   <X className="w-4 h-4" />
                 </button>
               </div>
             ) : (
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#BABAAE]" />
                 <Input
-                  className="pl-9"
-                  placeholder="Search by name or email…"
+                  className={`${inputCls} pl-9`}
+                  placeholder="Search by email…"
                   value={searchQuery}
                   onChange={(e) => handleSearch(e.target.value)}
                 />
                 {debouncedQuery.length >= 2 && (
-                  <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-background border border-border rounded-lg shadow-lg max-h-48 overflow-y-auto">
-                    {searchQuery2.isLoading ? (
-                      <div className="p-3 text-sm text-muted-foreground">Searching…</div>
-                    ) : (searchQuery2.data ?? []).length === 0 ? (
-                      <div className="p-3 text-sm text-muted-foreground">No users found</div>
-                    ) : (searchQuery2.data ?? []).map(u => (
-                      <button key={u.id} onClick={() => setSelectedUser(u)}
-                        className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-muted/50 text-left transition-colors">
-                        <div className="w-7 h-7 rounded-full bg-muted flex items-center justify-center shrink-0">
-                          <User className="w-3.5 h-3.5 text-muted-foreground" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium">{u.email ?? "—"}</p>
-                        </div>
+                  <div className="absolute top-full left-0 right-0 z-50 mt-px bg-[#2B2823] border border-[#57544E] max-h-48 overflow-y-auto">
+                    {searchResults.isLoading ? (
+                      <div className="p-3 font-sans text-sm text-[#BABAAE]">Searching…</div>
+                    ) : (searchResults.data ?? []).length === 0 ? (
+                      <div className="p-3 font-sans text-sm text-[#BABAAE]">No users found</div>
+                    ) : (searchResults.data ?? []).map((u) => (
+                      <button
+                        key={u.id}
+                        onClick={() => setSelectedUser(u)}
+                        className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-[#423F3B] text-left"
+                      >
+                        <User className="w-3.5 h-3.5 text-[#BABAAE] shrink-0" />
+                        <span className="font-sans text-sm text-[#E0D3BD]">{u.email}</span>
                       </button>
                     ))}
                   </div>
@@ -131,47 +203,87 @@ function AddMemberDialog({ open, onClose }: { open: boolean; onClose: () => void
 
           {/* Tier */}
           <div className="space-y-2">
-            <Label>Membership Tier</Label>
+            <Label className={labelCls}>Membership Tier</Label>
             <Select value={tier} onValueChange={(v) => setTier(v as typeof tier)}>
-              <SelectTrigger>
+              <SelectTrigger className={inputCls}>
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="standard">Standard</SelectItem>
-                <SelectItem value="premier">Premier</SelectItem>
-                <SelectItem value="founding">Founding</SelectItem>
+              <SelectContent className="bg-[#2B2823] border border-[#57544E] rounded-none">
+                <SelectItem value="standard" className="font-sans text-sm text-[#E0D3BD] focus:bg-[#423F3B]">Standard</SelectItem>
+                <SelectItem value="premier" className="font-sans text-sm text-[#E0D3BD] focus:bg-[#423F3B]">Premier</SelectItem>
+                <SelectItem value="founding" className="font-sans text-sm text-[#E0D3BD] focus:bg-[#423F3B]">Founding</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
-          {/* Member Number (optional — auto-generated if blank) */}
+          {/* Member Number */}
           <div className="space-y-2">
-            <Label>Member Number <span className="text-xs text-muted-foreground">(auto-generated if blank)</span></Label>
-            <Input placeholder="e.g. RL-2026-0001" value={memberNumber} onChange={(e) => setMemberNumber(e.target.value)} />
+            <Label className={labelCls}>
+              Member Number{" "}
+              <span className="normal-case tracking-normal text-[#57544E]">(auto-generated if blank)</span>
+            </Label>
+            <Input
+              className={inputCls}
+              placeholder="e.g. RL-2026-0001"
+              value={memberNumber}
+              onChange={(e) => setMemberNumber(e.target.value)}
+            />
           </div>
 
           {/* Dates */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>Join Date</Label>
-              <Input type="date" value={joinDate} onChange={(e) => setJoinDate(e.target.value)} />
+              <Label className={labelCls}>Join Date</Label>
+              <Input
+                type="date"
+                className={inputCls}
+                value={joinDate}
+                onChange={(e) => setJoinDate(e.target.value)}
+              />
             </div>
             <div className="space-y-2">
-              <Label>Renewal Date <span className="text-xs text-muted-foreground">(optional)</span></Label>
-              <Input type="date" value={renewalDate} onChange={(e) => setRenewalDate(e.target.value)} />
+              <Label className={labelCls}>
+                Renewal Date{" "}
+                <span className="normal-case tracking-normal text-[#57544E]">(optional)</span>
+              </Label>
+              <Input
+                type="date"
+                className={inputCls}
+                value={renewalDate}
+                onChange={(e) => setRenewalDate(e.target.value)}
+              />
             </div>
           </div>
 
           {/* Notes */}
           <div className="space-y-2">
-            <Label>Internal Notes <span className="text-xs text-muted-foreground">(optional)</span></Label>
-            <Textarea rows={2} placeholder="Referral source, special conditions, etc." value={notes} onChange={(e) => setNotes(e.target.value)} />
+            <Label className={labelCls}>
+              Internal Notes{" "}
+              <span className="normal-case tracking-normal text-[#57544E]">(optional)</span>
+            </Label>
+            <Textarea
+              rows={2}
+              className={inputCls}
+              placeholder="Referral source, special conditions, etc."
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+            />
           </div>
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={() => { onClose(); resetForm(); }}>Cancel</Button>
-          <Button onClick={handleSubmit} disabled={!selectedUser || createMutation.isPending} className="bg-emerald-700 hover:bg-emerald-800 text-white">
+        <DialogFooter className="px-6 py-4 border-t border-[#57544E] flex gap-3">
+          <Button
+            variant="outline"
+            onClick={() => { onClose(); resetForm(); }}
+            className="border border-[#57544E] text-[#E0D3BD] bg-transparent hover:border-[#9B4D19] hover:text-[#9B4D19] font-sans text-xs tracking-[0.1em] uppercase rounded-none"
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleSubmit}
+            disabled={!selectedUser || createMutation.isPending}
+            className="bg-[#9B4D19] hover:bg-[#7a3c14] text-[#E0D3BD] font-sans text-xs tracking-[0.1em] uppercase rounded-none"
+          >
             {createMutation.isPending ? "Creating…" : "Create Member"}
           </Button>
         </DialogFooter>
@@ -180,19 +292,85 @@ function AddMemberDialog({ open, onClose }: { open: boolean; onClose: () => void
   );
 }
 
-// ─── Member Detail Drawer ─────────────────────────────────────────────────────
-type MemberRow = { member: { id: number; userId: string; memberNumber: string | null; tier: string; joinDate: string | null; renewalDate: string | null; active: boolean; notes: string | null; createdAt: Date }; user: { id: string; email: string | null } | null };
+// ─── Deactivate Confirm Dialog ────────────────────────────────────────────────
+function DeactivateConfirmDialog({
+  open,
+  onConfirm,
+  onCancel,
+}: {
+  open: boolean;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  return (
+    <Dialog open={open} onOpenChange={(o) => { if (!o) onCancel(); }}>
+      <DialogContent className="max-w-sm bg-[#363330] border border-[#57544E] rounded-none p-0 gap-0">
+        <DialogHeader className="px-6 py-5 border-b border-[#57544E]">
+          <DialogTitle className="font-sans text-base font-medium tracking-[0.06em] uppercase text-[#E0D3BD]">
+            Deactivate Member?
+          </DialogTitle>
+        </DialogHeader>
+        <div className="px-6 py-5">
+          <p className="font-sans text-sm text-[#BABAAE]">
+            This member will lose access to member-only areas. You can reactivate them at any time.
+          </p>
+        </div>
+        <DialogFooter className="px-6 py-4 border-t border-[#57544E] flex gap-3">
+          <Button
+            variant="outline"
+            onClick={onCancel}
+            className="border border-[#57544E] text-[#E0D3BD] bg-transparent hover:border-[#9B4D19] hover:text-[#9B4D19] font-sans text-xs tracking-[0.1em] uppercase rounded-none"
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={onConfirm}
+            className="bg-[#9B4D19] hover:bg-[#7a3c14] text-[#E0D3BD] font-sans text-xs tracking-[0.1em] uppercase rounded-none"
+          >
+            Deactivate
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
 
-function MemberDetailDrawer({ row, onClose, onUpdate }: { row: MemberRow; onClose: () => void; onUpdate: () => void }) {
+// ─── Member Detail Drawer ─────────────────────────────────────────────────────
+type MemberRow = {
+  member: {
+    id: number;
+    userId: string;
+    memberNumber: string | null;
+    tier: string;
+    joinDate: string | null;
+    renewalDate: string | null;
+    active: boolean;
+    notes: string | null;
+    createdAt: Date;
+  };
+  user: { id: string; email: string | null } | null;
+};
+
+function MemberDetailDrawer({
+  row,
+  onClose,
+  onUpdate,
+}: {
+  row: MemberRow;
+  onClose: () => void;
+  onUpdate: () => void;
+}) {
   const { member: m, user: u } = row;
   const utils = trpc.useUtils();
   const [editTier, setEditTier] = useState(m.tier as "standard" | "premier" | "founding");
   const [editRenewal, setEditRenewal] = useState(m.renewalDate ?? "");
   const [editNotes, setEditNotes] = useState(m.notes ?? "");
+  const [deactivateOpen, setDeactivateOpen] = useState(false);
 
   const updateMutation = trpc.portal.membership.updateMember.useMutation({
     onSuccess: () => {
       utils.portal.membership.members.invalidate();
+      utils.portal.membership.stats.invalidate();
       toast.success("Member updated");
       onUpdate();
     },
@@ -208,258 +386,327 @@ function MemberDetailDrawer({ row, onClose, onUpdate }: { row: MemberRow; onClos
     });
   };
 
+  const handleToggleActive = () => {
+    if (m.active) {
+      setDeactivateOpen(true);
+    } else {
+      updateMutation.mutate({ id: m.id, active: true });
+    }
+  };
+
+  const handleDeactivateConfirm = () => {
+    setDeactivateOpen(false);
+    updateMutation.mutate({ id: m.id, active: false });
+  };
+
+  const inputCls =
+    "bg-[#2B2823] border border-[#57544E] text-[#E0D3BD] placeholder-[#57544E] font-sans text-sm focus:outline-none focus:ring-1 focus:ring-[#9B4D19] focus:border-[#9B4D19] rounded-none w-full px-3 py-2";
+  const labelCls = "font-sans text-xs tracking-[0.1em] uppercase text-[#BABAAE]";
+
   return (
-    <div className="fixed inset-y-0 right-0 z-50 w-full max-w-md bg-background border-l border-border shadow-xl flex flex-col">
-      <div className="flex items-center justify-between px-6 py-4 border-b border-border">
-        <h2 className="text-lg font-semibold text-foreground">Member Details</h2>
-        <button onClick={onClose} className="text-muted-foreground hover:text-foreground"><X className="w-5 h-5" /></button>
-      </div>
-
-      <div className="flex-1 overflow-y-auto p-6 space-y-6">
-        {/* Identity */}
-        <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-full bg-emerald-100 flex items-center justify-center">
-            <User className="w-7 h-7 text-emerald-700" />
-          </div>
+    <>
+      <div className="fixed inset-y-0 right-0 z-50 w-full max-w-md bg-[#2B2823] border-l border-[#57544E] flex flex-col">
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[#57544E] bg-[#363330]">
           <div>
-            <p className="text-lg font-semibold text-foreground">{u?.email ?? "—"}</p>
-            <p className="text-sm text-muted-foreground flex items-center gap-1">
-              <Mail className="w-3.5 h-3.5" />{u?.email ?? "—"}
-            </p>
+            <p className="font-sans text-xs tracking-[0.12em] uppercase text-[#BABAAE]">Member Details</p>
+            <p className="font-sans text-base font-medium text-[#E0D3BD] mt-0.5">{u?.email ?? "—"}</p>
           </div>
+          <button onClick={onClose} className="text-[#BABAAE] hover:text-[#E0D3BD] transition-colors">
+            <X className="w-5 h-5" />
+          </button>
         </div>
 
-        {/* Key facts */}
-        <div className="grid grid-cols-2 gap-3">
-          {[
-            { label: "Member #", value: m.memberNumber ?? "—" },
-            { label: "Status", value: m.active ? "Active" : "Inactive", color: m.active ? "text-green-700" : "text-red-700" },
-            { label: "Joined", value: formatDate(m.joinDate) },
-            { label: "Member Since", value: formatDate(m.createdAt) },
-          ].map(f => (
-            <div key={f.label} className="p-3 rounded-lg bg-muted/40">
-              <p className="text-xs text-muted-foreground mb-0.5">{f.label}</p>
-              <p className={`text-sm font-medium ${f.color ?? "text-foreground"}`}>{f.value}</p>
+        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+          {/* Read-only facts */}
+          <div className="grid grid-cols-2 gap-px bg-[#57544E]">
+            {[
+              { label: "Member #", value: m.memberNumber ?? "—" },
+              { label: "Status", value: <StatusDot active={m.active} /> },
+              { label: "Joined", value: formatDate(m.joinDate) },
+              { label: "Member Since", value: formatDate(m.createdAt) },
+            ].map((f) => (
+              <div key={f.label} className="bg-[#363330] p-4">
+                <p className="font-sans text-xs tracking-[0.1em] uppercase text-[#BABAAE] mb-1">{f.label}</p>
+                {typeof f.value === "string" ? (
+                  <p className="font-sans text-sm text-[#E0D3BD]">{f.value}</p>
+                ) : (
+                  f.value
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* Edit form */}
+          <div className="space-y-4">
+            <p className="font-sans text-xs tracking-[0.12em] uppercase text-[#BABAAE]">Edit</p>
+
+            <div className="space-y-1.5">
+              <label className={labelCls}>Tier</label>
+              <Select value={editTier} onValueChange={(v) => setEditTier(v as typeof editTier)}>
+                <SelectTrigger className="bg-[#2B2823] border border-[#57544E] text-[#E0D3BD] font-sans text-sm rounded-none focus:ring-[#9B4D19]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-[#2B2823] border border-[#57544E] rounded-none">
+                  <SelectItem value="standard" className="font-sans text-sm text-[#E0D3BD] focus:bg-[#423F3B]">Standard</SelectItem>
+                  <SelectItem value="premier" className="font-sans text-sm text-[#E0D3BD] focus:bg-[#423F3B]">Premier</SelectItem>
+                  <SelectItem value="founding" className="font-sans text-sm text-[#E0D3BD] focus:bg-[#423F3B]">Founding</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-          ))}
-        </div>
 
-        {/* Editable fields */}
-        <div className="space-y-4">
-          <div className="space-y-1.5">
-            <Label>Tier</Label>
-            <Select value={editTier} onValueChange={(v) => setEditTier(v as typeof editTier)}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="standard">Standard</SelectItem>
-                <SelectItem value="premier">Premier</SelectItem>
-                <SelectItem value="founding">Founding</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-1.5">
-            <Label>Renewal Date</Label>
-            <Input type="date" value={editRenewal} onChange={(e) => setEditRenewal(e.target.value)} />
-          </div>
-          <div className="space-y-1.5">
-            <Label>Internal Notes</Label>
-            <Textarea rows={3} value={editNotes} onChange={(e) => setEditNotes(e.target.value)} />
-          </div>
-        </div>
+            <div className="space-y-1.5">
+              <label className={labelCls}>Renewal Date</label>
+              <input
+                type="date"
+                className={inputCls}
+                value={editRenewal}
+                onChange={(e) => setEditRenewal(e.target.value)}
+              />
+            </div>
 
-        {/* Toggle active */}
-        <div className="pt-2 border-t border-border">
+            <div className="space-y-1.5">
+              <label className={labelCls}>Internal Notes</label>
+              <textarea
+                rows={3}
+                className={`${inputCls} resize-none`}
+                value={editNotes}
+                onChange={(e) => setEditNotes(e.target.value)}
+              />
+            </div>
+          </div>
+
+          {/* Save */}
           <Button
-            variant="outline"
-            size="sm"
-            className={m.active ? "text-red-700 border-red-200 hover:bg-red-50" : "text-green-700 border-green-200 hover:bg-green-50"}
-            onClick={() => updateMutation.mutate({ id: m.id, active: !m.active })}
+            onClick={handleSave}
             disabled={updateMutation.isPending}
+            className="w-full bg-[#9B4D19] hover:bg-[#7a3c14] text-[#E0D3BD] font-sans text-xs tracking-[0.1em] uppercase rounded-none"
           >
-            {m.active ? "Deactivate Membership" : "Reactivate Membership"}
+            {updateMutation.isPending ? "Saving…" : "Save Changes"}
           </Button>
+
+          {/* Activate / Deactivate */}
+          <div className="pt-2 border-t border-[#57544E]">
+            <Button
+              variant="outline"
+              onClick={handleToggleActive}
+              disabled={updateMutation.isPending}
+              className="w-full border border-[#57544E] text-[#BABAAE] bg-transparent hover:border-[#9B4D19] hover:text-[#9B4D19] font-sans text-xs tracking-[0.1em] uppercase rounded-none"
+            >
+              {m.active ? "Deactivate Membership" : "Reactivate Membership"}
+            </Button>
+          </div>
         </div>
       </div>
 
-      <div className="px-6 py-4 border-t border-border flex gap-3">
-        <Button variant="outline" className="flex-1" onClick={onClose}>Cancel</Button>
-        <Button className="flex-1 bg-emerald-700 hover:bg-emerald-800 text-white" onClick={handleSave} disabled={updateMutation.isPending}>
-          {updateMutation.isPending ? "Saving…" : "Save Changes"}
-        </Button>
-      </div>
-    </div>
+      <DeactivateConfirmDialog
+        open={deactivateOpen}
+        onConfirm={handleDeactivateConfirm}
+        onCancel={() => setDeactivateOpen(false)}
+      />
+    </>
   );
 }
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function PortalMembership() {
   const [tab, setTab] = useState("members");
+  const [searchInput, setSearchInput] = useState("");
   const [tierFilter, setTierFilter] = useState<string | undefined>(undefined);
   const [activeFilter, setActiveFilter] = useState<boolean | undefined>(undefined);
   const [addOpen, setAddOpen] = useState(false);
   const [selectedRow, setSelectedRow] = useState<MemberRow | null>(null);
   const utils = trpc.useUtils();
 
+  const statsQuery = trpc.portal.membership.stats.useQuery();
+
   const membersQuery = trpc.portal.membership.members.useInfiniteQuery(
     { active: activeFilter, tier: tierFilter, limit: 25 },
     { getNextPageParam: (p) => p.nextCursor ?? undefined, staleTime: 30_000 }
   );
-  const statsQuery = trpc.portal.membership.stats.useQuery();
+
   const applicationsQuery = trpc.portal.membership.applications.useInfiniteQuery(
     { limit: 25 },
     { getNextPageParam: (p) => p.nextCursor ?? undefined, staleTime: 30_000 }
   );
 
   const updateApplicationMutation = trpc.portal.membership.updateApplicationStatus.useMutation({
-    onSuccess: () => { utils.portal.membership.applications.invalidate(); toast.success("Application updated"); },
+    onSuccess: () => {
+      utils.portal.membership.applications.invalidate();
+      toast.success("Application updated");
+    },
     onError: (e) => toast.error(e.message),
   });
 
-  const membersFlat = membersQuery.data?.pages.flatMap(p => p.items) ?? [];
-  const rows = membersFlat;
   const stats = statsQuery.data;
-  const applicationsFlat = applicationsQuery.data?.pages.flatMap(p => p.items) ?? [];
-  const applications = applicationsFlat;
+  const allMembers = membersQuery.data?.pages.flatMap((p) => p.items) ?? [];
+
+  // Client-side email filter
+  const membersFiltered = searchInput.trim()
+    ? allMembers.filter((r) =>
+        (r.user?.email ?? "").toLowerCase().includes(searchInput.trim().toLowerCase())
+      )
+    : allMembers;
+
+  const applications = applicationsQuery.data?.pages.flatMap((p) => p.items) ?? [];
+
+  const thCls = "text-left px-4 py-3 font-sans text-xs tracking-[0.1em] uppercase text-[#BABAAE] font-normal border-b border-[#57544E]";
+  const tdCls = "px-4 py-3 font-sans text-sm text-[#BABAAE]";
 
   return (
     <div className="p-6 space-y-6 max-w-7xl mx-auto">
       {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-3">
+      <div className="flex items-start justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-            <Shield className="w-6 h-6 text-emerald-600" />
-            Membership Administration
+          <p className="font-sans text-xs tracking-[0.12em] uppercase text-[#BABAAE]">Administration</p>
+          <h1 className="font-sans text-2xl font-medium tracking-tight text-[#E0D3BD] mt-1">
+            Membership
           </h1>
-          <p className="text-sm text-muted-foreground">Manage member accounts, tiers, and renewals</p>
         </div>
-        <Button onClick={() => setAddOpen(true)} className="bg-emerald-700 hover:bg-emerald-800 text-white gap-2">
-          <Plus className="w-4 h-4" />
+        <Button
+          onClick={() => setAddOpen(true)}
+          className="bg-[#9B4D19] hover:bg-[#7a3c14] text-[#E0D3BD] font-sans text-xs tracking-[0.1em] uppercase rounded-none flex items-center gap-2"
+        >
+          <Plus className="w-3.5 h-3.5" />
           Add Member
         </Button>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {[
-          { label: "Total Members", value: stats?.total ?? 0, color: "text-foreground" },
-          { label: "Active", value: stats?.active ?? 0, color: "text-green-600" },
-          { label: "Pending Renewal", value: stats?.pendingRenewal ?? 0, color: "text-yellow-600" },
-          { label: "Inactive", value: stats?.inactive ?? 0, color: "text-red-600" },
-        ].map(stat => (
-          <Card key={stat.label}>
-            <CardContent className="p-4">
-              {statsQuery.isLoading ? <Skeleton className="h-7 w-16 mb-1" /> : <p className={`text-2xl font-bold ${stat.color}`}>{stat.value}</p>}
-              <p className="text-xs text-muted-foreground">{stat.label}</p>
-            </CardContent>
-          </Card>
-        ))}
+      {/* Stat cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-[#57544E]">
+        <StatCard label="Total Members" value={stats?.total ?? 0} loading={statsQuery.isLoading} />
+        <StatCard label="Active" value={stats?.active ?? 0} loading={statsQuery.isLoading} />
+        <StatCard label="Pending Renewal" value={stats?.pendingRenewal ?? 0} loading={statsQuery.isLoading} />
+        <StatCard label="Inactive" value={stats?.inactive ?? 0} loading={statsQuery.isLoading} />
       </div>
 
+      {/* Tabs */}
       <Tabs value={tab} onValueChange={setTab}>
-        <TabsList>
-          <TabsTrigger value="members">Members</TabsTrigger>
-          <TabsTrigger value="applications">Applications</TabsTrigger>
+        <TabsList className="bg-[#363330] border border-[#57544E] rounded-none p-0 h-auto">
+          {["members", "applications"].map((t) => (
+            <TabsTrigger
+              key={t}
+              value={t}
+              className="font-sans text-xs tracking-[0.1em] uppercase px-5 py-2.5 rounded-none data-[state=active]:bg-[#9B4D19] data-[state=active]:text-[#E0D3BD] data-[state=inactive]:text-[#BABAAE] data-[state=inactive]:hover:text-[#E0D3BD]"
+            >
+              {t === "members" ? "Members" : "Applications"}
+            </TabsTrigger>
+          ))}
         </TabsList>
 
         {/* ── Members Tab ── */}
         <TabsContent value="members" className="space-y-4 mt-4">
-          <div className="flex gap-3 flex-wrap">
-            <div className="flex gap-2">
-              {[
-                { label: "All", active: activeFilter === undefined, onClick: () => setActiveFilter(undefined) },
-                { label: "Active", active: activeFilter === true, onClick: () => setActiveFilter(true) },
-                { label: "Inactive", active: activeFilter === false, onClick: () => setActiveFilter(false) },
-              ].map(f => (
-                <button key={f.label} onClick={f.onClick}
-                  className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${f.active ? "border-primary bg-primary/5 text-primary" : "border-border text-muted-foreground hover:border-primary/50"}`}>
-                  {f.label}
-                </button>
-              ))}
+          {/* Search + filters */}
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:flex-wrap">
+            {/* Search */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#BABAAE]" />
+              <input
+                type="text"
+                className="bg-[#363330] border border-[#57544E] text-[#E0D3BD] placeholder-[#57544E] font-sans text-sm pl-9 pr-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#9B4D19] focus:border-[#9B4D19] w-64"
+                placeholder="Filter by email…"
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+              />
             </div>
+
+            {/* Status chips */}
             <div className="flex gap-2">
-              {[
-                { label: "All Tiers", value: undefined },
-                { label: "Standard", value: "standard" },
-                { label: "Premier", value: "premier" },
-                { label: "Founding", value: "founding" },
-              ].map(f => (
-                <button key={f.label} onClick={() => setTierFilter(f.value)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all capitalize ${tierFilter === f.value ? "border-amber-500 bg-amber-50 text-amber-700" : "border-border text-muted-foreground hover:border-amber-300"}`}>
-                  {f.label}
-                </button>
-              ))}
+              <FilterChip label="All" selected={activeFilter === undefined} onClick={() => setActiveFilter(undefined)} />
+              <FilterChip label="Active" selected={activeFilter === true} onClick={() => setActiveFilter(true)} />
+              <FilterChip label="Inactive" selected={activeFilter === false} onClick={() => setActiveFilter(false)} />
+            </div>
+
+            {/* Tier chips */}
+            <div className="flex gap-2">
+              <FilterChip label="All Tiers" selected={tierFilter === undefined} onClick={() => setTierFilter(undefined)} />
+              <FilterChip label="Standard" selected={tierFilter === "standard"} onClick={() => setTierFilter("standard")} />
+              <FilterChip label="Premier" selected={tierFilter === "premier"} onClick={() => setTierFilter("premier")} />
+              <FilterChip label="Founding" selected={tierFilter === "founding"} onClick={() => setTierFilter("founding")} />
             </div>
           </div>
 
-          <Card>
-            <CardContent className="p-0">
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-border bg-muted/30">
-                      <th className="text-left px-4 py-3 font-medium text-muted-foreground">Member</th>
-                      <th className="text-left px-4 py-3 font-medium text-muted-foreground">Tier</th>
-                      <th className="text-left px-4 py-3 font-medium text-muted-foreground">Member #</th>
-                      <th className="text-left px-4 py-3 font-medium text-muted-foreground">Joined</th>
-                      <th className="text-left px-4 py-3 font-medium text-muted-foreground">Renewal</th>
-                      <th className="text-left px-4 py-3 font-medium text-muted-foreground">Status</th>
-                      <th className="text-left px-4 py-3 font-medium text-muted-foreground"></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {membersQuery.isLoading ? (
-                      [1,2,3,4,5].map(i => <tr key={i} className="border-b border-border"><td colSpan={7} className="px-4 py-3"><Skeleton className="h-5 w-full" /></td></tr>)
-                    ) : rows.length === 0 ? (
-                      <tr>
-                        <td colSpan={7} className="px-4 py-12 text-center">
-                          <div className="flex flex-col items-center gap-3">
-                            <Shield className="w-10 h-10 text-muted-foreground/40" />
-                            <p className="text-muted-foreground">No members yet</p>
-                            <Button size="sm" onClick={() => setAddOpen(true)} className="bg-emerald-700 hover:bg-emerald-800 text-white gap-1.5">
-                              <Plus className="w-3.5 h-3.5" />Add First Member
-                            </Button>
-                          </div>
+          {/* Members table */}
+          <div className="bg-[#363330] border border-[#57544E]">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-[#423F3B]">
+                  <tr>
+                    <th className={thCls}>Email</th>
+                    <th className={thCls}>Member #</th>
+                    <th className={thCls}>Tier</th>
+                    <th className={thCls}>Joined</th>
+                    <th className={thCls}>Renewal</th>
+                    <th className={thCls}>Status</th>
+                    <th className={`${thCls} w-8`}></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {membersQuery.isLoading ? (
+                    [1, 2, 3, 4, 5].map((i) => (
+                      <tr key={i} className="border-b border-[#57544E]">
+                        <td colSpan={7} className="px-4 py-3">
+                          <Skeleton className="h-4 w-full bg-[#423F3B]" />
                         </td>
                       </tr>
-                    ) : rows.map((row) => {
+                    ))
+                  ) : membersFiltered.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="px-4 py-12 text-center">
+                        <p className="font-sans text-sm text-[#BABAAE]">No members found</p>
+                        {allMembers.length === 0 && (
+                          <Button
+                            size="sm"
+                            onClick={() => setAddOpen(true)}
+                            className="mt-3 bg-[#9B4D19] hover:bg-[#7a3c14] text-[#E0D3BD] font-sans text-xs tracking-[0.1em] uppercase rounded-none"
+                          >
+                            <Plus className="w-3.5 h-3.5 mr-1.5" />
+                            Add First Member
+                          </Button>
+                        )}
+                      </td>
+                    </tr>
+                  ) : (
+                    membersFiltered.map((row) => {
                       const { member: m, user: u } = row;
                       return (
-                        <tr key={m.id} className="border-b border-border hover:bg-muted/30 transition-colors cursor-pointer"
-                          onClick={() => setSelectedRow(row as MemberRow)}>
-                          <td className="px-4 py-3">
-                            <p className="font-medium text-foreground">{u?.email ?? "—"}</p>
-                            {u?.email && (
-                              <div className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
-                                <Mail className="w-3 h-3" /><span>{u.email}</span>
-                              </div>
-                            )}
+                        <tr
+                          key={m.id}
+                          className="border-b border-[#57544E] hover:bg-[#423F3B]/50 cursor-pointer transition-colors"
+                          onClick={() => setSelectedRow(row as MemberRow)}
+                        >
+                          <td className={`${tdCls} text-[#E0D3BD]`}>{u?.email ?? "—"}</td>
+                          <td className={`${tdCls} font-mono text-xs`}>{m.memberNumber ?? "—"}</td>
+                          <td className={tdCls}>
+                            <span className="font-sans text-xs capitalize text-[#E0D3BD]">{m.tier}</span>
                           </td>
-                          <td className="px-4 py-3">
-                            <span className="px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800 capitalize">{m.tier}</span>
+                          <td className={tdCls}>{formatDate(m.joinDate)}</td>
+                          <td className={tdCls}>{formatDate(m.renewalDate)}</td>
+                          <td className={tdCls}>
+                            <StatusDot active={m.active} />
                           </td>
-                          <td className="px-4 py-3 text-muted-foreground text-xs">{m.memberNumber ?? "—"}</td>
-                          <td className="px-4 py-3 text-muted-foreground">{formatDate(m.joinDate)}</td>
-                          <td className="px-4 py-3 text-muted-foreground">{formatDate(m.renewalDate)}</td>
-                          <td className="px-4 py-3">
-                            <span className={`px-2 py-0.5 rounded text-xs font-medium ${m.active ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}`}>
-                              {m.active ? "Active" : "Inactive"}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3">
-                            <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                          <td className={tdCls}>
+                            <ChevronRight className="w-4 h-4 text-[#57544E]" />
                           </td>
                         </tr>
                       );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </CardContent>
-          </Card>
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
           {membersQuery.hasNextPage && (
-            <div className="flex justify-center pt-2">
-              <Button variant="outline" size="sm" onClick={() => membersQuery.fetchNextPage()} disabled={membersQuery.isFetchingNextPage}>
-                {membersQuery.isFetchingNextPage ? "Loading…" : "Load more members"}
+            <div className="flex justify-center pt-1">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => membersQuery.fetchNextPage()}
+                disabled={membersQuery.isFetchingNextPage}
+                className="border border-[#57544E] text-[#BABAAE] bg-transparent hover:border-[#9B4D19] hover:text-[#9B4D19] font-sans text-xs tracking-[0.1em] uppercase rounded-none"
+              >
+                {membersQuery.isFetchingNextPage ? "Loading…" : "Load More"}
               </Button>
             </div>
           )}
@@ -467,62 +714,113 @@ export default function PortalMembership() {
 
         {/* ── Applications Tab ── */}
         <TabsContent value="applications" className="space-y-4 mt-4">
-          <Card>
-            <CardContent className="p-0">
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-border bg-muted/30">
-                      <th className="text-left px-4 py-3 font-medium text-muted-foreground">Applicant</th>
-                      <th className="text-left px-4 py-3 font-medium text-muted-foreground">Submitted</th>
-                      <th className="text-left px-4 py-3 font-medium text-muted-foreground">Status</th>
-                      <th className="text-left px-4 py-3 font-medium text-muted-foreground">Actions</th>
+          <div className="bg-[#363330] border border-[#57544E]">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-[#423F3B]">
+                  <tr>
+                    <th className={thCls}>Name</th>
+                    <th className={thCls}>Email</th>
+                    <th className={thCls}>Submitted</th>
+                    <th className={thCls}>Status</th>
+                    <th className={thCls}>Interests</th>
+                    <th className={`${thCls} w-40`}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {applicationsQuery.isLoading ? (
+                    [1, 2, 3].map((i) => (
+                      <tr key={i} className="border-b border-[#57544E]">
+                        <td colSpan={6} className="px-4 py-3">
+                          <Skeleton className="h-4 w-full bg-[#423F3B]" />
+                        </td>
+                      </tr>
+                    ))
+                  ) : applications.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="px-4 py-12 text-center">
+                        <p className="font-sans text-sm text-[#BABAAE]">No applications</p>
+                      </td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {applicationsQuery.isLoading ? (
-                      [1,2,3].map(i => <tr key={i} className="border-b border-border"><td colSpan={4} className="px-4 py-3"><Skeleton className="h-5 w-full" /></td></tr>)
-                    ) : applications.length === 0 ? (
-                      <tr><td colSpan={4} className="px-4 py-8 text-center text-muted-foreground">No applications</td></tr>
-                    ) : applications.map(a => (
-                      <tr key={a.id} className="border-b border-border hover:bg-muted/30 transition-colors">
-                        <td className="px-4 py-3">
-                          <p className="font-medium text-foreground">{a.name}</p>
-                          {a.email && <p className="text-xs text-muted-foreground">{a.email}</p>}
+                  ) : (
+                    applications.map((a) => (
+                      <tr
+                        key={a.id}
+                        className="border-b border-[#57544E] hover:bg-[#423F3B]/50 transition-colors"
+                      >
+                        <td className={`${tdCls} text-[#E0D3BD]`}>{a.name}</td>
+                        <td className={tdCls}>{a.email ?? "—"}</td>
+                        <td className={tdCls}>{formatDate(a.createdAt)}</td>
+                        <td className={tdCls}>
+                          <span className="inline-flex items-center gap-1.5">
+                            <span
+                              className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                              style={{
+                                backgroundColor:
+                                  a.status === "approved"
+                                    ? "#6B7250"
+                                    : a.status === "declined"
+                                    ? "#57544E"
+                                    : "#9B4D19",
+                              }}
+                            />
+                            <span className="font-sans text-xs capitalize text-[#BABAAE]">
+                              {a.status}
+                            </span>
+                          </span>
                         </td>
-                        <td className="px-4 py-3 text-muted-foreground">{formatDate(a.createdAt)}</td>
-                        <td className="px-4 py-3">
-                          <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-                            a.status === "approved" ? "bg-green-100 text-green-800" :
-                            a.status === "declined" ? "bg-red-100 text-red-800" :
-                            "bg-yellow-100 text-yellow-800"
-                          }`}>{a.status}</span>
+                        <td className={tdCls}>
+                          <span className="font-sans text-xs text-[#BABAAE]">
+                            {Array.isArray(a.interests) ? (a.interests as string[]).join(", ") : (a.interests ?? "—")}
+                          </span>
                         </td>
-                        <td className="px-4 py-3">
-                          {a.status === "pending" && (
+                        <td className={tdCls}>
+                          {a.status === "pending" ? (
                             <div className="flex gap-2">
-                              <Button size="sm" variant="outline" className="text-xs h-7 px-2 text-green-700"
-                                onClick={() => updateApplicationMutation.mutate({ id: a.id, status: "approved" })}>
+                              <Button
+                                size="sm"
+                                onClick={() =>
+                                  updateApplicationMutation.mutate({ id: a.id, status: "approved" })
+                                }
+                                disabled={updateApplicationMutation.isPending}
+                                className="bg-[#9B4D19] hover:bg-[#7a3c14] text-[#E0D3BD] font-sans text-xs tracking-[0.08em] uppercase rounded-none h-7 px-3"
+                              >
                                 Approve
                               </Button>
-                              <Button size="sm" variant="outline" className="text-xs h-7 px-2 text-red-700"
-                                onClick={() => updateApplicationMutation.mutate({ id: a.id, status: "declined" })}>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() =>
+                                  updateApplicationMutation.mutate({ id: a.id, status: "declined" })
+                                }
+                                disabled={updateApplicationMutation.isPending}
+                                className="border border-[#57544E] text-[#BABAAE] bg-transparent hover:border-[#9B4D19] hover:text-[#9B4D19] font-sans text-xs tracking-[0.08em] uppercase rounded-none h-7 px-3"
+                              >
                                 Decline
                               </Button>
                             </div>
+                          ) : (
+                            <span className="font-sans text-xs text-[#57544E]">—</span>
                           )}
                         </td>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </CardContent>
-          </Card>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
           {applicationsQuery.hasNextPage && (
-            <div className="flex justify-center pt-2">
-              <Button variant="outline" size="sm" onClick={() => applicationsQuery.fetchNextPage()} disabled={applicationsQuery.isFetchingNextPage}>
-                {applicationsQuery.isFetchingNextPage ? "Loading…" : "Load more applications"}
+            <div className="flex justify-center pt-1">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => applicationsQuery.fetchNextPage()}
+                disabled={applicationsQuery.isFetchingNextPage}
+                className="border border-[#57544E] text-[#BABAAE] bg-transparent hover:border-[#9B4D19] hover:text-[#9B4D19] font-sans text-xs tracking-[0.1em] uppercase rounded-none"
+              >
+                {applicationsQuery.isFetchingNextPage ? "Loading…" : "Load More"}
               </Button>
             </div>
           )}
@@ -535,7 +833,10 @@ export default function PortalMembership() {
       {/* Member Detail Drawer */}
       {selectedRow && (
         <>
-          <div className="fixed inset-0 z-40 bg-black/30" onClick={() => setSelectedRow(null)} />
+          <div
+            className="fixed inset-0 z-40 bg-black/50"
+            onClick={() => setSelectedRow(null)}
+          />
           <MemberDetailDrawer
             row={selectedRow}
             onClose={() => setSelectedRow(null)}

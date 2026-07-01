@@ -2,8 +2,8 @@ import { useState } from "react";
 import { trpc } from "@shared/lib/trpc";
 import { Input } from "@shared/ui/input";
 import { Button } from "@shared/ui/button";
-import { Badge } from "@shared/ui/badge";
 import { Skeleton } from "@shared/ui/skeleton";
+import { Label } from "@shared/ui/label";
 import {
   Dialog,
   DialogContent,
@@ -12,107 +12,202 @@ import {
   DialogTitle,
 } from "@shared/ui/dialog";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@shared/ui/select";
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@shared/ui/dropdown-menu";
-import { AlertTriangle, Check, Copy, MoreHorizontal, Plus, Search, Shield, Users } from "lucide-react";
-import { toast } from "sonner";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@shared/ui/tabs";
 import { useAuth } from "@features/auth/public";
+import {
+  Shield,
+  MoreHorizontal,
+  Copy,
+  Check,
+  Mail,
+  ChevronRight,
+  UserX,
+  RefreshCw,
+  KeyRound,
+  ShieldCheck,
+  ShieldOff,
+} from "lucide-react";
 
-function formatDate(d: string | Date | null | undefined) {
-  if (!d) return "—";
-  return new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
+
+type UserRole = "admin" | "member";
+type UserStatus = "active" | "invited" | "disabled";
+
+interface UserRecord {
+  id: string;
+  email: string;
+  role: UserRole;
+  status: UserStatus;
+  lastLoginAt?: Date | string | null;
+  createdAt: Date | string;
 }
 
-function StatusBadge({ status }: { status: string }) {
-  const map: Record<string, string> = {
-    active: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30",
-    invited: "bg-amber-500/15 text-amber-400 border-amber-500/30",
-    disabled: "bg-destructive/15 text-destructive border-destructive/30",
+// ---------------------------------------------------------------------------
+// Small presentational helpers
+// ---------------------------------------------------------------------------
+
+function StatusDot({ status }: { status: UserStatus }) {
+  const colorMap: Record<UserStatus, string> = {
+    active: "bg-[#6B7250]",
+    invited: "bg-amber-400",
+    disabled: "bg-[#57544E]",
+  };
+  const labelMap: Record<UserStatus, string> = {
+    active: "Active",
+    invited: "Pending",
+    disabled: "Disabled",
   };
   return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border ${map[status] ?? "bg-muted text-muted-foreground"}`}>
-      {status}
+    <span className="flex items-center gap-1.5">
+      <span className={`w-1.5 h-1.5 rounded-full ${colorMap[status]}`} />
+      <span className="text-sm text-[#BABAAE]">{labelMap[status]}</span>
     </span>
   );
 }
 
-function RoleBadge({ role }: { role: string }) {
-  return (
-    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium border ${
-      role === "admin"
-        ? "bg-indigo-500/15 text-indigo-400 border-indigo-500/30"
-        : "bg-muted text-muted-foreground border-border"
-    }`}>
-      {role === "admin" && <Shield className="w-3 h-3" />}
-      {role}
-    </span>
-  );
+function RoleLabel({ role }: { role: UserRole }) {
+  if (role === "admin") {
+    return (
+      <span className="flex items-center gap-1 text-[#9B4D19] text-sm">
+        <Shield className="w-3.5 h-3.5" />
+        Admin
+      </span>
+    );
+  }
+  return <span className="text-sm text-[#BABAAE]">Member</span>;
 }
 
-function InviteLinkBox({ url, onClose }: { url: string; onClose: () => void }) {
+function formatDate(iso: string | null | undefined) {
+  if (!iso) return "—";
+  return new Date(iso).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Invite Link Box
+// ---------------------------------------------------------------------------
+
+function InviteLinkBox({
+  url,
+  onDone,
+}: {
+  url: string;
+  onDone: () => void;
+}) {
   const [copied, setCopied] = useState(false);
-  const copy = () => {
-    navigator.clipboard.writeText(url);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
+
+  function handleCopy() {
+    navigator.clipboard.writeText(url).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }
+
   return (
-    <div className="rounded border border-border bg-muted/30 p-4 space-y-3">
-      <p className="text-xs text-muted-foreground font-sans tracking-wide uppercase">Invite link (copy and share)</p>
+    <div className="mt-4 bg-[#2B2823] border border-[#57544E] p-4 space-y-3">
+      <p className="font-sans text-xs tracking-[0.12em] uppercase text-[#BABAAE]">
+        Invite Link Generated
+      </p>
       <div className="flex items-center gap-2">
-        <code className="flex-1 text-xs text-foreground bg-background rounded px-3 py-2 border border-border truncate select-all">
+        <code className="flex-1 font-mono text-xs text-[#E0D3BD] bg-[#363330] border border-[#57544E] px-3 py-2 select-all break-all">
           {url}
         </code>
-        <Button size="sm" variant="outline" onClick={copy} className="shrink-0 gap-1.5 text-xs">
-          {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
-          {copied ? "Copied" : "Copy"}
+        <button
+          onClick={handleCopy}
+          className="shrink-0 p-2 border border-[#57544E] text-[#BABAAE] hover:border-[#9B4D19] hover:text-[#9B4D19] transition-colors"
+          title="Copy link"
+        >
+          {copied ? (
+            <Check className="w-4 h-4 text-[#6B7250]" />
+          ) : (
+            <Copy className="w-4 h-4" />
+          )}
+        </button>
+      </div>
+      <div className="flex justify-end">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onDone}
+          className="font-sans text-xs tracking-[0.1em] uppercase text-[#BABAAE] hover:text-[#E0D3BD]"
+        >
+          Done
         </Button>
       </div>
-      <Button size="sm" variant="ghost" className="w-full text-xs text-muted-foreground" onClick={onClose}>
-        Done
-      </Button>
     </div>
   );
 }
+
+// ---------------------------------------------------------------------------
+// Confirm Dialog (generic)
+// ---------------------------------------------------------------------------
 
 function ConfirmDialog({
   open,
   onOpenChange,
   title,
   description,
-  confirmLabel,
-  destructive,
+  confirmLabel = "Confirm",
+  destructive = false,
+  loading = false,
   onConfirm,
-  loading,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   title: string;
   description: string;
-  confirmLabel: string;
+  confirmLabel?: string;
   destructive?: boolean;
-  onConfirm: () => void;
   loading?: boolean;
+  onConfirm: () => void;
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="bg-[#363330] border border-[#57544E] rounded-none text-[#E0D3BD] max-w-md">
         <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
+          <DialogTitle className="font-sans font-medium text-[#E0D3BD]">
+            {title}
+          </DialogTitle>
         </DialogHeader>
-        <p className="text-sm text-muted-foreground">{description}</p>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>Cancel</Button>
+        <p className="text-sm text-[#BABAAE]">{description}</p>
+        <DialogFooter className="gap-2">
           <Button
-            variant={destructive ? "destructive" : "default"}
-            onClick={onConfirm}
-            disabled={loading}
+            variant="ghost"
+            size="sm"
+            onClick={() => onOpenChange(false)}
+            className="font-sans text-xs tracking-[0.1em] uppercase text-[#BABAAE] hover:text-[#E0D3BD]"
           >
-            {loading ? "Please wait…" : confirmLabel}
+            Cancel
+          </Button>
+          <Button
+            size="sm"
+            disabled={loading}
+            onClick={onConfirm}
+            className={
+              destructive
+                ? "bg-red-900/80 hover:bg-red-900 text-[#E0D3BD] font-sans text-xs tracking-[0.1em] uppercase rounded-none"
+                : "bg-[#9B4D19] hover:bg-[#7a3c14] text-[#E0D3BD] font-sans text-xs tracking-[0.1em] uppercase rounded-none"
+            }
+          >
+            {loading ? "Working…" : confirmLabel}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -120,317 +215,565 @@ function ConfirmDialog({
   );
 }
 
-export default function AdminUsers() {
-  const { user: me } = useAuth();
-  const [search, setSearch] = useState("");
+// ---------------------------------------------------------------------------
+// INVITATIONS TAB
+// ---------------------------------------------------------------------------
+
+function InvitationsTab() {
+  const [email, setEmail] = useState("");
+  const [role, setRole] = useState<UserRole>("member");
+  const [inviteUrl, setInviteUrl] = useState<string | null>(null);
+
+  // Resend confirm state
+  const [resendTarget, setResendTarget] = useState<UserRecord | null>(null);
+  const [resendUrl, setResendUrl] = useState<string | null>(null);
+
+  // Revoke confirm state
+  const [revokeTarget, setRevokeTarget] = useState<UserRecord | null>(null);
+
   const utils = trpc.useUtils();
-  const listQuery = trpc.portal.users.list.useQuery({ search: search || undefined });
-  const users = listQuery.data ?? [];
 
-  // Invite dialog
-  const [showInvite, setShowInvite] = useState(false);
-  const [inviteEmail, setInviteEmail] = useState("");
-  const [inviteRole, setInviteRole] = useState<"admin" | "member">("member");
-  const [inviteLink, setInviteLink] = useState<string | null>(null);
-  const [inviteError, setInviteError] = useState<string | null>(null);
+  const { data: allUsers, isLoading } = trpc.portal.users.list.useQuery({
+    search: "",
+  });
+
+  const pendingInvites: UserRecord[] = (allUsers ?? []).filter(
+    (u: UserRecord) => u.status === "invited"
+  );
+
   const inviteMutation = trpc.portal.users.invite.useMutation({
-    onSuccess: (data) => {
+    onSuccess: (data: { inviteUrl: string; emailSent: boolean }) => {
+      setInviteUrl(data.inviteUrl);
+      setEmail("");
+      setRole("member");
       utils.portal.users.list.invalidate();
-      setInviteLink(data.inviteUrl);
-      if (data.emailSent) toast.success("Invite email sent");
-      else toast.info("Invite created — copy the link below");
     },
-    onError: (e) => setInviteError(e.message),
   });
 
-  // Resend invite
-  const [resendTarget, setResendTarget] = useState<{ id: string; email: string } | null>(null);
-  const [resendLink, setResendLink] = useState<string | null>(null);
   const resendMutation = trpc.portal.users.resendInvite.useMutation({
-    onSuccess: (data) => {
-      utils.portal.users.list.invalidate();
-      setResendLink(data.inviteUrl);
-      if (data.emailSent) toast.success("Invite resent");
-      else toast.info("New invite created — copy the link below");
+    onSuccess: (data: { inviteUrl: string; emailSent: boolean }) => {
+      setResendUrl(data.inviteUrl);
       setResendTarget(null);
+      utils.portal.users.list.invalidate();
     },
-    onError: (e) => { toast.error(e.message); setResendTarget(null); },
   });
 
-  // Role change
-  const [roleTarget, setRoleTarget] = useState<{ id: string; email: string; currentRole: string; newRole: "admin" | "member" } | null>(null);
-  const roleMutation = trpc.portal.users.updateRole.useMutation({
-    onSuccess: () => { utils.portal.users.list.invalidate(); toast.success("Role updated"); setRoleTarget(null); },
-    onError: (e) => { toast.error(e.message); setRoleTarget(null); },
+  const updateStatusMutation = trpc.portal.users.updateStatus.useMutation({
+    onSuccess: () => {
+      setRevokeTarget(null);
+      utils.portal.users.list.invalidate();
+    },
   });
 
-  // Status change
-  const [statusTarget, setStatusTarget] = useState<{ id: string; email: string; newStatus: "active" | "disabled" } | null>(null);
-  const statusMutation = trpc.portal.users.updateStatus.useMutation({
-    onSuccess: () => { utils.portal.users.list.invalidate(); toast.success("Status updated"); setStatusTarget(null); },
-    onError: (e) => { toast.error(e.message); setStatusTarget(null); },
-  });
-
-  // Force reset
-  const [resetTarget, setResetTarget] = useState<{ id: string; email: string } | null>(null);
-  const resetMutation = trpc.portal.users.forcePasswordReset.useMutation({
-    onSuccess: () => { utils.portal.users.list.invalidate(); toast.success("Password reset required"); setResetTarget(null); },
-    onError: (e) => { toast.error(e.message); setResetTarget(null); },
-  });
-
-  const openInviteDialog = () => {
-    setInviteEmail("");
-    setInviteRole("member");
-    setInviteLink(null);
-    setInviteError(null);
-    setShowInvite(true);
-  };
+  function handleInvite() {
+    if (!email.trim()) return;
+    inviteMutation.mutate({ email: email.trim(), role });
+  }
 
   return (
-    <div className="p-6 space-y-6 max-w-7xl mx-auto">
-      {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-            <Users className="w-6 h-6 text-indigo-500" />
-            User Management
-          </h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            Manage admin and member accounts, send invitations, and control access.
-          </p>
+    <div className="space-y-8">
+      {/* Invite form */}
+      <div className="bg-[#363330] border border-[#57544E] p-6 space-y-5">
+        <p className="font-sans text-xs tracking-[0.12em] uppercase text-[#BABAAE]">
+          Invite New Member
+        </p>
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="flex-1 space-y-1.5">
+            <Label className="font-sans text-xs tracking-[0.1em] uppercase text-[#BABAAE]">
+              Email Address
+            </Label>
+            <Input
+              type="email"
+              placeholder="name@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleInvite()}
+              className="bg-[#2B2823] border-[#57544E] text-[#E0D3BD] placeholder:text-[#57544E] rounded-none focus-visible:ring-[#9B4D19] focus-visible:ring-1 focus-visible:border-[#9B4D19]"
+            />
+          </div>
+          <div className="w-full sm:w-40 space-y-1.5">
+            <Label className="font-sans text-xs tracking-[0.1em] uppercase text-[#BABAAE]">
+              Role
+            </Label>
+            <Select
+              value={role}
+              onValueChange={(v) => setRole(v as UserRole)}
+            >
+              <SelectTrigger className="bg-[#2B2823] border-[#57544E] text-[#E0D3BD] rounded-none focus:ring-[#9B4D19] focus:ring-1">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-[#363330] border-[#57544E] rounded-none text-[#E0D3BD]">
+                <SelectItem value="member" className="focus:bg-[#423F3B] focus:text-[#E0D3BD]">
+                  Member
+                </SelectItem>
+                <SelectItem value="admin" className="focus:bg-[#423F3B] focus:text-[#E0D3BD]">
+                  Admin
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex items-end">
+            <Button
+              onClick={handleInvite}
+              disabled={!email.trim() || inviteMutation.isPending}
+              className="bg-[#9B4D19] hover:bg-[#7a3c14] text-[#E0D3BD] font-sans text-xs tracking-[0.1em] uppercase rounded-none h-10 px-5"
+            >
+              <Mail className="w-3.5 h-3.5 mr-2" />
+              {inviteMutation.isPending ? "Sending…" : "Send Invite"}
+            </Button>
+          </div>
         </div>
-        <Button onClick={openInviteDialog} className="gap-1.5 text-sm">
-          <Plus className="w-4 h-4" />
-          Invite User
-        </Button>
+
+        {inviteMutation.isError && (
+          <p className="text-sm text-red-400">{inviteMutation.error.message}</p>
+        )}
+
+        {inviteUrl && (
+          <InviteLinkBox url={inviteUrl} onDone={() => setInviteUrl(null)} />
+        )}
       </div>
 
-      {/* Search */}
-      <div className="relative max-w-sm">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <Input
-          placeholder="Search by email…"
-          className="pl-9"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-      </div>
-
-      {/* Resend link display */}
-      {resendLink && (
-        <InviteLinkBox url={resendLink} onClose={() => setResendLink(null)} />
+      {/* Resend link box (shown inline after resend) */}
+      {resendUrl && (
+        <InviteLinkBox url={resendUrl} onDone={() => setResendUrl(null)} />
       )}
 
-      {/* Table */}
-      <div className="rounded-lg border border-border bg-card overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-border bg-muted/30">
-              <th className="text-left px-4 py-3 font-medium text-muted-foreground">Email</th>
-              <th className="text-left px-4 py-3 font-medium text-muted-foreground">Role</th>
-              <th className="text-left px-4 py-3 font-medium text-muted-foreground">Status</th>
-              <th className="text-left px-4 py-3 font-medium text-muted-foreground">Must Change PW</th>
-              <th className="text-left px-4 py-3 font-medium text-muted-foreground">Last Login</th>
-              <th className="text-left px-4 py-3 font-medium text-muted-foreground">Created</th>
-              <th className="px-4 py-3" />
-            </tr>
-          </thead>
-          <tbody>
-            {listQuery.isLoading ? (
-              [1, 2, 3, 4].map((i) => (
-                <tr key={i} className="border-b border-border">
-                  <td colSpan={7} className="px-4 py-3">
-                    <Skeleton className="h-5 w-full" />
-                  </td>
-                </tr>
-              ))
-            ) : users.length === 0 ? (
-              <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">
-                  No users found
-                </td>
-              </tr>
-            ) : (
-              users.map((u) => (
-                <tr key={u.id} className="border-b border-border hover:bg-muted/20 transition-colors">
-                  <td className="px-4 py-3 font-medium text-foreground">
-                    {u.email}
-                    {u.id === me?.id && (
-                      <span className="ml-2 text-xs text-muted-foreground">(you)</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3"><RoleBadge role={u.role ?? "member"} /></td>
-                  <td className="px-4 py-3"><StatusBadge status={u.status ?? "invited"} /></td>
-                  <td className="px-4 py-3 text-center">
-                    {u.mustChangePassword ? (
-                      <span className="text-amber-400 text-xs">Yes</span>
-                    ) : (
-                      <span className="text-muted-foreground text-xs">—</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3 text-muted-foreground text-xs">{formatDate(u.lastLoginAt)}</td>
-                  <td className="px-4 py-3 text-muted-foreground text-xs">{formatDate(u.createdAt)}</td>
-                  <td className="px-4 py-3 text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-7 w-7">
-                          <MoreHorizontal className="w-4 h-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-48">
-                        {u.status === "invited" && (
-                          <DropdownMenuItem onClick={() => setResendTarget({ id: u.id, email: u.email ?? "" })}>
-                            Resend Invite
-                          </DropdownMenuItem>
-                        )}
-                        {u.status !== "invited" && (
-                          <DropdownMenuItem onClick={() => setResetTarget({ id: u.id, email: u.email ?? "" })}>
-                            Force Password Reset
-                          </DropdownMenuItem>
-                        )}
-                        <DropdownMenuSeparator />
-                        {u.role !== "admin" ? (
-                          <DropdownMenuItem onClick={() => setRoleTarget({ id: u.id, email: u.email ?? "", currentRole: u.role ?? "member", newRole: "admin" })}>
-                            Promote to Admin
-                          </DropdownMenuItem>
-                        ) : (
-                          <DropdownMenuItem onClick={() => setRoleTarget({ id: u.id, email: u.email ?? "", currentRole: u.role ?? "admin", newRole: "member" })}>
-                            Demote to Member
-                          </DropdownMenuItem>
-                        )}
-                        <DropdownMenuSeparator />
-                        {u.status !== "disabled" ? (
-                          <DropdownMenuItem
-                            className="text-destructive"
-                            onClick={() => setStatusTarget({ id: u.id, email: u.email ?? "", newStatus: "disabled" })}
-                          >
-                            Disable Account
-                          </DropdownMenuItem>
-                        ) : (
-                          <DropdownMenuItem onClick={() => setStatusTarget({ id: u.id, email: u.email ?? "", newStatus: "active" })}>
-                            Enable Account
-                          </DropdownMenuItem>
-                        )}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+      {/* Pending invites list */}
+      <div>
+        <p className="font-sans text-xs tracking-[0.12em] uppercase text-[#BABAAE] mb-4">
+          Pending Invitations
+        </p>
 
-      {/* Invite dialog */}
-      <Dialog open={showInvite} onOpenChange={(v) => { setShowInvite(v); if (!v) { setInviteLink(null); setInviteError(null); } }}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Invite User</DialogTitle>
-          </DialogHeader>
-          {inviteLink ? (
-            <InviteLinkBox url={inviteLink} onClose={() => { setShowInvite(false); setInviteLink(null); }} />
-          ) : (
-            <div className="space-y-4">
-              {inviteError && (
-                <div className="flex items-start gap-2 rounded border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-                  <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
-                  {inviteError}
+        {isLoading ? (
+          <div className="space-y-2">
+            {[1, 2, 3].map((i) => (
+              <Skeleton key={i} className="h-14 bg-[#363330]" />
+            ))}
+          </div>
+        ) : pendingInvites.length === 0 ? (
+          <div className="bg-[#363330] border border-[#57544E] p-8 text-center">
+            <p className="text-sm text-[#BABAAE]">No pending invitations.</p>
+          </div>
+        ) : (
+          <div className="bg-[#363330] border border-[#57544E] divide-y divide-[#57544E]">
+            {pendingInvites.map((user: UserRecord) => (
+              <div
+                key={user.id}
+                className="flex items-center justify-between px-5 py-4 hover:bg-[#423F3B]/50 transition-colors"
+              >
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm text-[#E0D3BD] truncate">{user.email}</p>
+                  <div className="flex items-center gap-4 mt-0.5">
+                    <RoleLabel role={user.role} />
+                    <span className="text-xs text-[#BABAAE]">
+                      Invited {formatDate(user.createdAt instanceof Date ? user.createdAt.toISOString() : user.createdAt)}
+                    </span>
+                  </div>
                 </div>
-              )}
-              <div>
-                <label className="block text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1.5">
-                  Email address
-                </label>
-                <Input
-                  type="email"
-                  placeholder="user@example.com"
-                  value={inviteEmail}
-                  onChange={(e) => { setInviteEmail(e.target.value); setInviteError(null); }}
-                  disabled={inviteMutation.isPending}
-                />
+                <div className="flex items-center gap-2 ml-4">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setResendTarget(user)}
+                    className="border-[#57544E] text-[#E0D3BD] hover:border-[#9B4D19] hover:text-[#9B4D19] rounded-none font-sans text-xs tracking-[0.08em] uppercase h-8 px-3"
+                  >
+                    <RefreshCw className="w-3 h-3 mr-1.5" />
+                    Resend
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setRevokeTarget(user)}
+                    className="border-[#57544E] text-[#BABAAE] hover:border-red-800 hover:text-red-400 rounded-none font-sans text-xs tracking-[0.08em] uppercase h-8 px-3"
+                  >
+                    <UserX className="w-3 h-3 mr-1.5" />
+                    Revoke
+                  </Button>
+                </div>
               </div>
-              <div>
-                <label className="block text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1.5">
-                  Role
-                </label>
-                <select
-                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-                  value={inviteRole}
-                  onChange={(e) => setInviteRole(e.target.value as "admin" | "member")}
-                  disabled={inviteMutation.isPending}
-                >
-                  <option value="member">Member</option>
-                  <option value="admin">Admin</option>
-                </select>
-              </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setShowInvite(false)} disabled={inviteMutation.isPending}>
-                  Cancel
-                </Button>
-                <Button
-                  disabled={!inviteEmail.trim() || inviteMutation.isPending}
-                  onClick={() => {
-                    setInviteError(null);
-                    inviteMutation.mutate({ email: inviteEmail.trim(), role: inviteRole });
-                  }}
-                >
-                  {inviteMutation.isPending ? "Sending…" : "Send Invite"}
-                </Button>
-              </DialogFooter>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* Resend confirm */}
       <ConfirmDialog
         open={!!resendTarget}
-        onOpenChange={(v) => { if (!v) setResendTarget(null); }}
+        onOpenChange={(v) => !v && setResendTarget(null)}
         title="Resend Invitation"
-        description={`Send a new invite link to ${resendTarget?.email}? The previous link will be invalidated.`}
+        description={`Resend the invite email to ${resendTarget?.email}?`}
         confirmLabel="Resend"
-        onConfirm={() => resendTarget && resendMutation.mutate({ userId: resendTarget.id })}
         loading={resendMutation.isPending}
+        onConfirm={() => {
+          if (resendTarget)
+            resendMutation.mutate({ userId: resendTarget.id });
+        }}
       />
 
-      {/* Role change confirm */}
+      {/* Revoke confirm */}
       <ConfirmDialog
-        open={!!roleTarget}
-        onOpenChange={(v) => { if (!v) setRoleTarget(null); }}
-        title={roleTarget?.newRole === "admin" ? "Promote to Admin" : "Demote to Member"}
-        description={`Change ${roleTarget?.email}'s role from ${roleTarget?.currentRole} to ${roleTarget?.newRole}?`}
-        confirmLabel="Confirm"
-        onConfirm={() => roleTarget && roleMutation.mutate({ userId: roleTarget.id, role: roleTarget.newRole })}
-        loading={roleMutation.isPending}
-      />
-
-      {/* Status change confirm */}
-      <ConfirmDialog
-        open={!!statusTarget}
-        onOpenChange={(v) => { if (!v) setStatusTarget(null); }}
-        title={statusTarget?.newStatus === "disabled" ? "Disable Account" : "Enable Account"}
-        description={
-          statusTarget?.newStatus === "disabled"
-            ? `Disable ${statusTarget?.email}? They will not be able to sign in.`
-            : `Re-enable ${statusTarget?.email}'s account?`
-        }
-        confirmLabel={statusTarget?.newStatus === "disabled" ? "Disable" : "Enable"}
-        destructive={statusTarget?.newStatus === "disabled"}
-        onConfirm={() => statusTarget && statusMutation.mutate({ userId: statusTarget.id, status: statusTarget.newStatus })}
-        loading={statusMutation.isPending}
-      />
-
-      {/* Force reset confirm */}
-      <ConfirmDialog
-        open={!!resetTarget}
-        onOpenChange={(v) => { if (!v) setResetTarget(null); }}
-        title="Force Password Reset"
-        description={`Require ${resetTarget?.email} to change their password on next login?`}
-        confirmLabel="Force Reset"
+        open={!!revokeTarget}
+        onOpenChange={(v) => !v && setRevokeTarget(null)}
+        title="Revoke Invitation"
+        description={`This will disable ${revokeTarget?.email}'s account. They will not be able to sign in.`}
+        confirmLabel="Revoke Access"
         destructive
-        onConfirm={() => resetTarget && resetMutation.mutate({ userId: resetTarget.id })}
-        loading={resetMutation.isPending}
+        loading={updateStatusMutation.isPending}
+        onConfirm={() => {
+          if (revokeTarget)
+            updateStatusMutation.mutate({ userId: revokeTarget.id, status: "disabled" });
+        }}
       />
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// USERS TAB
+// ---------------------------------------------------------------------------
+
+type ConfirmAction =
+  | { type: "forceReset"; user: UserRecord }
+  | { type: "promoteAdmin"; user: UserRecord }
+  | { type: "demoteAdmin"; user: UserRecord }
+  | { type: "enable"; user: UserRecord }
+  | { type: "disable"; user: UserRecord };
+
+function UsersTab() {
+  const { user: currentUser } = useAuth();
+  const currentUserId = currentUser?.id;
+  const [search, setSearch] = useState("");
+  const [pendingAction, setPendingAction] = useState<ConfirmAction | null>(null);
+
+  const utils = trpc.useUtils();
+
+  const { data: users, isLoading } = trpc.portal.users.list.useQuery({ search });
+
+  const activeUsers: UserRecord[] = (users ?? []).filter(
+    (u: UserRecord) => u.status !== "invited"
+  );
+
+  const forceResetMutation = trpc.portal.users.forcePasswordReset.useMutation({
+    onSuccess: () => setPendingAction(null),
+  });
+
+  const updateRoleMutation = trpc.portal.users.updateRole.useMutation({
+    onSuccess: () => {
+      setPendingAction(null);
+      utils.portal.users.list.invalidate();
+    },
+  });
+
+  const updateStatusMutation = trpc.portal.users.updateStatus.useMutation({
+    onSuccess: () => {
+      setPendingAction(null);
+      utils.portal.users.list.invalidate();
+    },
+  });
+
+  function isMutating() {
+    return (
+      forceResetMutation.isPending ||
+      updateRoleMutation.isPending ||
+      updateStatusMutation.isPending
+    );
+  }
+
+  function executeAction() {
+    if (!pendingAction) return;
+    switch (pendingAction.type) {
+      case "forceReset":
+        forceResetMutation.mutate({ userId: pendingAction.user.id });
+        break;
+      case "promoteAdmin":
+        updateRoleMutation.mutate({ userId: pendingAction.user.id, role: "admin" });
+        break;
+      case "demoteAdmin":
+        updateRoleMutation.mutate({ userId: pendingAction.user.id, role: "member" });
+        break;
+      case "enable":
+        updateStatusMutation.mutate({ userId: pendingAction.user.id, status: "active" });
+        break;
+      case "disable":
+        updateStatusMutation.mutate({ userId: pendingAction.user.id, status: "disabled" });
+        break;
+    }
+  }
+
+  function getConfirmProps(action: ConfirmAction): {
+    title: string;
+    description: string;
+    confirmLabel: string;
+    destructive: boolean;
+  } {
+    switch (action.type) {
+      case "forceReset":
+        return {
+          title: "Force Password Reset",
+          description: `${action.user.email} will be required to reset their password on next sign-in.`,
+          confirmLabel: "Force Reset",
+          destructive: false,
+        };
+      case "promoteAdmin":
+        return {
+          title: "Promote to Admin",
+          description: `Grant admin privileges to ${action.user.email}? They will have full access to the operations portal.`,
+          confirmLabel: "Promote",
+          destructive: false,
+        };
+      case "demoteAdmin":
+        return {
+          title: "Remove Admin Role",
+          description: `Remove admin privileges from ${action.user.email}? They will be downgraded to a standard member.`,
+          confirmLabel: "Remove Admin",
+          destructive: true,
+        };
+      case "enable":
+        return {
+          title: "Enable Account",
+          description: `Re-enable ${action.user.email}'s account and restore their access.`,
+          confirmLabel: "Enable",
+          destructive: false,
+        };
+      case "disable":
+        return {
+          title: "Disable Account",
+          description: `Disable ${action.user.email}'s account. They will not be able to sign in until re-enabled.`,
+          confirmLabel: "Disable",
+          destructive: true,
+        };
+    }
+  }
+
+  const confirmProps = pendingAction ? getConfirmProps(pendingAction) : null;
+
+  return (
+    <div className="space-y-5">
+      {/* Search */}
+      <div className="max-w-sm">
+        <Input
+          type="search"
+          placeholder="Search by email…"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="bg-[#363330] border-[#57544E] text-[#E0D3BD] placeholder:text-[#57544E] rounded-none focus-visible:ring-[#9B4D19] focus-visible:ring-1 focus-visible:border-[#9B4D19]"
+        />
+      </div>
+
+      {/* Table */}
+      {isLoading ? (
+        <div className="space-y-2">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <Skeleton key={i} className="h-14 bg-[#363330]" />
+          ))}
+        </div>
+      ) : activeUsers.length === 0 ? (
+        <div className="bg-[#363330] border border-[#57544E] p-12 text-center">
+          <p className="text-sm text-[#BABAAE]">
+            {search ? "No users match your search." : "No users found."}
+          </p>
+        </div>
+      ) : (
+        <div className="bg-[#363330] border border-[#57544E]">
+          {/* Header */}
+          <div className="grid grid-cols-[1fr_120px_120px_140px_48px] gap-x-4 px-5 py-3 border-b border-[#57544E]">
+            <span className="font-sans text-xs tracking-[0.12em] uppercase text-[#BABAAE]">
+              Email
+            </span>
+            <span className="font-sans text-xs tracking-[0.12em] uppercase text-[#BABAAE]">
+              Role
+            </span>
+            <span className="font-sans text-xs tracking-[0.12em] uppercase text-[#BABAAE]">
+              Status
+            </span>
+            <span className="font-sans text-xs tracking-[0.12em] uppercase text-[#BABAAE]">
+              Last Login
+            </span>
+            <span />
+          </div>
+
+          {/* Rows */}
+          <div className="divide-y divide-[#57544E]">
+            {activeUsers.map((user: UserRecord) => {
+              const isCurrentUser = user.id === currentUserId;
+              return (
+                <div
+                  key={user.id}
+                  className="grid grid-cols-[1fr_120px_120px_140px_48px] gap-x-4 items-center px-5 py-3.5 hover:bg-[#423F3B]/50 transition-colors"
+                >
+                  {/* Email */}
+                  <div className="min-w-0 flex items-center gap-2">
+                    <span className="text-sm text-[#E0D3BD] truncate">
+                      {user.email}
+                    </span>
+                    {isCurrentUser && (
+                      <span className="font-sans text-[10px] tracking-[0.1em] uppercase text-[#576276] shrink-0">
+                        you
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Role */}
+                  <div>
+                    <RoleLabel role={user.role} />
+                  </div>
+
+                  {/* Status */}
+                  <div>
+                    <StatusDot status={user.status} />
+                  </div>
+
+                  {/* Last login */}
+                  <span className="text-sm text-[#BABAAE]">
+                    {formatDate(user.lastLoginAt instanceof Date ? user.lastLoginAt.toISOString() : user.lastLoginAt)}
+                  </span>
+
+                  {/* Actions */}
+                  <div className="flex justify-end">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0 text-[#BABAAE] hover:text-[#E0D3BD] hover:bg-[#423F3B]"
+                        >
+                          <MoreHorizontal className="w-4 h-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent
+                        align="end"
+                        className="bg-[#363330] border-[#57544E] rounded-none text-[#E0D3BD] min-w-[180px]"
+                      >
+                        <DropdownMenuItem
+                          className="font-sans text-xs tracking-[0.06em] cursor-pointer focus:bg-[#423F3B] focus:text-[#E0D3BD] gap-2"
+                          onClick={() =>
+                            setPendingAction({ type: "forceReset", user })
+                          }
+                        >
+                          <KeyRound className="w-3.5 h-3.5 text-[#BABAAE]" />
+                          Force Password Reset
+                        </DropdownMenuItem>
+
+                        <DropdownMenuSeparator className="bg-[#57544E]" />
+
+                        {user.role === "member" ? (
+                          <DropdownMenuItem
+                            className="font-sans text-xs tracking-[0.06em] cursor-pointer focus:bg-[#423F3B] focus:text-[#E0D3BD] gap-2"
+                            onClick={() =>
+                              setPendingAction({ type: "promoteAdmin", user })
+                            }
+                          >
+                            <ShieldCheck className="w-3.5 h-3.5 text-[#BABAAE]" />
+                            Promote to Admin
+                          </DropdownMenuItem>
+                        ) : (
+                          !isCurrentUser && (
+                            <DropdownMenuItem
+                              className="font-sans text-xs tracking-[0.06em] cursor-pointer focus:bg-[#423F3B] focus:text-[#E0D3BD] gap-2"
+                              onClick={() =>
+                                setPendingAction({ type: "demoteAdmin", user })
+                              }
+                            >
+                              <ShieldOff className="w-3.5 h-3.5 text-[#BABAAE]" />
+                              Remove Admin Role
+                            </DropdownMenuItem>
+                          )
+                        )}
+
+                        <DropdownMenuSeparator className="bg-[#57544E]" />
+
+                        {user.status === "disabled" ? (
+                          <DropdownMenuItem
+                            className="font-sans text-xs tracking-[0.06em] cursor-pointer focus:bg-[#423F3B] focus:text-[#6B7250] text-[#6B7250] gap-2"
+                            onClick={() =>
+                              setPendingAction({ type: "enable", user })
+                            }
+                          >
+                            <ChevronRight className="w-3.5 h-3.5" />
+                            Enable Account
+                          </DropdownMenuItem>
+                        ) : (
+                          !isCurrentUser && (
+                            <DropdownMenuItem
+                              className="font-sans text-xs tracking-[0.06em] cursor-pointer focus:bg-[#423F3B] focus:text-red-400 text-red-400 gap-2"
+                              onClick={() =>
+                                setPendingAction({ type: "disable", user })
+                              }
+                            >
+                              <UserX className="w-3.5 h-3.5" />
+                              Disable Account
+                            </DropdownMenuItem>
+                          )
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Confirm dialog */}
+      {pendingAction && confirmProps && (
+        <ConfirmDialog
+          open={!!pendingAction}
+          onOpenChange={(v) => !v && setPendingAction(null)}
+          title={confirmProps.title}
+          description={confirmProps.description}
+          confirmLabel={confirmProps.confirmLabel}
+          destructive={confirmProps.destructive}
+          loading={isMutating()}
+          onConfirm={executeAction}
+        />
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// PAGE ROOT
+// ---------------------------------------------------------------------------
+
+export default function AdminUsers() {
+  return (
+    <div className="space-y-8">
+      {/* Page header */}
+      <div>
+        <p className="font-sans text-xs tracking-[0.12em] uppercase text-[#BABAAE] mb-1">
+          Operations
+        </p>
+        <h1 className="font-sans text-2xl font-medium tracking-tight text-[#E0D3BD]">
+          Users &amp; Access
+        </h1>
+      </div>
+
+      {/* Tabs */}
+      <Tabs defaultValue="invitations">
+        <TabsList className="bg-[#363330] border border-[#57544E] rounded-none h-10 p-0 gap-0">
+          <TabsTrigger
+            value="invitations"
+            className="rounded-none h-full px-5 font-sans text-xs tracking-[0.1em] uppercase text-[#BABAAE] data-[state=active]:bg-[#2B2823] data-[state=active]:text-[#E0D3BD] data-[state=active]:shadow-none border-r border-[#57544E]"
+          >
+            Invitations
+          </TabsTrigger>
+          <TabsTrigger
+            value="users"
+            className="rounded-none h-full px-5 font-sans text-xs tracking-[0.1em] uppercase text-[#BABAAE] data-[state=active]:bg-[#2B2823] data-[state=active]:text-[#E0D3BD] data-[state=active]:shadow-none"
+          >
+            Users
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="invitations" className="mt-6">
+          <InvitationsTab />
+        </TabsContent>
+
+        <TabsContent value="users" className="mt-6">
+          <UsersTab />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
