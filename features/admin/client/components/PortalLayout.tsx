@@ -55,6 +55,8 @@ import { DashboardLayoutSkeleton } from "@/_shared/components/DashboardLayoutSke
 
 const STAFF_ROLES = ["owner", "admin", "venue_sales", "events_manager", "membership_manager", "hunt_fish_ops", "hospitality", "staff", "finance"];
 
+const adminNavItem = { icon: Shield, label: "Users", path: "/ops/users" };
+
 const navGroups = [
   {
     label: "Overview",
@@ -95,6 +97,8 @@ const navGroups = [
     ],
   },
 ];
+// Admin-only nav group — rendered separately below navGroups
+
 
 export default function PortalLayout({ children }: { children: React.ReactNode }) {
   const { loading, user, logout } = useAuth();
@@ -189,6 +193,27 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
                 </SidebarMenu>
               </SidebarGroup>
             ))}
+            {user?.role === "admin" && (
+              <SidebarGroup className="mb-1">
+                <SidebarGroupLabel className="text-xs font-medium text-sidebar-foreground/50 uppercase tracking-wider px-2 mb-1">
+                  Admin
+                </SidebarGroupLabel>
+                <SidebarMenu>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={location === adminNavItem.path || location.startsWith(adminNavItem.path)}
+                      className="w-full"
+                    >
+                      <Link href={adminNavItem.path} className="flex items-center gap-3 px-3 py-2 rounded-md text-sm">
+                        <adminNavItem.icon className="w-4 h-4 flex-shrink-0" />
+                        <span>{adminNavItem.label}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                </SidebarMenu>
+              </SidebarGroup>
+            )}
           </SidebarContent>
 
           <SidebarFooter className="px-3 py-3 border-t border-sidebar-border">

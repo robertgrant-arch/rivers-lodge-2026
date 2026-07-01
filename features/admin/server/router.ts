@@ -33,7 +33,10 @@ import {
   cmsAnnouncements,
   cmsMemberContent,
 } from "@features/cms/schema";
-import { randomBytes } from "crypto";
+import { randomBytes, createHash } from "crypto";
+import { invites } from "@features/auth/schema";
+import { sendInviteEmail, sendPasswordResetNotification } from "@core/server/mailer";
+import { ENV } from "@core/server/env";
 
 function getDb() {
   if (!process.env.DATABASE_URL) throw new Error("DATABASE_URL not set");
@@ -1278,6 +1281,215 @@ const memberBookingsRouter = router({
     }),
 });
 
+// ─── Users Admin Router ───────────────────────────────────────────────────────
+const usersAdminRouter = router({
+  list: ownerProcedure
+    .input(z.object({ search: z.string().optional() }))
+    .query(async ({ input }) => {
+      const db = getDb();
+      const conditions = [];
+      if (input.search) conditions.push(like(users.email, `%${input.search}%`));
+      return db
+        .select()
+        .from(users)
+        .where(conditions.length ? and(...conditions) : undefined)
+        .orderBy(desc(users.createdAt));
+    }),
+
+  invite: ownerProcedure
+    .input(z.object({
+      email: z.string().email(),
+      role: z.enum(["admin", "member"]).default("member"),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const db = getDb();
+      const email = input.email.toLowerCase();
+
+      const [existing] = await db.select().from(users).where(eq(users.email, email)).limit(1);
+      if (existing && existing.status !== "invited") {
+        throw new TRPCError({ code: "CONFLICT", message: "A user with this email already exists" });
+      }
+
+      let userId: string;
+      if (existing) {
+        userId = existing.id;
+        // Update role in case it changed
+        if (existing.role !== input.role) {
+          await db.update(users).set({ role: input.role }).where(eq(users.id, userId));
+        }
+        // Expire old pending invites
+        await db.update(invites).set({ expiresAt: new Date() }).where(eq(invites.userId, userId));
+      } else {
+        userId = crypto.randomUUID();
+        await db.insert(users).values({
+          id: userId,
+          email,
+          role: input.role,
+          status: "invited",
+          mustChangePassword: true,
+          createdAt: new Date(),
+        });
+      }
+
+      const rawToken = randomBytes(32).toString("hex");
+      const tokenHash = createHash("sha256").update(rawToken).digest("hex");
+      const expiresAt = new Date(Date.now() + 72 * 60 * 60 * 1000);
+      await db.insert(invites).values({
+        id: crypto.randomUUID(),
+        userId,
+        tokenHash,
+        expiresAt,
+        createdBy: ctx.user.id,
+      });
+
+      const inviteUrl = `${ENV.appBaseUrl}/accept-invite?token=${rawToken}`;
+      const emailSent = await sendInviteEmail(email, inviteUrl, ctx.user.email ?? "An admin");
+
+      await logAudit({
+        actingUserId: ctx.user.id,
+        actingUserName: ctx.user.email ?? "Admin",
+        actionType: "create",
+        entityType: "UserInvite",
+        entityId: userId,
+        newValue: email,
+      });
+
+      return { inviteUrl, emailSent };
+    }),
+
+  resendInvite: ownerProcedure
+    .input(z.object({ userId: z.string() }))
+    .mutation(async ({ input, ctx }) => {
+      const db = getDb();
+      const [user] = await db.select().from(users).where(eq(users.id, input.userId)).limit(1);
+      if (!user) throw new TRPCError({ code: "NOT_FOUND" });
+      if (user.status !== "invited") {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "User has already accepted their invitation" });
+      }
+
+      // Expire all existing invites for this user
+      await db.update(invites).set({ expiresAt: new Date() }).where(eq(invites.userId, input.userId));
+
+      const rawToken = randomBytes(32).toString("hex");
+      const tokenHash = createHash("sha256").update(rawToken).digest("hex");
+      const expiresAt = new Date(Date.now() + 72 * 60 * 60 * 1000);
+      await db.insert(invites).values({
+        id: crypto.randomUUID(),
+        userId: input.userId,
+        tokenHash,
+        expiresAt,
+        createdBy: ctx.user.id,
+      });
+
+      const inviteUrl = `${ENV.appBaseUrl}/accept-invite?token=${rawToken}`;
+      const emailSent = await sendInviteEmail(user.email ?? "", inviteUrl, ctx.user.email ?? "An admin");
+
+      await logAudit({
+        actingUserId: ctx.user.id,
+        actingUserName: ctx.user.email ?? "Admin",
+        actionType: "create",
+        entityType: "UserInviteResend",
+        entityId: input.userId,
+      });
+
+      return { inviteUrl, emailSent };
+    }),
+
+  updateRole: ownerProcedure
+    .input(z.object({
+      userId: z.string(),
+      role: z.enum(["admin", "member"]),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      if (input.userId === ctx.user.id && input.role !== "admin") {
+        // Demoting self — check if last admin
+        const db = getDb();
+        const [{ count }] = await db
+          .select({ count: sql<number>`count(*)` })
+          .from(users)
+          .where(and(eq(users.role, "admin"), eq(users.status, "active")));
+        if (Number(count) <= 1) {
+          throw new TRPCError({ code: "FORBIDDEN", message: "Cannot demote yourself — you are the last active admin" });
+        }
+      }
+      const db = getDb();
+      const [existing] = await db.select({ role: users.role }).from(users).where(eq(users.id, input.userId)).limit(1);
+      if (!existing) throw new TRPCError({ code: "NOT_FOUND" });
+      await db.update(users).set({ role: input.role }).where(eq(users.id, input.userId));
+      await logAudit({
+        actingUserId: ctx.user.id,
+        actingUserName: ctx.user.email ?? "Admin",
+        actionType: "update",
+        entityType: "User",
+        entityId: input.userId,
+        fieldChanged: "role",
+        oldValue: existing.role,
+        newValue: input.role,
+      });
+      return { success: true };
+    }),
+
+  updateStatus: ownerProcedure
+    .input(z.object({
+      userId: z.string(),
+      status: z.enum(["active", "disabled"]),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      if (input.userId === ctx.user.id && input.status === "disabled") {
+        throw new TRPCError({ code: "FORBIDDEN", message: "You cannot disable your own account" });
+      }
+      const db = getDb();
+      const [target] = await db.select().from(users).where(eq(users.id, input.userId)).limit(1);
+      if (!target) throw new TRPCError({ code: "NOT_FOUND" });
+
+      // Prevent disabling the last active admin
+      if (input.status === "disabled" && target.role === "admin") {
+        const [{ count }] = await db
+          .select({ count: sql<number>`count(*)` })
+          .from(users)
+          .where(and(eq(users.role, "admin"), eq(users.status, "active")));
+        if (Number(count) <= 1) {
+          throw new TRPCError({ code: "FORBIDDEN", message: "Cannot disable the last active admin account" });
+        }
+      }
+
+      await db.update(users).set({ status: input.status }).where(eq(users.id, input.userId));
+      await logAudit({
+        actingUserId: ctx.user.id,
+        actingUserName: ctx.user.email ?? "Admin",
+        actionType: "status_change",
+        entityType: "User",
+        entityId: input.userId,
+        oldValue: target.status,
+        newValue: input.status,
+      });
+      return { success: true };
+    }),
+
+  forcePasswordReset: ownerProcedure
+    .input(z.object({ userId: z.string() }))
+    .mutation(async ({ input, ctx }) => {
+      const db = getDb();
+      const [target] = await db.select().from(users).where(eq(users.id, input.userId)).limit(1);
+      if (!target) throw new TRPCError({ code: "NOT_FOUND" });
+      if (target.status === "invited") {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "User has not yet accepted their invitation" });
+      }
+      await db.update(users).set({ mustChangePassword: true }).where(eq(users.id, input.userId));
+      await sendPasswordResetNotification(target.email ?? "", ctx.user.email ?? "An admin");
+      await logAudit({
+        actingUserId: ctx.user.id,
+        actingUserName: ctx.user.email ?? "Admin",
+        actionType: "override",
+        entityType: "User",
+        entityId: input.userId,
+        fieldChanged: "mustChangePassword",
+        newValue: "true",
+      });
+      return { success: true };
+    }),
+});
+
 // ─── Admin App Router ─────────────────────────────────────────────────────────
 export const adminRouter = router({
   dashboard: dashboardRouter,
@@ -1292,6 +1504,7 @@ export const adminRouter = router({
   membership: membershipPortalRouter,
   auditLog: auditLogRouter,
   analytics: analyticsRouter,
+  users: usersAdminRouter,
 });
 
 // Backward-compat alias — consumed by server/routers.ts as `portalRouter`

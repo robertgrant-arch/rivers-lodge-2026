@@ -6,4 +6,5 @@ export const ENV = {
   forgeApiKey: process.env.BUILT_IN_FORGE_API_KEY ?? "",
   adminEmail: process.env.ADMIN_EMAIL ?? "",
   adminTempPassword: process.env.ADMIN_TEMP_PASSWORD ?? "",
+  appBaseUrl: process.env.APP_BASE_URL ?? "http://localhost:5173",
 };

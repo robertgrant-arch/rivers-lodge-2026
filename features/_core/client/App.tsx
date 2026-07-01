@@ -73,6 +73,7 @@ const PortalLeads = lazy(() => import("@features/admin/client/pages/PortalLeads"
 const PortalNotifications = lazy(() => import("@features/admin/client/pages/PortalNotifications"));
 const PortalTestimonials = lazy(() => import("@features/admin/client/pages/PortalTestimonials"));
 const PortalProperties = lazy(() => import("@features/admin/client/pages/PortalProperties"));
+const AdminUsers = lazy(() => import("@features/admin/client/pages/AdminUsers"));
 
 // Reports pages
 const PortalFieldReports = lazy(() => import("@features/reports/client/pages/PortalFieldReports"));
@@ -136,6 +137,7 @@ function Router() {
         <Route path="/ops/waivers">{() => <PortalLayout><PortalWaivers /></PortalLayout>}</Route>
         <Route path="/ops/customers">{() => <PortalLayout><PortalCustomers /></PortalLayout>}</Route>
         <Route path="/ops/employees">{() => <PortalLayout><PortalEmployees /></PortalLayout>}</Route>
+        <Route path="/ops/users">{() => <PortalLayout><AdminUsers /></PortalLayout>}</Route>
         <Route path="/ops/membership">{() => <PortalLayout><PortalMembership /></PortalLayout>}</Route>
         <Route path="/ops/reports">{() => <PortalLayout><PortalReports /></PortalLayout>}</Route>
         <Route path="/ops/bookings/:id">{() => <PortalLayout><PortalBookings /></PortalLayout>}</Route>
