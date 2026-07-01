@@ -39,7 +39,10 @@ function createDb(): Promise<DrizzleDb | null> {
     return Promise.resolve(null);
   }
   try {
-    _pool = new Pool({ connectionString: url });
+    const ssl = url.includes("render.com") || process.env.NODE_ENV === "production"
+      ? { rejectUnauthorized: false }
+      : undefined;
+    _pool = new Pool({ connectionString: url, ssl });
     return Promise.resolve(drizzle(_pool) as unknown as DrizzleDb);
   } catch (error) {
     console.warn("[Database] Failed to create connection pool:", error);
