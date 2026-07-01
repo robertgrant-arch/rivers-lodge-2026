@@ -1,0 +1,51 @@
+# Build output
+dist/
+dist-server/
+.vite/
+*.tsbuildinfo
+
+# Dependencies
+node_modules/
+
+# Logs
+*.log
+logs/
+npm-debug.log*
+pnpm-debug.log*
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+drizzle/meta/
+
+# Environment / secrets
+.env
+.env.local
+.env.*.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.idea/
+*.swp
+*.swo
+.vscode/settings.json
+
+# Test output / coverage
+coverage/
+.vitest/
+
+# Render / deployment artifacts
+.render-buildpacks.json
+
+# Debug tooling
+client/public/__manus__/
+
+# Patches (rarely relevant to code tasks)
+patches/
+
+# Generated type files
+*.d.ts.map

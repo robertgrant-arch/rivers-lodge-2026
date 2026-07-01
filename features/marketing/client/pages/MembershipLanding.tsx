@@ -15,18 +15,18 @@ const INTERIOR   = "https://files.manuscdn.com/user_upload_by_module/session_fil
 const GROUNDS    = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/RNvGygATwGRMluZa.jpg";
 const LODGE_INT  = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/ydbhfuDouoqRGsqW.jpg";
 
-const SAGE = "oklch(0.58 0.065 145)";
+const SAGE = "#6B7250";
 
 const experiences = [
   {
     label: "Hunt",
-    href: "/hunt",
+    href: "/outdoor-activities/whitetail",
     desc: "Managed whitetail, waterfowl, turkey, and sporting clays on 300 private acres.",
     image: GROUNDS,
   },
   {
     label: "Fish",
-    href: "/fish",
+    href: "/outdoor-activities/fishing",
     desc: "Five private fisheries — bass, crappie, catfish, and more along the Marais des Cygnes.",
     image: RIVER,
   },
@@ -77,14 +77,14 @@ export default function MembershipLanding() {
           </div>
           <div className="relative z-10 max-w-[1440px] mx-auto px-5 lg:px-10 w-full">
             <div className="h-px w-10 mb-6" style={{ backgroundColor: SAGE }} />
-            <p className="eyebrow text-[oklch(0.94_0.008_78)/55] mb-4">Membership &amp; Outdoors</p>
+            <p className="eyebrow text-[#E0D3BD/55] mb-4">Membership &amp; Outdoors</p>
             <h1
               className="font-serif font-light italic text-white leading-tight mb-6"
               style={{ fontSize: "clamp(2.5rem,6vw,5.5rem)" }}
             >
-              Three hundred acres.<br />Entirely private.
+              Thousands of acres.<br />Entirely private.
             </h1>
-            <p className="text-[oklch(0.94_0.008_78)/75] font-sans text-base max-w-lg mb-10 leading-relaxed">
+            <p className="text-[#E0D3BD/75] font-sans text-base max-w-lg mb-10 leading-relaxed">
               The Rivers Lodge &amp; Hunt Club offers a limited number of memberships each season. Hunt, fish, and belong to something rare.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
@@ -104,17 +104,17 @@ export default function MembershipLanding() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
               <div>
                 <div className="h-px w-10 mb-6" style={{ backgroundColor: SAGE }} />
-                <p className="eyebrow text-[oklch(0.55_0.012_70)] mb-4">The Land</p>
+                <p className="eyebrow text-[#908B82] mb-4">The Land</p>
                 <h2
-                  className="font-serif text-[oklch(0.94_0.008_78)] leading-tight mb-6"
+                  className="font-serif text-[#E0D3BD] leading-tight mb-6"
                   style={{ fontSize: "clamp(1.75rem,3.5vw,2.75rem)" }}
                 >
                   This is what private land feels like.
                 </h2>
-                <p className="text-[oklch(0.60_0.015_72)] font-sans text-base leading-relaxed mb-6">
+                <p className="text-[#BABAAE] font-sans text-base leading-relaxed mb-6">
                   The Marais des Cygnes River runs through the heart of the property. Timber, open fields, and managed habitat create some of the finest hunting and fishing in eastern Kansas — all within an hour of Kansas City.
                 </p>
-                <p className="text-[oklch(0.60_0.015_72)] font-sans text-base leading-relaxed mb-8">
+                <p className="text-[#BABAAE] font-sans text-base leading-relaxed mb-8">
                   Membership at the Rivers Lodge is not a timeshare or a hunting lease. It is a community of like-minded people who share a deep respect for the land and a commitment to conservation.
                 </p>
                 <Link href="/estate" className="link-arrow">
@@ -140,13 +140,13 @@ export default function MembershipLanding() {
         </section>
 
         {/* ── Experience Types ──────────────────────────────────────────── */}
-        <section className="section bg-[oklch(0.115_0.007_64)]">
+        <section className="section bg-[#363330]">
           <div className="max-w-[1440px] mx-auto px-5 lg:px-10">
             <div className="text-center mb-14">
               <div className="h-px w-10 mx-auto mb-6" style={{ backgroundColor: SAGE }} />
-              <p className="eyebrow text-[oklch(0.55_0.012_70)] mb-3">Member Experiences</p>
+              <p className="eyebrow text-[#908B82] mb-3">Member Experiences</p>
               <h2
-                className="font-serif text-[oklch(0.94_0.008_78)] leading-tight"
+                className="font-serif text-[#E0D3BD] leading-tight"
                 style={{ fontSize: "clamp(1.75rem,3vw,2.5rem)" }}
               >
                 Every season, something to look forward to.
@@ -163,7 +163,7 @@ export default function MembershipLanding() {
                     />
                   </div>
                   <p className="eyebrow mb-2" style={{ color: SAGE, fontSize: "10px" }}>{exp.label}</p>
-                  <p className="text-[oklch(0.60_0.015_72)] font-sans text-sm leading-relaxed">{exp.desc}</p>
+                  <p className="text-[#BABAAE] font-sans text-sm leading-relaxed">{exp.desc}</p>
                   <p className="link-arrow mt-3 text-[10px]" style={{ color: SAGE }}>
                     Learn More
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
@@ -179,9 +179,9 @@ export default function MembershipLanding() {
           <div className="max-w-[1440px] mx-auto px-5 lg:px-10">
             <div className="mb-14">
               <div className="h-px w-10 mb-6" style={{ backgroundColor: SAGE }} />
-              <p className="eyebrow text-[oklch(0.55_0.012_70)] mb-3">Membership Tiers</p>
+              <p className="eyebrow text-[#908B82] mb-3">Membership Tiers</p>
               <h2
-                className="font-serif text-[oklch(0.94_0.008_78)] leading-tight max-w-lg"
+                className="font-serif text-[#E0D3BD] leading-tight max-w-lg"
                 style={{ fontSize: "clamp(1.75rem,3vw,2.5rem)" }}
               >
                 Three levels of access. One community.
@@ -193,15 +193,15 @@ export default function MembershipLanding() {
                   key={tier.name}
                   className={`p-8 border flex flex-col ${
                     tier.highlight
-                      ? "border-[oklch(0.58_0.065_145)] bg-[oklch(0.115_0.007_64)]"
-                      : "border-[oklch(0.22_0.008_64)] bg-[oklch(0.115_0.007_64)]"
+                      ? "border-[#6B7250] bg-[#363330]"
+                      : "border-[#57544E] bg-[#363330]"
                   }`}
                 >
                   {tier.highlight && (
                     <p className="eyebrow mb-3" style={{ color: SAGE, fontSize: "10px" }}>Most Popular</p>
                   )}
-                  <h3 className="font-serif text-[oklch(0.94_0.008_78)] text-xl mb-4">{tier.name}</h3>
-                  <p className="text-[oklch(0.60_0.015_72)] font-sans text-sm leading-relaxed flex-1 mb-6">{tier.desc}</p>
+                  <h3 className="font-serif text-[#E0D3BD] text-xl mb-4">{tier.name}</h3>
+                  <p className="text-[#BABAAE] font-sans text-sm leading-relaxed flex-1 mb-6">{tier.desc}</p>
                   <Link href="/membership" className="link-arrow text-[10px]" style={{ color: SAGE }}>
                     Learn More
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
@@ -213,18 +213,18 @@ export default function MembershipLanding() {
         </section>
 
         {/* ── Stats Strip ───────────────────────────────────────────────── */}
-        <div className="bg-[oklch(0.115_0.007_64)] border-y border-[oklch(0.22_0.008_64)]">
+        <div className="bg-[#363330] border-y border-[#57544E]">
           <div className="max-w-[1440px] mx-auto px-5 lg:px-10 py-10">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
               {[
-                { value: "300+", label: "Private Acres" },
+                { value: "Thousands", label: "Private Acres" },
                 { value: "5", label: "Private Fisheries" },
                 { value: "3", label: "Hunting Pursuits" },
                 { value: "60 min", label: "From Kansas City" },
               ].map((s) => (
                 <div key={s.label}>
                   <p className="font-serif text-3xl md:text-4xl leading-none mb-1" style={{ color: SAGE }}>{s.value}</p>
-                  <p className="eyebrow text-[oklch(0.55_0.012_70)]" style={{ fontSize: "10px" }}>{s.label}</p>
+                  <p className="eyebrow text-[#908B82]" style={{ fontSize: "10px" }}>{s.label}</p>
                 </div>
               ))}
             </div>
@@ -237,10 +237,10 @@ export default function MembershipLanding() {
             <div className="max-w-[1440px] mx-auto px-5 lg:px-10">
               <div className="max-w-2xl mx-auto text-center">
                 <div className="h-px w-10 mx-auto mb-8" style={{ backgroundColor: SAGE }} />
-                <blockquote className="font-serif italic text-[oklch(0.94_0.008_78)] leading-relaxed mb-6" style={{ fontSize: "clamp(1.25rem,2.5vw,1.75rem)" }}>
+                <blockquote className="font-serif italic text-[#E0D3BD] leading-relaxed mb-6" style={{ fontSize: "clamp(1.25rem,2.5vw,1.75rem)" }}>
                   "{testimonials[0].quote}"
                 </blockquote>
-                <p className="eyebrow text-[oklch(0.55_0.012_70)]" style={{ fontSize: "10px" }}>
+                <p className="eyebrow text-[#908B82]" style={{ fontSize: "10px" }}>
                   {testimonials[0].authorName}
                   {testimonials[0].authorTitle ? ` — ${testimonials[0].authorTitle}` : ""}
                 </p>
@@ -254,14 +254,14 @@ export default function MembershipLanding() {
           <div className="max-w-[1440px] mx-auto px-5 lg:px-10">
             <div className="text-center mb-10">
               <div className="h-px w-10 mx-auto mb-6" style={{ backgroundColor: SAGE }} />
-              <p className="eyebrow text-[oklch(0.55_0.012_70)] mb-3">Estate Availability</p>
-              <h2 className="font-serif text-[oklch(0.94_0.008_78)] text-3xl md:text-4xl leading-tight">
+              <p className="eyebrow text-[#908B82] mb-3">Estate Availability</p>
+              <h2 className="font-serif text-[#E0D3BD] text-3xl md:text-4xl leading-tight">
                 Plan your season.
               </h2>
             </div>
             <div className="max-w-2xl mx-auto">
               <AvailabilityCalendar showLegend={true} />
-              <p className="text-center mt-6 font-sans text-[oklch(0.55_0.012_70)] text-sm">
+              <p className="text-center mt-6 font-sans text-[#908B82] text-sm">
                 Members book stays through the member portal. Contact us to discuss availability for your preferred dates.
               </p>
               <div className="flex justify-center mt-8">
@@ -272,13 +272,13 @@ export default function MembershipLanding() {
         </section>
 
         {/* ── FAQ ─────────────────────────────────────────────────────────────── */}
-        <section className="section bg-[oklch(0.115_0.007_64)]">
+        <section className="section bg-[#363330]">
           <div className="max-w-[1440px] mx-auto px-5 lg:px-10">
             <div className="max-w-3xl mx-auto">
               <div className="text-center mb-12">
                 <div className="h-px w-10 mx-auto mb-6" style={{ backgroundColor: SAGE }} />
-                <p className="eyebrow text-[oklch(0.55_0.012_70)] mb-3">Common Questions</p>
-                <h2 className="font-serif text-[oklch(0.94_0.008_78)] text-3xl md:text-4xl leading-tight">
+                <p className="eyebrow text-[#908B82] mb-3">Common Questions</p>
+                <h2 className="font-serif text-[#E0D3BD] text-3xl md:text-4xl leading-tight">
                   Membership, answered.
                 </h2>
               </div>
@@ -320,14 +320,14 @@ export default function MembershipLanding() {
         </section>
 
         {/* ── Membership Inquiry CTA ─────────────────────────────────────────────── */}
-        <section className="section bg-[oklch(0.115_0.007_64)]">
+        <section className="section bg-[#363330]">
           <div className="max-w-[1440px] mx-auto px-5 lg:px-10">
             <div className="max-w-xl mx-auto text-center">
               <div className="h-px w-10 mx-auto mb-6" style={{ backgroundColor: SAGE }} />
-              <h2 className="font-serif text-[oklch(0.94_0.008_78)] text-3xl md:text-4xl leading-tight mb-5">
+              <h2 className="font-serif text-[#E0D3BD] text-3xl md:text-4xl leading-tight mb-5">
                 Membership is by invitation.
               </h2>
-              <p className="text-[oklch(0.60_0.015_72)] font-sans text-sm leading-relaxed mb-8">
+              <p className="text-[#BABAAE] font-sans text-sm leading-relaxed mb-8">
                 A limited number of memberships are available each season. If you're interested in joining the Rivers Lodge community, we'd like to hear from you.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">

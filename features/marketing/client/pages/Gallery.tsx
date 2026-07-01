@@ -28,52 +28,7 @@ const CMS_CATEGORY_MAP: Record<string, Category> = {
 
 type Photo = { src: string; alt: string; category: Category };
 const photos: Photo[] = [
-  // Weddings
-  { src: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/siQifohpnZvEwjzv.jpg",       alt: "Couple kissing during outdoor ceremony at Rivers Lodge",       category: "weddings" },
-  { src: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/NuVfykZEURKLacpv.jpg",       alt: "Outdoor wedding ceremony on the deck with water views",        category: "weddings" },
-  { src: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/mSPuNFIqdVcIezPH.jpg",       alt: "Outdoor ceremony setup on the deck with white chairs",         category: "weddings" },
-  { src: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/qYCdMEPFXPqLETpW.jpg",       alt: "Ceremony on the deck — bride, groom, and officiant",           category: "weddings" },
-  { src: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/pFNbepnLIXdSdggm.jpg",       alt: "Wedding ceremony on the deck with building in background",     category: "weddings" },
-  { src: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/gWfYLmNXrOoFKvTt.jpg",       alt: "Newlyweds walking by the lake with string lights",             category: "weddings" },
-  { src: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/zOzIJZPsdomrZqHd.jpg",       alt: "Bride and groom holding hands by the water",                  category: "weddings" },
-  { src: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/NZtYcxtHmabpDiKB.jpg",       alt: "Couple embracing in a field of white flowers",                 category: "weddings" },
-  { src: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/hnnWIhlgDRZJLgCn.jpg",       alt: "Bride and groom in tall grass at Rivers Lodge",                category: "weddings" },
-  { src: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/SSdcPuhkHXDvzhtk.jpg",       alt: "Wedding reception tables inside Rivers Barn",                  category: "weddings" },
-  { src: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/hTwwqFuGkHHpWJgA.jpg",       alt: "Champagne toast at wedding reception in Rivers Barn",          category: "weddings" },
-  { src: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/JbMIltWvczRWbDaw.jpg",    alt: "Newlyweds walking by the pond at Rivers Lodge",                category: "weddings" },
-  { src: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/frgfGSQgOuESJGtz.jpg",    alt: "Couple on the dock by the lake at sunset",                    category: "weddings" },
-  { src: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/RvSrHcjtkNbDoalw.jpg",    alt: "Wedding ceremony at the Rivers Lodge",                        category: "weddings" },
-  { src: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/RvSrHcjtkNbDoalw.jpg",    alt: "Outdoor fishing on the river at Rivers Lodge",                category: "weddings" },
-  // Venues
-  { src: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/GEBYbBimoPflfefP.jpg",             alt: "Rivers Barn exterior at dusk — dark wood siding and lit windows", category: "venues" },
-  { src: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/RNvGygATwGRMluZa.jpg",             alt: "Estate fire pit — stone pit with Adirondack chairs",           category: "venues" },
-  { src: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/iIofWjQRmWLcfkoI.jpg",    alt: "Riverhouse Suite interior — boho-style room",                 category: "venues" },
-  { src: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/oyCUCsQLeEsyBufo.jpg",    alt: "Riverhouse Suites exterior — summer view with blue chairs",   category: "venues" },
-  { src: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/ydbhfuDouoqRGsqW.jpg",             alt: "Timber Edge Clubhouse — bar and lounge interior",             category: "venues" },
-  // Lodging
-  { src: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/JcuUUmANmAAHItUn.jpg",         alt: "Lodge interior — living and dining area",                     category: "lodging" },
-  { src: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/pNgYcBDkkMZrjPdg.jpg",  alt: "The Lodge — bright bedroom suite",                            category: "lodging" },
-  { src: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/FBhBBcKGLLMcZCZH.jpg",           alt: "The Lodge — kitchen and dining area",                         category: "lodging" },
-  { src: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/CWqFSDNCUymmKhkq.jpg",             alt: "The Lodge — kitchen sink and window detail",                  category: "lodging" },
-  { src: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/ooPGTJSHasHosVDF.jpg",             alt: "The Lodge — dining room and great room",                      category: "lodging" },
-  { src: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/wswsJSxuUMvPOXez.jpg", alt: "Riverhouse Suites exterior — autumn view",                    category: "lodging" },
-  { src: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/ZfbnTlBBpONdqwAL.jpg",     alt: "Riverhouse Suite interior — dark olive room with oars",       category: "lodging" },
-  { src: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/jPtEuiXynfNedkpV.jpg",             alt: "Ohana House — aerial view of the private property",           category: "lodging" },
-  { src: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/aLRhjpmRWbewKvgx.jpg",             alt: "Ohana House — private dock at sunset",                        category: "lodging" },
-  // Grounds
-  { src: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/ooPGTJSHasHosVDF.jpg",             alt: "The Lodge — dining room and great room",                      category: "grounds" },
-  { src: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/xZXSDWkpiCXfqsiU.jpg", alt: "Golden-hour aerial of the full Rivers Lodge property",      category: "grounds" },
-  { src: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/TdlSWCLWjUxbkCAY.jpg",         alt: "Rivers Lodge exterior — the main Lodge building",             category: "grounds" },
-  { src: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/ueUiZmGhmnLKziOQ.jpg", alt: "Estate fire pit and Adirondack chairs at dusk",              category: "grounds" },
-  { src: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/ZfbnTlBBpONdqwAL.jpg",     alt: "Riverhouse Suite interior — dark olive room with oars",       category: "grounds" },
-  { src: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/wswsJSxuUMvPOXez.jpg", alt: "Estate grounds — natural landscape",    category: "grounds" },
-  { src: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/pNgYcBDkkMZrjPdg.jpg", alt: "Estate grounds — river and land",         category: "grounds" },
-  { src: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/iIofWjQRmWLcfkoI.jpg", alt: "Estate grounds — wooded areas",             category: "grounds" },
-  { src: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/oyCUCsQLeEsyBufo.jpg", alt: "Estate grounds — open fields",              category: "grounds" },
-  { src: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/ZfbnTlBBpONdqwAL.jpg", alt: "Estate grounds — waterfront",               category: "grounds" },
-  { src: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/ueUiZmGhmnLKziOQ.jpg", alt: "Estate grounds — evening light",            category: "grounds" },
-  { src: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/frgfGSQgOuESJGtz.jpg",    alt: "Couple on the dock by the water at sunset",                  category: "grounds" },
-  { src: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/xZXSDWkpiCXfqsiU.jpg",             alt: "Estate grounds — natural setting",                           category: "grounds" },
+  // Photos cleared — repopulate via CMS or this array when ready
 ];
 
 // ─── Lightbox ─────────────────────────────────────────────────────────────────
@@ -186,16 +141,7 @@ export default function Gallery() {
     setTimeout(() => setVisible(true), 50);
   };
 
-  const allPhotos = (cmsGalleries && cmsGalleries.length > 0)
-    ? cmsGalleries.flatMap((gallery) => {
-        const cat = CMS_CATEGORY_MAP[gallery.category] ?? "grounds";
-        return (gallery.images ?? []).map((img) => ({
-          src: img.url,
-          alt: img.altText ?? gallery.name,
-          category: cat as Category,
-        }));
-      })
-    : photos;
+  const allPhotos: Photo[] = photos;
 
   const filtered = active === "all" ? allPhotos : allPhotos.filter((p) => p.category === active);
   const activeCat = categories.find((c) => c.key === active);

@@ -1,61 +1,39 @@
 import { Link } from "wouter";
 import { getLoginUrl } from "@features/auth/public";
 
-const weddingsLinks = [
-  { label: "Weddings", href: "/weddings" },
-  { label: "Corporate Outings", href: "/corporate" },
-  { label: "Lodging & Spaces", href: "/lodging" },
-  { label: "Venue Spaces", href: "/venues" },
-  { label: "Gallery", href: "/gallery" },
-];
-
-const membershipLinks = [
-  { label: "Hunt", href: "/hunt" },
-  { label: "Fish", href: "/fish" },
-  { label: "Membership", href: "/membership" },
-  { label: "The Estate", href: "/estate" },
-  { label: "Apply", href: "/membership#apply" },
-];
-
-const contactLinks = [
-  { label: "Contact Us", href: "/contact", external: false },
-  { label: "Privacy Policy", href: "/privacy", external: false },
-];
-
 export default function PublicFooter() {
   return (
-    <footer className="bg-[oklch(0.075_0.005_64)] text-[oklch(0.55_0.012_70)]">
+    <footer className="bg-[#201E1C] text-[#908B82]">
       {/* Gold rule at top */}
-      <div className="h-px bg-[oklch(0.72_0.095_78)/20]" />
+      <div className="h-px bg-[#9B4D19]/20" />
 
       <div className="max-w-[1440px] mx-auto px-5 lg:px-10 pt-16 pb-10 md:pt-20 md:pb-12">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-10 md:gap-8 pb-14 md:pb-16 border-b border-[oklch(1_0_0/0.06)]">
+        <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-8 md:gap-6 pb-14 md:pb-16 border-b border-[oklch(1_0_0/0.06)]">
 
           {/* ── Brand ──────────────────────────────────────────────────── */}
           <div className="col-span-2 md:col-span-1">
             <div className="mb-5">
-              <div className="font-serif text-[1.375rem] text-[oklch(0.94_0.008_78)] leading-tight tracking-wide">
+              <div className="font-serif text-[1.375rem] text-[#E0D3BD] leading-tight tracking-wide">
                 Rivers Lodge
               </div>
               <div className="text-[9px] tracking-[0.24em] uppercase font-sans font-light opacity-50 mt-1">
                 &amp; Hunt Club
               </div>
             </div>
-            <p className="text-[12px] font-sans leading-relaxed opacity-70 max-w-[220px] mb-5">
-              A private estate on the Marais des Cygnes. Destination weddings, exclusive membership, and the finest private hunting and fishing in the Midwest.
+            <p className="text-[12px] font-sans leading-relaxed opacity-70 max-w-[200px] mb-5">
+              A private estate on the Marais des Cygnes. Exclusive membership, destination weddings, and the finest private hunting and fishing in the Midwest.
             </p>
             <address className="not-italic text-[11px] font-sans leading-relaxed opacity-50 mb-5">
               18103 E 2300 Ln<br />
               La Cygne, KS 66040
             </address>
-            {/* Social */}
             <div className="flex items-center gap-4">
               <a
                 href="https://www.instagram.com/theriverslodge"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Instagram"
-                className="text-[oklch(0.55_0.012_70)] hover:text-[oklch(0.72_0.095_78)] transition-colors"
+                className="text-[#908B82] hover:text-[#9B4D19] transition-colors"
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                   <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
@@ -68,7 +46,7 @@ export default function PublicFooter() {
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Facebook"
-                className="text-[oklch(0.55_0.012_70)] hover:text-[oklch(0.72_0.095_78)] transition-colors"
+                className="text-[#908B82] hover:text-[#9B4D19] transition-colors"
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>
@@ -77,72 +55,105 @@ export default function PublicFooter() {
             </div>
           </div>
 
-          {/* ── Weddings & Events ─────────────────────────────────────── */}
+          {/* ── Lane 1: Events ───────────────────────────────────────── */}
           <div>
-            <h4 className="text-[10px] tracking-[0.22em] uppercase font-sans font-medium text-[oklch(0.94_0.008_78)] mb-5">
-              Weddings &amp; Events
+            <h4 className="text-[10px] tracking-[0.22em] uppercase font-sans font-medium text-[#E0D3BD] mb-5">
+              Events
             </h4>
             <nav className="flex flex-col gap-3">
-              {weddingsLinks.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className="text-[12px] font-sans hover:text-[oklch(0.70_0.060_50)] transition-colors"
-                >
-                  {item.label}
-                </Link>
-              ))}
+              <Link href="/weddings" className="text-[12px] font-sans hover:text-[#9B4D19] transition-colors">
+                Weddings
+              </Link>
+              <Link href="/corporate-events" className="text-[12px] font-sans hover:text-[#9B4D19] transition-colors">
+                Corporate Events
+              </Link>
+              <Link href="/food-and-wine" className="text-[12px] font-sans hover:text-[#9B4D19] transition-colors">
+                Food &amp; Wine
+              </Link>
+              <Link href="/outdoor-activities" className="text-[12px] font-sans hover:text-[#9B4D19] transition-colors">
+                Outdoor Activities
+              </Link>
             </nav>
           </div>
 
-          {/* ── Membership & Outdoors ─────────────────────────────────── */}
-          <div>
-            <h4 className="text-[10px] tracking-[0.22em] uppercase font-sans font-medium text-[oklch(0.94_0.008_78)] mb-5">
-              Membership &amp; Outdoors
+          {/* ── Lane 2: Lodging ──────────────────────────────────────── */}
+          <div className="col-span-2 md:col-span-1">
+            <h4 className="text-[10px] tracking-[0.22em] uppercase font-sans font-medium text-[#E0D3BD] mb-5">
+              Lodging
             </h4>
-            <nav className="flex flex-col gap-3">
-              {membershipLinks.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className="text-[12px] font-sans hover:text-[oklch(0.58_0.065_145)] transition-colors"
-                >
-                  {item.label}
-                </Link>
-              ))}
-            </nav>
-          </div>
-
-          {/* ── Contact & Legal ───────────────────────────────────────── */}
-          <div>
-            <h4 className="text-[10px] tracking-[0.22em] uppercase font-sans font-medium text-[oklch(0.94_0.008_78)] mb-5">
-              Contact &amp; Legal
-            </h4>
-            <nav className="flex flex-col gap-3">
-              {/* Member Login must use a plain <a> — it targets /api/oauth/start,
-                  a server route that requires a full-page navigation. */}
-              <a
-                href={getLoginUrl()}
-                className="text-[12px] font-sans hover:text-[oklch(0.94_0.008_78)] transition-colors"
-              >
-                Member Login
-              </a>
-              {contactLinks.map((item) => (
-                <Link
-                  key={item.label}
-                  href={item.href}
-                  className="text-[12px] font-sans hover:text-[oklch(0.94_0.008_78)] transition-colors"
-                >
-                  {item.label}
-                </Link>
-              ))}
-            </nav>
-            <div className="mt-6 pt-5 border-t border-[oklch(1_0_0/0.06)]">
-              <p className="text-[11px] font-sans leading-relaxed opacity-60">
-                60 minutes from<br />Kansas City, MO
-              </p>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+              <Link href="/lodging/the-lodge" className="text-[12px] font-sans hover:text-[#9B4D19] transition-colors">
+                The Lodge
+              </Link>
+              <Link href="/lodging/the-barn" className="text-[12px] font-sans hover:text-[#9B4D19] transition-colors">
+                The Barn
+              </Link>
+              <Link href="/lodging/riverhouse-suites" className="text-[12px] font-sans hover:text-[#9B4D19] transition-colors">
+                Riverhouse Suites
+              </Link>
+              <Link href="/lodging/the-green-drake" className="text-[12px] font-sans hover:text-[#9B4D19] transition-colors">
+                The Green Drake
+              </Link>
+              <Link href="/lodging/the-annex" className="text-[12px] font-sans hover:text-[#9B4D19] transition-colors">
+                The Annex
+              </Link>
+              <Link href="/lodging/the-clubhouse" className="text-[12px] font-sans hover:text-[#9B4D19] transition-colors">
+                The Clubhouse
+              </Link>
+              <Link href="/lodging/the-farmhouse" className="text-[12px] font-sans hover:text-[#9B4D19] transition-colors">
+                Farmhouse
+              </Link>
+              <Link href="/lodging/big-tine-house" className="text-[12px] font-sans hover:text-[#9B4D19] transition-colors">
+                Big Tine House
+              </Link>
+              <Link href="/lodging/trego-road" className="text-[12px] font-sans hover:text-[#9B4D19] transition-colors">
+                Trego Road
+              </Link>
             </div>
           </div>
+
+          {/* ── Lane 3: Explore Membership ────────────────────────────── */}
+          <div>
+            <h4 className="text-[10px] tracking-[0.22em] uppercase font-sans font-medium text-[#E0D3BD] mb-5">
+              Explore Membership
+            </h4>
+            <nav className="flex flex-col gap-3">
+              <Link href="/membership" className="text-[12px] font-sans hover:text-[#6B7250] transition-colors">
+                Membership Overview
+              </Link>
+              <Link href="/membership/benefits" className="text-[12px] font-sans hover:text-[#6B7250] transition-colors">
+                Benefits / Why Join
+              </Link>
+              <Link href="/membership/faq" className="text-[12px] font-sans hover:text-[#6B7250] transition-colors">
+                FAQ
+              </Link>
+              <Link href="/membership/events" className="text-[12px] font-sans hover:text-[#6B7250] transition-colors">
+                Member Events
+              </Link>
+            </nav>
+          </div>
+
+          {/* ── Lane 4: Utility ──────────────────────────────────────── */}
+          <div className="col-span-2 md:col-span-1">
+            <h4 className="text-[10px] tracking-[0.22em] uppercase font-sans font-medium text-[#E0D3BD] mb-5">
+              Explore
+            </h4>
+            <nav className="flex flex-col gap-3">
+              <Link href="/gallery" className="text-[12px] font-sans hover:text-[#E0D3BD] transition-colors">
+                Gallery
+              </Link>
+              <Link href="/contact" className="text-[12px] font-sans hover:text-[#E0D3BD] transition-colors">
+                Contact
+              </Link>
+              <a href={getLoginUrl()} className="text-[12px] font-sans hover:text-[#E0D3BD] transition-colors">
+                Member Login
+              </a>
+              <Link href="/privacy" className="text-[12px] font-sans hover:text-[#E0D3BD] transition-colors">
+                Privacy Policy
+              </Link>
+            </nav>
+          </div>
+
         </div>
 
         {/* ── Copyright bar ──────────────────────────────────────────────── */}

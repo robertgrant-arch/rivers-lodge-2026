@@ -53,8 +53,8 @@ export default function StickyInquiryCTA({
       <div
         className="flex items-center justify-between gap-4 px-5 py-4 border-t"
         style={{
-          background: "oklch(0.12 0.015 66 / 0.97)",
-          borderColor: "oklch(0.22 0.008 64)",
+          background: "rgba(43, 40, 35, 0.97)",
+          borderColor: "#57544E",
           backdropFilter: "blur(12px)",
         }}
       >

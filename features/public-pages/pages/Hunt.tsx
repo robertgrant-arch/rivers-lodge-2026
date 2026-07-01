@@ -52,7 +52,7 @@ export default function Hunt() {
   description="World-class whitetail deer hunting, waterfowl, and upland bird hunting on 1,800 private acres in La Cygne, Kansas. Exclusive member access."
   url="/hunt"
 />
-      <div style={{ "--track-accent": "oklch(0.58 0.065 145)" } as React.CSSProperties}>
+      <div style={{ "--track-accent": "#6B7250" } as React.CSSProperties}>
 
       {/* Hero */}
       <section className="relative hero-full flex items-end pb-24 overflow-hidden">
@@ -61,16 +61,16 @@ export default function Hunt() {
           <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, transparent 0%, oklch(0 0 0/0.12) 40%, oklch(0 0 0/0.82) 100%)" }} />
         </div>
         <div className="relative z-10 max-w-[1440px] mx-auto px-5 lg:px-14 w-full">
-          <div style={{ height: "1px", width: "2rem", backgroundColor: "oklch(0.58 0.065 145)", marginBottom: "1.25rem" }} />
+          <div style={{ height: "1px", width: "2rem", backgroundColor: "#6B7250", marginBottom: "1.25rem" }} />
           <p className="eyebrow text-white/50 mb-4">Hunt</p>
           <h1 className="font-serif font-light text-white leading-[0.92] mb-6" style={{ fontSize: "clamp(2.75rem,6.5vw,5.5rem)" }}>
             Private hunting on
             <br /><em className="italic font-light">managed Kansas land.</em>
           </h1>
           <p className="font-sans text-white/65 max-w-lg leading-relaxed mb-10" style={{ fontSize: "0.9375rem" }}>
-            Three hundred acres of whitetail timber, managed food plots, waterfowl wetlands, and upland fields. Available exclusively to members.
+            Thousands of acres of whitetail timber, managed food plots, waterfowl wetlands, and upland fields. Available exclusively to members.
           </p>
-          <Link href="/membership" className="btn-outline" style={{ borderColor: "oklch(0.58 0.065 145)", color: "oklch(0.58 0.065 145)" }}>
+          <Link href="/membership" className="btn-outline" style={{ borderColor: "#6B7250", color: "#6B7250" }}>
             Explore Membership
           </Link>
         </div>
@@ -81,7 +81,7 @@ export default function Hunt() {
         <div className="max-w-[1440px] mx-auto px-5 lg:px-14">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-28 items-center">
             <div>
-              <div style={{ height: "1px", width: "2rem", backgroundColor: "oklch(0.58 0.065 145)", marginBottom: "1.25rem" }} />
+              <div style={{ height: "1px", width: "2rem", backgroundColor: "#6B7250", marginBottom: "1.25rem" }} />
               <p className="eyebrow text-muted-brand mb-4">The Land</p>
               <h2 className="font-serif font-light text-warm leading-tight mb-8" style={{ fontSize: "clamp(1.875rem,3.5vw,3rem)" }}>
                 Managed with purpose.
@@ -103,7 +103,7 @@ export default function Hunt() {
       <section ref={pursuitsRef as React.RefObject<HTMLDivElement>} className="fade-up section bg-surface">
         <div className="max-w-[1440px] mx-auto px-5 lg:px-14">
           <div className="mb-14">
-            <div style={{ height: "1px", width: "2rem", backgroundColor: "oklch(0.58 0.065 145)", marginBottom: "1.25rem" }} />
+            <div style={{ height: "1px", width: "2rem", backgroundColor: "#6B7250", marginBottom: "1.25rem" }} />
             <p className="eyebrow text-muted-brand mb-4">Pursuits</p>
             <h2 className="font-serif font-light text-warm leading-tight" style={{ fontSize: "clamp(1.75rem,3vw,2.5rem)" }}>
               What the land holds.
@@ -116,7 +116,7 @@ export default function Hunt() {
                   <img src={p.img} alt={p.title} className="w-full h-full object-cover" loading="lazy" />
                 </div>
                 <div className="p-7">
-                  <div style={{ height: "1px", width: "1.5rem", backgroundColor: "oklch(0.58 0.065 145)", marginBottom: "1rem" }} />
+                  <div style={{ height: "1px", width: "1.5rem", backgroundColor: "#6B7250", marginBottom: "1rem" }} />
                   <h3 className="font-serif text-warm text-xl mb-3">{p.title}</h3>
                   <p className="font-sans text-muted-brand text-sm leading-relaxed">{p.desc}</p>
                 </div>
@@ -130,7 +130,7 @@ export default function Hunt() {
       <section ref={seasonRef as React.RefObject<HTMLDivElement>} className="fade-up section bg-background">
         <div className="max-w-[1440px] mx-auto px-5 lg:px-14">
           <div className="mb-12">
-            <div style={{ height: "1px", width: "2rem", backgroundColor: "oklch(0.58 0.065 145)", marginBottom: "1.25rem" }} />
+            <div style={{ height: "1px", width: "2rem", backgroundColor: "#6B7250", marginBottom: "1.25rem" }} />
             <p className="eyebrow text-muted-brand mb-4">Season Calendar</p>
             <h2 className="font-serif font-light text-warm leading-tight" style={{ fontSize: "clamp(1.75rem,3vw,2.5rem)" }}>
               Kansas hunting seasons.
@@ -166,8 +166,8 @@ export default function Hunt() {
                         style={{
                           left: `${left}%`,
                           width: `${width}%`,
-                          background: "oklch(0.58 0.065 145 / 0.75)",
-                          borderLeft: "2px solid oklch(0.58 0.065 145)",
+                          background: "rgba(107, 114, 80, 0.75)",
+                          borderLeft: "2px solid #6B7250",
                         }}
                       />
                       {/* Month grid lines */}
@@ -175,7 +175,7 @@ export default function Hunt() {
                         <div
                           key={m}
                           className="absolute top-0 bottom-0 w-px"
-                          style={{ left: `${(m/12)*100}%`, background: "oklch(0.22 0.008 64)" }}
+                          style={{ left: `${(m/12)*100}%`, background: "#57544E" }}
                         />
                       ))}
                     </div>
@@ -192,7 +192,7 @@ export default function Hunt() {
       <section ref={ctaRef as React.RefObject<HTMLDivElement>} className="fade-up section bg-surface">
         <div className="max-w-[1440px] mx-auto px-5 lg:px-14">
           <div className="max-w-2xl">
-            <div style={{ height: "1px", width: "2rem", backgroundColor: "oklch(0.58 0.065 145)", marginBottom: "1.25rem" }} />
+            <div style={{ height: "1px", width: "2rem", backgroundColor: "#6B7250", marginBottom: "1.25rem" }} />
             <p className="eyebrow text-muted-brand mb-4">Membership Required</p>
             <h2 className="font-serif font-light text-warm leading-tight mb-6" style={{ fontSize: "clamp(1.875rem,3.5vw,3rem)" }}>
               Hunting access is exclusive to members.
@@ -201,7 +201,7 @@ export default function Hunt() {
               A limited number of memberships are available each season. If you're interested in joining, we'd like to hear from you.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
-              <Link href="/membership" className="btn-outline" style={{ borderColor: "oklch(0.58 0.065 145)", color: "oklch(0.58 0.065 145)" }}>
+              <Link href="/membership" className="btn-outline" style={{ borderColor: "#6B7250", color: "#6B7250" }}>
                 Explore Membership
               </Link>
               <Link href="/fish" className="btn-ghost">View Fishing</Link>

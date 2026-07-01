@@ -62,7 +62,7 @@ function MiniCalendar({ blockedDates }: { blockedDates: string[] }) {
   const next = () => { if (month === 11) { setMonth(0); setYear(y => y + 1); } else setMonth(m => m + 1); };
 
   return (
-    <div className="bg-[oklch(0.13_0.008_66)] border border-white/8 p-6">
+    <div className="bg-[#2B2823] border border-white/8 p-6">
       <div className="flex items-center justify-between mb-5">
         <button onClick={prev} className="w-8 h-8 flex items-center justify-center text-white/40 hover:text-white transition-colors">‹</button>
         <span className="font-serif text-lg text-white">{MONTH_NAMES[month]} {year}</span>
@@ -182,7 +182,7 @@ function UpdatesTab({
       {filteredCmsContent.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-8">
           {filteredCmsContent.map((c) => (
-            <div key={c.id} className="bg-[oklch(0.13_0.008_66)] border border-white/8 p-6">
+            <div key={c.id} className="bg-[#2B2823] border border-white/8 p-6">
               <div className="flex items-center justify-between mb-3">
                 <span className="text-[9px] tracking-[0.16em] uppercase font-sans text-white/30">{c.contentType.replace(/_/g, " ")}</span>
                 {c.publishedAt && <span className="text-[9px] font-sans text-white/25">{new Date(c.publishedAt).toLocaleDateString()}</span>}
@@ -203,7 +203,7 @@ function UpdatesTab({
       ) : filteredUpdates.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           {filteredUpdates.map((u) => (
-            <div key={u.id} className="bg-[oklch(0.13_0.008_66)] border border-white/8 p-6">
+            <div key={u.id} className="bg-[#2B2823] border border-white/8 p-6">
               <div className="flex items-center justify-between mb-3">
                 <span className="text-[9px] tracking-[0.16em] uppercase font-sans text-white/30">{u.category}</span>
                 <span className="text-[9px] font-sans text-white/25">{new Date(u.publishedAt).toLocaleDateString()}</span>
@@ -214,7 +214,7 @@ function UpdatesTab({
           ))}
         </div>
       ) : !hasContent ? (
-        <div className="text-center py-16 border border-white/8 bg-[oklch(0.13_0.008_66)]">
+        <div className="text-center py-16 border border-white/8 bg-[#2B2823]">
           <p className="font-serif text-xl text-white mb-2">
             {activeCategory === "All" ? "No updates yet." : `No ${activeCategory} updates yet.`}
           </p>
@@ -373,7 +373,7 @@ export default function MemberPortal() {
       <div className="min-h-screen bg-background" style={isPreviewMode ? { paddingTop: "2.5rem" } : {}}>
 
         {/* ── Portal Header ─────────────────────────────────────────────── */}
-        <div className="bg-[oklch(0.10_0.010_66)] border-b border-white/8 pt-24 pb-8">
+        <div className="bg-[#2B2823] border-b border-white/8 pt-24 pb-8">
           <div className="max-w-[1440px] mx-auto px-6 lg:px-16">
             <div className="flex items-start justify-between gap-4">
               <div>
@@ -410,7 +410,7 @@ export default function MemberPortal() {
                   )}
                 </button>
                 {notifOpen && (
-                  <div className="absolute right-0 top-12 w-80 bg-[oklch(0.13_0.008_66)] border border-white/10 shadow-2xl z-50">
+                  <div className="absolute right-0 top-12 w-80 bg-[#2B2823] border border-white/10 shadow-2xl z-50">
                     <div className="px-4 py-3 border-b border-white/8">
                       <p className="text-[10px] tracking-[0.16em] uppercase font-sans text-white/50">Notifications</p>
                     </div>
@@ -437,7 +437,7 @@ export default function MemberPortal() {
         </div>
 
         {/* ── Tabs ──────────────────────────────────────────────────────── */}
-        <div className="border-b border-white/8 bg-[oklch(0.10_0.010_66)] sticky top-0 z-10">
+        <div className="border-b border-white/8 bg-[#2B2823] sticky top-0 z-10">
           <div className="max-w-[1440px] mx-auto px-6 lg:px-16">
             <div className="flex gap-0 overflow-x-auto scrollbar-none">
               {tabs.map((t) => (
@@ -476,7 +476,7 @@ export default function MemberPortal() {
                   { label: "Stay Requests", value: String((myRequests.data ?? []).length), sub: `${pendingRequests.length} active` },
                   { label: "Messages", value: String(myMessages.data?.length ?? 0), sub: "with concierge" },
                 ].map((stat) => (
-                  <div key={stat.label} className="bg-[oklch(0.13_0.008_66)] border border-white/8 p-5">
+                  <div key={stat.label} className="bg-[#2B2823] border border-white/8 p-5">
                     <p className="eyebrow text-white/30 mb-2">{stat.label}</p>
                     <div className="font-serif text-2xl text-white mb-0.5">{stat.value}</div>
                     <div className="text-xs font-sans text-white/40">{stat.sub}</div>
@@ -488,7 +488,7 @@ export default function MemberPortal() {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <button
                   onClick={() => setTab("request")}
-                  className="flex items-center gap-4 bg-[oklch(0.13_0.008_66)] border border-white/8 hover:border-[var(--gold)]/40 p-5 text-left transition-colors group"
+                  className="flex items-center gap-4 bg-[#2B2823] border border-white/8 hover:border-[var(--gold)]/40 p-5 text-left transition-colors group"
                 >
                   <div className="w-10 h-10 flex items-center justify-center border border-white/10 group-hover:border-[var(--gold)]/40 transition-colors flex-shrink-0">
                     <svg className="w-4 h-4 text-white/50 group-hover:text-[var(--gold)] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -503,7 +503,7 @@ export default function MemberPortal() {
 
                 <button
                   onClick={() => setTab("messages")}
-                  className="flex items-center gap-4 bg-[oklch(0.13_0.008_66)] border border-white/8 hover:border-[var(--gold)]/40 p-5 text-left transition-colors group"
+                  className="flex items-center gap-4 bg-[#2B2823] border border-white/8 hover:border-[var(--gold)]/40 p-5 text-left transition-colors group"
                 >
                   <div className="w-10 h-10 flex items-center justify-center border border-white/10 group-hover:border-[var(--gold)]/40 transition-colors flex-shrink-0">
                     <svg className="w-4 h-4 text-white/50 group-hover:text-[var(--gold)] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -536,7 +536,7 @@ export default function MemberPortal() {
               {/* Property Booking quick links */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <Link href="/portal/properties">
-                  <div className="flex items-center gap-4 bg-[oklch(0.13_0.008_66)] border border-[var(--gold)]/30 hover:border-[var(--gold)]/60 p-5 text-left transition-colors group cursor-pointer">
+                  <div className="flex items-center gap-4 bg-[#2B2823] border border-[var(--gold)]/30 hover:border-[var(--gold)]/60 p-5 text-left transition-colors group cursor-pointer">
                     <div className="w-10 h-10 flex items-center justify-center border border-[var(--gold)]/30 group-hover:border-[var(--gold)]/60 transition-colors flex-shrink-0">
                       <svg className="w-4 h-4 text-[var(--gold)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
@@ -550,7 +550,7 @@ export default function MemberPortal() {
                   </div>
                 </Link>
                 <Link href="/portal/my-bookings">
-                  <div className="flex items-center gap-4 bg-[oklch(0.13_0.008_66)] border border-white/8 hover:border-[var(--gold)]/40 p-5 text-left transition-colors group cursor-pointer">
+                  <div className="flex items-center gap-4 bg-[#2B2823] border border-white/8 hover:border-[var(--gold)]/40 p-5 text-left transition-colors group cursor-pointer">
                     <div className="w-10 h-10 flex items-center justify-center border border-white/10 group-hover:border-[var(--gold)]/40 transition-colors flex-shrink-0">
                       <svg className="w-4 h-4 text-white/50 group-hover:text-[var(--gold)] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
@@ -566,7 +566,7 @@ export default function MemberPortal() {
 
               {/* Recent requests summary */}
               {(myRequests.data ?? []).length > 0 && (
-                <div className="bg-[oklch(0.13_0.008_66)] border border-white/8 p-6">
+                <div className="bg-[#2B2823] border border-white/8 p-6">
                   <div className="flex items-center justify-between mb-5">
                     <p className="eyebrow text-white/40">Recent Stay Requests</p>
                     <button onClick={() => setTab("bookings")} className="text-[10px] font-sans text-[var(--gold)] hover:underline tracking-[0.1em] uppercase">
@@ -591,7 +591,7 @@ export default function MemberPortal() {
 
               {/* Latest updates */}
               {(updates.data ?? []).length > 0 && (
-                <div className="bg-[oklch(0.13_0.008_66)] border border-white/8 p-6">
+                <div className="bg-[#2B2823] border border-white/8 p-6">
                   <div className="flex items-center justify-between mb-5">
                     <p className="eyebrow text-white/40">Latest Updates</p>
                     <button onClick={() => setTab("updates")} className="text-[10px] font-sans text-[var(--gold)] hover:underline tracking-[0.1em] uppercase">
@@ -633,7 +633,7 @@ export default function MemberPortal() {
                   <div className="w-6 h-6 border border-white/20 border-t-white/60 rounded-full animate-spin" />
                 </div>
               ) : (myRequests.data ?? []).length === 0 ? (
-                <div className="text-center py-20 border border-white/8 bg-[oklch(0.13_0.008_66)]">
+                <div className="text-center py-20 border border-white/8 bg-[#2B2823]">
                   <p className="font-serif text-2xl text-white mb-3">No requests yet.</p>
                   <p className="text-sm font-sans text-white/40 mb-6">Submit your first stay request to get started.</p>
                   <button onClick={() => setTab("request")} className="btn-primary px-6 py-3">
@@ -648,7 +648,7 @@ export default function MemberPortal() {
                     const currentStep = statusSteps.indexOf(req.status);
                     const isTerminal = ["rejected","lost"].includes(req.status);
                     return (
-                      <div key={req.id} className="bg-[oklch(0.13_0.008_66)] border border-white/8 p-6">
+                      <div key={req.id} className="bg-[#2B2823] border border-white/8 p-6">
                         <div className="flex items-start justify-between gap-4 mb-5">
                           <div>
                             <h3 className="font-serif text-xl text-white mb-1">
@@ -758,7 +758,7 @@ export default function MemberPortal() {
                     { season: "Fishing",           dates: "Year-Round",      open: true  },
                     { season: "Sporting Clays",    dates: "Year-Round",      open: true  },
                   ].map((s) => (
-                    <div key={s.season} className="flex items-center justify-between bg-[oklch(0.13_0.008_66)] border border-white/8 px-4 py-3">
+                    <div key={s.season} className="flex items-center justify-between bg-[#2B2823] border border-white/8 px-4 py-3">
                       <div>
                         <div className="text-sm font-sans font-medium text-white">{s.season}</div>
                         <div className="text-xs font-sans text-white/40">{s.dates}</div>
@@ -821,10 +821,10 @@ export default function MemberPortal() {
                     onChange={(e) => setRequestForm({ ...requestForm, businessLine: e.target.value as typeof requestForm.businessLine })}
                     className="w-full border-0 border-b border-white/20 bg-transparent px-0 py-3 text-sm font-sans text-white focus:outline-none focus:border-[var(--gold)] transition-colors appearance-none cursor-pointer"
                   >
-                    <option value="member_stay" className="bg-[oklch(0.13_0.008_66)]">Lodging Stay</option>
-                    <option value="hunt" className="bg-[oklch(0.13_0.008_66)]">Hunting</option>
-                    <option value="fish" className="bg-[oklch(0.13_0.008_66)]">Fishing</option>
-                    <option value="hunt_and_fish" className="bg-[oklch(0.13_0.008_66)]">Hunt &amp; Fish Package</option>
+                    <option value="member_stay" className="bg-[#2B2823]">Lodging Stay</option>
+                    <option value="hunt" className="bg-[#2B2823]">Hunting</option>
+                    <option value="fish" className="bg-[#2B2823]">Fishing</option>
+                    <option value="hunt_and_fish" className="bg-[#2B2823]">Hunt &amp; Fish Package</option>
                   </select>
                 </div>
 
@@ -953,7 +953,7 @@ export default function MemberPortal() {
                 ) : (myMessages.data ?? []).length > 0 ? (
                   <div className="flex flex-col gap-3">
                     {(myMessages.data ?? []).map((m) => (
-                      <div key={m.id} className="bg-[oklch(0.13_0.008_66)] border border-white/8 p-5">
+                      <div key={m.id} className="bg-[#2B2823] border border-white/8 p-5">
                         <div className="flex items-center justify-between mb-2">
                           <span className="text-sm font-sans font-medium text-white">{m.subject ?? "No subject"}</span>
                           <span className="text-[9px] font-sans text-white/30">{new Date(m.createdAt).toLocaleDateString()}</span>
@@ -963,7 +963,7 @@ export default function MemberPortal() {
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center py-12 border border-white/8 bg-[oklch(0.13_0.008_66)]">
+                  <div className="text-center py-12 border border-white/8 bg-[#2B2823]">
                     <p className="font-serif text-xl text-white mb-2">No messages yet.</p>
                     <p className="text-xs font-sans text-white/40">Send your first message to the concierge team.</p>
                   </div>
@@ -988,7 +988,7 @@ export default function MemberPortal() {
             <p className="text-sm font-sans text-white/40 mb-8">Your membership details and account information.</p>
             <div className="flex flex-col gap-6">
               {/* Account info */}
-              <div className="bg-[oklch(0.13_0.008_66)] border border-white/8 p-6">
+              <div className="bg-[#2B2823] border border-white/8 p-6">
                 <p className="eyebrow text-white/30 mb-5">Account</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   {[
@@ -1009,7 +1009,7 @@ export default function MemberPortal() {
               </div>
               {/* Member notes */}
               {member?.notes && (
-                <div className="bg-[oklch(0.13_0.008_66)] border border-white/8 p-6">
+                <div className="bg-[#2B2823] border border-white/8 p-6">
                   <p className="eyebrow text-white/30 mb-3">Notes from the Lodge</p>
                   <p className="text-sm font-sans text-white/50 leading-relaxed">{member.notes}</p>
                 </div>
@@ -1030,7 +1030,7 @@ export default function MemberPortal() {
 
       {/* ── Booking Detail Modal ──────────────────────────────────── */}
       <Dialog open={!!selectedRequest} onOpenChange={(open) => { if (!open) setSelectedRequest(null); }}>
-        <DialogContent className="max-w-lg bg-[oklch(0.13_0.008_66)] border border-white/10 text-white rounded-none p-0 overflow-hidden">
+        <DialogContent className="max-w-lg bg-[#2B2823] border border-white/10 text-white rounded-none p-0 overflow-hidden">
           <DialogHeader className="px-6 pt-6 pb-4 border-b border-white/8">
             <DialogTitle className="font-serif text-xl text-white">
               {selectedRequest ? (ACTIVITY_LABELS[selectedRequest.businessLine] ?? selectedRequest.businessLine) : ""}

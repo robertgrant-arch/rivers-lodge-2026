@@ -4,7 +4,8 @@ services:
     runtime: node
     region: oregon
     plan: starter
-    buildCommand: pnpm install && pnpm build
+    branch: main
+    buildCommand: pnpm install --frozen-lockfile && pnpm build
     startCommand: pnpm start
     healthCheckPath: /api/health
     envVars:

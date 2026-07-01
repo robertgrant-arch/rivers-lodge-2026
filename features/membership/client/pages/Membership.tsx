@@ -1,18 +1,23 @@
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import { Link } from "wouter";
+import { Turnstile } from "@marsidev/react-turnstile";
+import type { TurnstileInstance } from "@marsidev/react-turnstile";
 import PublicLayout from "@/components/PublicLayout";
+import Picture from "@shared/components/Picture";
 import SEOHead, { structuredData } from '@shared/components/SEOHead';
 import { useAuth } from '@features/auth/public';
 import { trpc } from '@shared/lib/trpc';
 
 const STAFF_ROLES_M = ["admin", "owner", "venue_sales", "events_manager", "membership_manager", "hunt_fish_ops", "hospitality", "staff", "finance"];
 
+const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined;
 
-const HERO    = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/xZXSDWkpiCXfqsiU.jpg";
-const AERIAL  = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/jPtEuiXynfNedkpV.jpg";
-const RIVER   = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/aLRhjpmRWbewKvgx.jpg";
-const GROUNDS = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/RNvGygATwGRMluZa.jpg";
-const LODGE   = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/TdlSWCLWjUxbkCAY.jpg";
+const HERO   = "/img/Ohana%20Aerial.jpg"; /* TODO: replace with dedicated membership hero once uploaded */
+const AERIAL = "/img/Ohana%20Aerial.jpg";
+
+type MembershipTier = "Individual" | "Corporate" | "Not Sure Yet";
+
+const ACCENT = "#6B7250";
 
 function useFadeUp(t = 0.12) {
   const ref = useRef<HTMLElement>(null);
@@ -27,42 +32,266 @@ function useFadeUp(t = 0.12) {
 }
 
 const benefits = [
-  { title: "Hunting Access",       desc: "Full access to 300 acres of managed whitetail, waterfowl, turkey, and upland hunting. Guided hunts available." },
-  { title: "Fishing Access",       desc: "The Marais des Cygnes, two private lakes, and river sloughs — year-round fishing for bass, catfish, crappie, and bluegill." },
-  { title: "Sporting Clays",       desc: "Private sporting clays course on the property. Open to members and their guests." },
-  { title: "Clubhouse Access",     desc: "Full bar, dining, and meeting space available to members throughout the season." },
-  { title: "Lodging Priority",     desc: "Members receive priority booking on the Lodge, Riverhouse Suites, and Annex." },
-  { title: "Guest Privileges",     desc: "Bring guests to the property for hunting, fishing, and sporting days." },
-  { title: "Land Management Input","desc": "Members are part of the conversation about how the land is managed from season to season." },
-  { title: "Community",            desc: "A small group of members who share a deep respect for the land and the way it's used." },
+  { title: "Private Events",         desc: "Exclusive member events throughout the year — concerts, chef tours, estate parties, and seasonal gatherings." },
+  { title: "Guided Hunting",         desc: "Guided whitetail, waterfowl, turkey, and upland hunts with dedicated hunt managers and full field support." },
+  { title: "DIY Hunting Access",     desc: "Self-guided access to the property's timber, food plots, river bottom, and blinds on your own schedule." },
+  { title: "Guided Fishing",         desc: "Guided trips on the Marais des Cygnes, private lakes, and river sloughs for bass, catfish, crappie, and bluegill." },
+  { title: "DIY Fishing Access",     desc: "Unrestricted member access to all water on the property — fish when you want, how you want." },
+  { title: "Lodging Priority",       desc: "Priority booking on The Lodge, Riverhouse Suites, The Annex, and all other estate accommodations." },
+  { title: "Land Access & Updates",  desc: "Year-round land access and seasonal stewardship updates — stay connected to the property between visits." },
+  { title: "Guest Privileges",       desc: "Bring guests onto the property for hunting, fishing, sporting days, and member events." },
 ];
 
 const tiers = [
   {
-    name: "Outdoors Member",
-    price: "Contact for pricing",
-    desc: "Full hunting and fishing access. Sporting clays. Clubhouse access. Guest privileges.",
-    features: ["Hunting — all species", "Fishing — all fisheries", "Sporting clays", "Clubhouse access", "2 guest days/month"],
+    name: "Individual" as MembershipTier,
+    desc: "One designated member with full access to hunting, fishing, private events, and estate amenities.",
+    features: [
+      "Private events — concerts, chef tours, parties",
+      "Guided and DIY Hunting access",
+      "Guided and DIY Fishing access",
+      "Land access & stewardship updates",
+      "Lodging priority booking",
+      "Guest privileges",
+    ],
   },
   {
-    name: "Lodge Member",
-    price: "Contact for pricing",
-    desc: "Everything in Outdoors, plus priority lodging access and expanded guest privileges.",
-    features: ["All Outdoors benefits", "Priority lodging booking", "4 guest days/month", "Annual member event"],
-    featured: true,
-  },
-  {
-    name: "Founding Member",
-    price: "By invitation",
-    desc: "Reserved for a small number of founding members. Full access, no restrictions.",
-    features: ["All Lodge benefits", "Unlimited guest days", "Land management input", "Founding member recognition"],
+    name: "Corporate" as MembershipTier,
+    desc: "Three designated members — ideal for companies who want to entertain clients and reward teams on the estate.",
+    features: [
+      "Three designated members",
+      "Private events — concerts, chef tours, parties",
+      "Guided and DIY Hunting access",
+      "Guided and DIY Fishing access",
+      "Land access & stewardship updates",
+      "Lodging priority booking",
+      "Guest privileges",
+    ],
   },
 ];
+
+function MembershipInquiryForm({ initialTier }: { initialTier: MembershipTier | "" }) {
+  const turnstileRef = useRef<TurnstileInstance>(null);
+  const [captchaToken, setCaptchaToken] = useState("");
+  const [submitted, setSubmitted] = useState(false);
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    membershipInterest: initialTier as MembershipTier | "",
+    message: "",
+  });
+
+  // Sync initialTier when the parent updates it (tier "Apply" click)
+  useEffect(() => {
+    if (initialTier) {
+      setForm((f) => ({ ...f, membershipInterest: initialTier }));
+    }
+  }, [initialTier]);
+
+  const set = (field: string, value: string) =>
+    setForm((f) => ({ ...f, [field]: value }));
+
+  const submit = trpc.inquiries.submit.useMutation({
+    onSuccess: () => setSubmitted(true),
+    onError: () => {
+      turnstileRef.current?.reset();
+      setCaptchaToken("");
+    },
+  });
+
+  const canSubmit =
+    !!form.name &&
+    !!form.email &&
+    !!form.phone &&
+    !!form.membershipInterest &&
+    !submit.isPending &&
+    (!TURNSTILE_SITE_KEY || !!captchaToken);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!canSubmit) return;
+
+    const fullMessage = [
+      `Membership Interest: ${form.membershipInterest}`,
+      `Source: Membership page`,
+      form.message ? `\n${form.message}` : "",
+    ]
+      .filter(Boolean)
+      .join("\n");
+
+    submit.mutate({
+      type: "membership",
+      name: form.name,
+      email: form.email,
+      phone: form.phone || undefined,
+      message: fullMessage,
+      captchaToken,
+    });
+  };
+
+  if (submitted) {
+    return (
+      <div className="max-w-2xl" role="status">
+        <div
+          className="flex items-start gap-4 p-6 border"
+          style={{ borderColor: ACCENT }}
+        >
+          <div
+            className="w-8 h-8 flex items-center justify-center shrink-0 mt-0.5"
+            style={{ border: `1px solid ${ACCENT}` }}
+            aria-hidden="true"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: ACCENT }}>
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+          <div>
+            <p className="eyebrow mb-2" style={{ color: ACCENT }}>Inquiry Received</p>
+            <p className="font-sans text-warm leading-relaxed" style={{ fontSize: "0.9375rem" }}>
+              Thank you — we've received your membership inquiry. A member of our team will be in touch shortly.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <form onSubmit={handleSubmit} noValidate className="max-w-2xl space-y-5" aria-label="Membership inquiry form">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+        <div>
+          <label htmlFor="m-name" className="block text-[9px] tracking-[0.14em] uppercase font-sans text-muted-brand mb-2">
+            Full Name <span style={{ color: ACCENT }} aria-hidden="true">*</span>
+            <span className="sr-only">(required)</span>
+          </label>
+          <input
+            id="m-name"
+            type="text"
+            value={form.name}
+            onChange={(e) => set("name", e.target.value)}
+            placeholder="Your full name"
+            className="form-field w-full"
+            required
+            aria-required="true"
+            autoComplete="name"
+          />
+        </div>
+
+        <div>
+          <label htmlFor="m-email" className="block text-[9px] tracking-[0.14em] uppercase font-sans text-muted-brand mb-2">
+            Email Address <span style={{ color: ACCENT }} aria-hidden="true">*</span>
+            <span className="sr-only">(required)</span>
+          </label>
+          <input
+            id="m-email"
+            type="email"
+            value={form.email}
+            onChange={(e) => set("email", e.target.value)}
+            placeholder="you@example.com"
+            className="form-field w-full"
+            required
+            aria-required="true"
+            autoComplete="email"
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+        <div>
+          <label htmlFor="m-phone" className="block text-[9px] tracking-[0.14em] uppercase font-sans text-muted-brand mb-2">
+            Phone Number <span style={{ color: ACCENT }} aria-hidden="true">*</span>
+            <span className="sr-only">(required)</span>
+          </label>
+          <input
+            id="m-phone"
+            type="tel"
+            value={form.phone}
+            onChange={(e) => set("phone", e.target.value)}
+            placeholder="(555) 555-5555"
+            className="form-field w-full"
+            required
+            aria-required="true"
+            autoComplete="tel"
+          />
+        </div>
+
+        <div>
+          <label htmlFor="m-interest" className="block text-[9px] tracking-[0.14em] uppercase font-sans text-muted-brand mb-2">
+            Membership Interest <span style={{ color: ACCENT }} aria-hidden="true">*</span>
+            <span className="sr-only">(required)</span>
+          </label>
+          <select
+            id="m-interest"
+            value={form.membershipInterest}
+            onChange={(e) => set("membershipInterest", e.target.value)}
+            className="form-field w-full"
+            required
+            aria-required="true"
+          >
+            <option value="" disabled>Select a tier…</option>
+            <option value="Individual">Individual</option>
+            <option value="Corporate">Corporate</option>
+            <option value="Not Sure Yet">Not Sure Yet</option>
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <label htmlFor="m-message" className="block text-[9px] tracking-[0.14em] uppercase font-sans text-muted-brand mb-2">
+          Tell Us About Your Interest <span style={{ color: ACCENT }} aria-hidden="true">*</span>
+          <span className="sr-only">(required)</span>
+        </label>
+        <textarea
+          id="m-message"
+          rows={4}
+          value={form.message}
+          onChange={(e) => set("message", e.target.value)}
+          placeholder="Tell us a bit about your interest in hunting, fishing, lodging access, or the property."
+          className="form-field w-full resize-none"
+          required
+          aria-required="true"
+        />
+      </div>
+
+      {TURNSTILE_SITE_KEY && (
+        <div>
+          <Turnstile
+            ref={turnstileRef}
+            siteKey={TURNSTILE_SITE_KEY}
+            onSuccess={setCaptchaToken}
+            onExpire={() => setCaptchaToken("")}
+            onError={() => setCaptchaToken("")}
+            options={{ theme: "light", size: "normal" }}
+          />
+        </div>
+      )}
+
+      {submit.isError && (
+        <p className="text-sm font-sans text-red-600" role="alert">
+          Something went wrong. Please try again or email us at{" "}
+          <a href="mailto:info@riverslodge.com" className="underline">info@riverslodge.com</a>.
+        </p>
+      )}
+
+      <button
+        type="submit"
+        disabled={!canSubmit}
+        className="btn-outline disabled:opacity-40 disabled:cursor-not-allowed"
+        style={{ borderColor: ACCENT, color: ACCENT }}
+      >
+        {submit.isPending ? "Sending…" : "Submit Membership Inquiry"}
+      </button>
+    </form>
+  );
+}
 
 export default function Membership() {
   const benefitsRef = useFadeUp();
   const tiersRef    = useFadeUp();
   const applyRef    = useFadeUp();
+
+  const [selectedTier, setSelectedTier] = useState<MembershipTier | "">("");
 
   const { user, isAuthenticated } = useAuth();
   const memberStatus = trpc.membership.myStatus.useQuery(undefined, {
@@ -72,6 +301,11 @@ export default function Membership() {
   const isStaffM = !!user?.role && STAFF_ROLES_M.includes(user.role as string);
   const isActiveMember = isStaffM || (!!memberStatus.data && memberStatus.data.active);
 
+  const handleApply = (tier: MembershipTier) => {
+    setSelectedTier(tier);
+    document.getElementById("apply")?.scrollIntoView({ behavior: "smooth" });
+  };
+
   return (
     <PublicLayout>
       <SEOHead
@@ -80,17 +314,17 @@ export default function Membership() {
   url="/membership"
   structuredData={structuredData.membershipClub()}
 />
-      <div style={{ "--track-accent": "oklch(0.58 0.065 145)" } as React.CSSProperties}>
+      <div style={{ "--track-accent": ACCENT } as React.CSSProperties}>
 
       {/* Active member shortcut banner */}
       {isActiveMember && (
-        <div className="bg-[oklch(0.13_0.007_64)] border-b border-[oklch(0.22_0.008_64)] px-5 lg:px-14 py-3 flex items-center justify-between gap-4">
-          <p className="text-[11px] tracking-[0.14em] uppercase font-sans text-[oklch(0.72_0.095_78)]">
+        <div className="bg-[#2B2823] border-b border-[#57544E] px-5 lg:px-14 py-3 flex items-center justify-between gap-4">
+          <p className="text-[11px] tracking-[0.14em] uppercase font-sans text-[#9B4D19]">
             You are an active member
           </p>
           <Link
             href="/portal"
-            className="text-[11px] tracking-[0.14em] uppercase font-sans font-medium border border-[oklch(0.72_0.095_78)] text-[oklch(0.72_0.095_78)] px-4 py-1.5 hover:bg-[oklch(0.72_0.095_78)] hover:text-[oklch(0.095_0.006_64)] transition-all duration-200 shrink-0"
+            className="text-[11px] tracking-[0.14em] uppercase font-sans font-medium border border-[#9B4D19] text-[#9B4D19] px-4 py-1.5 hover:bg-[#9B4D19] hover:text-[#2B2823] transition-all duration-200 shrink-0"
           >
             Go to Member Portal →
           </Link>
@@ -100,20 +334,31 @@ export default function Membership() {
       {/* Hero */}
       <section className="relative hero-full flex items-end pb-24 overflow-hidden">
         <div className="absolute inset-0">
-          <img src={HERO} alt="Membership at Rivers Lodge" className="w-full h-full object-cover" fetchPriority="high" />
+          <Picture
+            src={HERO}
+            alt="Membership at Rivers Lodge"
+            className="absolute inset-0 w-full h-full"
+            imgClassName="absolute inset-0 w-full h-full object-cover"
+            fetchPriority="high"
+            loading="eager"
+            decoding="async"
+            width={1920}
+            height={1080}
+            sizes="100vw"
+          />
           <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, transparent 0%, oklch(0 0 0/0.12) 40%, oklch(0 0 0/0.82) 100%)" }} />
         </div>
         <div className="relative z-10 max-w-[1440px] mx-auto px-5 lg:px-14 w-full">
-          <div style={{ height: "1px", width: "2rem", backgroundColor: "oklch(0.58 0.065 145)", marginBottom: "1.25rem" }} />
+          <div style={{ height: "1px", width: "2rem", backgroundColor: ACCENT, marginBottom: "1.25rem" }} />
           <p className="eyebrow text-white/50 mb-4">Membership</p>
           <h1 className="font-serif font-light text-white leading-[0.92] mb-6" style={{ fontSize: "clamp(2.75rem,6.5vw,5.5rem)" }}>
             Hunt, fish, and
             <br /><em className="italic font-light">belong.</em>
           </h1>
           <p className="font-sans text-white/65 max-w-lg leading-relaxed mb-10" style={{ fontSize: "0.9375rem" }}>
-            Private membership on 300 acres of managed Kansas land. A limited number of memberships are available each season.
+            Private membership on thousands of acres of Kansas and Missouri land. A limited number of memberships are available each season.
           </p>
-          <a href="#apply" className="btn-outline" style={{ borderColor: "oklch(0.58 0.065 145)", color: "oklch(0.58 0.065 145)" }}>
+          <a href="#apply" className="btn-outline" style={{ borderColor: ACCENT, color: ACCENT }}>
             Apply for Membership
           </a>
         </div>
@@ -124,20 +369,27 @@ export default function Membership() {
         <div className="max-w-[1440px] mx-auto px-5 lg:px-14">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-28 items-center">
             <div>
-              <div style={{ height: "1px", width: "2rem", backgroundColor: "oklch(0.58 0.065 145)", marginBottom: "1.25rem" }} />
+              <div style={{ height: "1px", width: "2rem", backgroundColor: ACCENT, marginBottom: "1.25rem" }} />
               <p className="eyebrow text-muted-brand mb-4">The Philosophy</p>
               <h2 className="font-serif font-light text-warm leading-tight mb-8" style={{ fontSize: "clamp(1.875rem,3.5vw,3rem)" }}>
-                Membership is
-                <br /><em className="italic">by invitation.</em>
+                Land, community,
+                <br /><em className="italic">and the way it's used.</em>
               </h2>
               <div className="space-y-5 font-sans text-muted-brand leading-relaxed" style={{ fontSize: "0.9375rem" }}>
-                <p>The Rivers Lodge membership is intentionally small. We limit the number of members to ensure the land is never over-pressured, the experience is never crowded, and the community remains one where everyone knows each other.</p>
-                <p>Membership is not just access to the land — it's membership in a community of people who take the land seriously. We look for members who share our values around conservation, ethical hunting, and long-term land stewardship.</p>
+                <p>Rivers Lodge membership is built around the land — Hunting, Fishing, private events, and a community of people who take long-term stewardship seriously. Members get unrestricted access to thousands of acres of managed Kansas and Missouri property, priority lodging, and an exclusive calendar of concerts, chef tours, estate parties, and seasonal gatherings.</p>
+                <p>We keep the membership intentionally small. The land is never over-pressured, the experience is never crowded, and the community remains one where everyone knows each other. Membership is by invitation.</p>
               </div>
             </div>
-            <div className="aspect-[4/3] overflow-hidden">
-              <img src={AERIAL} alt="Aerial view of the estate" className="w-full h-full object-cover" loading="lazy" />
-            </div>
+            <Picture
+              src={AERIAL}
+              alt="Aerial view of the estate"
+              className="aspect-[4/3] overflow-hidden"
+              loading="lazy"
+              decoding="async"
+              sizes="(max-width: 1024px) 100vw, 50vw"
+              width={1200}
+              height={900}
+            />
           </div>
         </div>
       </section>
@@ -146,7 +398,7 @@ export default function Membership() {
       <section className="section bg-surface">
         <div className="max-w-[1440px] mx-auto px-5 lg:px-14">
           <div className="max-w-3xl">
-            <blockquote className="pull-quote" style={{ borderLeftColor: "oklch(0.58 0.065 145)" }}>
+            <blockquote className="pull-quote" style={{ borderLeftColor: ACCENT }}>
               "We limit membership to protect the land and the experience. The people who belong here know why that matters."
             </blockquote>
           </div>
@@ -157,7 +409,7 @@ export default function Membership() {
       <section ref={benefitsRef as React.RefObject<HTMLDivElement>} className="fade-up section bg-background">
         <div className="max-w-[1440px] mx-auto px-5 lg:px-14">
           <div className="mb-14">
-            <div style={{ height: "1px", width: "2rem", backgroundColor: "oklch(0.58 0.065 145)", marginBottom: "1.25rem" }} />
+            <div style={{ height: "1px", width: "2rem", backgroundColor: ACCENT, marginBottom: "1.25rem" }} />
             <p className="eyebrow text-muted-brand mb-4">Member Benefits</p>
             <h2 className="font-serif font-light text-warm leading-tight" style={{ fontSize: "clamp(1.75rem,3vw,2.5rem)" }}>
               What membership includes.
@@ -166,7 +418,7 @@ export default function Membership() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-px bg-border">
             {benefits.map((b) => (
               <div key={b.title} className="bg-background p-7">
-                <div style={{ height: "1px", width: "1.5rem", backgroundColor: "oklch(0.58 0.065 145)", marginBottom: "1rem" }} />
+                <div style={{ height: "1px", width: "1.5rem", backgroundColor: ACCENT, marginBottom: "1rem" }} />
                 <h3 className="font-serif text-warm text-lg mb-3">{b.title}</h3>
                 <p className="font-sans text-muted-brand text-sm leading-relaxed">{b.desc}</p>
               </div>
@@ -179,30 +431,34 @@ export default function Membership() {
       <section ref={tiersRef as React.RefObject<HTMLDivElement>} className="fade-up section bg-surface">
         <div className="max-w-[1440px] mx-auto px-5 lg:px-14">
           <div className="mb-14">
-            <div style={{ height: "1px", width: "2rem", backgroundColor: "oklch(0.58 0.065 145)", marginBottom: "1.25rem" }} />
+            <div style={{ height: "1px", width: "2rem", backgroundColor: ACCENT, marginBottom: "1.25rem" }} />
             <p className="eyebrow text-muted-brand mb-4">Membership Tiers</p>
             <h2 className="font-serif font-light text-warm leading-tight" style={{ fontSize: "clamp(1.75rem,3vw,2.5rem)" }}>
-              Three levels of access.
+              Two membership types.
             </h2>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-px bg-border">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-border">
             {tiers.map((tier) => (
-              <div key={tier.name} className={`p-8 lg:p-10 flex flex-col ${tier.featured ? "bg-surface" : "bg-background"}`}
-                style={tier.featured ? { borderTop: "2px solid oklch(0.58 0.065 145)" } : {}}>
-                <p className="eyebrow text-muted-brand mb-3" style={{ fontSize: "10px" }}>{tier.name}</p>
-                <p className="font-serif text-warm text-2xl mb-4">{tier.price}</p>
+              <div key={tier.name} className="p-8 lg:p-10 flex flex-col bg-background">
+                <div style={{ height: "1px", width: "2rem", backgroundColor: ACCENT, marginBottom: "1.25rem" }} />
+                <h3 className="font-serif font-light text-warm leading-tight mb-4" style={{ fontSize: "clamp(1.875rem,3.5vw,3rem)" }}>{tier.name}</h3>
                 <p className="font-sans text-muted-brand text-sm leading-relaxed mb-6">{tier.desc}</p>
                 <ul className="space-y-2 flex-1 mb-8">
                   {tier.features.map((f) => (
                     <li key={f} className="flex items-start gap-3 font-sans text-sm text-muted-brand">
-                      <span style={{ color: "oklch(0.58 0.065 145)", marginTop: "2px", flexShrink: 0 }}>—</span>
+                      <span style={{ color: ACCENT, marginTop: "2px", flexShrink: 0 }}>—</span>
                       {f}
                     </li>
                   ))}
                 </ul>
-                <a href="#apply" className="btn-outline self-start text-xs" style={{ borderColor: "oklch(0.58 0.065 145)", color: "oklch(0.58 0.065 145)" }}>
+                <button
+                  type="button"
+                  onClick={() => handleApply(tier.name)}
+                  className="btn-outline self-start text-xs"
+                  style={{ borderColor: ACCENT, color: ACCENT }}
+                >
                   Apply
-                </a>
+                </button>
               </div>
             ))}
           </div>
@@ -212,19 +468,17 @@ export default function Membership() {
       {/* Apply */}
       <section id="apply" ref={applyRef as React.RefObject<HTMLDivElement>} className="fade-up section bg-background">
         <div className="max-w-[1440px] mx-auto px-5 lg:px-14">
-          <div className="max-w-2xl">
-            <div style={{ height: "1px", width: "2rem", backgroundColor: "oklch(0.58 0.065 145)", marginBottom: "1.25rem" }} />
+          <div className="mb-10">
+            <div style={{ height: "1px", width: "2rem", backgroundColor: ACCENT, marginBottom: "1.25rem" }} />
             <p className="eyebrow text-muted-brand mb-4">Apply for Membership</p>
             <h2 className="font-serif font-light text-warm leading-tight mb-6" style={{ fontSize: "clamp(1.875rem,3.5vw,3rem)" }}>
               Tell us about yourself.
             </h2>
-            <p className="font-sans text-muted-brand leading-relaxed mb-10" style={{ fontSize: "0.9375rem" }}>
+            <p className="font-sans text-muted-brand leading-relaxed" style={{ fontSize: "0.9375rem", maxWidth: "38rem" }}>
               Membership is by invitation. Share a bit about yourself and your interest in the property and we'll be in touch.
             </p>
-            <Link href="/contact?type=membership" className="btn-outline" style={{ borderColor: "oklch(0.58 0.065 145)", color: "oklch(0.58 0.065 145)" }}>
-              Begin Membership Inquiry
-            </Link>
           </div>
+          <MembershipInquiryForm initialTier={selectedTier} />
         </div>
       </section>
 
