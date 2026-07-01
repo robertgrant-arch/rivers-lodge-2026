@@ -250,7 +250,7 @@ export default function Home() {
               </div>
             </div>
             <Picture
-              src="/img/MHR53675.jpg"
+              src="/img/3C0A0165.jpg"
               alt="Rivers Lodge & Hunt Club estate"
               label="Estate"
               className="aspect-[4/3] overflow-hidden w-full"
