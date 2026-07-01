@@ -32,7 +32,7 @@ export type InsertMembershipApplication = typeof membershipApplications.$inferIn
 
 export const members = mysqlTable("members", {
   id: int("id").autoincrement().primaryKey(),
-  userId: int("userId").notNull(),
+  userId: varchar("userId", { length: 36 }).notNull(),
   memberNumber: varchar("memberNumber", { length: 50 }),
   tier: mysqlEnum("tier", ["standard", "premier", "founding"]).default("standard").notNull(),
   joinDate: date("joinDate"),

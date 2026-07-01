@@ -1,26 +1,41 @@
 import {
-  int,
+  boolean,
+  datetime,
   mysqlEnum,
   mysqlTable,
   text,
-  timestamp,
   varchar,
 } from "drizzle-orm/mysql-core";
 
-// ─── Core Auth ────────────────────────────────────────────────────────────────
-
 export const users = mysqlTable("users", {
-  id: int("id").autoincrement().primaryKey(),
-  openId: varchar("openId", { length: 64 }).notNull().unique(),
-  name: text("name"),
-  email: varchar("email", { length: 320 }),
-  loginMethod: varchar("loginMethod", { length: 64 }),
-  role: mysqlEnum("role", ["user", "admin", "owner", "venue_sales", "events_manager", "membership_manager", "hunt_fish_ops", "hospitality", "staff", "finance", "member"]).default("user").notNull(),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-  lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
+  id: varchar("id", { length: 36 }).primaryKey().$default(() => crypto.randomUUID()),
+  email: varchar("email", { length: 320 }).notNull().unique(),
+  passwordHash: text("password_hash"),
+  role: mysqlEnum("role", ["admin", "member"]).notNull().default("member"),
+  status: mysqlEnum("status", ["invited", "active", "disabled"]).notNull().default("invited"),
+  mustChangePassword: boolean("must_change_password").notNull().default(true),
+  createdAt: datetime("created_at").notNull().$default(() => new Date()),
+  lastLoginAt: datetime("last_login_at"),
+});
+
+export const invites = mysqlTable("invites", {
+  id: varchar("id", { length: 36 }).primaryKey().$default(() => crypto.randomUUID()),
+  userId: varchar("user_id", { length: 36 }).notNull(),
+  tokenHash: text("token_hash").notNull(),
+  expiresAt: datetime("expires_at").notNull(),
+  acceptedAt: datetime("accepted_at"),
+  createdBy: varchar("created_by", { length: 36 }),
+});
+
+export const sessions = mysqlTable("sessions", {
+  id: varchar("id", { length: 36 }).primaryKey().$default(() => crypto.randomUUID()),
+  userId: varchar("user_id", { length: 36 }).notNull(),
+  expiresAt: datetime("expires_at").notNull(),
+  createdAt: datetime("created_at").notNull().$default(() => new Date()),
 });
 
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 export type UserRole = (typeof users.$inferSelect)["role"];
+export type Session = typeof sessions.$inferSelect;
+export type Invite = typeof invites.$inferSelect;

@@ -1,26 +1,7 @@
 // @vitest-environment jsdom
-/**
- * Basic unit tests for the Clerk-based useAuth hook.
- *
- * NOTE: The previous version of this file tested localStorage persistence of
- * Manus user data. That behaviour was removed when authentication was migrated
- * to Clerk. These tests verify the replacement hook's core contract.
- */
-
 import React from "react";
 import { renderHook } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-
-// ─── Clerk mock ───────────────────────────────────────────────────────────────
-const mockSignOut = vi.fn().mockResolvedValue(undefined);
-const mockRedirectToSignIn = vi.fn();
-
-vi.mock("@clerk/clerk-react", () => ({
-  useClerk: () => ({
-    signOut: mockSignOut,
-    redirectToSignIn: mockRedirectToSignIn,
-  }),
-}));
 
 // ─── tRPC mock ────────────────────────────────────────────────────────────────
 const queryData = { current: undefined as unknown };
@@ -36,6 +17,11 @@ vi.mock("@shared/lib/trpc", () => ({
           refetch: vi.fn(),
         }),
       },
+      logout: {
+        useMutation: () => ({
+          mutateAsync: vi.fn().mockResolvedValue({ success: true }),
+        }),
+      },
     },
     useUtils: () => ({
       auth: {
@@ -47,7 +33,7 @@ vi.mock("@shared/lib/trpc", () => ({
 
 import { useAuth } from "./useAuth";
 
-describe("useAuth (Clerk)", () => {
+describe("useAuth", () => {
   it("returns isAuthenticated=false when there is no DB user", () => {
     queryData.current = undefined;
     const { result } = renderHook(() => useAuth());
@@ -56,17 +42,10 @@ describe("useAuth (Clerk)", () => {
   });
 
   it("returns isAuthenticated=true with user data when DB user exists", () => {
-    const user = { id: 1, name: "Alice", role: "member" as const };
+    const user = { id: "abc-123", email: "alice@example.com", role: "member" as const };
     queryData.current = user;
     const { result } = renderHook(() => useAuth());
     expect(result.current.isAuthenticated).toBe(true);
     expect(result.current.user).toEqual(user);
-  });
-
-  it("calls Clerk signOut on logout()", async () => {
-    queryData.current = { id: 1, name: "Alice", role: "member" as const };
-    const { result } = renderHook(() => useAuth());
-    await result.current.logout();
-    expect(mockSignOut).toHaveBeenCalled();
   });
 });

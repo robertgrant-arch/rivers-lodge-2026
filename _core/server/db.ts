@@ -1,9 +1,11 @@
-import { eq, desc, and } from "drizzle-orm";
+import { eq, desc, and, gt } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import mysql from "mysql2/promise";
 import {
-  InsertUser,
   users,
+  invites,
+  sessions,
+  InsertUser,
   inquiries,
   InsertInquiry,
   membershipApplications,
@@ -28,14 +30,6 @@ import { ENV } from "./env";
 
 type DrizzleDb = ReturnType<typeof drizzle>;
 
-// ─── Connection pool ──────────────────────────────────────────────────────────
-//
-// We keep a module-level pool reference so checkDbHealth() can run SELECT 1
-// without going through Drizzle.  The pool is created exactly once: even if
-// two callers race to getDb() simultaneously, _dbPromise is set synchronously
-// on the first call, so the second caller reuses the same promise and never
-// creates a second pool.
-
 let _pool: mysql.Pool | null = null;
 
 function createDb(): Promise<DrizzleDb | null> {
@@ -49,7 +43,7 @@ function createDb(): Promise<DrizzleDb | null> {
       uri: url,
       connectionLimit: 10,
       waitForConnections: true,
-      queueLimit: 0, // unlimited queue; rely on connection timeout instead
+      queueLimit: 0,
     });
     return Promise.resolve(drizzle(_pool) as unknown as DrizzleDb);
   } catch (error) {
@@ -58,9 +52,6 @@ function createDb(): Promise<DrizzleDb | null> {
   }
 }
 
-// Cache the promise, not the resolved value.  Two concurrent callers both see
-// a non-null _dbPromise after the first synchronous assignment, so only one
-// pool is ever created.
 let _dbPromise: Promise<DrizzleDb | null> | null = null;
 
 export function getDb(): Promise<DrizzleDb | null> {
@@ -68,13 +59,7 @@ export function getDb(): Promise<DrizzleDb | null> {
   return _dbPromise;
 }
 
-/**
- * Check DB connectivity for the /api/health endpoint.
- * Runs SELECT 1 with a 2-second timeout.
- * Returns true if the pool responds, false on any error or timeout.
- */
 export async function checkDbHealth(): Promise<boolean> {
-  // Ensure pool is initialised (no-op if already done).
   await getDb();
   if (!_pool) return false;
   try {
@@ -92,43 +77,102 @@ export async function checkDbHealth(): Promise<boolean> {
 
 // ─── Users ────────────────────────────────────────────────────────────────────
 
-export async function upsertUser(user: InsertUser): Promise<void> {
-  if (!user.openId) throw new Error("User openId is required for upsert");
-  const db = await getDb();
-  if (!db) { console.warn("[Database] Cannot upsert user: database not available"); return; }
-  try {
-    const values: InsertUser = { openId: user.openId };
-    const updateSet: Record<string, unknown> = {};
-    const textFields = ["name", "email", "loginMethod"] as const;
-    type TextField = (typeof textFields)[number];
-    const assignNullable = (field: TextField) => {
-      const value = user[field];
-      if (value === undefined) return;
-      const normalized = value ?? null;
-      values[field] = normalized;
-      updateSet[field] = normalized;
-    };
-    textFields.forEach(assignNullable);
-    if (user.lastSignedIn !== undefined) { values.lastSignedIn = user.lastSignedIn; updateSet.lastSignedIn = user.lastSignedIn; }
-    if (user.role !== undefined) { values.role = user.role; updateSet.role = user.role; }
-    else if (user.openId === ENV.ownerOpenId) { values.role = "admin"; updateSet.role = "admin"; }
-    if (!values.lastSignedIn) values.lastSignedIn = new Date();
-    if (Object.keys(updateSet).length === 0) updateSet.lastSignedIn = new Date();
-    await db.insert(users).values(values).onDuplicateKeyUpdate({ set: updateSet });
-  } catch (error) { console.error("[Database] Failed to upsert user:", error); throw error; }
-}
-
-export async function getUserByOpenId(openId: string) {
+export async function getUserById(id: string) {
   const db = await getDb();
   if (!db) return undefined;
-  const result = await db.select().from(users).where(eq(users.openId, openId)).limit(1);
+  const result = await db.select().from(users).where(eq(users.id, id)).limit(1);
   return result.length > 0 ? result[0] : undefined;
+}
+
+export async function getUserByEmail(email: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(users).where(eq(users.email, email.toLowerCase())).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function createUser(data: InsertUser) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.insert(users).values({ ...data, email: data.email.toLowerCase() });
+}
+
+export async function updateUser(id: string, data: Partial<InsertUser>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(users).set(data).where(eq(users.id, id));
 }
 
 export async function getAllUsers() {
   const db = await getDb();
   if (!db) return [];
   return db.select().from(users).orderBy(desc(users.createdAt));
+}
+
+// ─── Sessions ─────────────────────────────────────────────────────────────────
+
+export async function createDbSession(userId: string, expiresAt: Date): Promise<string> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const id = crypto.randomUUID();
+  await db.insert(sessions).values({ id, userId, expiresAt, createdAt: new Date() });
+  return id;
+}
+
+export async function getDbSession(sessionId: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const now = new Date();
+  const result = await db
+    .select()
+    .from(sessions)
+    .where(and(eq(sessions.id, sessionId), gt(sessions.expiresAt, now)))
+    .limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function deleteDbSession(sessionId: string) {
+  const db = await getDb();
+  if (!db) return;
+  await db.delete(sessions).where(eq(sessions.id, sessionId));
+}
+
+// ─── Invites ──────────────────────────────────────────────────────────────────
+
+export async function createInvite(data: {
+  userId: string;
+  tokenHash: string;
+  expiresAt: Date;
+  createdBy?: string;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const id = crypto.randomUUID();
+  await db.insert(invites).values({ id, ...data });
+  return id;
+}
+
+export async function getInviteByTokenHash(tokenHash: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const now = new Date();
+  const result = await db
+    .select()
+    .from(invites)
+    .where(
+      and(
+        eq(invites.tokenHash, tokenHash),
+        gt(invites.expiresAt, now),
+      ),
+    )
+    .limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function acceptInvite(inviteId: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(invites).set({ acceptedAt: new Date() }).where(eq(invites.id, inviteId));
 }
 
 // ─── Inquiries ────────────────────────────────────────────────────────────────
@@ -152,9 +196,6 @@ export async function updateInquiryStatus(id: number, status: "new" | "contacted
 }
 
 // ─── Membership Applications ──────────────────────────────────────────────────
-// TODO(membership-extraction): These helpers have been copied to
-// features/membership/server/dal.ts. Remove them here once all callers import
-// from the feature module instead.
 
 export async function createMembershipApplication(data: InsertMembershipApplication) {
   const db = await getDb();
@@ -175,9 +216,6 @@ export async function updateApplicationStatus(id: number, status: "pending" | "a
 }
 
 // ─── Members ──────────────────────────────────────────────────────────────────
-// TODO(membership-extraction): These helpers have been copied to
-// features/membership/server/dal.ts. Remove them here once all callers import
-// from the feature module instead.
 
 export async function getAllMembers() {
   const db = await getDb();
@@ -185,7 +223,7 @@ export async function getAllMembers() {
   return db.select().from(members).orderBy(desc(members.createdAt));
 }
 
-export async function getMemberByUserId(userId: number) {
+export async function getMemberByUserId(userId: string) {
   const db = await getDb();
   if (!db) return undefined;
   const result = await db.select().from(members).where(eq(members.userId, userId)).limit(1);
@@ -266,7 +304,7 @@ export async function deleteSeasonalUpdate(id: number) {
 
 // ─── Messages ─────────────────────────────────────────────────────────────────
 
-export async function getMessagesForUser(userId: number) {
+export async function getMessagesForUser(userId: string) {
   const db = await getDb();
   if (!db) return [];
   return db.select().from(messages)
@@ -322,7 +360,7 @@ export async function deleteBlockedDate(id: number) {
   await db.delete(blockedDates).where(eq(blockedDates.id, id));
 }
 
-// ─── CMS: Amenities ───────────────────────────────────────────────────────────
+// ─── CMS ──────────────────────────────────────────────────────────────────────
 
 import {
   cmsAmenities,
@@ -351,8 +389,6 @@ export async function getCmsAmenities() {
   if (!db) return [];
   return db.select().from(cmsAmenities).where(eq(cmsAmenities.active, true)).orderBy(cmsAmenities.sortOrder);
 }
-
-// ─── CMS: Lodging Units ───────────────────────────────────────────────────────
 
 export async function getCmsLodgingUnits(forWeddings?: boolean, forMembers?: boolean) {
   const db = await getDb();
@@ -387,8 +423,6 @@ export async function deleteCmsLodgingUnit(id: number) {
   if (!db) throw new Error("Database not available");
   await db.delete(cmsLodgingUnits).where(eq(cmsLodgingUnits.id, id));
 }
-
-// ─── CMS: Event Spaces ────────────────────────────────────────────────────────
 
 export async function getCmsEventSpaces(division?: "weddings" | "corporate" | "both") {
   const db = await getDb();
@@ -426,8 +460,6 @@ export async function deleteCmsEventSpace(id: number) {
   await db.delete(cmsEventSpaces).where(eq(cmsEventSpaces.id, id));
 }
 
-// ─── CMS: Packages ────────────────────────────────────────────────────────────
-
 export async function getCmsPackages(division?: "weddings" | "membership" | "corporate") {
   const db = await getDb();
   if (!db) return [];
@@ -438,8 +470,6 @@ export async function getCmsPackages(division?: "weddings" | "membership" | "cor
   }
   return db.select().from(cmsPackages).where(eq(cmsPackages.status, "published")).orderBy(cmsPackages.sortOrder);
 }
-
-// ─── CMS: Galleries ───────────────────────────────────────────────────────────
 
 export async function getCmsGalleries() {
   const db = await getDb();
@@ -469,8 +499,6 @@ export async function getAllGalleriesWithImages() {
   return result;
 }
 
-// ─── CMS: Testimonials ────────────────────────────────────────────────────────
-
 export async function getCmsTestimonials(division?: "weddings" | "membership" | "corporate" | "general", featuredOnly?: boolean) {
   const db = await getDb();
   if (!db) return [];
@@ -497,8 +525,6 @@ export async function deleteCmsTestimonial(id: number) {
   if (!db) throw new Error("Database not available");
   await db.delete(cmsTestimonials).where(eq(cmsTestimonials.id, id));
 }
-
-// ─── CMS: FAQs ────────────────────────────────────────────────────────────────
 
 export async function getCmsFaqs(division?: "weddings" | "membership" | "corporate" | "general") {
   const db = await getDb();
@@ -529,8 +555,6 @@ export async function deleteCmsFaq(id: number) {
   await db.delete(cmsFaqs).where(eq(cmsFaqs.id, id));
 }
 
-// ─── CMS: Announcements ───────────────────────────────────────────────────────
-
 export async function getCmsAnnouncements(audience?: "all" | "members" | "public") {
   const db = await getDb();
   if (!db) return [];
@@ -560,8 +584,6 @@ export async function deleteCmsAnnouncement(id: number) {
   await db.delete(cmsAnnouncements).where(eq(cmsAnnouncements.id, id));
 }
 
-// ─── CMS: Member Content ──────────────────────────────────────────────────────
-
 export async function getCmsMemberContent(contentType?: "season_date" | "hunt_report" | "fish_report" | "member_news" | "policy_update") {
   const db = await getDb();
   if (!db) return [];
@@ -590,8 +612,6 @@ export async function deleteCmsMemberContent(id: number) {
   if (!db) throw new Error("Database not available");
   await db.delete(cmsMemberContent).where(eq(cmsMemberContent.id, id));
 }
-
-// ─── CMS: Singletons ──────────────────────────────────────────────────────────
 
 export async function getCmsSingleton(key: string) {
   const db = await getDb();

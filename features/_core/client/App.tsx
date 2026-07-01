@@ -1,17 +1,11 @@
 import { Suspense, lazy } from "react";
-import { SignIn, SignUp } from "@clerk/clerk-react";
 import { Toaster } from '@shared/ui/sonner';
 import { TooltipProvider } from '@shared/ui/tooltip';
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "../../_shared/components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
-// Layout components — must be sync (used by every /ops page simultaneously)
 import PortalLayout from "../../admin/client/components/PortalLayout";
 
-// ComponentShowcase is dev-only.  import.meta.env.DEV is a compile-time
-// constant that Vite replaces with `false` in production builds, so the
-// dynamic import() call is never evaluated and the chunk is never emitted.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const ComponentShowcase: React.LazyExoticComponent<any> | null = import.meta.env.DEV
   ? lazy(() => import("@features/_shared/pages/ComponentShowcase"))
   : null;
@@ -57,6 +51,11 @@ const PropertyBrowser = lazy(() => import("@features/portal/client/pages/Propert
 const PropertyDetail = lazy(() => import("@features/portal/client/pages/PropertyDetail"));
 const PortalAvailability = lazy(() => import("@features/portal/client/pages/PortalAvailability"));
 
+// Auth pages
+const SignIn = lazy(() => import("@features/auth/client/pages/SignIn"));
+const AcceptInvite = lazy(() => import("@features/auth/client/pages/AcceptInvite"));
+const ChangePassword = lazy(() => import("@features/auth/client/pages/ChangePassword"));
+
 // Admin portal pages
 const AdminDashboard = lazy(() => import("@features/admin/client/pages/AdminDashboard"));
 const PortalDashboard = lazy(() => import("@features/admin/client/pages/PortalDashboard"));
@@ -79,13 +78,6 @@ const PortalProperties = lazy(() => import("@features/admin/client/pages/PortalP
 const PortalFieldReports = lazy(() => import("@features/reports/client/pages/PortalFieldReports"));
 const PortalNewsletter = lazy(() => import("@features/reports/client/pages/PortalNewsletter"));
 
-/**
- * RouteLoader — shown by <Suspense> while a lazy page chunk is loading.
- *
- * Intentionally minimal to avoid layout shift: full-viewport dark background
- * matching the site theme + a single gold spinner.  No text — avoids the
- * "Loading…" flash for fast connections where the chunk arrives in < 100 ms.
- */
 function RouteLoader() {
   return (
     <div
@@ -102,9 +94,10 @@ function Router() {
   return (
     <Suspense fallback={<RouteLoader />}>
       <Switch>
-        {/* Auth pages — rendered by Clerk */}
-        <Route path="/sign-in">{() => <div className="min-h-screen flex items-center justify-center bg-background"><SignIn routing="path" path="/sign-in" afterSignInUrl="/portal" /></div>}</Route>
-        <Route path="/sign-up">{() => <div className="min-h-screen flex items-center justify-center bg-background"><SignUp routing="path" path="/sign-up" afterSignUpUrl="/portal" /></div>}</Route>
+        {/* Auth pages */}
+        <Route path="/sign-in" component={SignIn} />
+        <Route path="/accept-invite" component={AcceptInvite} />
+        <Route path="/account/change-password" component={ChangePassword} />
 
         {/* Public */}
         <Route path="/" component={Home} />
@@ -155,7 +148,7 @@ function Router() {
         <Route path="/ops/newsletter">{() => <PortalLayout><PortalNewsletter /></PortalLayout>}</Route>
         {/* Public waiver signing */}
         <Route path="/sign-waiver/:token">{(p) => <SignWaiver />}</Route>
-        {/* Dev-only: component showcase — tree-shaken from production builds */}
+        {/* Dev-only: component showcase */}
         {import.meta.env.DEV && ComponentShowcase && (
           <Route path="/showcase" component={ComponentShowcase} />
         )}

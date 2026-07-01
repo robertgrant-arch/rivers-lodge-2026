@@ -42,7 +42,7 @@ export const weddingBookings = mysqlTable("wedding_bookings", {
   balanceReceivedDate: date("balanceReceivedDate"),
   source: mysqlEnum("source", ["website", "referral", "direct", "social", "vendor"]).default("website"),
   referredBy: varchar("referredBy", { length: 255 }),
-  assignedUserId: int("assignedUserId"),
+  assignedUserId: varchar("assignedUserId", { length: 36 }),
   notes: text("notes"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
@@ -82,7 +82,7 @@ export const corporateBookings = mysqlTable("corporate_bookings", {
   balanceReceivedDate: date("balanceReceivedDate"),
   source: mysqlEnum("source", ["website", "referral", "direct", "repeat"]).default("website"),
   repeatClient: boolean("repeatClient").default(false),
-  assignedUserId: int("assignedUserId"),
+  assignedUserId: varchar("assignedUserId", { length: 36 }),
   notes: text("notes"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
@@ -113,7 +113,7 @@ export const huntFishBookings = mysqlTable("hunt_fish_bookings", {
   startTime: varchar("startTime", { length: 20 }),
   endTime: varchar("endTime", { length: 20 }),
   partySize: int("partySize").default(1),
-  guideUserId: int("guideUserId"),
+  guideUserId: varchar("guideUserId", { length: 36 }),
   standLocation: varchar("standLocation", { length: 255 }),
   season: varchar("season", { length: 100 }),
   totalCharge: decimal("totalCharge", { precision: 10, scale: 2 }),
@@ -174,7 +174,7 @@ export const portalBlockedDates = mysqlTable("portal_blocked_dates", {
   reasonNotes: text("reasonNotes"),
   scope: mysqlEnum("scope", ["entire_property", "specific_venue", "specific_lodging"]).default("entire_property"),
   scopeTarget: varchar("scopeTarget", { length: 100 }),
-  createdByUserId: int("createdByUserId"),
+  createdByUserId: varchar("createdByUserId", { length: 36 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 export type PortalBlockedDate = typeof portalBlockedDates.$inferSelect;
@@ -184,7 +184,7 @@ export type InsertPortalBlockedDate = typeof portalBlockedDates.$inferInsert;
 
 export const portalStaffAssignments = mysqlTable("portal_staff_assignments", {
   id: int("id").autoincrement().primaryKey(),
-  staffUserId: int("staffUserId").notNull(),
+  staffUserId: varchar("staffUserId", { length: 36 }).notNull(),
   bookingType: mysqlEnum("bookingType", ["wedding", "corporate", "member_booking", "hunt_fish"]).notNull(),
   bookingId: int("bookingId").notNull(),
   role: varchar("role", { length: 100 }),
@@ -199,7 +199,7 @@ export const portalDocuments = mysqlTable("portal_documents", {
   fileName: varchar("fileName", { length: 255 }).notNull(),
   fileType: mysqlEnum("fileType", ["contract", "proposal", "waiver", "photo", "floor_plan", "other"]).default("other"),
   s3Key: varchar("s3Key", { length: 500 }).notNull(),
-  uploadedByUserId: int("uploadedByUserId"),
+  uploadedByUserId: varchar("uploadedByUserId", { length: 36 }),
   linkedEntityType: varchar("linkedEntityType", { length: 50 }),
   linkedEntityId: int("linkedEntityId"),
   version: int("version").default(1),
@@ -248,7 +248,7 @@ export type PortalWaiver = typeof portalWaivers.$inferSelect;
 
 export const portalAuditLog = mysqlTable("portal_audit_log", {
   id: bigint("id", { mode: "number" }).autoincrement().primaryKey(),
-  actingUserId: int("actingUserId"),
+  actingUserId: varchar("actingUserId", { length: 36 }),
   actingUserName: varchar("actingUserName", { length: 255 }),
   actionType: mysqlEnum("actionType", [
     "create", "update", "delete", "status_change", "login", "export", "override"
@@ -268,7 +268,7 @@ export type PortalAuditLog = typeof portalAuditLog.$inferSelect;
 
 export const portalNotifications = mysqlTable("portal_notifications", {
   id: int("id").autoincrement().primaryKey(),
-  recipientUserId: int("recipientUserId").notNull(),
+  recipientUserId: varchar("recipientUserId", { length: 36 }).notNull(),
   title: varchar("title", { length: 255 }).notNull(),
   body: text("body"),
   priority: mysqlEnum("priority", ["critical", "high", "medium", "low"]).default("medium"),
@@ -283,8 +283,8 @@ export type PortalNotification = typeof portalNotifications.$inferSelect;
 
 export const portalTasks = mysqlTable("portal_tasks", {
   id: int("id").autoincrement().primaryKey(),
-  assignedToUserId: int("assignedToUserId").notNull(),
-  createdByUserId: int("createdByUserId"),
+  assignedToUserId: varchar("assignedToUserId", { length: 36 }).notNull(),
+  createdByUserId: varchar("createdByUserId", { length: 36 }),
   title: varchar("title", { length: 255 }).notNull(),
   notes: text("notes"),
   dueDate: date("dueDate"),
@@ -302,7 +302,7 @@ export type PortalTask = typeof portalTasks.$inferSelect;
 
 export const portalNotes = mysqlTable("portal_notes", {
   id: int("id").autoincrement().primaryKey(),
-  authorUserId: int("authorUserId").notNull(),
+  authorUserId: varchar("authorUserId", { length: 36 }).notNull(),
   authorName: varchar("authorName", { length: 255 }),
   entityType: varchar("entityType", { length: 100 }).notNull(),
   entityId: int("entityId").notNull(),

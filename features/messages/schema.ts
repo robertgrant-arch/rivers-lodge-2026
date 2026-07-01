@@ -11,8 +11,8 @@ import {
 
 export const messages = mysqlTable("messages", {
   id: int("id").autoincrement().primaryKey(),
-  fromUserId: int("fromUserId").notNull(),
-  toUserId: int("toUserId"),
+  fromUserId: varchar("fromUserId", { length: 36 }).notNull(),
+  toUserId: varchar("toUserId", { length: 36 }),
   subject: varchar("subject", { length: 255 }),
   body: text("body").notNull(),
   read: boolean("read").default(false).notNull(),

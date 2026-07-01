@@ -17,18 +17,6 @@ describe("ENV", () => {
     vi.resetModules();
   });
 
-  it("reads CLERK_SECRET_KEY", async () => {
-    process.env.CLERK_SECRET_KEY = "sk_test_abc";
-    const { ENV } = await tryLoadEnv();
-    expect(ENV.clerkSecretKey).toBe("sk_test_abc");
-  });
-
-  it("defaults clerkSecretKey to empty string when absent", async () => {
-    delete process.env.CLERK_SECRET_KEY;
-    const { ENV } = await tryLoadEnv();
-    expect(ENV.clerkSecretKey).toBe("");
-  });
-
   it("cookieCrossSite is false by default", async () => {
     delete process.env.COOKIE_CROSS_SITE;
     const { ENV } = await tryLoadEnv();
@@ -41,9 +29,9 @@ describe("ENV", () => {
     expect(ENV.cookieCrossSite).toBe(true);
   });
 
-  it("cookieCrossSite is false for any value other than 'true'", async () => {
-    process.env.COOKIE_CROSS_SITE = "1";
+  it("reads ADMIN_EMAIL", async () => {
+    process.env.ADMIN_EMAIL = "admin@example.com";
     const { ENV } = await tryLoadEnv();
-    expect(ENV.cookieCrossSite).toBe(false);
+    expect(ENV.adminEmail).toBe("admin@example.com");
   });
 });

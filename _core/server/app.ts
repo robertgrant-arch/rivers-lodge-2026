@@ -3,12 +3,11 @@ import express from "express";
 import helmet from "helmet";
 import { createServer } from "http";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
-import { clerkMiddleware } from "@clerk/express";
 import { registerStorageProxy } from "./storageProxy";
 import { appRouter } from "./router";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
-import { submitLimiter } from "./rateLimit";
+import { submitLimiter, loginLimiter } from "./rateLimit";
 import { resolvePort } from "./port";
 import { checkDbHealth } from "./db";
 
@@ -17,37 +16,16 @@ async function startServer() {
   const server = createServer(app);
 
   // ── Proxy trust ─────────────────────────────────────────────────────────────
-  // Render (and most cloud platforms) place a TLS-terminating load balancer in
-  // front of the Node process.  "trust proxy" 1 tells Express to trust the
-  // first X-Forwarded-* hop so that req.ip reflects the real client IP (used
-  // by the auth rate limiter) and req.protocol reflects the external scheme.
   app.set("trust proxy", 1);
 
-  // ── Clerk authentication middleware ─────────────────────────────────────────
-  // Must come early so getAuth(req) is available to all downstream handlers.
-  app.use(clerkMiddleware());
-
   // ── Security headers ────────────────────────────────────────────────────────
-  // CSP is intentionally disabled here — a real policy is added in a later
-  // prompt once nonces are wired through the SSR/Vite HTML transform.
   app.use(helmet({ contentSecurityPolicy: false }));
 
   // ── Body parsers ────────────────────────────────────────────────────────────
-  // 1 MB covers all tRPC JSON payloads with room to spare.
-  // If a specific route ever needs more (e.g. a future image-upload endpoint),
-  // mount a separate express.json({ limit: "10mb" }) on that route alone.
   app.use(express.json({ limit: "1mb" }));
   app.use(express.urlencoded({ limit: "1mb", extended: true }));
 
   // ── Rate limiting ───────────────────────────────────────────────────────────
-  // Public form-submission tRPC procedures — 5 req/min/IP.
-  // We match on path prefix before createExpressMiddleware so the limiter
-  // fires before tRPC decoding.  tRPC routes are:
-  //   POST /api/trpc/inquiries.submit
-  //   POST /api/trpc/membership.submitApplication
-  //   POST /api/trpc/messages.send
-  //   POST /api/trpc/waivers.sign
-  // The regex covers all of them with a single middleware mount.
   const submitProcedures =
     /^\/api\/trpc\/(inquiries\.submit|membership\.submitApplication|messages\.send|waivers\.sign)/;
   app.use((req, res, next) => {
@@ -57,11 +35,17 @@ async function startServer() {
     next();
   });
 
+  // Login endpoint — 10 attempts / 15 min / IP+email
+  app.use((req, res, next) => {
+    if (/^\/api\/trpc\/auth\.login/.test(req.path)) {
+      return loginLimiter(req, res, next);
+    }
+    next();
+  });
+
   registerStorageProxy(app);
 
-  // XML sitemap — minimal static set of public marketing pages.
-  // A richer dynamic sitemap (property listings, blog posts, etc.) is a
-  // later prompt; this ensures search engines can discover the core pages.
+  // XML sitemap
   app.get("/sitemap.xml", (_req, res) => {
     const base = "https://theriverslodge.com";
     const now = new Date().toISOString().split("T")[0];
@@ -94,14 +78,11 @@ async function startServer() {
     ].join("\n");
 
     res.setHeader("Content-Type", "application/xml; charset=utf-8");
-    res.setHeader("Cache-Control", "public, max-age=86400"); // 24 h
+    res.setHeader("Cache-Control", "public, max-age=86400");
     res.send(xml);
   });
 
-  // Health check for Render (and other load balancers).
-  // Verifies DB connectivity with SELECT 1 / 2-second timeout so that a
-  // crashed pool removes the instance from rotation instead of silently
-  // serving errors.
+  // Health check
   app.get("/api/health", async (_req, res) => {
     try {
       const dbOk = await checkDbHealth();
@@ -123,7 +104,7 @@ async function startServer() {
       createContext,
     }),
   );
-  // development mode uses Vite, production mode uses static files
+
   if (process.env.NODE_ENV === "development") {
     await setupVite(app, server);
   } else {
