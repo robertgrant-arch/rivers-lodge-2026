@@ -7,7 +7,7 @@ import { registerStorageProxy } from "./storageProxy";
 import { appRouter } from "./router";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
-import { submitLimiter, loginLimiter } from "./rateLimit";
+import { submitLimiter, loginLimiter, acceptInviteLimiter, changePasswordLimiter } from "./rateLimit";
 import { resolvePort } from "./port";
 import { checkDbHealth } from "./db";
 
@@ -39,6 +39,22 @@ async function startServer() {
   app.use((req, res, next) => {
     if (/^\/api\/trpc\/auth\.login/.test(req.path)) {
       return loginLimiter(req, res, next);
+    }
+    next();
+  });
+
+  // Accept-invite — 20 / 15 min / IP
+  app.use((req, res, next) => {
+    if (/^\/api\/trpc\/auth\.acceptInvite/.test(req.path)) {
+      return acceptInviteLimiter(req, res, next);
+    }
+    next();
+  });
+
+  // Change-password — 10 / 15 min / IP
+  app.use((req, res, next) => {
+    if (/^\/api\/trpc\/auth\.changePassword/.test(req.path)) {
+      return changePasswordLimiter(req, res, next);
     }
     next();
   });

@@ -47,3 +47,31 @@ export const loginLimiter = rateLimit({
     }
   },
 });
+
+/**
+ * acceptInviteLimiter — auth.acceptInvite tRPC procedure
+ *
+ * Token is 32 random bytes so brute force is infeasible, but rate-limiting
+ * prevents excessive DB lookups and token scanning.
+ */
+export const acceptInviteLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 20,
+  standardHeaders: "draft-6",
+  legacyHeaders: false,
+  message: { error: "Too many invite attempts — please wait 15 minutes and try again." },
+});
+
+/**
+ * changePasswordLimiter — auth.changePassword tRPC procedure
+ *
+ * Authenticated endpoint. Key on IP to block external credential stuffing
+ * against the current-password field.
+ */
+export const changePasswordLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 10,
+  standardHeaders: "draft-6",
+  legacyHeaders: false,
+  message: { error: "Too many password change attempts — please wait 15 minutes and try again." },
+});

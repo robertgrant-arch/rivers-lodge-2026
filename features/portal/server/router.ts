@@ -8,8 +8,7 @@
  * features/admin/server/router.ts.
  */
 
-import { router } from "../../_core/server/trpc";
-import { requireMemberSession } from "@features/auth/server/public";
+import { router, memberProcedure } from "../../_core/server/trpc";
 import { getDb } from "@core/server/db";
 import { members, messages, bookings } from "@core/db/schema";
 import { eq } from "drizzle-orm";
@@ -20,7 +19,7 @@ export const memberPortalRouter = router({
   /**
    * Returns the authenticated member's profile + membership record.
    */
-  myProfile: requireMemberSession.query(async ({ ctx }) => {
+  myProfile: memberProcedure.query(async ({ ctx }) => {
     const db = await getDb();
     const member = db
       ? (await db.select().from(members).where(eq(members.userId, ctx.user.id)).limit(1))[0] ?? null
@@ -38,7 +37,7 @@ export const memberPortalRouter = router({
   /**
    * Returns the authenticated member's bookings (legacy bookings table).
    */
-  myBookings: requireMemberSession.query(async ({ ctx }) => {
+  myBookings: memberProcedure.query(async ({ ctx }) => {
     const db = await getDb();
     if (!db) return [];
     const rows = await db.select().from(bookings).where(eq(bookings.userId, ctx.user.id));
@@ -48,7 +47,7 @@ export const memberPortalRouter = router({
   /**
    * Returns the authenticated member's concierge messages.
    */
-  myMessages: requireMemberSession.query(async ({ ctx }) => {
+  myMessages: memberProcedure.query(async ({ ctx }) => {
     const db = await getDb();
     if (!db) return [];
     const rows = await db.select().from(messages).where(eq(messages.fromUserId, ctx.user.id));
