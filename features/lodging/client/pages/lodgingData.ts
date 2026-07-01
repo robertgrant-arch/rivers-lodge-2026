@@ -44,8 +44,7 @@ export const VENUES: LodgingVenue[] = [
       "Kansas City designer interiors",
     ],
     galleryImgs: [
-      { src: "/img/lodge-1-gallery.jpg", alt: "The Lodge — Photo 1" },
-      { src: "/img/lodge-2-gallery.jpg", alt: "The Lodge — Photo 2" },
+          { src: "/img/lodge-2-gallery.jpg", alt: "The Lodge — Photo 2" },
       { src: "/img/lodge-3-gallery.jpg", alt: "The Lodge — Photo 3" },
       { src: "/img/lodge-6-gallery.jpg", alt: "The Lodge — Photo 4" },
       { src: "/img/lodge-8-gallery.jpg", alt: "The Lodge — Photo 5" },
