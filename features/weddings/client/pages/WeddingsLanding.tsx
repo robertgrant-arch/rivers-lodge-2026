@@ -12,8 +12,7 @@ const HERO       = "/img/Ohana%20Dock.jpg";
 const BARN_INT   = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/ooPGTJSHasHosVDF.jpg";
 const CEREMONY   = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/NuVfykZEURKLacpv.jpg";
 const RECEPTION  = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/SSdcPuhkHXDvzhtk.jpg";
-const LODGE_EXT  = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/TdlSWCLWjUxbkCAY.jpg";
-const INTERIOR   = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/JcuUUmANmAAHItUn.jpg";
+const TIMBER_EDGE = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/NuVfykZEURKLacpv.jpg";
 const GROUNDS    = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/JbMIltWvczRWbDaw.jpg";
 
 const BLUSH = "#9B4D19";
@@ -42,8 +41,7 @@ const eventTypes = [
 const venues = [
   { name: "Rivers Barn", capacity: "Up to 300", type: "Dinner & Reception", image: BARN_INT },
   { name: "River Lawn", capacity: "Up to 200", type: "Ceremony & Outdoor", image: GROUNDS },
-  { name: "The Clubhouse", capacity: "Up to 60", type: "Dining & Meeting", image: INTERIOR },
-  { name: "The Lodge", capacity: "Up to 20", type: "Private Dining & Lodging", image: LODGE_EXT },
+  { name: "Timber Edge", capacity: "Up to 120", type: "Outdoor Ceremony", image: TIMBER_EDGE },
 ];
 
 export default function WeddingsLanding() {
@@ -189,7 +187,7 @@ export default function WeddingsLanding() {
                 className="font-serif text-[#E0D3BD] leading-tight max-w-lg"
                 style={{ fontSize: "clamp(1.75rem,3vw,2.5rem)" }}
               >
-                Four distinct spaces. One private estate.
+                Three ceremony &amp; reception spaces. One private estate.
               </h2>
             </div>
             <div className="scroll-strip pb-4">
