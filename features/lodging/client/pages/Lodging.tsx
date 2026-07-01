@@ -85,28 +85,65 @@ export default function Lodging() {
   return (
     <PublicLayout>
       <SEOHead
-  title="Lodging & Spaces"
-  description="Stay at The Rivers Lodge — the Main Lodge, Riverhouse Suites, Annex, Farmhouse, and Ohana House. Private, luxurious, and exclusively yours."
+  title="Lodging & Venues"
+  description="Stay and gather at The Rivers Lodge — five lodging buildings and four event spaces on a private Kansas estate. One hour from Kansas City."
   url="/lodging"
 />
       {/* Header */}
       <section className="pt-32 pb-16 md:pt-40 md:pb-20 bg-background">
         <div className="max-w-[1440px] mx-auto px-5 lg:px-10">
           <div className="gold-rule" />
-          <p className="eyebrow text-[#908B82] mb-4">On-Site Lodging</p>
+          <p className="eyebrow text-[#908B82] mb-4">The Estate</p>
           <h1
             className="font-serif font-light italic text-[#E0D3BD] leading-tight mb-6"
             style={{ fontSize: "clamp(2.5rem,5vw,4.5rem)" }}
           >
-            Stay on the estate.<br />All weekend.
+            Lodging &amp; Venues.
           </h1>
           <p className="text-[#BABAAE] font-sans text-base max-w-xl leading-relaxed">
-            Five lodging buildings sleep your entire wedding party on-site. From the 6,000 sq ft Lodge to the secluded Ohana House on its own 20-acre lake — everyone stays together.
+            Five lodging buildings and four event spaces — all on a private Kansas estate one hour from Kansas City.
           </p>
         </div>
       </section>
 
+      {/* ── Browse Paths ─────────────────────────────────────────────── */}
+      <section className="bg-[#363330]">
+        <div className="max-w-[1440px] mx-auto px-5 lg:px-10">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-[#57544E]">
+            <a
+              href="#lodging"
+              className="group bg-[#363330] p-10 lg:p-14 hover:bg-[#2B2823] transition-colors block"
+            >
+              <div className="gold-rule mb-6" />
+              <p className="eyebrow text-[#908B82] mb-3">Accommodation</p>
+              <h2 className="font-serif font-light text-[#E0D3BD] text-3xl mb-4">Stay</h2>
+              <p className="font-sans text-[#BABAAE] text-sm leading-relaxed mb-6">
+                Five buildings sleep your entire party on-site — from the 6,000 sq ft Lodge to the secluded Ohana House on its own private lake.
+              </p>
+              <span className="text-[11px] tracking-[0.12em] uppercase font-sans font-medium text-[#9B4D19] group-hover:opacity-80 transition-opacity">
+                Browse Lodging →
+              </span>
+            </a>
+            <Link
+              href="/venues"
+              className="group bg-[#363330] p-10 lg:p-14 hover:bg-[#2B2823] transition-colors block"
+            >
+              <div className="gold-rule mb-6" />
+              <p className="eyebrow text-[#908B82] mb-3">Event Spaces</p>
+              <h2 className="font-serif font-light text-[#E0D3BD] text-3xl mb-4">Gather</h2>
+              <p className="font-sans text-[#BABAAE] text-sm leading-relaxed mb-6">
+                Rivers Barn, the River Lawn, Timber Edge, and the Clubhouse — ceremony and reception spaces for up to 300 guests.
+              </p>
+              <span className="text-[11px] tracking-[0.12em] uppercase font-sans font-medium text-[#9B4D19] group-hover:opacity-80 transition-opacity">
+                Browse Venues →
+              </span>
+            </Link>
+          </div>
+        </div>
+      </section>
+
       {/* Properties */}
+      <div id="lodging">
       {lodgingProperties.map((prop, i) => (
         <section
           key={prop.slug}
@@ -184,6 +221,7 @@ export default function Lodging() {
           </div>
         </section>
       ))}
+      </div>
 
       {/* CTA */}
       <section className="py-20 bg-[#2B2823] text-center">

@@ -6,36 +6,30 @@ import { trpc } from '@shared/lib/trpc';
 
 const STAFF_ROLES = ["admin", "owner", "venue_sales", "events_manager", "membership_manager", "hunt_fish_ops", "hospitality", "staff", "finance"];
 
-type Track = "events" | "lodging" | "membership" | null;
+type Track = "events" | "lodging" | "outdoor" | "about" | "membership" | null;
 
 function getTrackFromPath(path: string): Track {
   if (
     path.startsWith("/weddings") || path.startsWith("/venues") ||
     path.startsWith("/corporate") || path.startsWith("/food-and-wine") ||
-    path.startsWith("/outdoor-activities") || path.startsWith("/weddings-events")
+    path.startsWith("/weddings-events")
   ) return "events";
   if (path.startsWith("/lodging")) return "lodging";
+  if (path.startsWith("/outdoor-activities")) return "outdoor";
+  if (path.startsWith("/about")) return "about";
   if (path.startsWith("/membership") || path.startsWith("/estate")) return "membership";
   return null;
 }
 
 const eventsDropdown = [
-  { label: "Weddings",              href: "/weddings",          desc: "Ceremonies & receptions on the estate" },
-  { label: "Corporate Events",      href: "/corporate-events",  desc: "Retreats, outings & client entertainment" },
-  { label: "Food & Wine",           href: "/food-and-wine",     desc: "Chef-driven, land-to-table dining" },
-  { label: "Outdoor Activities",    href: "/outdoor-activities",desc: "Hunting, fishing & sporting pursuits" },
-  { label: "Booking / Plan a Visit",href: "/contact",           desc: "Get in touch to plan your visit" },
+  { label: "Weddings",         href: "/weddings",        desc: "Ceremonies & receptions on the estate" },
+  { label: "Corporate Events", href: "/corporate-events", desc: "Retreats, outings & client entertainment" },
+  { label: "Food & Wine",      href: "/food-and-wine",   desc: "Chef-driven, land-to-table dining" },
 ];
 
 const lodgingDropdown = [
-  { label: "The Lodge",             href: "/lodging/the-lodge",         desc: "Main lodge — 6,000 sq ft, 4 bedrooms" },
-  { label: "Riverhouse Suites",     href: "/lodging/riverhouse-suites", desc: "Suites on the Marais des Cygnes" },
-  { label: "The Annex",             href: "/lodging/the-annex",         desc: "4 bedrooms, modern farmhouse" },
-  { label: "Farmhouse",             href: "/lodging/the-farmhouse",     desc: "Classic Kansas farmhouse" },
-  { label: "Big Tine House",        href: "/lodging/big-tine-house",    desc: "Spacious lodge for large groups" },
-  { label: "Trego Road Property",   href: "/lodging/trego-road",        desc: "Secluded retreat at property edge" },
-  { label: "Outdoor Activities",    href: "/outdoor-activities",        desc: "Hunting, fishing & sporting pursuits" },
-  { label: "Booking / Plan Your Stay", href: "/contact",                desc: "Inquire about availability" },
+  { label: "Lodging", href: "/lodging#lodging", desc: "Five buildings — sleep your entire party on-site" },
+  { label: "Venues",  href: "/venues",          desc: "Ceremony & reception spaces for up to 300 guests" },
 ];
 
 const membershipDropdown = [
@@ -173,7 +167,7 @@ export default function PublicNav() {
           {/* ── Desktop Nav ──────────────────────────────────────────────── */}
           <nav className="hidden md:flex flex-1 items-center justify-center gap-0">
 
-            {/* 1. Events ▾ */}
+            {/* 1. Weddings & Events ▾ */}
             <div ref={eventsRef} className="relative">
               <button
                 onClick={() => { setEventsOpen(!eventsOpen); setLodgingOpen(false); setMembershipOpen(false); }}
@@ -184,7 +178,7 @@ export default function PublicNav() {
                 onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = ORANGE; }}
                 onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = activeColor(track === "events", ORANGE); }}
               >
-                Events
+                Weddings &amp; Events
                 <ChevronDown size={11} className={chevronCls(eventsOpen)} />
               </button>
               {eventsOpen && (
@@ -199,20 +193,30 @@ export default function PublicNav() {
               )}
             </div>
 
-            {/* 2. Lodging ▾ */}
+            {/* 2. Lodging & Venues (link + chevron) */}
             <div ref={lodgingRef} className="relative">
-              <button
-                onClick={() => { setLodgingOpen(!lodgingOpen); setEventsOpen(false); setMembershipOpen(false); }}
-                aria-expanded={lodgingOpen}
-                aria-haspopup="true"
-                className="flex items-center gap-1 px-2 py-2 text-[11px] tracking-[0.09em] uppercase font-sans font-medium whitespace-nowrap transition-colors"
-                style={{ color: activeColor(track === "lodging", ORANGE) }}
-                onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = ORANGE; }}
-                onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = activeColor(track === "lodging", ORANGE); }}
-              >
-                Lodging
-                <ChevronDown size={11} className={chevronCls(lodgingOpen)} />
-              </button>
+              <div className="flex items-center">
+                <Link
+                  href="/lodging"
+                  className="px-2 py-2 text-[11px] tracking-[0.09em] uppercase font-sans font-medium whitespace-nowrap transition-colors"
+                  style={{ color: activeColor(track === "lodging", ORANGE) }}
+                  onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = ORANGE; }}
+                  onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = activeColor(track === "lodging", ORANGE); }}
+                >
+                  Lodging &amp; Venues
+                </Link>
+                <button
+                  onClick={() => { setLodgingOpen(!lodgingOpen); setEventsOpen(false); setMembershipOpen(false); }}
+                  aria-label="Open Lodging & Venues menu"
+                  aria-expanded={lodgingOpen}
+                  className="p-1.5 -ml-1 transition-colors"
+                  style={{ color: activeColor(track === "lodging", ORANGE) }}
+                  onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = ORANGE; }}
+                  onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = activeColor(track === "lodging", ORANGE); }}
+                >
+                  <ChevronDown size={11} className={chevronCls(lodgingOpen)} />
+                </button>
+              </div>
               {lodgingOpen && (
                 <div className="absolute top-full left-0 mt-1 w-72 bg-[#363330] border border-[#57544E] shadow-2xl py-2 z-50">
                   {lodgingDropdown.map((item) => (
@@ -261,20 +265,23 @@ export default function PublicNav() {
               )}
             </div>
 
-            {/* 4. Gallery */}
+            {/* 4. Outdoor Activities */}
             <Link
-              href="/gallery"
-              className="px-2 py-2 text-[11px] tracking-[0.09em] uppercase font-sans font-medium text-[#E0D3BD] whitespace-nowrap hover:opacity-70 transition-opacity"
+              href="/outdoor-activities"
+              className="px-2 py-2 text-[11px] tracking-[0.09em] uppercase font-sans font-medium whitespace-nowrap transition-colors"
+              style={{ color: activeColor(track === "outdoor", SAGE) }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = SAGE; }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = activeColor(track === "outdoor", SAGE); }}
             >
-              Gallery
+              Outdoor Activities
             </Link>
 
-            {/* 5. Contact */}
+            {/* 5. About */}
             <Link
-              href="/contact"
+              href="/about"
               className="px-2 py-2 text-[11px] tracking-[0.09em] uppercase font-sans font-medium text-[#E0D3BD] whitespace-nowrap hover:opacity-70 transition-opacity"
             >
-              Contact
+              About
             </Link>
 
           </nav>
@@ -376,11 +383,11 @@ export default function PublicNav() {
             )}
           </div>
 
-          {/* 1. Events */}
+          {/* 1. Weddings & Events */}
           <div className="mb-2">
             <div className="flex items-center justify-between py-3">
               <span className="text-[11px] tracking-[0.18em] uppercase font-sans font-medium text-[#9B4D19]">
-                Events
+                Weddings &amp; Events
               </span>
               <button
                 onClick={() => setMobileEventsOpen(!mobileEventsOpen)}
@@ -406,15 +413,19 @@ export default function PublicNav() {
             )}
           </div>
 
-          {/* 2. Lodging */}
+          {/* 2. Lodging & Venues */}
           <div className="mb-2">
             <div className="flex items-center justify-between py-3">
-              <span className="text-[11px] tracking-[0.18em] uppercase font-sans font-medium text-[#9B4D19]">
-                Lodging
-              </span>
+              <Link
+                href="/lodging"
+                onClick={() => setMobileOpen(false)}
+                className="text-[11px] tracking-[0.18em] uppercase font-sans font-medium text-[#9B4D19]"
+              >
+                Lodging &amp; Venues
+              </Link>
               <button
                 onClick={() => setMobileLodgingOpen(!mobileLodgingOpen)}
-                aria-label="Toggle Lodging"
+                aria-label="Toggle Lodging & Venues"
                 className="p-1 text-[#BABAAE]"
               >
                 <ChevronDown size={14} className={chevronCls(mobileLodgingOpen)} />
@@ -470,22 +481,22 @@ export default function PublicNav() {
             )}
           </div>
 
-          {/* 4. Gallery */}
+          {/* 4. Outdoor Activities */}
           <Link
-            href="/gallery"
+            href="/outdoor-activities"
             onClick={() => setMobileOpen(false)}
-            className="py-3 text-[11px] tracking-[0.18em] uppercase font-sans font-medium text-[#E0D3BD] hover:text-[#9B4D19] transition-colors"
+            className="py-3 text-[11px] tracking-[0.18em] uppercase font-sans font-medium text-[#E0D3BD] hover:text-[#6B7250] transition-colors"
           >
-            Gallery
+            Outdoor Activities
           </Link>
 
-          {/* 5. Contact */}
+          {/* 5. About */}
           <Link
-            href="/contact"
+            href="/about"
             onClick={() => setMobileOpen(false)}
-            className="py-3 text-[11px] tracking-[0.18em] uppercase font-sans font-medium text-[#E0D3BD] hover:text-[#9B4D19] transition-colors"
+            className="py-3 text-[11px] tracking-[0.18em] uppercase font-sans font-medium text-[#E0D3BD] hover:opacity-70 transition-opacity"
           >
-            Contact
+            About
           </Link>
 
         </div>
