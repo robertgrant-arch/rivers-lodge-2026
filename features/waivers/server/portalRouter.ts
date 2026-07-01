@@ -4,6 +4,7 @@ import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { eq, desc, and } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
+import { Pool } from "pg";
 import { publicProcedure, protectedProcedure, router } from "../../_core/server/trpc";
 import {
   waiverTemplates,
@@ -13,8 +14,10 @@ import { randomBytes } from "crypto";
 import { generateAndStoreWaiverPdf } from "./waiverPdf";
 
 function getDb() {
-  if (!process.env.DATABASE_URL) throw new Error("DATABASE_URL not set");
-  return drizzle(process.env.DATABASE_URL);
+  const url = process.env.DATABASE_URL;
+  if (!url) throw new Error("DATABASE_URL not set");
+  const ssl = url.includes("render.com") || process.env.NODE_ENV === "production" ? { rejectUnauthorized: false } : undefined;
+  return drizzle(new Pool({ connectionString: url, ssl }));
 }
 
 const STAFF_ROLES = ["owner", "admin", "venue_sales", "events_manager", "membership_manager", "hunt_fish_ops", "hospitality", "staff", "finance"] as const;

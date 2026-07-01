@@ -1,5 +1,6 @@
 import { eq, desc, and } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
+import { Pool } from "pg";
 import {
   cmsAmenities,
   cmsLodgingUnits,
@@ -22,8 +23,10 @@ import {
 } from '@features/cms/schema';
 
 function getDb() {
-  if (!process.env.DATABASE_URL) throw new Error("DATABASE_URL not set");
-  return drizzle(process.env.DATABASE_URL);
+  const url = process.env.DATABASE_URL;
+  if (!url) throw new Error("DATABASE_URL not set");
+  const ssl = url.includes("render.com") || process.env.NODE_ENV === "production" ? { rejectUnauthorized: false } : undefined;
+  return drizzle(new Pool({ connectionString: url, ssl }));
 }
 
 // ─── CMS: Amenities ───────────────────────────────────────────────────────────

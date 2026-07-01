@@ -8,6 +8,7 @@ import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { eq, desc, and, or, like, sql, lt } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
+import { Pool } from "pg";
 import { publicProcedure, protectedProcedure, router } from "../../_core/server/trpc";
 import { notifyOwner } from "../../_core/server/notification";
 import { verifyCaptcha } from "@core/server/captcha";
@@ -35,8 +36,10 @@ const portalProcedure = protectedProcedure.use(({ ctx, next }) => {
 // ─── Inline DB helper (mirrors portalRouter pattern) ──────────────────────────
 
 function getPortalDb() {
-  if (!process.env.DATABASE_URL) throw new Error("DATABASE_URL not set");
-  return drizzle(process.env.DATABASE_URL);
+  const url = process.env.DATABASE_URL;
+  if (!url) throw new Error("DATABASE_URL not set");
+  const ssl = url.includes("render.com") || process.env.NODE_ENV === "production" ? { rejectUnauthorized: false } : undefined;
+  return drizzle(new Pool({ connectionString: url, ssl }));
 }
 
 // ─── Audit Log (portalRouter-local helper) ────────────────────────────────────

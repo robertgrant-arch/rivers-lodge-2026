@@ -3,6 +3,7 @@ import { TRPCError } from "@trpc/server";
 import { generateAndStoreWaiverPdf } from "@features/waivers/public";
 import { publicProcedure, protectedProcedure, router } from "../../_core/server/trpc";
 import { drizzle } from "drizzle-orm/node-postgres";
+import { Pool } from "pg";
 import { eq, desc, and, gte, lte, sql, or, like, lt } from "drizzle-orm";
 import {
   weddingBookings,
@@ -39,8 +40,12 @@ import { sendInviteEmail, sendPasswordResetNotification } from "@core/server/mai
 import { ENV } from "@core/server/env";
 
 function getDb() {
-  if (!process.env.DATABASE_URL) throw new Error("DATABASE_URL not set");
-  return drizzle(process.env.DATABASE_URL);
+  const url = process.env.DATABASE_URL;
+  if (!url) throw new Error("DATABASE_URL not set");
+  const ssl = url.includes("render.com") || process.env.NODE_ENV === "production"
+    ? { rejectUnauthorized: false }
+    : undefined;
+  return drizzle(new Pool({ connectionString: url, ssl }));
 }
 
 // ─── Portal Role Guards ───────────────────────────────────────────────────────
