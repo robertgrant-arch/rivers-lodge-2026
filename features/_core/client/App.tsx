@@ -1,4 +1,5 @@
 import { Suspense, lazy } from "react";
+import { useScrollToTop } from "@shared/hooks/useScrollToTop";
 import { Toaster } from '@shared/ui/sonner';
 import { TooltipProvider } from '@shared/ui/tooltip';
 import { Route, Switch } from "wouter";

@@ -53,7 +53,7 @@ import { useEffect, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from "@/_shared/components/DashboardLayoutSkeleton";
 
-const STAFF_ROLES = ["owner", "admin", "venue_sales", "events_manager", "membership_manager", "hunt_fish_ops", "hospitality", "staff", "finance"];
+const ADMIN_ROLE = "admin";
 
 const adminNavItem = { icon: Shield, label: "Users", path: "/ops/users" };
 
@@ -106,7 +106,7 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
   const [previewLoading, setPreviewLoading] = useState(false);
   const ensureMember = trpc.membership.ensureMemberForPreview.useMutation();
   const notificationsQuery = trpc.portal.dashboard.notifications.useQuery(undefined, {
-    enabled: !!user && STAFF_ROLES.includes(user.role ?? ""),
+    enabled: !!user && user.role === ADMIN_ROLE,
     refetchInterval: 30000,
   });
   const unreadCount = notificationsQuery.data?.length ?? 0;
@@ -133,18 +133,18 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
     );
   }
 
-  if (!STAFF_ROLES.includes(user.role ?? "")) {
+  if (user.role !== ADMIN_ROLE) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
         <div className="flex flex-col items-center gap-6 p-8 max-w-md w-full text-center">
           <Shield className="w-12 h-12 text-destructive" />
           <h1 className="text-2xl font-semibold tracking-tight">Access Denied</h1>
           <p className="text-sm text-muted-foreground">
-            Your account does not have portal access. Contact the property owner to request staff access.
+            The operations portal is restricted to administrator accounts.
           </p>
           <div className="flex gap-3">
             <Button variant="outline" onClick={() => logout()}>Sign Out</Button>
-            <Button asChild><Link href="/">Public Site</Link></Button>
+            <Button asChild><Link href="/portal">Member Portal</Link></Button>
           </div>
         </div>
       </div>

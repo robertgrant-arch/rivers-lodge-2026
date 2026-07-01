@@ -13,8 +13,13 @@ export default function SignIn() {
     onSuccess: (data) => {
       if (data.mustChangePassword) {
         navigate("/account/change-password");
-      } else {
+      } else if (data.role === "admin") {
+        navigate("/ops");
+      } else if (data.role === "member") {
         navigate("/portal");
+      } else {
+        // Unknown or missing role — safe fallback
+        setError("Your account role is not recognized. Please contact an administrator.");
       }
     },
     onError: (err) => {

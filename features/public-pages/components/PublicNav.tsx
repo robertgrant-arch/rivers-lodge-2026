@@ -2,9 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "wouter";
 import { Menu, X, ChevronDown, LogOut, User } from "lucide-react";
 import { useAuth, getLoginUrl } from '@features/auth/public';
-import { trpc } from '@shared/lib/trpc';
 
-const STAFF_ROLES = ["admin", "owner", "venue_sales", "events_manager", "membership_manager", "hunt_fish_ops", "hospitality", "staff", "finance"];
 
 type Track = "events" | "lodging" | "outdoor" | "membership" | null;
 
@@ -39,19 +37,11 @@ const membershipDropdown = [
 ];
 
 function getPortalHref(role?: string): string {
-  if (!role) return "/portal";
-  if (role === "admin" || role === "owner") return "/admin";
-  const staffRoles = ["venue_sales","events_manager","membership_manager","hunt_fish_ops","hospitality","staff","finance"];
-  if (staffRoles.includes(role)) return "/ops";
-  return "/portal";
+  return role === "admin" ? "/ops" : "/portal";
 }
 
 function getPortalLabel(role?: string): string {
-  if (!role) return "Member Portal";
-  if (role === "admin" || role === "owner") return "Admin";
-  const staffRoles = ["venue_sales","events_manager","membership_manager","hunt_fish_ops","hospitality","staff","finance"];
-  if (staffRoles.includes(role)) return "Operations";
-  return "Member Portal";
+  return role === "admin" ? "Admin Portal" : "Member Portal";
 }
 
 const ORANGE = "#9B4D19";
@@ -83,12 +73,7 @@ export default function PublicNav() {
 
   const { user, isAuthenticated, logout } = useAuth();
 
-  const memberStatus = trpc.membership.myStatus.useQuery(undefined, {
-    enabled: isAuthenticated,
-    staleTime: 5 * 60 * 1000,
-  });
-  const isStaff = !!user?.role && STAFF_ROLES.includes(user.role as string);
-  const hasPortalAccess = isStaff || (!!memberStatus.data && memberStatus.data.active);
+  const hasPortalAccess = isAuthenticated && (user?.role === "admin" || user?.role === "member");
 
   const track = getTrackFromPath(location);
   const isTransparent = !scrolled && !mobileOpen;
