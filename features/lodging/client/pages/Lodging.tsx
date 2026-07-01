@@ -14,8 +14,8 @@ const FALLBACK_LODGING = [
     bedrooms: 4,
     desc: "Our 6,000 square foot lodge has 4 bedrooms decorated by a prominent Kansas City designer and incorporates many aspects of history and outdoor pursuits from the area. The lodge has a full kitchen, large balcony, heated floors, heating/AC, and a large recreation room.",
     features: ["4 bedrooms", "6,000 sq ft", "Full kitchen", "Large balcony", "Heated floors", "Recreation room", "Kansas City designer interiors"],
-    img: "/img/Main%20Lodge.jpg",
-    img2: "/img/main%20lodge%20inside.jpg",
+    hero: "/img/Main%20Lodge.jpg",
+    supporting: ["/img/main%20lodge%20inside.jpg", "/img/lodge-1-gallery.jpg", "/img/lodge-2-gallery.jpg"],
   },
   {
     slug: "riverhouse-suites",
@@ -25,8 +25,8 @@ const FALLBACK_LODGING = [
     bedrooms: 4,
     desc: "The Riverhouse Suites were completed in 2022 and designed with luxury in mind. Each room is uniquely decorated and all rooms have their own bathrooms and individual heating/AC units.",
     features: ["4 private suites", "Private bath per suite", "Individual heating/AC", "Uniquely decorated rooms", "Luxury finishes", "Completed 2022"],
-    img: "/img/Riverhouse%20Suite.jpg",
-    img2: "/img/Riverhouse%20Suite%201.jpg",
+    hero: "/img/Riverhouse%20Suite.jpg",
+    supporting: ["/img/Riverhouse%20Suite%201.jpg"],
   },
   {
     slug: "annex-bridal-suite",
@@ -36,8 +36,8 @@ const FALLBACK_LODGING = [
     bedrooms: 4,
     desc: "The Annex & Bridal Suite was completely remodeled in 2021. It has a modern farmhouse feel with a light and airy design. Just steps away from Rivers Barn, it is the perfect spot to spend the day getting ready for your big day. The Annex & Bridal Suite has 4 bedrooms and 3 bathrooms.",
     features: ["4 bedrooms", "3 bathrooms", "Steps from Rivers Barn", "Remodeled 2021", "Modern farmhouse feel", "Light and airy design"],
-    img: "/img/annex-hero.jpg",
-    img2: "",
+    hero: "/img/lodge-1-hero.jpg", // PLACEHOLDER — upload annex-hero.jpg to replace
+    supporting: [],
   },
   {
     slug: "ohana-house",
@@ -47,8 +47,8 @@ const FALLBACK_LODGING = [
     bedrooms: 4,
     desc: "The Ohana House is located approximately 15 minutes from the main lodge. It has 4 bedrooms and bathrooms, a 20-acre lake, a gorgeous fire pit, and miles of nature trails. Enjoy fishing, canoeing, paddle boarding, hiking, or just laying on a hammock. The Ohana House can be rented as part of a corporate or wedding package, or is a perfect place for just a family getaway.",
     features: ["4 bedrooms & bathrooms", "20-acre private lake", "Gorgeous fire pit", "Miles of nature trails", "Fishing, canoeing, paddleboarding", "15 min from main lodge"],
-    img: "/img/Ohana%20Aerial.jpg",
-    img2: "/img/Ohana%20Firepit.jpg",
+    hero: "/img/Ohana%20Aerial.jpg",
+    supporting: ["/img/Ohana%20Firepit.jpg", "/img/Ohana%20House%20Dining.jpg", "/img/Ohana%20Kitchen.jpg"],
   },
   {
     slug: "the-farmhouse",
@@ -58,37 +58,63 @@ const FALLBACK_LODGING = [
     bedrooms: null,
     desc: "A classic Kansas farmhouse on the estate grounds. Comfortable, private, and full of character — ideal for overflow lodging, family groups, or guests who prefer a quieter corner of the property.",
     features: ["Private setting", "Classic farmhouse character", "Estate grounds", "Ideal for overflow", "Quiet and secluded", "Full amenities"],
-    img: "/img/farmhouse-hero.jpg",
-    img2: "",
+    hero: "/img/hero%203.jpg", // PLACEHOLDER — upload farmhouse-hero.jpg to replace
+    supporting: [],
   },
 ];
+
+type LodgingProp = {
+  slug: string;
+  name: string;
+  tagline: string;
+  sqft: string | null;
+  bedrooms: number | null;
+  maxGuests?: number | null;
+  desc: string;
+  features: string[];
+  hero: string;
+  supporting: string[];
+};
+
+const fallbackBySlug = Object.fromEntries(FALLBACK_LODGING.map(u => [u.slug, u]));
 
 export default function Lodging() {
   const { data: cmsUnits } = trpc.cms.getLodgingUnits.useQuery();
 
-  // Map CMS units to display format, falling back to static data
-  const lodgingProperties = (cmsUnits && cmsUnits.length > 0)
-    ? cmsUnits.map((unit) => ({
-        slug: unit.slug,
-        name: unit.name,
-        tagline: unit.shortDescription ?? "",
-        sqft: unit.squareFootage ? `${unit.squareFootage.toLocaleString()} sq ft` : null,
-        bedrooms: unit.bedrooms,
-        maxGuests: unit.maxGuests,
-        desc: unit.longDescription ?? "",
-        features: Array.isArray(unit.features) ? (unit.features as string[]) : [],
-        img: "",
-        img2: "",
-      }))
+  const lodgingProperties: LodgingProp[] = (cmsUnits && cmsUnits.length > 0)
+    ? cmsUnits.map((unit) => {
+        const fb = fallbackBySlug[unit.slug];
+        const cmsHero: string = (unit as { heroImage?: string | null }).heroImage || "";
+        const cmsGallery: string[] = Array.isArray((unit as { galleryImages?: unknown }).galleryImages)
+          ? ((unit as { galleryImages: string[] }).galleryImages)
+          : [];
+        const hero = cmsHero || (cmsGallery.length > 0 ? cmsGallery[0] : "") || fb?.hero || "";
+        const supporting = cmsGallery.length > 1
+          ? cmsGallery.slice(1)
+          : fb?.supporting ?? [];
+        return {
+          slug: unit.slug,
+          name: unit.name,
+          tagline: unit.shortDescription ?? "",
+          sqft: unit.squareFootage ? `${unit.squareFootage.toLocaleString()} sq ft` : null,
+          bedrooms: unit.bedrooms,
+          maxGuests: unit.maxGuests,
+          desc: unit.longDescription ?? "",
+          features: Array.isArray(unit.features) ? (unit.features as string[]) : [],
+          hero,
+          supporting,
+        };
+      })
     : FALLBACK_LODGING;
 
   return (
     <PublicLayout>
       <SEOHead
-  title="Lodging & Venues"
-  description="Stay and gather at The Rivers Lodge — five lodging buildings and four event spaces on a private Kansas estate. One hour from Kansas City."
-  url="/lodging"
-/>
+        title="Lodging & Venues"
+        description="Stay and gather at The Rivers Lodge — five lodging buildings and four event spaces on a private Kansas estate. One hour from Kansas City."
+        url="/lodging"
+      />
+
       {/* Header */}
       <section className="pt-32 pb-16 md:pt-40 md:pb-20 bg-background">
         <div className="max-w-[1440px] mx-auto px-5 lg:px-10">
@@ -144,60 +170,71 @@ export default function Lodging() {
 
       {/* Properties */}
       <div id="lodging">
-      {lodgingProperties.map((prop, i) => (
-        <section
-          key={prop.slug}
-          id={prop.slug}
-          className={`section ${i % 2 === 0 ? "bg-background" : "bg-[#363330]"}`}
-        >
-          <div className="max-w-[1440px] mx-auto px-5 lg:px-10">
-            <div className={`grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-start ${i % 2 !== 0 ? "lg:grid-flow-dense" : ""}`}>
-              {/* Images */}
-              <div className={`grid grid-cols-3 gap-3 ${i % 2 !== 0 ? "lg:col-start-2" : ""}`}>
-                <Picture
-                  src={prop.img}
-                  alt={prop.name}
-                  label={prop.name}
-                  className="col-span-2 overflow-hidden aspect-[4/3]"
-                  imgClassName="absolute inset-0 w-full h-full object-cover hover:scale-105 transition-transform duration-700"
-                  loading="lazy"
-                  decoding="async"
-                  sizes="(max-width: 1024px) 66vw, 33vw"
-                  width={800}
-                  height={600}
-                />
-                <Picture
-                  src={prop.img2}
-                  alt={`${prop.name} interior`}
-                  label={`${prop.name} interior`}
-                  className="overflow-hidden aspect-[3/4]"
-                  imgClassName="absolute inset-0 w-full h-full object-cover hover:scale-105 transition-transform duration-700"
-                  loading="lazy"
-                  decoding="async"
-                  sizes="(max-width: 1024px) 33vw, 16vw"
-                  width={480}
-                  height={640}
-                />
-              </div>
+        {lodgingProperties.map((prop, i) => (
+          <section
+            key={prop.slug}
+            id={prop.slug}
+            className={`section ${i % 2 === 0 ? "bg-background" : "bg-[#363330]"}`}
+          >
+            <div className="max-w-[1440px] mx-auto px-5 lg:px-10">
 
-              {/* Content */}
-                <div className={i % 2 !== 0 ? "lg:col-start-1 lg:row-start-1" : ""}>
-                <p className="text-[9px] tracking-[0.22em] uppercase font-sans text-muted-foreground mb-2">{(prop as { tagline?: string }).tagline ?? ""}</p>
+              {/* Hero image */}
+              <Picture
+                src={prop.hero}
+                alt={prop.name}
+                label={prop.name}
+                className="w-full overflow-hidden aspect-[16/9] mb-3"
+                imgClassName="absolute inset-0 w-full h-full object-cover"
+                loading="lazy"
+                decoding="async"
+                sizes="(max-width: 1440px) 100vw, 1440px"
+                width={1440}
+                height={810}
+              />
+
+              {/* Supporting images row */}
+              {prop.supporting.length > 0 && (
+                <div className={`grid gap-3 mb-10 ${
+                  prop.supporting.length === 1 ? "grid-cols-2" :
+                  prop.supporting.length === 2 ? "grid-cols-2" :
+                  "grid-cols-3"
+                }`}>
+                  {prop.supporting.map((src, j) => (
+                    <Picture
+                      key={j}
+                      src={src}
+                      alt={`${prop.name} detail`}
+                      label={`${prop.name} detail`}
+                      className={`overflow-hidden aspect-[4/3] ${prop.supporting.length === 1 ? "col-span-1" : ""}`}
+                      imgClassName="absolute inset-0 w-full h-full object-cover hover:scale-105 transition-transform duration-700"
+                      loading="lazy"
+                      decoding="async"
+                      sizes="(max-width: 768px) 50vw, 33vw"
+                      width={600}
+                      height={450}
+                    />
+                  ))}
+                </div>
+              )}
+
+              {/* Text content */}
+              <div className="max-w-3xl mt-8">
+                <p className="text-[9px] tracking-[0.22em] uppercase font-sans text-muted-foreground mb-2">{prop.tagline}</p>
                 <h2 className="font-serif text-4xl md:text-5xl text-foreground mb-2">{prop.name}</h2>
                 <div className="flex items-center gap-3 mb-5">
                   {prop.bedrooms && (
                     <span className="text-xs font-sans text-muted-foreground">{prop.bedrooms} Bedrooms</span>
                   )}
-                  {(prop as { sqft?: string | null }).sqft && (
+                  {prop.sqft && (
                     <>
                       <span className="w-1 h-1 rounded-full bg-border" />
-                      <span className="text-xs font-sans text-muted-foreground">{(prop as { sqft?: string | null }).sqft}</span>
+                      <span className="text-xs font-sans text-muted-foreground">{prop.sqft}</span>
                     </>
                   )}
-                  {(prop as { maxGuests?: number | null }).maxGuests && !(prop as { sqft?: string | null }).sqft && (
+                  {prop.maxGuests && !prop.sqft && (
                     <>
                       <span className="w-1 h-1 rounded-full bg-border" />
-                      <span className="text-xs font-sans text-muted-foreground">Sleeps {(prop as { maxGuests?: number | null }).maxGuests}</span>
+                      <span className="text-xs font-sans text-muted-foreground">Sleeps {prop.maxGuests}</span>
                     </>
                   )}
                 </div>
@@ -217,10 +254,10 @@ export default function Lodging() {
                   Inquire About Lodging
                 </Link>
               </div>
+
             </div>
-          </div>
-        </section>
-      ))}
+          </section>
+        ))}
       </div>
 
       {/* CTA */}

@@ -224,7 +224,45 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── 04. Teaser: Membership ───────────────────────────────────────── */}
+      {/* ── 04. Teaser: About ───────────────────────────────────────────── */}
+      <section className="fade-up section bg-background">
+        <div className="max-w-[1440px] mx-auto px-5 lg:px-14">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+            <div>
+              <div className="gold-rule mb-5" />
+              <p className="eyebrow text-muted-brand mb-4">Our Story</p>
+              <h2
+                className="font-serif font-light text-warm leading-tight mb-6"
+                style={{ fontSize: "clamp(1.875rem,3.5vw,3rem)" }}
+              >
+                The Rivers Lodge<br />
+                <em className="italic">&amp; Hunt Club.</em>
+              </h2>
+              <p className="font-sans text-muted-brand leading-relaxed mb-6" style={{ fontSize: "0.9375rem" }}>
+                A privately owned working land estate on the Marais des Cygnes in La Cygne, Kansas — one hour south of Kansas City. The Lodge was built around a simple idea: give a small number of families and guests exclusive, unhurried access to thousands of managed acres and the people who care for them.
+              </p>
+              <p className="font-sans text-muted-brand leading-relaxed mb-10" style={{ fontSize: "0.9375rem" }}>
+                Every visit — whether a wedding weekend, a hunting season, or a member gathering — is yours alone. No shared grounds, no overlapping events.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4">
+                <Link href="/about" className="btn-ghost">Our Story</Link>
+                <Link href="/about/property" className="btn-ghost">The Property</Link>
+              </div>
+            </div>
+            <Picture
+              src="/img/MHR53675.jpg"
+              alt="Rivers Lodge & Hunt Club estate"
+              label="Estate"
+              className="aspect-[4/3] overflow-hidden w-full"
+              width={1200}
+              height={900}
+              sizes="(max-width: 1024px) 100vw, 50vw"
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* ── 05. Teaser: Membership ───────────────────────────────────────── */}
       <section ref={memberRef} className="fade-up section bg-background">
         <div className="max-w-[1440px] mx-auto px-5 lg:px-14">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">

@@ -6,7 +6,7 @@ import { trpc } from '@shared/lib/trpc';
 
 const STAFF_ROLES = ["admin", "owner", "venue_sales", "events_manager", "membership_manager", "hunt_fish_ops", "hospitality", "staff", "finance"];
 
-type Track = "events" | "lodging" | "outdoor" | "about" | "membership" | null;
+type Track = "events" | "lodging" | "outdoor" | "membership" | null;
 
 function getTrackFromPath(path: string): Track {
   if (
@@ -16,7 +16,6 @@ function getTrackFromPath(path: string): Track {
   ) return "events";
   if (path.startsWith("/lodging")) return "lodging";
   if (path.startsWith("/outdoor-activities")) return "outdoor";
-  if (path.startsWith("/about")) return "about";
   if (path.startsWith("/membership") || path.startsWith("/estate")) return "membership";
   return null;
 }
@@ -276,14 +275,6 @@ export default function PublicNav() {
               Outdoor Activities
             </Link>
 
-            {/* 5. About */}
-            <Link
-              href="/about"
-              className="px-2 py-2 text-[11px] tracking-[0.09em] uppercase font-sans font-medium text-[#E0D3BD] whitespace-nowrap hover:opacity-70 transition-opacity"
-            >
-              About
-            </Link>
-
           </nav>
 
           {/* ── Right CTA (Member Login) ──────────────────────────────────── */}
@@ -488,15 +479,6 @@ export default function PublicNav() {
             className="py-3 text-[11px] tracking-[0.18em] uppercase font-sans font-medium text-[#E0D3BD] hover:text-[#6B7250] transition-colors"
           >
             Outdoor Activities
-          </Link>
-
-          {/* 5. About */}
-          <Link
-            href="/about"
-            onClick={() => setMobileOpen(false)}
-            className="py-3 text-[11px] tracking-[0.18em] uppercase font-sans font-medium text-[#E0D3BD] hover:opacity-70 transition-opacity"
-          >
-            About
           </Link>
 
         </div>
