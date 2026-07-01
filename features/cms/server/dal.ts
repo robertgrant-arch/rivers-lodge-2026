@@ -1,4 +1,4 @@
-import { eq, desc, and } from "drizzle-orm";
+import { eq, desc, and, inArray } from "drizzle-orm";
 import { getPortalDb } from "@core/server/db";
 import {
   cmsAmenities,
@@ -125,12 +125,20 @@ export async function getCmsGalleryWithImages(slug: string) {
 export async function getAllGalleriesWithImages() {
   const db = getDb();
   const galleries = await db.select().from(cmsGalleries).where(eq(cmsGalleries.status, "published")).orderBy(cmsGalleries.sortOrder);
-  const result = [];
-  for (const gallery of galleries) {
-    const images = await db.select().from(cmsGalleryImages).where(eq(cmsGalleryImages.galleryId, gallery.id)).orderBy(cmsGalleryImages.sortOrder);
-    result.push({ ...gallery, images });
+  if (galleries.length === 0) return [];
+  // Fetch every gallery's images in a single query, then group in memory
+  // (previously ran one query per gallery — an N+1 that scaled with gallery count).
+  const galleryIds = galleries.map((g) => g.id);
+  const allImages = await db.select().from(cmsGalleryImages)
+    .where(inArray(cmsGalleryImages.galleryId, galleryIds))
+    .orderBy(cmsGalleryImages.sortOrder);
+  const imagesByGallery = new Map<number, typeof allImages>();
+  for (const img of allImages) {
+    const list = imagesByGallery.get(img.galleryId) ?? [];
+    list.push(img);
+    imagesByGallery.set(img.galleryId, list);
   }
-  return result;
+  return galleries.map((gallery) => ({ ...gallery, images: imagesByGallery.get(gallery.id) ?? [] }));
 }
 
 // ─── CMS: Testimonials ────────────────────────────────────────────────────────

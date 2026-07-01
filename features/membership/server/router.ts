@@ -281,14 +281,18 @@ export const membershipRouter = router({
 
   stats: portalProcedure.query(async () => {
     const db = getPortalDb();
-    const [total] = await db.select({ count: sql<number>`count(*)` }).from(members);
-    const [active] = await db.select({ count: sql<number>`count(*)` }).from(members).where(eq(members.active, true));
-    const [inactive] = await db.select({ count: sql<number>`count(*)` }).from(members).where(eq(members.active, false));
     const today = new Date().toISOString().split("T")[0];
-    const [pendingRenewal] = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(members)
-      .where(sql`active = true AND renewalDate IS NOT NULL AND renewalDate <= DATE_ADD(${today}, INTERVAL 30 DAY)`);
+    const [[total], [active], [inactive], [pendingRenewal]] = await Promise.all([
+      db.select({ count: sql<number>`count(*)` }).from(members),
+      db.select({ count: sql<number>`count(*)` }).from(members).where(eq(members.active, true)),
+      db.select({ count: sql<number>`count(*)` }).from(members).where(eq(members.active, false)),
+      db.select({ count: sql<number>`count(*)` }).from(members)
+        .where(and(
+          eq(members.active, true),
+          sql`${members.renewalDate} IS NOT NULL`,
+          sql`${members.renewalDate} <= (${today}::date + INTERVAL '30 days')`,
+        )),
+    ]);
     return {
       total: total.count,
       active: active.count,

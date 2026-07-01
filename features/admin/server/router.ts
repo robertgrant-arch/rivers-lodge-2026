@@ -2,7 +2,7 @@ import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { generateAndStoreWaiverPdf } from "@features/waivers/public";
 import { publicProcedure, protectedProcedure, router } from "../../_core/server/trpc";
-import { eq, desc, and, gte, lte, sql, or, like, lt } from "drizzle-orm";
+import { eq, desc, and, gte, lte, sql, or, like, lt, inArray } from "drizzle-orm";
 import {
   weddingBookings,
   corporateBookings,
@@ -106,9 +106,9 @@ const dashboardRouter = router({
         .from(members).where(eq(members.active, true)),
       db.select({ count: sql<number>`count(*)` })
         .from(inquiries).where(eq(inquiries.status, "new")),
-      db.select({ total: sql<string>`COALESCE(SUM(contractValue), 0)` })
+      db.select({ total: sql<string>`COALESCE(SUM(${weddingBookings.contractValue}), 0)` })
         .from(weddingBookings).where(eq(weddingBookings.status, "confirmed")),
-      db.select({ total: sql<string>`COALESCE(SUM(contractValue), 0)` })
+      db.select({ total: sql<string>`COALESCE(SUM(${corporateBookings.contractValue}), 0)` })
         .from(corporateBookings).where(eq(corporateBookings.status, "confirmed")),
     ]);
     return {
@@ -236,26 +236,29 @@ const calendarRouter = router({
     }))
     .query(async ({ input }) => {
       const db = getDb();
-      const weddings = await db.select().from(weddingBookings)
-        .where(and(
-          sql`${weddingBookings.weddingDate} >= ${input.startDate}`,
-          sql`${weddingBookings.weddingDate} <= ${input.endDate}`
-        ));
-      const corporate = await db.select().from(corporateBookings)
-        .where(and(
-          sql`${corporateBookings.arrivalDate} >= ${input.startDate}`,
-          sql`${corporateBookings.departureDate} <= ${input.endDate}`
-        ));
-      const huntFish = await db.select().from(huntFishBookings)
-        .where(and(
-          sql`${huntFishBookings.bookingDate} >= ${input.startDate}`,
-          sql`${huntFishBookings.bookingDate} <= ${input.endDate}`
-        ));
-      const blocked = await db.select().from(portalBlockedDates)
-        .where(and(
-          sql`${portalBlockedDates.startDate} <= ${input.endDate}`,
-          sql`${portalBlockedDates.endDate} >= ${input.startDate}`
-        ));
+      // All four ranges are independent — fetch concurrently.
+      const [weddings, corporate, huntFish, blocked] = await Promise.all([
+        db.select().from(weddingBookings)
+          .where(and(
+            sql`${weddingBookings.weddingDate} >= ${input.startDate}`,
+            sql`${weddingBookings.weddingDate} <= ${input.endDate}`
+          )),
+        db.select().from(corporateBookings)
+          .where(and(
+            sql`${corporateBookings.arrivalDate} >= ${input.startDate}`,
+            sql`${corporateBookings.departureDate} <= ${input.endDate}`
+          )),
+        db.select().from(huntFishBookings)
+          .where(and(
+            sql`${huntFishBookings.bookingDate} >= ${input.startDate}`,
+            sql`${huntFishBookings.bookingDate} <= ${input.endDate}`
+          )),
+        db.select().from(portalBlockedDates)
+          .where(and(
+            sql`${portalBlockedDates.startDate} <= ${input.endDate}`,
+            sql`${portalBlockedDates.endDate} >= ${input.startDate}`
+          )),
+      ]);
       return {
         weddings: weddings.map(w => ({ ...w, _type: "wedding" as const })),
         corporate: corporate.map(c => ({ ...c, _type: "corporate" as const })),
@@ -346,13 +349,15 @@ const weddingsPortalRouter = router({
     .input(z.object({ id: z.number() }))
     .query(async ({ input }) => {
       const db = getDb();
-      const [booking] = await db.select().from(weddingBookings).where(eq(weddingBookings.id, input.id));
+      const [[booking], notes, docs] = await Promise.all([
+        db.select().from(weddingBookings).where(eq(weddingBookings.id, input.id)),
+        db.select().from(portalNotes)
+          .where(and(eq(portalNotes.entityType, "wedding"), eq(portalNotes.entityId, input.id)))
+          .orderBy(desc(portalNotes.createdAt)),
+        db.select().from(portalDocuments)
+          .where(and(eq(portalDocuments.linkedEntityType, "wedding"), eq(portalDocuments.linkedEntityId, input.id))),
+      ]);
       if (!booking) throw new TRPCError({ code: "NOT_FOUND" });
-      const notes = await db.select().from(portalNotes)
-        .where(and(eq(portalNotes.entityType, "wedding"), eq(portalNotes.entityId, input.id)))
-        .orderBy(desc(portalNotes.createdAt));
-      const docs = await db.select().from(portalDocuments)
-        .where(and(eq(portalDocuments.linkedEntityType, "wedding"), eq(portalDocuments.linkedEntityId, input.id)));
       return { booking, notes, docs };
     }),
 
@@ -515,11 +520,13 @@ const corporatePortalRouter = router({
     .input(z.object({ id: z.number() }))
     .query(async ({ input }) => {
       const db = getDb();
-      const [booking] = await db.select().from(corporateBookings).where(eq(corporateBookings.id, input.id));
+      const [[booking], notes] = await Promise.all([
+        db.select().from(corporateBookings).where(eq(corporateBookings.id, input.id)),
+        db.select().from(portalNotes)
+          .where(and(eq(portalNotes.entityType, "corporate"), eq(portalNotes.entityId, input.id)))
+          .orderBy(desc(portalNotes.createdAt)),
+      ]);
       if (!booking) throw new TRPCError({ code: "NOT_FOUND" });
-      const notes = await db.select().from(portalNotes)
-        .where(and(eq(portalNotes.entityType, "corporate"), eq(portalNotes.entityId, input.id)))
-        .orderBy(desc(portalNotes.createdAt));
       return { booking, notes };
     }),
 
@@ -674,12 +681,14 @@ const huntFishPortalRouter = router({
     .input(z.object({ id: z.number() }))
     .query(async ({ input }) => {
       const db = getDb();
-      const [booking] = await db.select().from(huntFishBookings).where(eq(huntFishBookings.id, input.id));
+      const [[booking], harvests, notes] = await Promise.all([
+        db.select().from(huntFishBookings).where(eq(huntFishBookings.id, input.id)),
+        db.select().from(harvestRecords).where(eq(harvestRecords.huntFishBookingId, input.id)),
+        db.select().from(portalNotes)
+          .where(and(eq(portalNotes.entityType, "hunt_fish"), eq(portalNotes.entityId, input.id)))
+          .orderBy(desc(portalNotes.createdAt)),
+      ]);
       if (!booking) throw new TRPCError({ code: "NOT_FOUND" });
-      const harvests = await db.select().from(harvestRecords).where(eq(harvestRecords.huntFishBookingId, input.id));
-      const notes = await db.select().from(portalNotes)
-        .where(and(eq(portalNotes.entityType, "hunt_fish"), eq(portalNotes.entityId, input.id)))
-        .orderBy(desc(portalNotes.createdAt));
       return { booking, harvests, notes };
     }),
 
@@ -815,11 +824,11 @@ const huntFishPortalRouter = router({
         .where(and(
           sql`${huntFishBookings.bookingDate} >= ${input.startDate}`,
           sql`${huntFishBookings.bookingDate} <= ${input.endDate}`,
-          sql`guideUserId IS NOT NULL`
+          sql`${huntFishBookings.guideUserId} IS NOT NULL`
         )).orderBy(huntFishBookings.bookingDate);
       const guideIds = Array.from(new Set(bookingsInRange.map(b => b.guideUserId).filter((id): id is string => id !== null)));
       const guides = guideIds.length > 0
-        ? await db.select({ id: users.id, email: users.email }).from(users).where(sql`id IN (${sql.join(guideIds.map((id) => sql`${id}`), sql`, `)})`)
+        ? await db.select({ id: users.id, email: users.email }).from(users).where(inArray(users.id, guideIds))
         : [];
       return { bookings: bookingsInRange, guides };
     }),
@@ -973,10 +982,10 @@ const customersPortalRouter = router({
       const db = getDb();
       const [user] = await db.select().from(users).where(eq(users.id, input.id));
       if (!user) throw new TRPCError({ code: "NOT_FOUND" });
-      const weddingHistory = await db.select().from(weddingBookings)
-        .where(eq(weddingBookings.contactEmail, user.email ?? ""));
-      const corporateHistory = await db.select().from(corporateBookings)
-        .where(eq(corporateBookings.contactEmail, user.email ?? ""));
+      const [weddingHistory, corporateHistory] = await Promise.all([
+        db.select().from(weddingBookings).where(eq(weddingBookings.contactEmail, user.email ?? "")),
+        db.select().from(corporateBookings).where(eq(corporateBookings.contactEmail, user.email ?? "")),
+      ]);
       return { user, weddingHistory, corporateHistory };
     }),
 });
@@ -1064,12 +1073,18 @@ const membershipPortalRouter = router({
 
   stats: portalProcedure.query(async () => {
     const db = getDb();
-    const [total] = await db.select({ count: sql<number>`count(*)` }).from(members);
-    const [active] = await db.select({ count: sql<number>`count(*)` }).from(members).where(eq(members.active, true));
-    const [inactive] = await db.select({ count: sql<number>`count(*)` }).from(members).where(eq(members.active, false));
     const today = new Date().toISOString().split("T")[0];
-    const [pendingRenewal] = await db.select({ count: sql<number>`count(*)` }).from(members)
-      .where(sql`active = true AND renewalDate IS NOT NULL AND renewalDate <= DATE_ADD(${today}, INTERVAL 30 DAY)`);
+    const [[total], [active], [inactive], [pendingRenewal]] = await Promise.all([
+      db.select({ count: sql<number>`count(*)` }).from(members),
+      db.select({ count: sql<number>`count(*)` }).from(members).where(eq(members.active, true)),
+      db.select({ count: sql<number>`count(*)` }).from(members).where(eq(members.active, false)),
+      db.select({ count: sql<number>`count(*)` }).from(members)
+        .where(and(
+          eq(members.active, true),
+          sql`${members.renewalDate} IS NOT NULL`,
+          sql`${members.renewalDate} <= (${today}::date + INTERVAL '30 days')`,
+        )),
+    ]);
     return { total: total.count, active: active.count, inactive: inactive.count, pendingRenewal: pendingRenewal.count, expired: inactive.count };
   }),
 
@@ -1197,28 +1212,30 @@ const auditLogRouter = router({
 const analyticsRouter = router({
   pipeline: portalProcedure.query(async () => {
     const db = getDb();
-    const weddingPipeline = await db.select({
-      status: weddingBookings.status,
-      count: sql<number>`count(*)`,
-      totalValue: sql<string>`COALESCE(SUM(contractValue), 0)`,
-    }).from(weddingBookings).groupBy(weddingBookings.status);
-
-    const corporatePipeline = await db.select({
-      status: corporateBookings.status,
-      count: sql<number>`count(*)`,
-      totalValue: sql<string>`COALESCE(SUM(contractValue), 0)`,
-    }).from(corporateBookings).groupBy(corporateBookings.status);
-
+    const [weddingPipeline, corporatePipeline] = await Promise.all([
+      db.select({
+        status: weddingBookings.status,
+        count: sql<number>`count(*)`,
+        totalValue: sql<string>`COALESCE(SUM(${weddingBookings.contractValue}), 0)`,
+      }).from(weddingBookings).groupBy(weddingBookings.status),
+      db.select({
+        status: corporateBookings.status,
+        count: sql<number>`count(*)`,
+        totalValue: sql<string>`COALESCE(SUM(${corporateBookings.contractValue}), 0)`,
+      }).from(corporateBookings).groupBy(corporateBookings.status),
+    ]);
     return { weddingPipeline, corporatePipeline };
   }),
 
   memberActivity: portalProcedure.query(async () => {
     const db = getDb();
-    const [total] = await db.select({ count: sql<number>`count(*)` }).from(members).where(eq(members.active, true));
-    const byTier = await db.select({
-      tier: members.tier,
-      count: sql<number>`count(*)`,
-    }).from(members).where(eq(members.active, true)).groupBy(members.tier);
+    const [[total], byTier] = await Promise.all([
+      db.select({ count: sql<number>`count(*)` }).from(members).where(eq(members.active, true)),
+      db.select({
+        tier: members.tier,
+        count: sql<number>`count(*)`,
+      }).from(members).where(eq(members.active, true)).groupBy(members.tier),
+    ]);
     return { totalActive: total.count, byTier };
   }),
 
@@ -1227,18 +1244,18 @@ const analyticsRouter = router({
     .query(async ({ input }) => {
       const db = getDb();
       const seasonCondition = input.season ? eq(huntFishBookings.season, input.season) : undefined;
-      const bookingsByType = await db.select({
-        bookingType: huntFishBookings.bookingType,
-        count: sql<number>`count(*)`,
-      }).from(huntFishBookings)
-        .where(seasonCondition)
-        .groupBy(huntFishBookings.bookingType);
-
-      const harvestBySpecies = await db.select({
-        species: harvestRecords.species,
-        totalCount: sql<number>`SUM(count)`,
-      }).from(harvestRecords).groupBy(harvestRecords.species);
-
+      const [bookingsByType, harvestBySpecies] = await Promise.all([
+        db.select({
+          bookingType: huntFishBookings.bookingType,
+          count: sql<number>`count(*)`,
+        }).from(huntFishBookings)
+          .where(seasonCondition)
+          .groupBy(huntFishBookings.bookingType),
+        db.select({
+          species: harvestRecords.species,
+          totalCount: sql<number>`SUM(${harvestRecords.count})`,
+        }).from(harvestRecords).groupBy(harvestRecords.species),
+      ]);
       return { bookingsByType, harvestBySpecies };
     }),
 });
