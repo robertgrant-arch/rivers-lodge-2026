@@ -21,10 +21,7 @@ const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
   return next({ ctx });
 });
 
-const STAFF_ROLES = [
-  "owner", "admin", "venue_sales", "events_manager", "membership_manager",
-  "hunt_fish_ops", "hospitality", "staff", "finance",
-] as const;
+const STAFF_ROLES = ["admin", "member"] as const;
 type StaffRole = typeof STAFF_ROLES[number];
 
 const portalProcedure = protectedProcedure.use(({ ctx, next }) => {
@@ -48,7 +45,7 @@ function getPortalDb() {
 import { portalAuditLog } from '@core/db/portal-schema';
 
 async function logAudit(params: {
-  actingUserId: number;
+  actingUserId: string;
   actingUserName: string;
   actionType: "create" | "update" | "delete" | "status_change" | "login" | "export" | "override";
   entityType: string;
@@ -146,7 +143,7 @@ export const membershipRouter = router({
         .where(eq(membershipApplications.id, input.id));
       await logAudit({
         actingUserId: ctx.user.id,
-        actingUserName: ctx.user.name ?? "Staff",
+        actingUserName: ctx.user.email ?? "Staff",
         actionType: "status_change",
         entityType: "MembershipApplication",
         entityId: String(input.id),
@@ -185,7 +182,7 @@ export const membershipRouter = router({
   createMember: portalProcedure
     .input(
       z.object({
-        userId: z.number(),
+        userId: z.string(),
         tier: z.enum(["standard", "premier", "founding"]).default("standard"),
         memberNumber: z.string().optional(),
         joinDate: z.string().optional(),
@@ -218,7 +215,7 @@ export const membershipRouter = router({
       } as any).$returningId();
       await logAudit({
         actingUserId: ctx.user.id,
-        actingUserName: ctx.user.name ?? "Staff",
+        actingUserName: ctx.user.email ?? "Staff",
         actionType: "create",
         entityType: "Member",
         entityId: String(newMember.id),
@@ -246,7 +243,7 @@ export const membershipRouter = router({
       await db.update(members).set(filtered as any).where(eq(members.id, id));
       await logAudit({
         actingUserId: ctx.user.id,
-        actingUserName: ctx.user.name ?? "Staff",
+        actingUserName: ctx.user.email ?? "Staff",
         actionType: "update",
         entityType: "Member",
         entityId: String(id),
@@ -336,9 +333,9 @@ export const membershipRouter = router({
       const db = getPortalDb();
       const q = `%${input.query}%`;
       return db
-        .select({ id: users.id, name: users.name, email: users.email })
+        .select({ id: users.id, email: users.email })
         .from(users)
-        .where(or(like(users.name, q), like(users.email, q)))
+        .where(like(users.email, q))
         .limit(20);
     }),
 });

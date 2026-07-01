@@ -22,15 +22,8 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 const ROLES = [
-  { value: "owner", label: "Owner" },
   { value: "admin", label: "Admin" },
-  { value: "venue_sales", label: "Venue Sales" },
-  { value: "events_manager", label: "Events Manager" },
-  { value: "membership_manager", label: "Membership Manager" },
-  { value: "hunt_fish_ops", label: "Hunt/Fish Ops" },
-  { value: "hospitality", label: "Hospitality" },
-  { value: "staff", label: "Staff" },
-  { value: "finance", label: "Finance" },
+  { value: "member", label: "Member" },
 ];
 
 function formatDate(d: string | Date | null | undefined) {
@@ -39,7 +32,7 @@ function formatDate(d: string | Date | null | undefined) {
 }
 
 export default function PortalEmployees() {
-  const [editingUser, setEditingUser] = useState<{ id: number; name: string | null; role: string } | null>(null);
+  const [editingUser, setEditingUser] = useState<{ id: string; email: string | null; role: string } | null>(null);
   const [newRole, setNewRole] = useState("staff");
   const utils = trpc.useUtils();
 
@@ -92,7 +85,7 @@ export default function PortalEmployees() {
                 ) : employees.map(e => (
                   <tr key={e.id} className="border-b border-border hover:bg-muted/30 transition-colors">
                     <td className="px-4 py-3">
-                      <p className="font-medium text-foreground">{e.name ?? "—"}</p>
+                      <p className="font-medium text-foreground">{e.email ?? "—"}</p>
                     </td>
                     <td className="px-4 py-3">
                       {e.email && (
@@ -107,11 +100,11 @@ export default function PortalEmployees() {
                         {e.role?.replace(/_/g, " ")}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-muted-foreground text-xs">{formatDate(e.lastSignedIn)}</td>
+                    <td className="px-4 py-3 text-muted-foreground text-xs">{formatDate(e.lastLoginAt)}</td>
                     <td className="px-4 py-3">
                       <Button size="sm" variant="outline" className="text-xs h-7 px-2"
                         onClick={() => {
-                          setEditingUser({ id: e.id, name: e.name, role: e.role });
+                          setEditingUser({ id: e.id, email: e.email, role: e.role });
                           setNewRole(e.role);
                         }}>
                         Change Role
@@ -129,7 +122,7 @@ export default function PortalEmployees() {
       <Dialog open={editingUser !== null} onOpenChange={() => setEditingUser(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Change Role — {editingUser?.name ?? "User"}</DialogTitle>
+            <DialogTitle>Change Role — {editingUser?.email ?? "User"}</DialogTitle>
           </DialogHeader>
           <div className="space-y-3 py-2">
             <Label>Portal Role</Label>

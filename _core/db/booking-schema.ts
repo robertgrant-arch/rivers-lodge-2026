@@ -176,7 +176,7 @@ export const conflictAcknowledgments = mysqlTable("conflict_acknowledgments", {
   conflictRuleId: varchar("conflictRuleId", { length: 20 }).notNull(), // e.g. 'SC-03'
   relatedBookingId: int("relatedBookingId"),
   resourceId: int("resourceId"),
-  acknowledgedByUserId: int("acknowledgedByUserId").notNull(),
+  acknowledgedByUserId: varchar("acknowledgedByUserId", { length: 36 }).notNull(),
   notes: text("notes"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
@@ -196,7 +196,7 @@ export const paymentRecords = mysqlTable("payment_records", {
   stripePaymentIntentId: varchar("stripePaymentIntentId", { length: 255 }),
   stripeRefundId: varchar("stripeRefundId", { length: 255 }),
   notes: text("notes"),
-  recordedByUserId: int("recordedByUserId"),
+  recordedByUserId: varchar("recordedByUserId", { length: 36 }),
   paidAt: timestamp("paidAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
@@ -250,7 +250,7 @@ export const reservationRequests = mysqlTable("reservation_requests", {
   contactPhone: varchar("contactPhone", { length: 50 }),
   // Member reference (for member portal requests)
   memberId: int("memberId"),
-  userId: int("userId"),
+  userId: varchar("userId", { length: 36 }),
   // Requested dates
   requestedStart: date("requestedStart").notNull(),
   requestedEnd: date("requestedEnd").notNull(),
@@ -272,7 +272,7 @@ export const reservationRequests = mysqlTable("reservation_requests", {
     "rejected",
     "lost",
   ]).default("new").notNull(),
-  assignedToUserId: int("assignedToUserId"),
+  assignedToUserId: varchar("assignedToUserId", { length: 36 }),
   convertedBookingId: int("convertedBookingId"), // FK to bookings once converted
   rejectionReason: text("rejectionReason"),
   notes: text("notes"),
@@ -327,7 +327,7 @@ export const leads = mysqlTable("leads", {
     "lost",
     "unqualified",
   ]).default("new").notNull(),
-  assignedToUserId: int("assignedToUserId"),
+  assignedToUserId: varchar("assignedToUserId", { length: 36 }),
   reservationRequestId: int("reservationRequestId"), // source request if applicable
   convertedBookingId: int("convertedBookingId"),
   lostReason: text("lostReason"),
@@ -348,7 +348,7 @@ export const bookingStateTransitions = mysqlTable("booking_state_transitions", {
   bookingId: int("bookingId").notNull(),
   fromStatus: varchar("fromStatus", { length: 50 }),
   toStatus: varchar("toStatus", { length: 50 }).notNull(),
-  triggeredByUserId: int("triggeredByUserId"),
+  triggeredByUserId: varchar("triggeredByUserId", { length: 36 }),
   notes: text("notes"),
   gateChecks: json("gateChecks"), // snapshot of which gates passed/failed
   createdAt: timestamp("createdAt").defaultNow().notNull(),
@@ -411,7 +411,7 @@ export const huntFishSlots = mysqlTable("hunt_fish_slots", {
 
   // Metadata
   notes: text("notes"),
-  createdByUserId: int("createdByUserId"),
+  createdByUserId: varchar("createdByUserId", { length: 36 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
@@ -431,7 +431,7 @@ export const tripRequests = mysqlTable("trip_requests", {
   slotId: int("slotId").notNull(),              // FK to hunt_fish_slots
 
   // Requester identity
-  userId: int("userId").notNull(),              // FK to users
+  userId: varchar("userId", { length: 36 }).notNull(),              // FK to users
   memberId: int("memberId"),                    // FK to members (denormalized for quick lookup)
 
   // Party details
@@ -456,7 +456,7 @@ export const tripRequests = mysqlTable("trip_requests", {
   ]).default("pending").notNull(),
 
   // Staff workflow
-  reviewedByUserId: int("reviewedByUserId"),
+  reviewedByUserId: varchar("reviewedByUserId", { length: 36 }),
   reviewedAt: timestamp("reviewedAt"),
   declineReason: text("declineReason"),
   staffNotes: text("staffNotes"),               // internal notes, not visible to member

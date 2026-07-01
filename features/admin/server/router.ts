@@ -41,7 +41,7 @@ function getDb() {
 }
 
 // ─── Portal Role Guards ───────────────────────────────────────────────────────
-const STAFF_ROLES = ["owner", "admin", "venue_sales", "events_manager", "membership_manager", "hunt_fish_ops", "hospitality", "staff", "finance"] as const;
+const STAFF_ROLES = ["admin", "member"] as const;
 type StaffRole = typeof STAFF_ROLES[number];
 
 const portalProcedure = protectedProcedure.use(({ ctx, next }) => {
@@ -53,15 +53,15 @@ const portalProcedure = protectedProcedure.use(({ ctx, next }) => {
 });
 
 const ownerProcedure = protectedProcedure.use(({ ctx, next }) => {
-  if (ctx.user.role !== "owner" && ctx.user.role !== "admin") {
-    throw new TRPCError({ code: "FORBIDDEN", message: "Owner access required" });
+  if (ctx.user.role !== "admin") {
+    throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
   }
   return next({ ctx });
 });
 
 // ─── Audit Log Helper ─────────────────────────────────────────────────────────
 async function logAudit(params: {
-  actingUserId: number;
+  actingUserId: string;
   actingUserName: string;
   actionType: "create" | "update" | "delete" | "status_change" | "login" | "export" | "override";
   entityType: string;
@@ -274,7 +274,7 @@ const calendarRouter = router({
       } as any);
       await logAudit({
         actingUserId: ctx.user.id,
-        actingUserName: ctx.user.name ?? "Staff",
+        actingUserName: ctx.user.email ?? "Staff",
         actionType: "create",
         entityType: "PortalBlockedDate",
         entityId: String(result.insertId),
@@ -290,7 +290,7 @@ const calendarRouter = router({
       await db.delete(portalBlockedDates).where(eq(portalBlockedDates.id, input.id));
       await logAudit({
         actingUserId: ctx.user.id,
-        actingUserName: ctx.user.name ?? "Staff",
+        actingUserName: ctx.user.email ?? "Staff",
         actionType: "delete",
         entityType: "PortalBlockedDate",
         entityId: String(input.id),
@@ -368,7 +368,7 @@ const weddingsPortalRouter = router({
       } as any);
       await logAudit({
         actingUserId: ctx.user.id,
-        actingUserName: ctx.user.name ?? "Staff",
+        actingUserName: ctx.user.email ?? "Staff",
         actionType: "create",
         entityType: "WeddingBooking",
         entityId: String(result.insertId),
@@ -409,7 +409,7 @@ const weddingsPortalRouter = router({
       await db.update(weddingBookings).set(filtered as any).where(eq(weddingBookings.id, id));
       await logAudit({
         actingUserId: ctx.user.id,
-        actingUserName: ctx.user.name ?? "Staff",
+        actingUserName: ctx.user.email ?? "Staff",
         actionType: "update",
         entityType: "WeddingBooking",
         entityId: String(id),
@@ -430,7 +430,7 @@ const weddingsPortalRouter = router({
       if (input.notes) {
         await db.insert(portalNotes).values({
           authorUserId: ctx.user.id,
-          authorName: ctx.user.name ?? "Staff",
+          authorName: ctx.user.email ?? "Staff",
           entityType: "wedding",
           entityId: input.id,
           body: input.notes,
@@ -438,7 +438,7 @@ const weddingsPortalRouter = router({
       }
       await logAudit({
         actingUserId: ctx.user.id,
-        actingUserName: ctx.user.name ?? "Staff",
+        actingUserName: ctx.user.email ?? "Staff",
         actionType: "status_change",
         entityType: "WeddingBooking",
         entityId: String(input.id),
@@ -458,7 +458,7 @@ const weddingsPortalRouter = router({
       const db = getDb();
       await db.insert(portalNotes).values({
         authorUserId: ctx.user.id,
-        authorName: ctx.user.name ?? "Staff",
+        authorName: ctx.user.email ?? "Staff",
         entityType: "wedding",
         entityId: input.id,
         body: input.body,
@@ -539,7 +539,7 @@ const corporatePortalRouter = router({
       } as any);
       await logAudit({
         actingUserId: ctx.user.id,
-        actingUserName: ctx.user.name ?? "Staff",
+        actingUserName: ctx.user.email ?? "Staff",
         actionType: "create",
         entityType: "CorporateBooking",
         entityId: String(result.insertId),
@@ -574,7 +574,7 @@ const corporatePortalRouter = router({
       await db.update(corporateBookings).set(filtered as any).where(eq(corporateBookings.id, id));
       await logAudit({
         actingUserId: ctx.user.id,
-        actingUserName: ctx.user.name ?? "Staff",
+        actingUserName: ctx.user.email ?? "Staff",
         actionType: "update",
         entityType: "CorporateBooking",
         entityId: String(id),
@@ -594,7 +594,7 @@ const corporatePortalRouter = router({
       if (input.notes) {
         await db.insert(portalNotes).values({
           authorUserId: ctx.user.id,
-          authorName: ctx.user.name ?? "Staff",
+          authorName: ctx.user.email ?? "Staff",
           entityType: "corporate",
           entityId: input.id,
           body: input.notes,
@@ -602,7 +602,7 @@ const corporatePortalRouter = router({
       }
       await logAudit({
         actingUserId: ctx.user.id,
-        actingUserName: ctx.user.name ?? "Staff",
+        actingUserName: ctx.user.email ?? "Staff",
         actionType: "status_change",
         entityType: "CorporateBooking",
         entityId: String(input.id),
@@ -617,7 +617,7 @@ const corporatePortalRouter = router({
       const db = getDb();
       await db.insert(portalNotes).values({
         authorUserId: ctx.user.id,
-        authorName: ctx.user.name ?? "Staff",
+        authorName: ctx.user.email ?? "Staff",
         entityType: "corporate",
         entityId: input.id,
         body: input.body,
@@ -633,7 +633,7 @@ const huntFishPortalRouter = router({
     .input(z.object({
       status: z.string().optional(),
       bookingType: z.string().optional(),
-      guideUserId: z.number().optional(),
+      guideUserId: z.string().optional(),
       startDate: z.string().optional(),
       endDate: z.string().optional(),
       limit: z.number().int().min(1).max(100).default(25),
@@ -681,7 +681,7 @@ const huntFishPortalRouter = router({
       bookingDate: z.string(),
       startTime: z.string().optional(),
       partySize: z.number().optional(),
-      guideUserId: z.number().optional(),
+      guideUserId: z.string().optional(),
       standLocation: z.string().optional(),
       season: z.string().optional(),
       notes: z.string().optional(),
@@ -704,7 +704,7 @@ const huntFishPortalRouter = router({
       } as any);
       await logAudit({
         actingUserId: ctx.user.id,
-        actingUserName: ctx.user.name ?? "Staff",
+        actingUserName: ctx.user.email ?? "Staff",
         actionType: "create",
         entityType: "HuntFishBooking",
         entityId: String(result.insertId),
@@ -722,7 +722,7 @@ const huntFishPortalRouter = router({
       await db.update(huntFishBookings).set({ status: input.status }).where(eq(huntFishBookings.id, input.id));
       await logAudit({
         actingUserId: ctx.user.id,
-        actingUserName: ctx.user.name ?? "Staff",
+        actingUserName: ctx.user.email ?? "Staff",
         actionType: "status_change",
         entityType: "HuntFishBooking",
         entityId: String(input.id),
@@ -732,7 +732,7 @@ const huntFishPortalRouter = router({
     }),
 
   assignGuide: portalProcedure
-    .input(z.object({ id: z.number(), guideUserId: z.number(), standLocation: z.string().optional() }))
+    .input(z.object({ id: z.number(), guideUserId: z.string(), standLocation: z.string().optional() }))
     .mutation(async ({ input, ctx }) => {
       const db = getDb();
       await db.update(huntFishBookings).set({
@@ -805,9 +805,9 @@ const huntFishPortalRouter = router({
           sql`${huntFishBookings.bookingDate} <= ${input.endDate}`,
           sql`guideUserId IS NOT NULL`
         )).orderBy(huntFishBookings.bookingDate);
-      const guideIds = Array.from(new Set(bookingsInRange.map(b => b.guideUserId).filter((id): id is number => id !== null)));
+      const guideIds = Array.from(new Set(bookingsInRange.map(b => b.guideUserId).filter((id): id is string => id !== null)));
       const guides = guideIds.length > 0
-        ? await db.select({ id: users.id, name: users.name }).from(users).where(sql`id IN (${sql.join(guideIds.map((id) => sql`${id}`), sql`, `)})`)
+        ? await db.select({ id: users.id, email: users.email }).from(users).where(sql`id IN (${sql.join(guideIds.map((id) => sql`${id}`), sql`, `)})`)
         : [];
       return { bookings: bookingsInRange, guides };
     }),
@@ -936,16 +936,15 @@ const customersPortalRouter = router({
     .input(z.object({
       search: z.string().optional(),
       limit: z.number().int().min(1).max(100).default(25),
-      cursor: z.number().int().optional(),
+      cursor: z.string().optional(),
     }))
     .query(async ({ input }) => {
       const db = getDb();
       const limit = input.limit;
       const conditions = [];
-      if (input.search) conditions.push(or(
-        like(users.name, `%${input.search}%`),
+      if (input.search) conditions.push(
         like(users.email, `%${input.search}%`)
-      ));
+      );
       if (input.cursor !== undefined) conditions.push(lt(users.id, input.cursor));
       const rows = await db.select().from(users)
         .where(conditions.length ? and(...conditions) : undefined)
@@ -957,7 +956,7 @@ const customersPortalRouter = router({
     }),
 
   get: portalProcedure
-    .input(z.object({ id: z.number() }))
+    .input(z.object({ id: z.string() }))
     .query(async ({ input }) => {
       const db = getDb();
       const [user] = await db.select().from(users).where(eq(users.id, input.id));
@@ -975,14 +974,14 @@ const employeesPortalRouter = router({
   list: ownerProcedure.query(async () => {
     const db = getDb();
     return db.select().from(users)
-      .where(sql`role NOT IN ('user', 'member')`)
-      .orderBy(users.name);
+      .where(sql`role NOT IN ('member')`)
+      .orderBy(users.email);
   }),
 
   updateRole: ownerProcedure
     .input(z.object({
-      userId: z.number(),
-      role: z.enum(["owner", "admin", "venue_sales", "events_manager", "membership_manager", "hunt_fish_ops", "hospitality", "staff", "finance", "member", "user"]),
+      userId: z.string(),
+      role: z.enum(["admin", "member"]),
     }))
     .mutation(async ({ input, ctx }) => {
       const db = getDb();
@@ -990,7 +989,7 @@ const employeesPortalRouter = router({
       await db.update(users).set({ role: input.role }).where(eq(users.id, input.userId));
       await logAudit({
         actingUserId: ctx.user.id,
-        actingUserName: ctx.user.name ?? "Owner",
+        actingUserName: ctx.user.email ?? "Owner",
         actionType: "update",
         entityType: "User",
         entityId: String(input.userId),
@@ -1041,7 +1040,7 @@ const membershipPortalRouter = router({
         .where(eq(membershipApplications.id, input.id));
       await logAudit({
         actingUserId: ctx.user.id,
-        actingUserName: ctx.user.name ?? "Staff",
+        actingUserName: ctx.user.email ?? "Staff",
         actionType: "status_change",
         entityType: "MembershipApplication",
         entityId: String(input.id),
@@ -1101,7 +1100,7 @@ const membershipPortalRouter = router({
       await db.update(members).set(filtered as any).where(eq(members.id, id));
       await logAudit({
         actingUserId: ctx.user.id,
-        actingUserName: ctx.user.name ?? "Staff",
+        actingUserName: ctx.user.email ?? "Staff",
         actionType: "update",
         entityType: "Member",
         entityId: String(id),
@@ -1115,15 +1114,15 @@ const membershipPortalRouter = router({
       const db = getDb();
       const q = `%${input.query}%`;
       return db
-        .select({ id: users.id, name: users.name, email: users.email })
+        .select({ id: users.id, email: users.email })
         .from(users)
-        .where(or(like(users.name, q), like(users.email, q)))
+        .where(like(users.email, q))
         .limit(20);
     }),
 
   createMember: portalProcedure
     .input(z.object({
-      userId: z.number(),
+      userId: z.string(),
       tier: z.enum(["standard", "premier", "founding"]).default("standard"),
       memberNumber: z.string().optional(),
       joinDate: z.string().optional(),
@@ -1151,7 +1150,7 @@ const membershipPortalRouter = router({
       } as any).$returningId();
       await logAudit({
         actingUserId: ctx.user.id,
-        actingUserName: ctx.user.name ?? "Staff",
+        actingUserName: ctx.user.email ?? "Staff",
         actionType: "create",
         entityType: "Member",
         entityId: String(newMember.id),
@@ -1269,7 +1268,7 @@ const memberBookingsRouter = router({
       await db.update(bookings).set(updates as any).where(eq(bookings.id, input.id));
       await logAudit({
         actingUserId: ctx.user.id,
-        actingUserName: ctx.user.name ?? "Staff",
+        actingUserName: ctx.user.email ?? "Staff",
         actionType: "status_change",
         entityType: "MemberBooking",
         entityId: String(input.id),

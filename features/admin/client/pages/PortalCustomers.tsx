@@ -72,7 +72,7 @@ export default function PortalCustomers() {
                 ) : customers.map(c => (
                   <tr key={c.id} className="border-b border-border hover:bg-muted/30 transition-colors">
                     <td className="px-4 py-3">
-                      <p className="font-medium text-foreground">{c.name ?? "—"}</p>
+                      <p className="font-medium text-foreground">{c.email ?? "—"}</p>
                     </td>
                     <td className="px-4 py-3">
                       {c.email && (
@@ -88,7 +88,7 @@ export default function PortalCustomers() {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-muted-foreground text-xs">{formatDate(c.createdAt)}</td>
-                    <td className="px-4 py-3 text-muted-foreground text-xs">{formatDate(c.lastSignedIn)}</td>
+                    <td className="px-4 py-3 text-muted-foreground text-xs">{formatDate(c.lastLoginAt)}</td>
                   </tr>
                 ))}
               </tbody>

@@ -76,7 +76,7 @@ export const messagesRouter = router({
         body: input.body,
       });
       await notifyOwner({
-        title: `New concierge message from ${ctx.user.name ?? ctx.user.email ?? "member"}`,
+        title: `New concierge message from ${ctx.user.email ?? "member"}`,
         content: input.body,
       });
       return { success: true };
@@ -85,7 +85,7 @@ export const messagesRouter = router({
   reply: adminProcedure
     .input(
       z.object({
-        toUserId: z.number(),
+        toUserId: z.string(),
         subject: z.string().optional(),
         body: z.string().min(1),
       })

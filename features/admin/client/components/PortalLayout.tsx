@@ -147,7 +147,7 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
     );
   }
 
-  const initials = (user.name ?? "S").split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
+  const initials = (user.email ?? "S").charAt(0).toUpperCase();
   const roleLabel = (user.role ?? "staff").replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
 
   return (
@@ -201,7 +201,7 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
                     </AvatarFallback>
                   </Avatar>
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-sidebar-foreground truncate">{user.name ?? "Staff"}</p>
+                    <p className="text-sm font-medium text-sidebar-foreground truncate">{user.email ?? "Staff"}</p>
                     <p className="text-xs text-sidebar-foreground/60 truncate">{roleLabel}</p>
                   </div>
                   <ChevronDown className="w-3 h-3 text-sidebar-foreground/50 flex-shrink-0" />
@@ -230,7 +230,7 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
             <SidebarTrigger className="text-muted-foreground hover:text-foreground" />
             <div className="flex-1" />
             {/* Preview as Member — owner/admin only */}
-            {(user?.role === "owner" || user?.role === "admin") && (
+            {user?.role === "admin" && (
               <Button
                 variant="outline"
                 size="sm"

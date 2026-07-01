@@ -108,7 +108,7 @@ async function updateInventory(
 }
 
 /** Get a member record for the current user, throwing if not found */
-async function requireMember(db: any, userId: number) {
+async function requireMember(db: any, userId: string) {
   const rows = await db!.select().from(members).where(eq(members.userId, userId)).limit(1);
   if (!rows[0]) {
     throw new TRPCError({

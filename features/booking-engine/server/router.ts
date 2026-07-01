@@ -304,7 +304,7 @@ const bookingsRouter = router({
       guestCount: z.number().optional(),
       totalRevenue: z.string().optional(),
       notes: z.string().optional(),
-      userId: z.number().optional(),
+      userId: z.string().optional(),
       // Resource allocations to create with this booking
       resourceAllocations: z.array(z.object({
         resourceId: z.number(),
@@ -660,7 +660,7 @@ const leadsRouter = router({
     .input(z.object({
       businessLine: z.string().optional(),
       status: z.string().optional(),
-      assignedToUserId: z.number().optional(),
+      assignedToUserId: z.string().optional(),
       search: z.string().optional(),
     }).optional())
     .query(async ({ ctx, input }) => {
@@ -713,7 +713,7 @@ const leadsRouter = router({
     .input(z.object({
       id: z.number(),
       status: z.enum(["new", "contacted", "qualified", "proposal_sent", "negotiating", "converted", "lost", "unqualified"]).optional(),
-      assignedToUserId: z.number().optional(),
+      assignedToUserId: z.string().optional(),
       notes: z.string().optional(),
       lostReason: z.string().optional(),
       followUpDate: z.string().optional(),
@@ -811,7 +811,7 @@ const requestsRouter = router({
     .input(z.object({
       id: z.number(),
       status: z.enum(["new", "contacted", "qualified", "proposal_sent", "converted", "rejected", "lost"]).optional(),
-      assignedToUserId: z.number().optional(),
+      assignedToUserId: z.string().optional(),
       notes: z.string().optional(),
       rejectionReason: z.string().optional(),
     }))

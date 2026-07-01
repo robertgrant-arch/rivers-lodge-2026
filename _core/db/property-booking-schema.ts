@@ -327,7 +327,7 @@ export const propertyBookings = mysqlTable("property_bookings", {
 
   // Who is booking
   memberId: int("memberId").notNull(),         // FK → members
-  userId: int("userId").notNull(),             // FK → users (denormalized)
+  userId: varchar("userId", { length: 36 }).notNull(),             // FK → users (denormalized)
 
   // What they are booking
   propertyId: int("propertyId").notNull(),     // FK → hunting_properties
@@ -368,7 +368,7 @@ export const propertyBookings = mysqlTable("property_bookings", {
 
   // Approval workflow
   requiresApproval: boolean("requiresApproval").default(false),
-  approvedByUserId: int("approvedByUserId"),   // FK → users
+  approvedByUserId: varchar("approvedByUserId", { length: 36 }),   // FK → users
   approvedAt: bigint("approvedAt", { mode: "number" }),
   declinedAt: bigint("declinedAt", { mode: "number" }),
   declineReason: text("declineReason"),
@@ -376,7 +376,7 @@ export const propertyBookings = mysqlTable("property_bookings", {
   // Cancellation
   cancelledAt: bigint("cancelledAt", { mode: "number" }),
   cancellationReason: text("cancellationReason"),
-  cancelledByUserId: int("cancelledByUserId"), // FK → users (member or staff)
+  cancelledByUserId: varchar("cancelledByUserId", { length: 36 }), // FK → users (member or staff)
   isLateCancellation: boolean("isLateCancellation").default(false),
 
   // Financial
@@ -487,7 +487,7 @@ export const bookingPayments = mysqlTable("booking_payments", {
     "voided",
   ]).default("completed").notNull(),
 
-  recordedByUserId: int("recordedByUserId"),   // FK → users (staff who recorded it)
+  recordedByUserId: varchar("recordedByUserId", { length: 36 }),   // FK → users (staff who recorded it)
   notes: text("notes"),
 
   createdAt: bigint("createdAt", { mode: "number" }).notNull(),
@@ -515,7 +515,7 @@ export const bookingAuditLog = mysqlTable("booking_audit_log", {
   fromValue: text("fromValue"),                // Previous value (JSON-serialized)
   toValue: text("toValue"),                    // New value (JSON-serialized)
 
-  performedByUserId: int("performedByUserId").notNull(),  // FK → users
+  performedByUserId: varchar("performedByUserId", { length: 36 }).notNull(),  // FK → users
   performedAt: bigint("performedAt", { mode: "number" }).notNull(),
   ipAddress: varchar("ipAddress", { length: 45 }),        // IPv4 or IPv6
 
@@ -607,7 +607,7 @@ export const propertyBlockedDates = mysqlTable("property_blocked_dates", {
   reasonNotes: varchar("reasonNotes", { length: 300 }),
   isPubliclyVisible: boolean("isPubliclyVisible").default(true),  // show as "unavailable" on public calendar
 
-  createdByUserId: int("createdByUserId").notNull(),  // FK → users
+  createdByUserId: varchar("createdByUserId", { length: 36 }).notNull(),  // FK → users
   createdAt: bigint("createdAt", { mode: "number" }).notNull(),
 }, (t) => ({
   propertyDateIdx: index("pbd_property_date_idx").on(t.propertyId, t.startDate),
@@ -626,7 +626,7 @@ export type InsertPropertyBlockedDate = typeof propertyBlockedDates.$inferInsert
 export const bookingWaitlist = mysqlTable("booking_waitlist", {
   id: int("id").autoincrement().primaryKey(),
   memberId: int("memberId").notNull(),         // FK → members
-  userId: int("userId").notNull(),             // FK → users
+  userId: varchar("userId", { length: 36 }).notNull(),             // FK → users
   propertyId: int("propertyId").notNull(),     // FK → hunting_properties
 
   requestedDate: date("requestedDate").notNull(),
@@ -684,7 +684,7 @@ export const propertyImages = mysqlTable("property_images", {
   sortOrder: int("sortOrder").default(0),
   active: boolean("active").default(true),
 
-  uploadedByUserId: int("uploadedByUserId"),
+  uploadedByUserId: varchar("uploadedByUserId", { length: 36 }),
   createdAt: bigint("createdAt", { mode: "number" }).notNull(),
 }, (t) => ({
   propertyIdx: index("pi_property_idx").on(t.propertyId),

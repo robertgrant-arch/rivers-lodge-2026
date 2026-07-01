@@ -26,7 +26,7 @@ function requirePortal(ctx: { user: { role: string } }) {
   }
 }
 
-async function getMemberForUser(userId: number) {
+async function getMemberForUser(userId: string) {
   const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
   const [member] = await db.select().from(members).where(eq(members.userId, userId)).limit(1);
@@ -396,7 +396,7 @@ const requestsRouter = router({
         .select({
           request: tripRequests,
           slot: huntFishSlots,
-          user: { id: users.id, name: users.name, email: users.email },
+          user: { id: users.id, email: users.email },
         })
         .from(tripRequests)
         .leftJoin(huntFishSlots, eq(tripRequests.slotId, huntFishSlots.id))

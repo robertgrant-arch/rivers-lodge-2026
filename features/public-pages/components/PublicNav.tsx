@@ -253,7 +253,7 @@ export default function PublicNav() {
                   className="flex items-center gap-2 text-[11px] tracking-[0.15em] uppercase font-sans font-medium border border-[oklch(0.72_0.095_78)] text-[oklch(0.72_0.095_78)] px-4 py-2.5 hover:bg-[oklch(0.72_0.095_78)] hover:text-[oklch(0.095_0.006_64)] transition-all duration-200"
                 >
                   <User size={13} />
-                  <span>{user?.name?.split(" ")[0] ?? getPortalLabel(user?.role)}</span>
+                  <span>{user?.email?.split("@")[0] ?? getPortalLabel(user?.role)}</span>
                   <ChevronDown size={11} className={`transition-transform duration-200 ${userMenuOpen ? "rotate-180" : ""}`} />
                 </button>
                 {userMenuOpen && (
@@ -313,7 +313,7 @@ export default function PublicNav() {
             {isAuthenticated ? (
               <div className="flex flex-col gap-2">
                 <p className="text-[10px] tracking-[0.16em] uppercase font-sans text-[oklch(0.50_0.010_70)] mb-1">
-                  Signed in as {user?.name ?? user?.email ?? "you"}
+                  Signed in as {user?.email ?? "you"}
                 </p>
                 <Link
                   href={getPortalHref(user?.role)}

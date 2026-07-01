@@ -21,7 +21,7 @@ const fieldReportsRouter = router({
     .query(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
-      const isAdmin = ctx.user.role === "admin" || ctx.user.role === "owner";
+      const isAdmin = ctx.user.role === "admin";
       const conditions: ReturnType<typeof eq>[] = [];
 
       if (input?.type && input.type !== "all") {
@@ -48,7 +48,7 @@ const fieldReportsRouter = router({
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
       const [report] = await db.select().from(fieldReports).where(eq(fieldReports.id, input.id));
       if (!report) throw new TRPCError({ code: "NOT_FOUND", message: "Report not found" });
-      const isAdmin = ctx.user.role === "admin" || ctx.user.role === "owner";
+      const isAdmin = ctx.user.role === "admin";
       if (!isAdmin && !report.published) {
         throw new TRPCError({ code: "FORBIDDEN", message: "Report not available" });
       }
@@ -82,7 +82,7 @@ const fieldReportsRouter = router({
         location: input.location ?? null,
         reportDate: new Date(input.reportDate),
         authorId: ctx.user.id,
-        authorName: ctx.user.name ?? "Admin",
+        authorName: ctx.user.email ?? "Admin",
         tierAccess: input.tierAccess,
         published: input.published,
         publishedAt: input.published ? new Date() : null,
@@ -295,12 +295,12 @@ Format as clean HTML with <h2>, <p>, and <em> tags only. No inline styles. Start
 
       // Get all active members with email addresses
       const activeMemberUsers = await db
-        .select({ id: users.id, name: users.name, email: users.email })
+        .select({ id: users.id, email: users.email })
         .from(users)
         .innerJoin(members, eq(members.userId, users.id))
         .where(eq(members.active, true));
 
-      const emailRecipients = activeMemberUsers.filter((u): u is { id: number; name: string | null; email: string } => !!u.email);
+      const emailRecipients = activeMemberUsers.filter((u): u is { id: string; email: string } => !!u.email);
       const sentCount = emailRecipients.length;
 
       await db.update(newsletters).set({

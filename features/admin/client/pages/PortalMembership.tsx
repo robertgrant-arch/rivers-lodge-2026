@@ -22,7 +22,7 @@ function AddMemberDialog({ open, onClose }: { open: boolean; onClose: () => void
   const utils = trpc.useUtils();
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
-  const [selectedUser, setSelectedUser] = useState<{ id: number; name: string | null; email: string | null } | null>(null);
+  const [selectedUser, setSelectedUser] = useState<{ id: string; email: string } | null>(null);
   const [tier, setTier] = useState<"standard" | "premier" | "founding">("standard");
   const [memberNumber, setMemberNumber] = useState("");
   const [joinDate, setJoinDate] = useState(new Date().toISOString().split("T")[0]);
@@ -90,8 +90,7 @@ function AddMemberDialog({ open, onClose }: { open: boolean; onClose: () => void
                     <User className="w-4 h-4 text-emerald-700" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-foreground">{selectedUser.name ?? "—"}</p>
-                    <p className="text-xs text-muted-foreground">{selectedUser.email ?? "—"}</p>
+                    <p className="text-sm font-medium text-foreground">{selectedUser.email ?? "—"}</p>
                   </div>
                 </div>
                 <button onClick={() => setSelectedUser(null)} className="text-muted-foreground hover:text-foreground">
@@ -120,8 +119,7 @@ function AddMemberDialog({ open, onClose }: { open: boolean; onClose: () => void
                           <User className="w-3.5 h-3.5 text-muted-foreground" />
                         </div>
                         <div>
-                          <p className="text-sm font-medium">{u.name ?? "—"}</p>
-                          <p className="text-xs text-muted-foreground">{u.email ?? "—"}</p>
+                          <p className="text-sm font-medium">{u.email ?? "—"}</p>
                         </div>
                       </button>
                     ))}
@@ -183,7 +181,7 @@ function AddMemberDialog({ open, onClose }: { open: boolean; onClose: () => void
 }
 
 // ─── Member Detail Drawer ─────────────────────────────────────────────────────
-type MemberRow = { member: { id: number; userId: number; memberNumber: string | null; tier: string; joinDate: string | null; renewalDate: string | null; active: boolean; notes: string | null; createdAt: Date }; user: { id: number; name: string | null; email: string | null } | null };
+type MemberRow = { member: { id: number; userId: string; memberNumber: string | null; tier: string; joinDate: string | null; renewalDate: string | null; active: boolean; notes: string | null; createdAt: Date }; user: { id: string; email: string | null } | null };
 
 function MemberDetailDrawer({ row, onClose, onUpdate }: { row: MemberRow; onClose: () => void; onUpdate: () => void }) {
   const { member: m, user: u } = row;
@@ -224,7 +222,7 @@ function MemberDetailDrawer({ row, onClose, onUpdate }: { row: MemberRow; onClos
             <User className="w-7 h-7 text-emerald-700" />
           </div>
           <div>
-            <p className="text-lg font-semibold text-foreground">{u?.name ?? "—"}</p>
+            <p className="text-lg font-semibold text-foreground">{u?.email ?? "—"}</p>
             <p className="text-sm text-muted-foreground flex items-center gap-1">
               <Mail className="w-3.5 h-3.5" />{u?.email ?? "—"}
             </p>
@@ -429,7 +427,7 @@ export default function PortalMembership() {
                         <tr key={m.id} className="border-b border-border hover:bg-muted/30 transition-colors cursor-pointer"
                           onClick={() => setSelectedRow(row as MemberRow)}>
                           <td className="px-4 py-3">
-                            <p className="font-medium text-foreground">{u?.name ?? "—"}</p>
+                            <p className="font-medium text-foreground">{u?.email ?? "—"}</p>
                             {u?.email && (
                               <div className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
                                 <Mail className="w-3 h-3" /><span>{u.email}</span>

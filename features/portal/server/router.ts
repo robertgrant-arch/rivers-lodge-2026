@@ -28,7 +28,6 @@ export const memberPortalRouter = router({
     return {
       user: {
         id: ctx.user.id,
-        name: ctx.user.name,
         email: ctx.user.email,
         role: ctx.user.role,
       },

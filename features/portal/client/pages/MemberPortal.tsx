@@ -230,7 +230,6 @@ function UpdatesTab({
 export default function MemberPortal() {
   const { user, isAuthenticated, loading } = useAuth({
     redirectOnUnauthenticated: true,
-    redirectPath: getLoginUrl("/portal"),
   });
   const [tab, setTab] = useState<Tab>("dashboard");
   const [msgForm, setMsgForm] = useState({ subject: "", body: "" });
@@ -311,7 +310,7 @@ export default function MemberPortal() {
             <p className="eyebrow text-white/40 mb-4">Member Portal</p>
             <h1 className="font-serif text-4xl text-white mb-5">Membership required.</h1>
             <p className="text-base font-sans text-white/50 leading-relaxed mb-4">
-              Welcome, {user?.name}. Your account is active but you don't have an active membership yet.
+              Welcome, {user?.email}. Your account is active but you don't have an active membership yet.
             </p>
             <p className="text-sm font-sans text-white/40 leading-relaxed mb-8">
               If you've recently applied, your application is under review. You'll receive an email when your membership is activated.
@@ -345,7 +344,7 @@ export default function MemberPortal() {
   const tierLabel = member?.tier
     ? member.tier.charAt(0).toUpperCase() + member.tier.slice(1)
     : isStaff
-      ? (user?.role === "owner" ? "Owner" : user?.role === "admin" ? "Admin" : "Staff")
+      ? (user?.role === "admin" ? "Admin" : "Staff")
       : "Standard";
   const pendingRequests = (myRequests.data ?? []).filter(r => !["converted","rejected","lost"].includes(r.status));
   const announcements = cmsAnnouncements.data ?? [];
@@ -380,7 +379,7 @@ export default function MemberPortal() {
               <div>
                 <p className="eyebrow text-white/40 mb-2">Member Portal</p>
                 <h1 className="font-serif text-3xl md:text-4xl text-white mb-3">
-                  Welcome back, {user?.name?.split(" ")[0]}.
+                  Welcome back, {user?.email?.split("@")[0]}.
                 </h1>
                 <div className="flex items-center gap-3 flex-wrap">
                   <span className="inline-flex items-center gap-1.5 px-3 py-1 border border-[var(--gold)]/40 text-[var(--gold)] text-[10px] tracking-[0.18em] uppercase font-sans">
@@ -519,7 +518,7 @@ export default function MemberPortal() {
 
                 {/* Refer a Member */}
                 <a
-                  href={`/contact?type=membership&ref=${encodeURIComponent(user?.name ?? "")}&note=${encodeURIComponent("I'd like to refer a friend for membership at The Rivers Lodge.")}`}
+                  href={`/contact?type=membership&ref=${encodeURIComponent(user?.email ?? "")}&note=${encodeURIComponent("I'd like to refer a friend for membership at The Rivers Lodge.")}`}
                   className="flex items-center gap-4 bg-[oklch(0.13_0.008_66)] border border-white/8 hover:border-[var(--gold)]/40 p-5 text-left transition-colors group"
                 >
                   <div className="w-10 h-10 flex items-center justify-center border border-white/10 group-hover:border-[var(--gold)]/40 transition-colors flex-shrink-0">
@@ -796,7 +795,7 @@ export default function MemberPortal() {
                   if (!user) return;
                   submitRequest.mutate({
                     businessLine: requestForm.businessLine,
-                    contactName: user.name ?? "Member",
+                    contactName: user.email ?? "Member",
                     contactEmail: user.email ?? "",
                     // z.coerce.date() on the server requires a Date (not string)
                     requestedStart: new Date(requestForm.requestedStart),
@@ -993,7 +992,7 @@ export default function MemberPortal() {
                 <p className="eyebrow text-white/30 mb-5">Account</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   {[
-                    { label: "Name", value: user?.name ?? "—" },
+                    { label: "Email", value: user?.email ?? "—" },
                     { label: "Email", value: user?.email ?? "—" },
                     { label: "Membership Tier", value: tierLabel },
                     { label: "Member Number", value: member?.memberNumber ? `#${member.memberNumber}` : "—" },

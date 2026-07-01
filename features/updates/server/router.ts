@@ -6,7 +6,7 @@ import * as db from "@features/_core/server/db";
 // ─── Seasonal Updates Router ──────────────────────────────────────────────────
 
 const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
-  if (ctx.user.role !== "admin" && ctx.user.role !== "owner") {
+  if (ctx.user.role !== "admin") {
     throw new TRPCError({ code: "FORBIDDEN" });
   }
   return next({ ctx });

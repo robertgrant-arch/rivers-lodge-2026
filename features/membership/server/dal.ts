@@ -39,7 +39,7 @@ export async function getAllMembers() {
   return db.select().from(members).orderBy(desc(members.createdAt));
 }
 
-export async function getMemberByUserId(userId: number) {
+export async function getMemberByUserId(userId: string) {
   const db = await getDb();
   if (!db) return undefined;
   const result = await db.select().from(members).where(eq(members.userId, userId)).limit(1);

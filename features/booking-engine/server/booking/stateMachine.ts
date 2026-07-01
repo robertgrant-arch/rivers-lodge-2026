@@ -132,7 +132,7 @@ export async function transitionBookingStatus(
   bookingId: number,
   fromStatus: BookingStatus,
   toStatus: BookingStatus,
-  triggeredByUserId: number,
+  triggeredByUserId: string,
   notes?: string,
   overrides: Record<string, boolean> = {}
 ): Promise<TransitionResult> {

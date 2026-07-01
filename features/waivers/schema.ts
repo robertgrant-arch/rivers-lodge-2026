@@ -11,7 +11,7 @@ import {
 
 export const waivers = mysqlTable("waivers", {
   id: int("id").autoincrement().primaryKey(),
-  userId: int("userId"),
+  userId: varchar("userId", { length: 36 }),
   signerName: varchar("signerName", { length: 255 }).notNull(),
   signerEmail: varchar("signerEmail", { length: 320 }),
   waiverType: mysqlEnum("waiverType", ["general", "hunt", "fish", "sporting_clays"]).default("general").notNull(),

@@ -21,7 +21,7 @@ export const fieldReports = mysqlTable("field_reports", {
   conditions: mysqlEnum("conditions", ["excellent", "good", "fair", "poor"]),
   location: varchar("location", { length: 255 }), // e.g. "South Pond", "North Timber Stand"
   reportDate: date("reportDate").notNull(),
-  authorId: int("authorId").notNull(), // users.id
+  authorId: varchar("authorId", { length: 36 }).notNull(), // users.id
   authorName: varchar("authorName", { length: 255 }), // denormalized for display
   // Visibility
   tierAccess: mysqlEnum("tierAccess", ["standard", "premier", "founding", "all"]).default("all").notNull(),
@@ -46,7 +46,7 @@ export const newsletters = mysqlTable("newsletters", {
   aiPromptContext: text("aiPromptContext"),
   status: mysqlEnum("status", ["draft", "pending_approval", "approved", "sent", "cancelled"]).default("draft").notNull(),
   // Approval workflow
-  approvedBy: int("approvedBy"), // users.id
+  approvedBy: varchar("approvedBy", { length: 36 }), // users.id
   approvedAt: timestamp("approvedAt"),
   // Send tracking
   sentAt: timestamp("sentAt"),
@@ -54,7 +54,7 @@ export const newsletters = mysqlTable("newsletters", {
   // Scheduling
   scheduledFor: timestamp("scheduledFor"),
   // Authorship
-  createdBy: int("createdBy").notNull(), // users.id
+  createdBy: varchar("createdBy", { length: 36 }).notNull(), // users.id
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });

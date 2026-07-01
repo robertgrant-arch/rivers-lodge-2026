@@ -26,7 +26,7 @@ export const bookings = mysqlTable("bookings", {
   depositPaid: boolean("depositPaid").default(false),
   status: mysqlEnum("status", ["inquiry", "confirmed", "completed", "cancelled"]).default("inquiry").notNull(),
   notes: text("notes"),
-  userId: int("userId"),
+  userId: varchar("userId", { length: 36 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });

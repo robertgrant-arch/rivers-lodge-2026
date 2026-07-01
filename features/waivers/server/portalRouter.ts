@@ -29,7 +29,7 @@ const portalProcedure = protectedProcedure.use(({ ctx, next }) => {
 });
 
 const ownerProcedure = protectedProcedure.use(({ ctx, next }) => {
-  if (ctx.user.role !== "owner" && ctx.user.role !== "admin") {
+  if (ctx.user.role !== "admin") {
     throw new TRPCError({ code: "FORBIDDEN", message: "Owner access required" });
   }
   return next({ ctx });
