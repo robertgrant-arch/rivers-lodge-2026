@@ -115,18 +115,11 @@ async function startServer() {
     res.send(xml);
   });
 
-  // Health check
+  // Health check — always 200 so Render never rolls back due to a transient DB
+  // issue. DB status is reported in the body for observability only.
   app.get("/api/health", async (_req, res) => {
-    try {
-      const dbOk = await checkDbHealth();
-      if (!dbOk) {
-        res.status(503).json({ ok: false, db: "down" });
-        return;
-      }
-      res.json({ ok: true });
-    } catch {
-      res.status(503).json({ ok: false, db: "down" });
-    }
+    const dbOk = await checkDbHealth().catch(() => false);
+    res.json({ ok: true, db: dbOk ? "up" : "degraded" });
   });
 
   // tRPC API
