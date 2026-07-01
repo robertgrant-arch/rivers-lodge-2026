@@ -92,22 +92,22 @@ export default function Lodging() {
             id={prop.slug}
             className={i % 2 === 0 ? "bg-background" : "bg-[#363330]"}
           >
-            {/* Full-bleed full-height hero */}
-            <div className="relative min-h-screen flex items-end overflow-hidden">
+            {/* Full-bleed compact hero */}
+            <div className="relative min-h-[70vh] flex items-end overflow-hidden">
               <div className="absolute inset-0 bg-[#2B2823]" aria-hidden="true" />
               <div
                 className="absolute inset-0 pointer-events-none"
-                style={{ background: "linear-gradient(to top, rgba(0,0,0,0.80) 0%, rgba(0,0,0,0.25) 50%, transparent 100%)" }}
+                style={{ background: "linear-gradient(to top, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.45) 55%, transparent 100%)" }}
               />
-              <div className="relative z-10 max-w-[1440px] mx-auto px-5 lg:px-10 w-full pb-16 md:pb-24">
+              <div className="relative z-10 max-w-[1440px] mx-auto px-5 lg:px-10 w-full pb-10 md:pb-12">
                 <p className="text-[9px] tracking-[0.22em] uppercase font-sans text-white/50 mb-3">{prop.teaser}</p>
                 <h2
-                  className="font-serif font-light text-white leading-tight mb-4"
-                  style={{ fontSize: "clamp(2.5rem,6vw,5rem)" }}
+                  className="font-serif font-light text-white leading-tight mb-3"
+                  style={{ fontSize: "clamp(1.75rem,4vw,3rem)" }}
                 >
                   {prop.title}
                 </h2>
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mb-8">
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mb-4">
                   {prop.bedrooms && (
                     <span className="text-xs font-sans text-white/60">{prop.bedrooms} Bedrooms</span>
                   )}
@@ -124,6 +124,9 @@ export default function Lodging() {
                     </>
                   )}
                 </div>
+                {prop.description.map((para, j) => (
+                  <p key={j} className="text-sm text-white/80 font-sans leading-relaxed mb-3 max-w-2xl">{para}</p>
+                ))}
                 <Link
                   href="/contact?type=lodging"
                   className="inline-flex items-center gap-2 text-xs tracking-[0.16em] uppercase font-sans font-medium text-white border-b border-white/30 pb-0.5 hover:border-white transition-colors"
@@ -133,19 +136,12 @@ export default function Lodging() {
               </div>
             </div>
 
-            {/* Description + Features + Gallery */}
-            <div className="max-w-[1440px] mx-auto px-5 lg:px-10 py-16">
-
-              {/* Description */}
-              <div className="max-w-2xl mb-10">
-                {prop.description.map((para, j) => (
-                  <p key={j} className="text-base font-sans text-muted-foreground leading-relaxed mb-4">{para}</p>
-                ))}
-              </div>
+            {/* Features + Gallery */}
+            <div className="max-w-[1440px] mx-auto px-5 lg:px-10 py-8">
 
               {/* Features */}
               {prop.features.length > 0 && (
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-12">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-6">
                   {prop.features.map((f) => (
                     <div key={f} className="flex items-center gap-2 text-xs font-sans text-muted-foreground">
                       <span className="w-1 h-1 rounded-full bg-muted-foreground flex-shrink-0" />
@@ -209,24 +205,27 @@ export default function Lodging() {
             id={venue.slug}
             className={i % 2 === 0 ? "bg-[#2B2823]" : "bg-[#363330]"}
           >
-            {/* Full-bleed full-height hero */}
-            <div className="relative min-h-screen flex items-end overflow-hidden">
+            {/* Full-bleed compact hero */}
+            <div className="relative min-h-[70vh] flex items-end overflow-hidden">
               <div className="absolute inset-0 bg-[#1E1C19]" aria-hidden="true" />
               <div
                 className="absolute inset-0 pointer-events-none"
-                style={{ background: "linear-gradient(to top, rgba(0,0,0,0.80) 0%, rgba(0,0,0,0.25) 50%, transparent 100%)" }}
+                style={{ background: "linear-gradient(to top, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.45) 55%, transparent 100%)" }}
               />
-              <div className="relative z-10 max-w-[1440px] mx-auto px-5 lg:px-10 w-full pb-16 md:pb-24">
+              <div className="relative z-10 max-w-[1440px] mx-auto px-5 lg:px-10 w-full pb-10 md:pb-12">
                 <p className="text-[9px] tracking-[0.20em] uppercase font-sans text-white/50 mb-3">{venue.teaser}</p>
                 <h2
-                  className="font-serif font-light text-white leading-tight mb-4"
-                  style={{ fontSize: "clamp(2.5rem,6vw,5rem)" }}
+                  className="font-serif font-light text-white leading-tight mb-3"
+                  style={{ fontSize: "clamp(1.75rem,4vw,3rem)" }}
                 >
                   {venue.title}
                 </h2>
                 {venue.capacity && (
-                  <p className="text-xs font-sans text-white/60 mb-8">{venue.capacity}</p>
+                  <p className="text-xs font-sans text-white/60 mb-4">{venue.capacity}</p>
                 )}
+                {venue.description.map((para, j) => (
+                  <p key={j} className="text-sm text-white/80 font-sans leading-relaxed mb-3 max-w-2xl">{para}</p>
+                ))}
                 <Link
                   href="/contact?type=wedding"
                   className="inline-flex items-center gap-2 text-xs tracking-[0.16em] uppercase font-sans font-medium text-white border-b border-white/30 pb-0.5 hover:border-white transition-colors"
@@ -236,19 +235,12 @@ export default function Lodging() {
               </div>
             </div>
 
-            {/* Description + Features + Gallery */}
-            <div className="max-w-[1440px] mx-auto px-5 lg:px-10 py-16">
-
-              {/* Description */}
-              <div className="max-w-2xl mb-10">
-                {venue.description.map((para, j) => (
-                  <p key={j} className="text-base font-sans text-muted-foreground leading-relaxed mb-4">{para}</p>
-                ))}
-              </div>
+            {/* Features + Gallery */}
+            <div className="max-w-[1440px] mx-auto px-5 lg:px-10 py-8">
 
               {/* Features */}
               {venue.features.length > 0 && (
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-12">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-6">
                   {venue.features.map((f) => (
                     <div key={f} className="flex items-center gap-2 text-xs font-sans text-muted-foreground">
                       <span className="w-1 h-1 rounded-full bg-muted-foreground flex-shrink-0" />
