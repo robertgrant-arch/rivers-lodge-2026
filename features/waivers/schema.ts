@@ -1,20 +1,20 @@
 import {
-  int,
-  mysqlEnum,
-  mysqlTable,
+  integer,
+  pgEnum,
+  pgTable,
   text,
   timestamp,
   varchar,
-} from "drizzle-orm/mysql-core";
+} from "drizzle-orm/pg-core";
 
-// ─── Waivers (legacy simple sign-and-store flow) ──────────────────────────────
+export const waiverTypeEnum = pgEnum("waiver_type", ["general", "hunt", "fish", "sporting_clays"]);
 
-export const waivers = mysqlTable("waivers", {
-  id: int("id").autoincrement().primaryKey(),
+export const waivers = pgTable("waivers", {
+  id: integer("id").generatedAlwaysAsIdentity().primaryKey(),
   userId: varchar("userId", { length: 36 }),
   signerName: varchar("signerName", { length: 255 }).notNull(),
   signerEmail: varchar("signerEmail", { length: 320 }),
-  waiverType: mysqlEnum("waiverType", ["general", "hunt", "fish", "sporting_clays"]).default("general").notNull(),
+  waiverType: waiverTypeEnum("waiverType").notNull().default("general"),
   signedAt: timestamp("signedAt").defaultNow().notNull(),
   ipAddress: varchar("ipAddress", { length: 64 }),
   content: text("content"),

@@ -2,7 +2,7 @@ import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { generateAndStoreWaiverPdf } from "@features/waivers/public";
 import { publicProcedure, protectedProcedure, router } from "../../_core/server/trpc";
-import { drizzle } from "drizzle-orm/mysql2";
+import { drizzle } from "drizzle-orm/node-postgres";
 import { eq, desc, and, gte, lte, sql, or, like, lt } from "drizzle-orm";
 import {
   weddingBookings,
@@ -267,23 +267,23 @@ const calendarRouter = router({
     .mutation(async ({ input, ctx }) => {
       const db = getDb();
       const [result] = await db.insert(portalBlockedDates).values({
-        startDate: new Date(input.startDate),
-        endDate: new Date(input.endDate),
+        startDate: input.startDate,
+        endDate: input.endDate,
         reason: input.reason ?? "other",
         reasonNotes: input.reasonNotes ?? null,
         scope: input.scope ?? "entire_property",
         scopeTarget: input.scopeTarget ?? null,
         createdByUserId: ctx.user.id,
-      } as any);
+      } as any).returning({ id: portalBlockedDates.id });
       await logAudit({
         actingUserId: ctx.user.id,
         actingUserName: ctx.user.email ?? "Staff",
         actionType: "create",
         entityType: "PortalBlockedDate",
-        entityId: String(result.insertId),
+        entityId: String(result.id),
         notes: `Blocked ${input.startDate} to ${input.endDate}`,
       });
-      return { success: true, id: result.insertId };
+      return { success: true, id: result.id };
     }),
 
   unblockDates: portalProcedure
@@ -368,15 +368,15 @@ const weddingsPortalRouter = router({
         source: input.source ?? "website",
         notes: input.notes ?? null,
         assignedUserId: ctx.user.id,
-      } as any);
+      } as any).returning({ id: weddingBookings.id });
       await logAudit({
         actingUserId: ctx.user.id,
         actingUserName: ctx.user.email ?? "Staff",
         actionType: "create",
         entityType: "WeddingBooking",
-        entityId: String(result.insertId),
+        entityId: String(result.id),
       });
-      return { id: result.insertId };
+      return { id: result.id };
     }),
 
   update: portalProcedure
@@ -539,15 +539,15 @@ const corporatePortalRouter = router({
         attendeeCount: input.attendeeCount ?? null,
         notes: input.notes ?? null,
         assignedUserId: ctx.user.id,
-      } as any);
+      } as any).returning({ id: corporateBookings.id });
       await logAudit({
         actingUserId: ctx.user.id,
         actingUserName: ctx.user.email ?? "Staff",
         actionType: "create",
         entityType: "CorporateBooking",
-        entityId: String(result.insertId),
+        entityId: String(result.id),
       });
-      return { id: result.insertId };
+      return { id: result.id };
     }),
 
   update: portalProcedure
@@ -704,15 +704,15 @@ const huntFishPortalRouter = router({
         standLocation: input.standLocation ?? null,
         season: input.season ?? null,
         notes: input.notes ?? null,
-      } as any);
+      } as any).returning({ id: huntFishBookings.id });
       await logAudit({
         actingUserId: ctx.user.id,
         actingUserName: ctx.user.email ?? "Staff",
         actionType: "create",
         entityType: "HuntFishBooking",
-        entityId: String(result.insertId),
+        entityId: String(result.id),
       });
-      return { id: result.insertId };
+      return { id: result.id };
     }),
 
   updateStatus: portalProcedure
@@ -763,8 +763,8 @@ const huntFishPortalRouter = router({
         details: input.details ?? null,
         guideNotes: input.guideNotes ?? null,
         harvestDate: new Date(input.harvestDate),
-      } as any);
-      return { id: result.insertId };
+      } as any).returning({ id: harvestRecords.id });
+      return { id: result.id };
     }),
 
   seasons: portalProcedure.query(async () => {
@@ -794,8 +794,8 @@ const huntFishPortalRouter = router({
         seasonBagLimit: input.seasonBagLimit ?? null,
         guideRate: input.guideRate ?? null,
         memberNotes: input.memberNotes ?? null,
-      } as any);
-      return { id: result.insertId };
+      } as any).returning({ id: seasonConfigs.id });
+      return { id: result.id };
     }),
 
   guideSchedule: portalProcedure
@@ -831,8 +831,8 @@ const waiversPortalRouter = router({
     }))
     .mutation(async ({ input }) => {
       const db = getDb();
-      const [result] = await db.insert(waiverTemplates).values(input as any);
-      return { id: result.insertId };
+      const [result] = await db.insert(waiverTemplates).values(input as any).returning({ id: waiverTemplates.id });
+      return { id: result.id };
     }),
 
   list: portalProcedure
@@ -873,8 +873,8 @@ const waiversPortalRouter = router({
         status: "sent",
         signingToken: token,
         sentAt: new Date(),
-      });
-      return { id: result.insertId, signingToken: token, signingUrl: `/sign-waiver/${token}` };
+      }).returning({ id: portalWaivers.id });
+      return { id: result.id, signingToken: token, signingUrl: `/sign-waiver/${token}` };
     }),
 
   getByToken: publicProcedure
@@ -1150,7 +1150,7 @@ const membershipPortalRouter = router({
         joinDate: input.joinDate ?? new Date().toISOString().split("T")[0],
         renewalDate: input.renewalDate ?? null,
         notes: input.notes ?? null,
-      } as any).$returningId();
+      } as any).returning({ id: members.id });
       await logAudit({
         actingUserId: ctx.user.id,
         actingUserName: ctx.user.email ?? "Staff",

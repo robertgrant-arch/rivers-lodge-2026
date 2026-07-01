@@ -12,23 +12,18 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 import type { TrpcContext } from "@core/server/context";
 
-// ─── Mock mysql2/promise so no real TCP connection is made ────────────────────
-// _core/server/db.ts calls mysql.createPool() before drizzle(), so we must
-// mock mysql2/promise in addition to drizzle-orm/mysql2.
-vi.mock("mysql2/promise", () => {
+// ─── Mock pg so no real TCP connection is made ───────────────────────────────
+vi.mock("pg", () => {
   const mockPool = {
-    query: vi.fn().mockResolvedValue([[{ 1: 1 }], []]),
+    query: vi.fn().mockResolvedValue({ rows: [] }),
     end: vi.fn().mockResolvedValue(undefined),
-    getConnection: vi.fn(),
+    connect: vi.fn(),
   };
-  return {
-    default: { createPool: vi.fn().mockReturnValue(mockPool) },
-    createPool: vi.fn().mockReturnValue(mockPool),
-  };
+  return { Pool: vi.fn().mockImplementation(() => mockPool) };
 });
 
 // ─── Mock drizzle so getDb() returns our controllable mock ───────────────────
-vi.mock("drizzle-orm/mysql2", () => ({
+vi.mock("drizzle-orm/node-postgres", () => ({
   drizzle: vi.fn(() => mockDb),
 }));
 
@@ -114,7 +109,7 @@ function makeInquiries(count: number) {
 
 describe("messages.allMessages — pagination", () => {
   beforeEach(() => {
-    vi.stubEnv("DATABASE_URL", "mysql://user:pass@localhost:3306/testdb");
+    vi.stubEnv("DATABASE_URL", "postgresql://user:pass@localhost:5432/testdb");
     vi.clearAllMocks();
   });
 
@@ -163,7 +158,7 @@ describe("messages.allMessages — pagination", () => {
 
 describe("inquiries.list — pagination", () => {
   beforeEach(() => {
-    vi.stubEnv("DATABASE_URL", "mysql://user:pass@localhost:3306/testdb");
+    vi.stubEnv("DATABASE_URL", "postgresql://user:pass@localhost:5432/testdb");
     vi.clearAllMocks();
   });
 

@@ -73,21 +73,21 @@ const fieldReportsRouter = router({
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
-      const result = await db.insert(fieldReports).values({
+      const [result] = await db.insert(fieldReports).values({
         type: input.type,
         title: input.title,
         body: input.body,
         species: input.species ?? null,
         conditions: input.conditions ?? null,
         location: input.location ?? null,
-        reportDate: new Date(input.reportDate),
+        reportDate: input.reportDate,
         authorId: ctx.user.id,
         authorName: ctx.user.email ?? "Admin",
         tierAccess: input.tierAccess,
         published: input.published,
         publishedAt: input.published ? new Date() : null,
-      });
-      return { id: (result[0] as any).insertId };
+      }).returning({ id: fieldReports.id });
+      return { id: result.id };
     }),
 
   // Update report (admin only)
@@ -225,16 +225,16 @@ Format as clean HTML with <h2>, <p>, and <em> tags only. No inline styles. Start
       const draftContent = rawContent.replace(/^SUBJECT:.+\n?/m, "").trim();
 
       // Save to DB
-      const result = await db.insert(newsletters).values({
+      const [insertedNewsletter] = await db.insert(newsletters).values({
         subject,
         draftContent,
         finalContent: draftContent,
         aiPromptContext: promptContext || null,
         status: "pending_approval",
         createdBy: ctx.user.id,
-      });
+      }).returning({ id: newsletters.id });
 
-      const id = (result[0] as any).insertId;
+      const id = insertedNewsletter.id;
 
       await notifyOwner({
         title: "Newsletter Draft Ready for Review",

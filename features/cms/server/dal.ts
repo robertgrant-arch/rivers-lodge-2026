@@ -1,5 +1,5 @@
 import { eq, desc, and } from "drizzle-orm";
-import { drizzle } from "drizzle-orm/mysql2";
+import { drizzle } from "drizzle-orm/node-postgres";
 import {
   cmsAmenities,
   cmsLodgingUnits,
@@ -51,7 +51,7 @@ export async function getCmsLodgingUnitBySlug(slug: string) {
 
 export async function upsertCmsLodgingUnit(data: InsertCmsLodgingUnit) {
   const db = getDb();
-  await db.insert(cmsLodgingUnits).values(data).onDuplicateKeyUpdate({ set: data });
+  await db.insert(cmsLodgingUnits).values(data).onConflictDoUpdate({ target: cmsLodgingUnits.slug, set: data });
 }
 
 export async function updateCmsLodgingUnit(id: number, data: Partial<InsertCmsLodgingUnit>) {
@@ -84,7 +84,7 @@ export async function getCmsEventSpaceBySlug(slug: string) {
 
 export async function upsertCmsEventSpace(data: InsertCmsEventSpace) {
   const db = getDb();
-  await db.insert(cmsEventSpaces).values(data).onDuplicateKeyUpdate({ set: data });
+  await db.insert(cmsEventSpaces).values(data).onConflictDoUpdate({ target: cmsEventSpaces.slug, set: data });
 }
 
 export async function updateCmsEventSpace(id: number, data: Partial<InsertCmsEventSpace>) {
@@ -257,5 +257,5 @@ export async function getAllCmsSingletons() {
 
 export async function upsertCmsSingleton(data: InsertCmsSingleton) {
   const db = getDb();
-  await db.insert(cmsSingletons).values(data).onDuplicateKeyUpdate({ set: { label: data.label, data: data.data, status: data.status } });
+  await db.insert(cmsSingletons).values(data).onConflictDoUpdate({ target: cmsSingletons.key, set: { label: data.label, data: data.data, status: data.status } });
 }

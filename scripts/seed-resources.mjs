@@ -2,11 +2,13 @@
  * Seed canonical resources for The Rivers Lodge & Hunt Club
  * Run: node seed-resources.mjs
  */
-import mysql from "mysql2/promise";
+import pg from "pg";
 import dotenv from "dotenv";
 dotenv.config();
 
-const connection = await mysql.createConnection(process.env.DATABASE_URL);
+const { Client } = pg;
+const client = new Client({ connectionString: process.env.DATABASE_URL });
+await client.connect();
 
 async function seed() {
   console.log("Seeding resource groups...");
@@ -23,14 +25,14 @@ async function seed() {
   ];
 
   for (const g of groups) {
-    await connection.execute(
-      "INSERT INTO resource_groups (name, slug, type, description, isActive) VALUES (?, ?, ?, ?, 1) ON DUPLICATE KEY UPDATE name=VALUES(name)",
+    await client.query(
+      "INSERT INTO resource_groups (name, slug, type, description, \"isActive\") VALUES ($1, $2, $3, $4, true) ON CONFLICT (slug) DO UPDATE SET name=EXCLUDED.name",
       [g.name, g.slug, g.type, g.description]
     );
   }
 
   // Get group IDs
-  const [groupRows] = await connection.execute("SELECT id, slug FROM resource_groups");
+  const { rows: groupRows } = await client.query("SELECT id, slug FROM resource_groups");
   const groupMap = Object.fromEntries(groupRows.map((r) => [r.slug, r.id]));
 
   console.log("Seeding resources...");
@@ -377,18 +379,18 @@ async function seed() {
   for (const r of resources) {
     const groupId = groupMap[r.groupSlug];
     if (!groupId) {
-      console.warn(`  ⚠ Group not found for slug: ${r.groupSlug}`);
+      console.warn(`  Group not found for slug: ${r.groupSlug}`);
       continue;
     }
-    await connection.execute(
-      `INSERT INTO resources 
-        (name, slug, groupId, type, capacity, holdbackHoursBefore, holdbackHoursAfter, exclusiveUse, description, cmsSlug, isActive, sortOrder)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 0)
-       ON DUPLICATE KEY UPDATE name=VALUES(name), description=VALUES(description)`,
+    await client.query(
+      `INSERT INTO resources
+        (name, slug, "groupId", type, capacity, "holdbackHoursBefore", "holdbackHoursAfter", "exclusiveUse", description, "cmsSlug", "isActive", "sortOrder")
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, true, 0)
+       ON CONFLICT (slug) DO UPDATE SET name=EXCLUDED.name, description=EXCLUDED.description`,
       [
         r.name, r.slug, groupId, r.type, r.capacity,
         r.holdbackHoursBefore, r.holdbackHoursAfter,
-        r.exclusiveUse ? 1 : 0,
+        r.exclusiveUse,
         r.description, r.cmsSlug ?? null,
       ]
     );
@@ -399,9 +401,9 @@ async function seed() {
   console.log("\nSeeding waiver requirements...");
 
   // Get waiver template IDs
-  const [templateRows] = await connection.execute("SELECT id, templateName FROM waiver_templates LIMIT 10");
+  const { rows: templateRows } = await client.query("SELECT id, \"templateName\" FROM waiver_templates LIMIT 10");
   if (templateRows.length === 0) {
-    console.log("  ⚠ No waiver templates found — skipping waiver requirements");
+    console.log("  No waiver templates found — skipping waiver requirements");
     console.log("    Create waiver templates in the portal first, then re-run this section.");
   } else {
     console.log(`  Found ${templateRows.length} waiver templates`);
@@ -419,5 +421,5 @@ try {
   console.error("Seed failed:", err.message);
   process.exit(1);
 } finally {
-  await connection.end();
+  await client.end();
 }

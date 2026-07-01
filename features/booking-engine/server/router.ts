@@ -351,23 +351,24 @@ const bookingsRouter = router({
           }
         }
 
+        const toDateStr = (d: Date) => d.toISOString().split("T")[0];
         // Create the booking
-        const insertResult = await tx.insert(bookings).values({
+        const [insertResult] = await tx.insert(bookings).values({
           type: input.type,
           clientName: input.clientName,
           clientEmail: input.clientEmail ?? null,
           clientPhone: input.clientPhone ?? null,
-          startDate: input.startDate,
-          endDate: input.endDate,
+          startDate: toDateStr(input.startDate),
+          endDate: toDateStr(input.endDate),
           guestCount: input.guestCount ?? null,
           totalRevenue: input.totalRevenue ?? null,
           depositPaid: false,
           status: "inquiry",
           notes: input.notes ?? null,
           userId: input.userId ?? null,
-        });
+        }).returning({ id: bookings.id });
 
-        const bookingId = Number((insertResult as { insertId?: number }).insertId ?? 0);
+        const bookingId = insertResult.id;
 
         // Create resource allocations
         if (input.resourceAllocations && input.resourceAllocations.length > 0) {
@@ -586,7 +587,7 @@ const bookingsRouter = router({
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
       await db.insert(blockedDates).values({
-        date: new Date(input.date),
+        date: input.date,
         reason: input.reason ?? null,
       });
       return { success: true };
@@ -699,11 +700,12 @@ const leadsRouter = router({
       requirePortalRole(ctx);
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const toDateStr = (d: Date) => d.toISOString().split("T")[0];
       const { requestedStartDate, requestedEndDate, ...rest } = input;
       await db.insert(leads).values({
         ...rest,
-        requestedStartDate: requestedStartDate ?? null,
-        requestedEndDate: requestedEndDate ?? null,
+        requestedStartDate: requestedStartDate ? toDateStr(requestedStartDate) : null,
+        requestedEndDate: requestedEndDate ? toDateStr(requestedEndDate) : null,
         assignedToUserId: ctx.user!.id,
       });
       return { success: true };
@@ -789,14 +791,15 @@ const requestsRouter = router({
       await verifyCaptcha(input.captchaToken);
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const toDateStr = (d: Date) => d.toISOString().split("T")[0];
       await db.insert(reservationRequests).values({
         source: "public_form",
         businessLine: input.businessLine,
         contactName: input.contactName,
         contactEmail: input.contactEmail,
         contactPhone: input.contactPhone ?? null,
-        requestedStart: input.requestedStart,
-        requestedEnd: input.requestedEnd,
+        requestedStart: toDateStr(input.requestedStart),
+        requestedEnd: toDateStr(input.requestedEnd),
         guestCount: input.guestCount ?? null,
         eventType: input.eventType ?? null,
         specialRequests: input.specialRequests ?? null,
@@ -861,12 +864,13 @@ const publicBookingRouter = router({
     .query(async ({ input }) => {
       const db = await getDb();
       if (!db) return [];
+      const pad = (n: number) => String(n).padStart(2, "0");
       const startDate = input.month
-        ? new Date(input.year, input.month - 1, 1)
-        : new Date(input.year, 0, 1);
+        ? `${input.year}-${pad(input.month)}-01`
+        : `${input.year}-01-01`;
       const endDate = input.month
-        ? new Date(input.year, input.month, 0)
-        : new Date(input.year, 11, 31);
+        ? `${input.year}-${pad(input.month)}-${new Date(input.year, input.month, 0).getDate()}`
+        : `${input.year}-12-31`;
       const rows = await db
         .select({ date: blockedDates.date, reason: blockedDates.reason })
         .from(blockedDates)

@@ -64,37 +64,33 @@ export const inquiriesRouter = router({
           estimatedGuestCount: input.guestCount ?? undefined,
           notes: input.message ?? undefined,
           status: "new",
-        });
-        const leadId = Number((leadResult as { insertId?: number }).insertId ?? 0);
+        }).returning({ id: leads.id });
+        const leadId = leadResult.id;
 
         // 2. For wedding / corporate inquiries with a date, also create a
         //    ReservationRequest so staff can track it through the booking flow.
         let reservationRequestId: number | undefined;
         if ((input.type === "wedding" || input.type === "corporate") && input.eventDate) {
-          const today = new Date();
-          const requestedStart =
-            new Date(input.eventDate) ||
-            new Date(today.getTime() + 90 * 24 * 60 * 60 * 1000);
-          const requestedEnd = new Date(
-            requestedStart.getTime() +
+          const startDate = new Date(input.eventDate);
+          const endDate = new Date(
+            startDate.getTime() +
               (input.type === "wedding" ? 2 : 3) * 24 * 60 * 60 * 1000,
           );
+          const toDateStr = (d: Date) => d.toISOString().split("T")[0];
           const [rrResult] = await tx.insert(reservationRequests).values({
             source: "public_form",
             businessLine: businessLine as "wedding" | "corporate" | "member_stay" | "hunt" | "fish" | "hunt_and_fish" | "other",
             contactName: input.name,
             contactEmail: input.email,
             contactPhone: input.phone ?? undefined,
-            requestedStart,
-            requestedEnd,
+            requestedStart: toDateStr(startDate),
+            requestedEnd: toDateStr(endDate),
             guestCount: input.guestCount ?? undefined,
             specialRequests: input.message ?? undefined,
             eventType: input.type,
             status: "new",
-          });
-          reservationRequestId = Number(
-            (rrResult as { insertId?: number }).insertId ?? 0,
-          );
+          }).returning({ id: reservationRequests.id });
+          reservationRequestId = rrResult.id;
         }
 
         return { leadId, reservationRequestId };

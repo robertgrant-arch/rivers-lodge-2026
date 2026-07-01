@@ -1,62 +1,54 @@
 import {
-  int,
-  mysqlEnum,
-  mysqlTable,
+  boolean,
+  date,
+  integer,
+  pgEnum,
+  pgTable,
   text,
   timestamp,
   varchar,
-  boolean,
-  date,
-} from "drizzle-orm/mysql-core";
+} from "drizzle-orm/pg-core";
 
-// ─── Field Reports ────────────────────────────────────────────────────────────
-// Fishing, hunting, and general field condition reports posted by admins
-export const fieldReports = mysqlTable("field_reports", {
-  id: int("id").autoincrement().primaryKey(),
-  type: mysqlEnum("type", ["fishing", "hunting", "field_conditions", "wildlife", "weather"]).notNull(),
+export const fieldReportTypeEnum = pgEnum("field_report_type", ["fishing", "hunting", "field_conditions", "wildlife", "weather"]);
+export const fieldConditionsEnum = pgEnum("field_conditions", ["excellent", "good", "fair", "poor"]);
+export const reportTierAccessEnum = pgEnum("report_tier_access", ["standard", "premier", "founding", "all"]);
+export const newsletterStatusEnum = pgEnum("newsletter_status", ["draft", "pending_approval", "approved", "sent", "cancelled"]);
+
+export const fieldReports = pgTable("field_reports", {
+  id: integer("id").generatedAlwaysAsIdentity().primaryKey(),
+  type: fieldReportTypeEnum("type").notNull(),
   title: varchar("title", { length: 255 }).notNull(),
   body: text("body").notNull(),
-  // Structured metadata (species, counts, conditions, etc.)
-  species: varchar("species", { length: 255 }), // e.g. "Largemouth Bass, Crappie"
-  conditions: mysqlEnum("conditions", ["excellent", "good", "fair", "poor"]),
-  location: varchar("location", { length: 255 }), // e.g. "South Pond", "North Timber Stand"
+  species: varchar("species", { length: 255 }),
+  conditions: fieldConditionsEnum("conditions"),
+  location: varchar("location", { length: 255 }),
   reportDate: date("reportDate").notNull(),
-  authorId: varchar("authorId", { length: 36 }).notNull(), // users.id
-  authorName: varchar("authorName", { length: 255 }), // denormalized for display
-  // Visibility
-  tierAccess: mysqlEnum("tierAccess", ["standard", "premier", "founding", "all"]).default("all").notNull(),
-  published: boolean("published").default(false).notNull(),
+  authorId: varchar("authorId", { length: 36 }).notNull(),
+  authorName: varchar("authorName", { length: 255 }),
+  tierAccess: reportTierAccessEnum("tierAccess").notNull().default("all"),
+  published: boolean("published").notNull().default(false),
   publishedAt: timestamp("publishedAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().$onUpdate(() => new Date()).notNull(),
 });
 export type FieldReport = typeof fieldReports.$inferSelect;
 export type InsertFieldReport = typeof fieldReports.$inferInsert;
 
-// ─── Newsletters ──────────────────────────────────────────────────────────────
-// AI-drafted weekly newsletters that go through admin approval before sending
-export const newsletters = mysqlTable("newsletters", {
-  id: int("id").autoincrement().primaryKey(),
+export const newsletters = pgTable("newsletters", {
+  id: integer("id").generatedAlwaysAsIdentity().primaryKey(),
   subject: varchar("subject", { length: 255 }).notNull(),
-  // AI-generated draft content (HTML or Markdown)
   draftContent: text("draftContent"),
-  // Admin-edited final content
   finalContent: text("finalContent"),
-  // Prompt context used to generate the draft
   aiPromptContext: text("aiPromptContext"),
-  status: mysqlEnum("status", ["draft", "pending_approval", "approved", "sent", "cancelled"]).default("draft").notNull(),
-  // Approval workflow
-  approvedBy: varchar("approvedBy", { length: 36 }), // users.id
+  status: newsletterStatusEnum("status").notNull().default("draft"),
+  approvedBy: varchar("approvedBy", { length: 36 }),
   approvedAt: timestamp("approvedAt"),
-  // Send tracking
   sentAt: timestamp("sentAt"),
-  sentCount: int("sentCount").default(0),
-  // Scheduling
+  sentCount: integer("sentCount").default(0),
   scheduledFor: timestamp("scheduledFor"),
-  // Authorship
-  createdBy: varchar("createdBy", { length: 36 }).notNull(), // users.id
+  createdBy: varchar("createdBy", { length: 36 }).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().$onUpdate(() => new Date()).notNull(),
 });
 export type Newsletter = typeof newsletters.$inferSelect;
 export type InsertNewsletter = typeof newsletters.$inferInsert;

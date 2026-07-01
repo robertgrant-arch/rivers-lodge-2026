@@ -1,6 +1,6 @@
 import { eq, desc, and, gt } from "drizzle-orm";
-import { drizzle } from "drizzle-orm/mysql2";
-import mysql from "mysql2/promise";
+import { drizzle } from "drizzle-orm/node-postgres";
+import { Pool } from "pg";
 import {
   users,
   invites,
@@ -30,7 +30,7 @@ import { ENV } from "./env";
 
 type DrizzleDb = ReturnType<typeof drizzle>;
 
-let _pool: mysql.Pool | null = null;
+let _pool: Pool | null = null;
 
 function createDb(): Promise<DrizzleDb | null> {
   const url = process.env.DATABASE_URL ?? ENV.databaseUrl;
@@ -39,12 +39,7 @@ function createDb(): Promise<DrizzleDb | null> {
     return Promise.resolve(null);
   }
   try {
-    _pool = mysql.createPool({
-      uri: url,
-      connectionLimit: 10,
-      waitForConnections: true,
-      queueLimit: 0,
-    });
+    _pool = new Pool({ connectionString: url });
     return Promise.resolve(drizzle(_pool) as unknown as DrizzleDb);
   } catch (error) {
     console.warn("[Database] Failed to create connection pool:", error);
@@ -409,7 +404,7 @@ export async function getCmsLodgingUnitBySlug(slug: string) {
 export async function upsertCmsLodgingUnit(data: InsertCmsLodgingUnit) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  await db.insert(cmsLodgingUnits).values(data).onDuplicateKeyUpdate({ set: data });
+  await db.insert(cmsLodgingUnits).values(data).onConflictDoUpdate({ target: cmsLodgingUnits.slug, set: data });
 }
 
 export async function updateCmsLodgingUnit(id: number, data: Partial<InsertCmsLodgingUnit>) {
@@ -445,7 +440,7 @@ export async function getCmsEventSpaceBySlug(slug: string) {
 export async function upsertCmsEventSpace(data: InsertCmsEventSpace) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  await db.insert(cmsEventSpaces).values(data).onDuplicateKeyUpdate({ set: data });
+  await db.insert(cmsEventSpaces).values(data).onConflictDoUpdate({ target: cmsEventSpaces.slug, set: data });
 }
 
 export async function updateCmsEventSpace(id: number, data: Partial<InsertCmsEventSpace>) {
@@ -629,5 +624,9 @@ export async function getAllCmsSingletons() {
 export async function upsertCmsSingleton(data: InsertCmsSingleton) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
-  await db.insert(cmsSingletons).values(data).onDuplicateKeyUpdate({ set: { label: data.label, data: data.data, status: data.status } });
+  await db.insert(cmsSingletons).values(data).onConflictDoUpdate({
+    target: cmsSingletons.key,
+    set: { label: data.label, data: data.data, status: data.status },
+  });
 }
+

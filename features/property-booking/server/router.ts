@@ -935,7 +935,7 @@ export const propertyBookingRouter = router({
             updatedAt: ts,
           } as any);
 
-          // Drizzle mysql2 insert returns [OkPacket, ...], so insertId is on index 0
+          // Drizzle node-postgres insert returns the inserted row via $returningId()
           const propertyId = Number((result as any)[0]?.insertId ?? (result as any).insertId);
 
           // Create default booking rules

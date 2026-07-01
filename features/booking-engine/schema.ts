@@ -2,42 +2,41 @@ import {
   boolean,
   date,
   decimal,
-  int,
-  mysqlEnum,
-  mysqlTable,
+  integer,
+  pgEnum,
+  pgTable,
   text,
   timestamp,
   varchar,
-} from "drizzle-orm/mysql-core";
+} from "drizzle-orm/pg-core";
 
-// ─── Bookings ─────────────────────────────────────────────────────────────────
+export const bookingTypeEnum = pgEnum("booking_type", ["wedding", "corporate", "member_stay", "hunt_fish"]);
+export const bookingStatusEnum = pgEnum("booking_status", ["inquiry", "confirmed", "completed", "cancelled"]);
 
-export const bookings = mysqlTable("bookings", {
-  id: int("id").autoincrement().primaryKey(),
-  type: mysqlEnum("type", ["wedding", "corporate", "member_stay", "hunt_fish"]).notNull(),
+export const bookings = pgTable("bookings", {
+  id: integer("id").generatedAlwaysAsIdentity().primaryKey(),
+  type: bookingTypeEnum("type").notNull(),
   clientName: varchar("clientName", { length: 255 }).notNull(),
   clientEmail: varchar("clientEmail", { length: 320 }),
   clientPhone: varchar("clientPhone", { length: 50 }),
   startDate: date("startDate").notNull(),
   endDate: date("endDate").notNull(),
   spaces: text("spaces"),
-  guestCount: int("guestCount"),
+  guestCount: integer("guestCount"),
   totalRevenue: decimal("totalRevenue", { precision: 10, scale: 2 }),
   depositPaid: boolean("depositPaid").default(false),
-  status: mysqlEnum("status", ["inquiry", "confirmed", "completed", "cancelled"]).default("inquiry").notNull(),
+  status: bookingStatusEnum("status").notNull().default("inquiry"),
   notes: text("notes"),
   userId: varchar("userId", { length: 36 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().$onUpdate(() => new Date()).notNull(),
 });
 
 export type Booking = typeof bookings.$inferSelect;
 export type InsertBooking = typeof bookings.$inferInsert;
 
-// ─── Blocked Dates ────────────────────────────────────────────────────────────
-
-export const blockedDates = mysqlTable("blocked_dates", {
-  id: int("id").autoincrement().primaryKey(),
+export const blockedDates = pgTable("blocked_dates", {
+  id: integer("id").generatedAlwaysAsIdentity().primaryKey(),
   date: date("date").notNull(),
   reason: varchar("reason", { length: 255 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),

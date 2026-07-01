@@ -1,7 +1,7 @@
 import "dotenv/config";
 import { hash } from "argon2";
-import { drizzle } from "drizzle-orm/mysql2";
-import mysql from "mysql2/promise";
+import { drizzle } from "drizzle-orm/node-postgres";
+import { Pool } from "pg";
 import { users } from "../features/auth/schema";
 import { eq } from "drizzle-orm";
 
@@ -21,7 +21,7 @@ if (!databaseUrl) {
   process.exit(1);
 }
 
-const pool = mysql.createPool({ uri: databaseUrl });
+const pool = new Pool({ connectionString: databaseUrl });
 const db = drizzle(pool);
 
 const passwordHash = await hash(password, { type: 2 }); // argon2id

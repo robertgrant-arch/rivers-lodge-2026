@@ -32,9 +32,7 @@ export default function AvailabilityCalendar({
   const blockedSet = useMemo(() => {
     const s = new Set<string>();
     for (const bd of blockedDates) {
-      // bd.date may be a Date object or string
-      const d = bd.date instanceof Date ? bd.date : new Date(bd.date);
-      s.add(d.toISOString().split("T")[0]);
+      s.add(bd.date);
     }
     return s;
   }, [blockedDates]);

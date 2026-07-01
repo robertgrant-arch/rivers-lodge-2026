@@ -1,24 +1,25 @@
 import {
-  int,
-  mysqlEnum,
-  mysqlTable,
+  integer,
+  pgEnum,
+  pgTable,
   text,
   timestamp,
   varchar,
-} from "drizzle-orm/mysql-core";
+} from "drizzle-orm/pg-core";
 
-// ─── Inquiries ────────────────────────────────────────────────────────────────
+export const inquiryTypeEnum = pgEnum("inquiry_type", ["wedding", "corporate", "tour", "general", "membership", "lodging", "event"]);
+export const inquiryStatusEnum = pgEnum("inquiry_status", ["new", "contacted", "booked", "closed"]);
 
-export const inquiries = mysqlTable("inquiries", {
-  id: int("id").autoincrement().primaryKey(),
-  type: mysqlEnum("type", ["wedding", "corporate", "tour", "general", "membership", "lodging", "event"]).notNull(),
+export const inquiries = pgTable("inquiries", {
+  id: integer("id").generatedAlwaysAsIdentity().primaryKey(),
+  type: inquiryTypeEnum("type").notNull(),
   name: varchar("name", { length: 255 }).notNull(),
   email: varchar("email", { length: 320 }).notNull(),
   phone: varchar("phone", { length: 50 }),
   eventDate: varchar("eventDate", { length: 100 }),
-  guestCount: int("guestCount"),
+  guestCount: integer("guestCount"),
   message: text("message"),
-  status: mysqlEnum("status", ["new", "contacted", "booked", "closed"]).default("new").notNull(),
+  status: inquiryStatusEnum("status").notNull().default("new"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 

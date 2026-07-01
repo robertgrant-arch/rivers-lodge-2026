@@ -3,7 +3,7 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { eq, desc, and } from "drizzle-orm";
-import { drizzle } from "drizzle-orm/mysql2";
+import { drizzle } from "drizzle-orm/node-postgres";
 import { publicProcedure, protectedProcedure, router } from "../../_core/server/trpc";
 import {
   waiverTemplates,
@@ -49,8 +49,8 @@ export const waiversPortalRouter = router({
     }))
     .mutation(async ({ input }) => {
       const db = getDb();
-      const [result] = await db.insert(waiverTemplates).values(input as any);
-      return { id: result.insertId };
+      const [result] = await db.insert(waiverTemplates).values(input as any).returning({ id: waiverTemplates.id });
+      return { id: result.id };
     }),
 
   list: portalProcedure
@@ -91,8 +91,8 @@ export const waiversPortalRouter = router({
         status: "sent",
         signingToken: token,
         sentAt: new Date(),
-      });
-      return { id: result.insertId, signingToken: token, signingUrl: `/sign-waiver/${token}` };
+      }).returning({ id: portalWaivers.id });
+      return { id: result.id, signingToken: token, signingUrl: `/sign-waiver/${token}` };
     }),
 
   getByToken: publicProcedure

@@ -2,36 +2,11 @@
  * Enterprise Hunting Property Booking Schema
  * ============================================
  * Designed for The Rivers Lodge & Hunt Club.
- *
- * Entity hierarchy:
- *   hunting_properties          ← Specific bookable locations (Stand 7, Duck Blind A, North Pasture)
- *   property_seasons            ← Season windows per property (Deer Season: Oct 1 – Jan 15)
- *   property_booking_rules      ← Rules per property (advance window, capacity, tier access)
- *   property_pricing            ← Pricing tiers per property/season/group size
- *   property_date_inventory     ← Denormalized availability counter per property per date (O(1) queries)
- *   property_bookings           ← The actual booking records (member, property, date range, status)
- *   booking_add_ons             ← Add-ons attached to a booking (guide, ATV, dog handler)
- *   booking_payments            ← Payment records linked to bookings
- *   booking_audit_log           ← Immutable audit trail of every status change
- *   harvest_reports             ← Post-hunt harvest reporting (required within N days)
- *   property_blocked_dates      ← Admin-set blocked dates per property
- *   booking_waitlist            ← Waitlist entries when property is full
- *   property_images             ← Photos per property (S3 URLs)
- *   property_amenities          ← Amenity tags per property
- *
- * Design decisions:
- *   - idempotencyKey on property_bookings prevents double-booking from retries
- *   - property_date_inventory is a denormalized counter updated atomically on booking insert/cancel
- *   - Booking rules are per-property (each stand can have different advance windows, capacity, tier access)
- *   - Audit log is append-only — never updated, only inserted
- *   - Harvest reports are linked to bookings; system can block future bookings if not filed in time
- *   - Waitlist with TTL notification — cancellations trigger waitlist notifications
- *   - Pricing at zero = included in membership; non-zero = additional fee (Stripe-ready)
  */
 
 import {
-  mysqlTable,
-  int,
+  pgTable,
+  integer,
   varchar,
   text,
   boolean,
@@ -40,692 +15,447 @@ import {
   time,
   decimal,
   json,
-  mysqlEnum,
+  pgEnum,
   bigint,
   uniqueIndex,
   index,
-} from "drizzle-orm/mysql-core";
+} from "drizzle-orm/pg-core";
+
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+export const huntingPropertyTypeEnum = pgEnum("hunting_property_type", [
+  "stand", "blind", "field", "pond", "creek", "food_plot", "zone", "lodge",
+]);
+
+export const propertyActivityEnum = pgEnum("property_activity", [
+  "deer", "duck", "turkey", "quail", "dove", "hog", "bass", "catfish", "crappie",
+  "mixed_hunt", "mixed_fish", "hunt_and_fish",
+]);
+
+export const inventoryStatusEnum = pgEnum("inventory_status", [
+  "open", "partial", "full", "blocked", "closed",
+]);
+
+export const propertyBookingActivityEnum = pgEnum("property_booking_activity", [
+  "deer", "duck", "turkey", "quail", "dove", "hog", "bass", "catfish", "crappie",
+  "mixed_hunt", "mixed_fish", "hunt_and_fish", "scouting",
+]);
+
+export const propertyBookingStatusEnum = pgEnum("property_booking_status", [
+  "pending_payment", "confirmed", "pending_approval", "checked_in",
+  "completed", "cancelled", "no_show", "declined",
+]);
+
+export const memberTierPricingEnum = pgEnum("member_tier_pricing", [
+  "founding", "standard", "associate", "day",
+]);
+
+export const bookingAddOnTypeEnum = pgEnum("booking_add_on_type", [
+  "guide", "atv", "dog_handler", "cleaning", "meals", "ammo", "gear_rental", "photography", "other",
+]);
+
+export const bookingPaymentTypeEnum = pgEnum("booking_payment_type", [
+  "deposit", "balance", "refund", "adjustment", "late_cancellation_fee",
+]);
+
+export const bookingPaymentMethodEnum = pgEnum("booking_payment_method", [
+  "stripe", "cash", "check", "comp", "credit", "other",
+]);
+
+export const bookingPaymentStatusEnum = pgEnum("booking_payment_status", [
+  "pending", "completed", "failed", "refunded", "voided",
+]);
+
+export const propertyBlockedReasonEnum = pgEnum("property_blocked_reason", [
+  "maintenance", "private_event", "wildlife_management", "weather",
+  "staff_use", "lease_restriction", "other",
+]);
+
+export const waitlistStatusEnum = pgEnum("waitlist_status", [
+  "waiting", "notified", "booked", "expired", "cancelled",
+]);
+
+export const propertyImageTypeEnum = pgEnum("property_image_type", [
+  "cover", "gallery", "map", "harvest", "amenity",
+]);
+
+export const propertyAmenityEnum = pgEnum("property_amenity", [
+  "heated_blind", "atv_access", "water_access", "electricity", "cell_service",
+  "wifi", "restroom", "food_plot", "feeder", "trail_camera", "boat_launch",
+  "dog_kennel", "cleaning_station", "storage", "parking", "handicap_accessible",
+]);
+
+export const propertySeasonActivityEnum = pgEnum("property_season_activity", [
+  "deer", "duck", "turkey", "quail", "dove", "hog",
+  "bass", "catfish", "crappie", "mixed_hunt", "mixed_fish", "hunt_and_fish",
+]);
+
+export const harvestActivityEnum = pgEnum("harvest_activity", [
+  "deer", "duck", "turkey", "quail", "dove", "hog",
+  "bass", "catfish", "crappie", "mixed_hunt", "mixed_fish", "hunt_and_fish",
+]);
+
+export const waitlistActivityEnum = pgEnum("waitlist_activity", [
+  "deer", "duck", "turkey", "quail", "dove", "hog",
+  "bass", "catfish", "crappie", "mixed_hunt", "mixed_fish", "hunt_and_fish",
+]);
 
 // ─── Hunting Properties ───────────────────────────────────────────────────────
 
-/**
- * The primary entity — a specific bookable hunting location.
- * Examples: "Stand 7 — North Pasture", "Duck Blind A", "Turkey Ridge", "South Pond"
- */
-export const huntingProperties = mysqlTable("hunting_properties", {
-  id: int("id").autoincrement().primaryKey(),
-
-  // Identity
-  name: varchar("name", { length: 120 }).notNull(),          // "Stand 7 — North Pasture"
-  slug: varchar("slug", { length: 80 }).notNull().unique(),  // "stand-7-north-pasture"
-  shortName: varchar("shortName", { length: 40 }),           // "Stand 7" (for calendar labels)
-
-  // Classification
-  type: mysqlEnum("type", [
-    "stand",        // elevated deer stand
-    "blind",        // ground blind (duck, turkey, deer)
-    "field",        // open field (dove, quail)
-    "pond",         // fishing pond / duck pond
-    "creek",        // creek / river fishing
-    "food_plot",    // food plot area
-    "zone",         // general hunting zone / pasture
-    "lodge",        // lodge property (for overnight stays)
-  ]).notNull(),
-
-  // Primary activity for this property
-  primaryActivity: mysqlEnum("primaryActivity", [
-    "deer",
-    "duck",
-    "turkey",
-    "quail",
-    "dove",
-    "hog",
-    "bass",
-    "catfish",
-    "crappie",
-    "mixed_hunt",
-    "mixed_fish",
-    "hunt_and_fish",
-  ]).notNull(),
-
-  // Secondary activities also available at this property
-  secondaryActivities: json("secondaryActivities"),  // string[] e.g. ["deer", "turkey"]
-
-  // Description
+export const huntingProperties = pgTable("hunting_properties", {
+  id: integer("id").generatedAlwaysAsIdentity().primaryKey(),
+  name: varchar("name", { length: 120 }).notNull(),
+  slug: varchar("slug", { length: 80 }).notNull().unique(),
+  shortName: varchar("shortName", { length: 40 }),
+  type: huntingPropertyTypeEnum("type").notNull(),
+  primaryActivity: propertyActivityEnum("primaryActivity").notNull(),
+  secondaryActivities: json("secondaryActivities"),
   description: text("description"),
   shortDescription: varchar("shortDescription", { length: 280 }),
-
-  // Physical attributes
   acreage: decimal("acreage", { precision: 8, scale: 2 }),
-  maxHunters: int("maxHunters").default(2).notNull(),   // max simultaneous hunters/anglers
+  maxHunters: integer("maxHunters").notNull().default(2),
   hasHeatedBlind: boolean("hasHeatedBlind").default(false),
   hasAtvAccess: boolean("hasAtvAccess").default(false),
   hasWaterAccess: boolean("hasWaterAccess").default(false),
   hasElectricity: boolean("hasElectricity").default(false),
   hasCellService: boolean("hasCellService").default(true),
-
-  // Location
   gpsLat: decimal("gpsLat", { precision: 10, scale: 7 }),
   gpsLng: decimal("gpsLng", { precision: 10, scale: 7 }),
-  locationNotes: varchar("locationNotes", { length: 300 }),  // "Take the north fork past the red gate"
-
-  // Media
+  locationNotes: varchar("locationNotes", { length: 300 }),
   coverImageUrl: varchar("coverImageUrl", { length: 500 }),
   mapImageUrl: varchar("mapImageUrl", { length: 500 }),
-
-  // Status
-  active: boolean("active").default(true).notNull(),
+  active: boolean("active").notNull().default(true),
   featuredOnPublicSite: boolean("featuredOnPublicSite").default(true),
-  sortOrder: int("sortOrder").default(0),
-
-  // Metadata
+  sortOrder: integer("sortOrder").default(0),
   createdAt: bigint("createdAt", { mode: "number" }).notNull(),
   updatedAt: bigint("updatedAt", { mode: "number" }).notNull(),
-}, (t) => ({
-  slugIdx: uniqueIndex("hp_slug_idx").on(t.slug),
-  activityIdx: index("hp_activity_idx").on(t.primaryActivity),
-  activeIdx: index("hp_active_idx").on(t.active),
-}));
+}, (t) => [
+  uniqueIndex("hp_slug_idx").on(t.slug),
+  index("hp_activity_idx").on(t.primaryActivity),
+  index("hp_active_idx").on(t.active),
+]);
 
 export type HuntingProperty = typeof huntingProperties.$inferSelect;
 export type InsertHuntingProperty = typeof huntingProperties.$inferInsert;
 
 // ─── Property Seasons ─────────────────────────────────────────────────────────
 
-/**
- * Season windows per property.
- * A property can have multiple seasons (e.g., Deer Stand 7 has both Archery and Rifle seasons).
- */
-export const propertySeasons = mysqlTable("property_seasons", {
-  id: int("id").autoincrement().primaryKey(),
-  propertyId: int("propertyId").notNull(),   // FK → hunting_properties
-
-  name: varchar("name", { length: 80 }).notNull(),  // "Archery Season 2026"
-  activity: mysqlEnum("activity", [
-    "deer", "duck", "turkey", "quail", "dove", "hog",
-    "bass", "catfish", "crappie", "mixed_hunt", "mixed_fish", "hunt_and_fish",
-  ]).notNull(),
-
+export const propertySeasons = pgTable("property_seasons", {
+  id: integer("id").generatedAlwaysAsIdentity().primaryKey(),
+  propertyId: integer("propertyId").notNull(),
+  name: varchar("name", { length: 80 }).notNull(),
+  activity: propertySeasonActivityEnum("activity").notNull(),
   startDate: date("startDate").notNull(),
   endDate: date("endDate").notNull(),
-
-  // Season-level capacity override (null = use property default)
-  maxHuntersOverride: int("maxHuntersOverride"),
-
-  active: boolean("active").default(true).notNull(),
+  maxHuntersOverride: integer("maxHuntersOverride"),
+  active: boolean("active").notNull().default(true),
   notes: text("notes"),
-
   createdAt: bigint("createdAt", { mode: "number" }).notNull(),
-}, (t) => ({
-  propertyIdx: index("ps_property_idx").on(t.propertyId),
-}));
+}, (t) => [
+  index("ps_property_idx").on(t.propertyId),
+]);
 
 export type PropertySeason = typeof propertySeasons.$inferSelect;
 export type InsertPropertySeason = typeof propertySeasons.$inferInsert;
 
 // ─── Property Booking Rules ───────────────────────────────────────────────────
 
-/**
- * Per-property booking rules.
- * Each stand/blind can have different advance windows, capacity, and tier access rules.
- */
-export const propertyBookingRules = mysqlTable("property_booking_rules", {
-  id: int("id").autoincrement().primaryKey(),
-  propertyId: int("propertyId").notNull().unique(),  // FK → hunting_properties (one rule set per property)
-
-  // Advance booking window
-  advanceBookingDays: int("advanceBookingDays").default(6).notNull(),   // how many days ahead members can book
-  minAdvanceHours: int("minAdvanceHours").default(24).notNull(),        // minimum notice required
-
-  // Duration limits
-  maxConsecutiveDays: int("maxConsecutiveDays").default(3).notNull(),   // max consecutive days per booking
-  maxDaysPerSeason: int("maxDaysPerSeason").default(10).notNull(),      // max total days per member per season
-
-  // Approval workflow
-  requiresApproval: boolean("requiresApproval").default(false).notNull(),  // auto-confirm or admin-approve
-
-  // Guest rules
-  allowGuests: boolean("allowGuests").default(true).notNull(),
-  maxGuestsPerBooking: int("maxGuestsPerBooking").default(1).notNull(),
+export const propertyBookingRules = pgTable("property_booking_rules", {
+  id: integer("id").generatedAlwaysAsIdentity().primaryKey(),
+  propertyId: integer("propertyId").notNull().unique(),
+  advanceBookingDays: integer("advanceBookingDays").notNull().default(6),
+  minAdvanceHours: integer("minAdvanceHours").notNull().default(24),
+  maxConsecutiveDays: integer("maxConsecutiveDays").notNull().default(3),
+  maxDaysPerSeason: integer("maxDaysPerSeason").notNull().default(10),
+  requiresApproval: boolean("requiresApproval").notNull().default(false),
+  allowGuests: boolean("allowGuests").notNull().default(true),
+  maxGuestsPerBooking: integer("maxGuestsPerBooking").notNull().default(1),
   guestCountsAgainstAllotment: boolean("guestCountsAgainstAllotment").default(true),
-
-  // Cancellation policy
-  cancellationHours: int("cancellationHours").default(24).notNull(),    // hours before hunt to cancel without penalty
+  cancellationHours: integer("cancellationHours").notNull().default(24),
   lateCancellationFee: decimal("lateCancellationFee", { precision: 10, scale: 2 }).default("0"),
-
-  // Harvest reporting
-  harvestReportRequired: boolean("harvestReportRequired").default(true).notNull(),
-  harvestReportDays: int("harvestReportDays").default(7).notNull(),     // days after hunt to submit report
+  harvestReportRequired: boolean("harvestReportRequired").notNull().default(true),
+  harvestReportDays: integer("harvestReportDays").notNull().default(7),
   blockBookingsIfReportOverdue: boolean("blockBookingsIfReportOverdue").default(true),
-
-  // Member tier access (JSON object: { founding: true, standard: true, associate: false, day: false })
   tierAccess: json("tierAccess"),
-
-  // Season-opening lottery
   openingDaysUseLottery: boolean("openingDaysUseLottery").default(false),
-  lotteryOpeningDays: int("lotteryOpeningDays").default(2),             // first N days of season use lottery
-
-  // Overbooking allowance (for cancellation buffer, like hotels)
-  overbookingPercent: int("overbookingPercent").default(0),             // 0 = no overbooking
-
-  // Admin notes on special rules
+  lotteryOpeningDays: integer("lotteryOpeningDays").default(2),
+  overbookingPercent: integer("overbookingPercent").default(0),
   notes: text("notes"),
-
   updatedAt: bigint("updatedAt", { mode: "number" }).notNull(),
-}, (t) => ({
-  propertyIdx: uniqueIndex("pbr_property_idx").on(t.propertyId),
-}));
+}, (t) => [
+  uniqueIndex("pbr_property_idx").on(t.propertyId),
+]);
 
 export type PropertyBookingRules = typeof propertyBookingRules.$inferSelect;
 export type InsertPropertyBookingRules = typeof propertyBookingRules.$inferInsert;
 
 // ─── Property Pricing ─────────────────────────────────────────────────────────
 
-/**
- * Pricing tiers per property, season, member tier, and group size.
- * pricePerDay = 0 means included in membership.
- */
-export const propertyPricing = mysqlTable("property_pricing", {
-  id: int("id").autoincrement().primaryKey(),
-  propertyId: int("propertyId").notNull(),   // FK → hunting_properties
-  seasonId: int("seasonId"),                 // FK → property_seasons (null = applies to all seasons)
-
-  // Applies to this member tier (null = all tiers)
-  memberTier: mysqlEnum("memberTier", ["founding", "standard", "associate", "day"]),
-
-  // Group size range this price applies to
-  groupSizeMin: int("groupSizeMin").default(1).notNull(),
-  groupSizeMax: int("groupSizeMax").default(99).notNull(),
-
-  // Pricing
-  pricePerDay: decimal("pricePerDay", { precision: 10, scale: 2 }).default("0").notNull(),  // 0 = included
-  depositAmount: decimal("depositAmount", { precision: 10, scale: 2 }).default("0").notNull(),
-  currency: varchar("currency", { length: 3 }).default("USD").notNull(),
-
-  // Add-on pricing
+export const propertyPricing = pgTable("property_pricing", {
+  id: integer("id").generatedAlwaysAsIdentity().primaryKey(),
+  propertyId: integer("propertyId").notNull(),
+  seasonId: integer("seasonId"),
+  memberTier: memberTierPricingEnum("memberTier"),
+  groupSizeMin: integer("groupSizeMin").notNull().default(1),
+  groupSizeMax: integer("groupSizeMax").notNull().default(99),
+  pricePerDay: decimal("pricePerDay", { precision: 10, scale: 2 }).notNull().default("0"),
+  depositAmount: decimal("depositAmount", { precision: 10, scale: 2 }).notNull().default("0"),
+  currency: varchar("currency", { length: 3 }).notNull().default("USD"),
   guideServicePerDay: decimal("guideServicePerDay", { precision: 10, scale: 2 }).default("0"),
   atvRentalPerDay: decimal("atvRentalPerDay", { precision: 10, scale: 2 }).default("0"),
   dogHandlerPerDay: decimal("dogHandlerPerDay", { precision: 10, scale: 2 }).default("0"),
   cleaningFee: decimal("cleaningFee", { precision: 10, scale: 2 }).default("0"),
-
-  active: boolean("active").default(true).notNull(),
+  active: boolean("active").notNull().default(true),
   notes: text("notes"),
   createdAt: bigint("createdAt", { mode: "number" }).notNull(),
-}, (t) => ({
-  propertyIdx: index("pp_property_idx").on(t.propertyId),
-}));
+}, (t) => [
+  index("pp_property_idx").on(t.propertyId),
+]);
 
 export type PropertyPricing = typeof propertyPricing.$inferSelect;
 export type InsertPropertyPricing = typeof propertyPricing.$inferInsert;
 
 // ─── Property Date Inventory ──────────────────────────────────────────────────
 
-/**
- * Denormalized availability counter per property per date.
- * Updated atomically on each booking insert/cancel.
- * Makes availability queries O(1) instead of scanning all bookings.
- *
- * This is the "availability inventory" pattern used by hotel systems (Airbnb, Marriott).
- */
-export const propertyDateInventory = mysqlTable("property_date_inventory", {
-  id: int("id").autoincrement().primaryKey(),
-  propertyId: int("propertyId").notNull(),   // FK → hunting_properties
+export const propertyDateInventory = pgTable("property_date_inventory", {
+  id: integer("id").generatedAlwaysAsIdentity().primaryKey(),
+  propertyId: integer("propertyId").notNull(),
   date: date("date").notNull(),
-
-  // Capacity for this date (may differ from property default due to season rules)
-  capacity: int("capacity").notNull(),
-
-  // Confirmed + pending bookings (denormalized counter)
-  bookedCount: int("bookedCount").default(0).notNull(),
-
-  // Computed status (updated by trigger/procedure on each booking change)
-  status: mysqlEnum("status", [
-    "open",       // available spots remain
-    "partial",    // ≥75% booked
-    "full",       // at capacity
-    "blocked",    // admin-blocked (maintenance, private event)
-    "closed",     // outside season window
-  ]).default("open").notNull(),
-
-  // Version for optimistic locking (prevents race conditions on concurrent bookings)
-  version: int("version").default(0).notNull(),
-
+  capacity: integer("capacity").notNull(),
+  bookedCount: integer("bookedCount").notNull().default(0),
+  status: inventoryStatusEnum("status").notNull().default("open"),
+  version: integer("version").notNull().default(0),
   updatedAt: bigint("updatedAt", { mode: "number" }).notNull(),
-}, (t) => ({
-  // DB-LEVEL DEFENSE — this UNIQUE constraint is the primary protection against
-  // concurrent inserts for the same property+date.  updateInventory() uses
-  // "INSERT ... WHERE NOT EXISTS" followed by "UPDATE ... WHERE propertyId = ?
-  // AND date = ?", both within the booking transaction.  If two concurrent
-  // transactions somehow both reach the INSERT branch simultaneously, the
-  // UNIQUE violation on (propertyId, date) will cause one of them to fail at
-  // the DB level, preventing a phantom row.  The FOR UPDATE lock on the
-  // inventory SELECT in bookings.create is the first line of defense; this
-  // constraint is the second.
-  propertyDateIdx: uniqueIndex("pdi_property_date_idx").on(t.propertyId, t.date),
-  statusIdx: index("pdi_status_idx").on(t.status),
-  dateIdx: index("pdi_date_idx").on(t.date),
-}));
+}, (t) => [
+  uniqueIndex("pdi_property_date_idx").on(t.propertyId, t.date),
+  index("pdi_status_idx").on(t.status),
+  index("pdi_date_idx").on(t.date),
+]);
 
 export type PropertyDateInventory = typeof propertyDateInventory.$inferSelect;
 export type InsertPropertyDateInventory = typeof propertyDateInventory.$inferInsert;
 
 // ─── Property Bookings ────────────────────────────────────────────────────────
 
-/**
- * The core booking record.
- * Lifecycle: confirmed → checked_in → completed | cancelled | no_show
- * (pending_payment → confirmed if deposit required)
- */
-export const propertyBookings = mysqlTable("property_bookings", {
-  id: int("id").autoincrement().primaryKey(),
-
-  // Human-readable reference (e.g. "RL-2026-00042")
+export const propertyBookings = pgTable("property_bookings", {
+  id: integer("id").generatedAlwaysAsIdentity().primaryKey(),
   bookingRef: varchar("bookingRef", { length: 20 }).notNull().unique(),
-
-  // Idempotency key (client-generated UUID) — prevents double-booking from retries
   idempotencyKey: varchar("idempotencyKey", { length: 64 }).notNull().unique(),
-
-  // Who is booking
-  memberId: int("memberId").notNull(),         // FK → members
-  userId: varchar("userId", { length: 36 }).notNull(),             // FK → users (denormalized)
-
-  // What they are booking
-  propertyId: int("propertyId").notNull(),     // FK → hunting_properties
-  seasonId: int("seasonId"),                   // FK → property_seasons (null if outside defined season)
-
-  // When
+  memberId: integer("memberId").notNull(),
+  userId: varchar("userId", { length: 36 }).notNull(),
+  propertyId: integer("propertyId").notNull(),
+  seasonId: integer("seasonId"),
   startDate: date("startDate").notNull(),
-  endDate: date("endDate").notNull(),          // inclusive (same as startDate for single-day)
-  totalDays: int("totalDays").default(1).notNull(),
-
-  // Party details
-  partySize: int("partySize").default(1).notNull(),
-  guestNames: json("guestNames"),              // string[] — names of guests in party
+  endDate: date("endDate").notNull(),
+  totalDays: integer("totalDays").notNull().default(1),
+  partySize: integer("partySize").notNull().default(1),
+  guestNames: json("guestNames"),
   hasMinors: boolean("hasMinors").default(false),
-
-  // Activity (may differ from property default, e.g., scouting trip)
-  activity: mysqlEnum("activity", [
-    "deer", "duck", "turkey", "quail", "dove", "hog",
-    "bass", "catfish", "crappie", "mixed_hunt", "mixed_fish", "hunt_and_fish", "scouting",
-  ]).notNull(),
-
-  // Compliance confirmations
+  activity: propertyBookingActivityEnum("activity").notNull(),
   huntingLicenseConfirmed: boolean("huntingLicenseConfirmed").default(false),
   fishingLicenseConfirmed: boolean("fishingLicenseConfirmed").default(false),
   waiverSignedAt: bigint("waiverSignedAt", { mode: "number" }),
-
-  // Booking status lifecycle
-  status: mysqlEnum("status", [
-    "pending_payment",   // deposit required before confirmation
-    "confirmed",         // active booking (auto-confirmed or staff-approved)
-    "pending_approval",  // awaiting staff review (when requiresApproval = true)
-    "checked_in",        // member has arrived
-    "completed",         // trip completed
-    "cancelled",         // cancelled by member or staff
-    "no_show",           // member did not appear
-    "declined",          // staff declined (for approval-required bookings)
-  ]).default("confirmed").notNull(),
-
-  // Approval workflow
+  status: propertyBookingStatusEnum("status").notNull().default("confirmed"),
   requiresApproval: boolean("requiresApproval").default(false),
-  approvedByUserId: varchar("approvedByUserId", { length: 36 }),   // FK → users
+  approvedByUserId: varchar("approvedByUserId", { length: 36 }),
   approvedAt: bigint("approvedAt", { mode: "number" }),
   declinedAt: bigint("declinedAt", { mode: "number" }),
   declineReason: text("declineReason"),
-
-  // Cancellation
   cancelledAt: bigint("cancelledAt", { mode: "number" }),
   cancellationReason: text("cancellationReason"),
-  cancelledByUserId: varchar("cancelledByUserId", { length: 36 }), // FK → users (member or staff)
+  cancelledByUserId: varchar("cancelledByUserId", { length: 36 }),
   isLateCancellation: boolean("isLateCancellation").default(false),
-
-  // Financial
-  totalAmount: decimal("totalAmount", { precision: 10, scale: 2 }).default("0").notNull(),
-  depositAmount: decimal("depositAmount", { precision: 10, scale: 2 }).default("0").notNull(),
-  depositPaid: decimal("depositPaid", { precision: 10, scale: 2 }).default("0").notNull(),
-  balanceDue: decimal("balanceDue", { precision: 10, scale: 2 }).default("0").notNull(),
-  currency: varchar("currency", { length: 3 }).default("USD").notNull(),
-
-  // Notes
-  memberNotes: text("memberNotes"),            // member's special requests (visible to staff)
-  staffNotes: text("staffNotes"),              // internal staff notes (not visible to member)
-
-  // Notifications
+  totalAmount: decimal("totalAmount", { precision: 10, scale: 2 }).notNull().default("0"),
+  depositAmount: decimal("depositAmount", { precision: 10, scale: 2 }).notNull().default("0"),
+  depositPaid: decimal("depositPaid", { precision: 10, scale: 2 }).notNull().default("0"),
+  balanceDue: decimal("balanceDue", { precision: 10, scale: 2 }).notNull().default("0"),
+  currency: varchar("currency", { length: 3 }).notNull().default("USD"),
+  memberNotes: text("memberNotes"),
+  staffNotes: text("staffNotes"),
   confirmationSentAt: bigint("confirmationSentAt", { mode: "number" }),
   reminderSentAt: bigint("reminderSentAt", { mode: "number" }),
-
-  // Timestamps
   createdAt: bigint("createdAt", { mode: "number" }).notNull(),
   updatedAt: bigint("updatedAt", { mode: "number" }).notNull(),
-}, (t) => ({
-  bookingRefIdx: uniqueIndex("pb_ref_idx").on(t.bookingRef),
-  idempotencyIdx: uniqueIndex("pb_idempotency_idx").on(t.idempotencyKey),
-  memberIdx: index("pb_member_idx").on(t.memberId),
-  propertyIdx: index("pb_property_idx").on(t.propertyId),
-  dateIdx: index("pb_date_idx").on(t.startDate, t.endDate),
-  statusIdx: index("pb_status_idx").on(t.status),
-}));
+}, (t) => [
+  uniqueIndex("pb_ref_idx").on(t.bookingRef),
+  uniqueIndex("pb_idempotency_idx").on(t.idempotencyKey),
+  index("pb_member_idx").on(t.memberId),
+  index("pb_property_idx").on(t.propertyId),
+  index("pb_date_idx").on(t.startDate, t.endDate),
+  index("pb_status_idx").on(t.status),
+]);
 
 export type PropertyBooking = typeof propertyBookings.$inferSelect;
 export type InsertPropertyBooking = typeof propertyBookings.$inferInsert;
 
 // ─── Booking Add-Ons ──────────────────────────────────────────────────────────
 
-/**
- * Optional add-ons attached to a booking.
- * Examples: guide service, ATV rental, dog handler, cleaning service, meals.
- */
-export const bookingAddOns = mysqlTable("booking_add_ons", {
-  id: int("id").autoincrement().primaryKey(),
-  bookingId: int("bookingId").notNull(),       // FK → property_bookings
-
-  type: mysqlEnum("type", [
-    "guide",
-    "atv",
-    "dog_handler",
-    "cleaning",
-    "meals",
-    "ammo",
-    "gear_rental",
-    "photography",
-    "other",
-  ]).notNull(),
-
+export const bookingAddOns = pgTable("booking_add_ons", {
+  id: integer("id").generatedAlwaysAsIdentity().primaryKey(),
+  bookingId: integer("bookingId").notNull(),
+  type: bookingAddOnTypeEnum("type").notNull(),
   description: varchar("description", { length: 200 }),
-  quantity: int("quantity").default(1).notNull(),
-  unitPrice: decimal("unitPrice", { precision: 10, scale: 2 }).default("0").notNull(),
-  totalPrice: decimal("totalPrice", { precision: 10, scale: 2 }).default("0").notNull(),
-
+  quantity: integer("quantity").notNull().default(1),
+  unitPrice: decimal("unitPrice", { precision: 10, scale: 2 }).notNull().default("0"),
+  totalPrice: decimal("totalPrice", { precision: 10, scale: 2 }).notNull().default("0"),
   createdAt: bigint("createdAt", { mode: "number" }).notNull(),
-}, (t) => ({
-  bookingIdx: index("bao_booking_idx").on(t.bookingId),
-}));
+}, (t) => [
+  index("bao_booking_idx").on(t.bookingId),
+]);
 
 export type BookingAddOn = typeof bookingAddOns.$inferSelect;
 export type InsertBookingAddOn = typeof bookingAddOns.$inferInsert;
 
 // ─── Booking Payments ─────────────────────────────────────────────────────────
 
-/**
- * Payment records linked to bookings.
- * Supports deposits, balance payments, refunds, and adjustments.
- * Stripe-ready: stripePaymentIntentId field for future integration.
- */
-export const bookingPayments = mysqlTable("booking_payments", {
-  id: int("id").autoincrement().primaryKey(),
-  bookingId: int("bookingId").notNull(),       // FK → property_bookings
-
-  type: mysqlEnum("type", [
-    "deposit",
-    "balance",
-    "refund",
-    "adjustment",
-    "late_cancellation_fee",
-  ]).notNull(),
-
+export const bookingPayments = pgTable("booking_payments", {
+  id: integer("id").generatedAlwaysAsIdentity().primaryKey(),
+  bookingId: integer("bookingId").notNull(),
+  type: bookingPaymentTypeEnum("type").notNull(),
   amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
-  currency: varchar("currency", { length: 3 }).default("USD").notNull(),
-
-  method: mysqlEnum("method", [
-    "stripe",
-    "cash",
-    "check",
-    "comp",
-    "credit",
-    "other",
-  ]).notNull(),
-
-  // Stripe integration fields
+  currency: varchar("currency", { length: 3 }).notNull().default("USD"),
+  method: bookingPaymentMethodEnum("method").notNull(),
   stripePaymentIntentId: varchar("stripePaymentIntentId", { length: 200 }),
   stripeChargeId: varchar("stripeChargeId", { length: 200 }),
-
-  status: mysqlEnum("status", [
-    "pending",
-    "completed",
-    "failed",
-    "refunded",
-    "voided",
-  ]).default("completed").notNull(),
-
-  recordedByUserId: varchar("recordedByUserId", { length: 36 }),   // FK → users (staff who recorded it)
+  status: bookingPaymentStatusEnum("status").notNull().default("completed"),
+  recordedByUserId: varchar("recordedByUserId", { length: 36 }),
   notes: text("notes"),
-
   createdAt: bigint("createdAt", { mode: "number" }).notNull(),
-}, (t) => ({
-  bookingIdx: index("bpay_booking_idx").on(t.bookingId),
-}));
+}, (t) => [
+  index("bpay_booking_idx").on(t.bookingId),
+]);
 
 export type BookingPayment = typeof bookingPayments.$inferSelect;
 export type InsertBookingPayment = typeof bookingPayments.$inferInsert;
 
 // ─── Booking Audit Log ────────────────────────────────────────────────────────
 
-/**
- * Immutable append-only audit trail of every booking state change.
- * Never updated — only inserted. Provides complete history for disputes.
- */
-export const bookingAuditLog = mysqlTable("booking_audit_log", {
-  id: int("id").autoincrement().primaryKey(),
-  bookingId: int("bookingId").notNull(),       // FK → property_bookings
-
+export const bookingAuditLog = pgTable("booking_audit_log", {
+  id: integer("id").generatedAlwaysAsIdentity().primaryKey(),
+  bookingId: integer("bookingId").notNull(),
   action: varchar("action", { length: 80 }).notNull(),
-  // Examples: 'booking_created', 'status_changed', 'payment_recorded',
-  //           'notes_updated', 'approved', 'declined', 'cancelled', 'checked_in'
-
-  fromValue: text("fromValue"),                // Previous value (JSON-serialized)
-  toValue: text("toValue"),                    // New value (JSON-serialized)
-
-  performedByUserId: varchar("performedByUserId", { length: 36 }).notNull(),  // FK → users
+  fromValue: text("fromValue"),
+  toValue: text("toValue"),
+  performedByUserId: varchar("performedByUserId", { length: 36 }).notNull(),
   performedAt: bigint("performedAt", { mode: "number" }).notNull(),
-  ipAddress: varchar("ipAddress", { length: 45 }),        // IPv4 or IPv6
-
-  notes: text("notes"),                        // Optional human-readable description
-}, (t) => ({
-  bookingIdx: index("bal_booking_idx").on(t.bookingId),
-  performedAtIdx: index("bal_performed_at_idx").on(t.performedAt),
-}));
+  ipAddress: varchar("ipAddress", { length: 45 }),
+  notes: text("notes"),
+}, (t) => [
+  index("bal_booking_idx").on(t.bookingId),
+  index("bal_performed_at_idx").on(t.performedAt),
+]);
 
 export type BookingAuditLog = typeof bookingAuditLog.$inferSelect;
 export type InsertBookingAuditLog = typeof bookingAuditLog.$inferInsert;
 
 // ─── Harvest Reports ──────────────────────────────────────────────────────────
 
-/**
- * Post-hunt harvest reporting.
- * Required within harvestReportDays of the hunt date.
- * Failure to report blocks future bookings (configurable per property rules).
- */
-export const harvestReports = mysqlTable("harvest_reports", {
-  id: int("id").autoincrement().primaryKey(),
-  bookingId: int("bookingId").notNull(),       // FK → property_bookings
-  memberId: int("memberId").notNull(),         // FK → members
-  propertyId: int("propertyId").notNull(),     // FK → hunting_properties
-
+export const harvestReports = pgTable("harvest_reports", {
+  id: integer("id").generatedAlwaysAsIdentity().primaryKey(),
+  bookingId: integer("bookingId").notNull(),
+  memberId: integer("memberId").notNull(),
+  propertyId: integer("propertyId").notNull(),
   huntDate: date("huntDate").notNull(),
-
-  activity: mysqlEnum("activity", [
-    "deer", "duck", "turkey", "quail", "dove", "hog",
-    "bass", "catfish", "crappie", "mixed_hunt", "mixed_fish", "hunt_and_fish",
-  ]).notNull(),
-
-  // Harvest details
-  harvested: boolean("harvested").default(false).notNull(),
-  species: varchar("species", { length: 80 }),           // "Whitetail Buck", "Mallard", etc.
-  count: int("count").default(1),                        // number of animals harvested
+  activity: harvestActivityEnum("activity").notNull(),
+  harvested: boolean("harvested").notNull().default(false),
+  species: varchar("species", { length: 80 }),
+  count: integer("count").default(1),
   weightLbs: decimal("weightLbs", { precision: 6, scale: 2 }),
-  antlerPoints: int("antlerPoints"),                     // for deer
-  antlerSpread: decimal("antlerSpread", { precision: 5, scale: 2 }),  // inches
-
-  // Conditions
+  antlerPoints: integer("antlerPoints"),
+  antlerSpread: decimal("antlerSpread", { precision: 5, scale: 2 }),
   weatherConditions: varchar("weatherConditions", { length: 100 }),
-  temperatureF: int("temperatureF"),
-  windSpeed: int("windSpeed"),                           // mph
+  temperatureF: integer("temperatureF"),
+  windSpeed: integer("windSpeed"),
   windDirection: varchar("windDirection", { length: 10 }),
-
-  // Notes and media
   notes: text("notes"),
-  photoUrl: varchar("photoUrl", { length: 500 }),        // S3 URL
-
-  // Submission
+  photoUrl: varchar("photoUrl", { length: 500 }),
   submittedAt: bigint("submittedAt", { mode: "number" }).notNull(),
-  dueBy: bigint("dueBy", { mode: "number" }).notNull(),  // deadline for submission
+  dueBy: bigint("dueBy", { mode: "number" }).notNull(),
   isOverdue: boolean("isOverdue").default(false),
-
   createdAt: bigint("createdAt", { mode: "number" }).notNull(),
-}, (t) => ({
-  bookingIdx: index("hr_booking_idx").on(t.bookingId),
-  memberIdx: index("hr_member_idx").on(t.memberId),
-  propertyIdx: index("hr_property_idx").on(t.propertyId),
-}));
+}, (t) => [
+  index("hr_booking_idx").on(t.bookingId),
+  index("hr_member_idx").on(t.memberId),
+  index("hr_property_idx").on(t.propertyId),
+]);
 
 export type HarvestReport = typeof harvestReports.$inferSelect;
 export type InsertHarvestReport = typeof harvestReports.$inferInsert;
 
 // ─── Property Blocked Dates ───────────────────────────────────────────────────
 
-/**
- * Admin-set blocked dates per property (or all properties).
- * Used for maintenance, private events, wildlife management closures, etc.
- */
-export const propertyBlockedDates = mysqlTable("property_blocked_dates", {
-  id: int("id").autoincrement().primaryKey(),
-  propertyId: int("propertyId"),               // FK → hunting_properties (null = all properties)
-
+export const propertyBlockedDates = pgTable("property_blocked_dates", {
+  id: integer("id").generatedAlwaysAsIdentity().primaryKey(),
+  propertyId: integer("propertyId"),
   startDate: date("startDate").notNull(),
   endDate: date("endDate").notNull(),
-
-  reason: mysqlEnum("reason", [
-    "maintenance",
-    "private_event",
-    "wildlife_management",
-    "weather",
-    "staff_use",
-    "lease_restriction",
-    "other",
-  ]).default("other"),
-
+  reason: propertyBlockedReasonEnum("reason").default("other"),
   reasonNotes: varchar("reasonNotes", { length: 300 }),
-  isPubliclyVisible: boolean("isPubliclyVisible").default(true),  // show as "unavailable" on public calendar
-
-  createdByUserId: varchar("createdByUserId", { length: 36 }).notNull(),  // FK → users
+  isPubliclyVisible: boolean("isPubliclyVisible").default(true),
+  createdByUserId: varchar("createdByUserId", { length: 36 }).notNull(),
   createdAt: bigint("createdAt", { mode: "number" }).notNull(),
-}, (t) => ({
-  propertyDateIdx: index("pbd_property_date_idx").on(t.propertyId, t.startDate),
-}));
+}, (t) => [
+  index("pbd_property_date_idx").on(t.propertyId, t.startDate),
+]);
 
 export type PropertyBlockedDate = typeof propertyBlockedDates.$inferSelect;
 export type InsertPropertyBlockedDate = typeof propertyBlockedDates.$inferInsert;
 
 // ─── Booking Waitlist ─────────────────────────────────────────────────────────
 
-/**
- * Waitlist entries when a property is full on a requested date.
- * When a cancellation opens a slot, waitlisted members are notified
- * and have a configurable window (default 24 hours) to claim the spot.
- */
-export const bookingWaitlist = mysqlTable("booking_waitlist", {
-  id: int("id").autoincrement().primaryKey(),
-  memberId: int("memberId").notNull(),         // FK → members
-  userId: varchar("userId", { length: 36 }).notNull(),             // FK → users
-  propertyId: int("propertyId").notNull(),     // FK → hunting_properties
-
+export const bookingWaitlist = pgTable("booking_waitlist", {
+  id: integer("id").generatedAlwaysAsIdentity().primaryKey(),
+  memberId: integer("memberId").notNull(),
+  userId: varchar("userId", { length: 36 }).notNull(),
+  propertyId: integer("propertyId").notNull(),
   requestedDate: date("requestedDate").notNull(),
-  partySize: int("partySize").default(1).notNull(),
-  activity: mysqlEnum("activity", [
-    "deer", "duck", "turkey", "quail", "dove", "hog",
-    "bass", "catfish", "crappie", "mixed_hunt", "mixed_fish", "hunt_and_fish",
-  ]),
-
-  status: mysqlEnum("status", [
-    "waiting",    // on the waitlist
-    "notified",   // notified of an opening, awaiting response
-    "booked",     // successfully booked after notification
-    "expired",    // notification window expired without booking
-    "cancelled",  // member removed themselves from waitlist
-  ]).default("waiting").notNull(),
-
-  // Notification tracking
+  partySize: integer("partySize").notNull().default(1),
+  activity: waitlistActivityEnum("activity"),
+  status: waitlistStatusEnum("status").notNull().default("waiting"),
   notifiedAt: bigint("notifiedAt", { mode: "number" }),
-  expiresAt: bigint("expiresAt", { mode: "number" }),    // 24 hours after notification
+  expiresAt: bigint("expiresAt", { mode: "number" }),
   bookedAt: bigint("bookedAt", { mode: "number" }),
-
   memberNotes: text("memberNotes"),
   createdAt: bigint("createdAt", { mode: "number" }).notNull(),
-}, (t) => ({
-  memberPropertyIdx: index("bwl_member_property_idx").on(t.memberId, t.propertyId),
-  statusIdx: index("bwl_status_idx").on(t.status),
-}));
+}, (t) => [
+  index("bwl_member_property_idx").on(t.memberId, t.propertyId),
+  index("bwl_status_idx").on(t.status),
+]);
 
 export type BookingWaitlist = typeof bookingWaitlist.$inferSelect;
 export type InsertBookingWaitlist = typeof bookingWaitlist.$inferInsert;
 
 // ─── Property Images ──────────────────────────────────────────────────────────
 
-/**
- * Photo gallery per property (stored in S3).
- */
-export const propertyImages = mysqlTable("property_images", {
-  id: int("id").autoincrement().primaryKey(),
-  propertyId: int("propertyId").notNull(),     // FK → hunting_properties
-
-  url: varchar("url", { length: 500 }).notNull(),     // S3 URL
-  storageKey: varchar("storageKey", { length: 300 }), // S3 key for deletion
+export const propertyImages = pgTable("property_images", {
+  id: integer("id").generatedAlwaysAsIdentity().primaryKey(),
+  propertyId: integer("propertyId").notNull(),
+  url: varchar("url", { length: 500 }).notNull(),
+  storageKey: varchar("storageKey", { length: 300 }),
   altText: varchar("altText", { length: 200 }),
   caption: varchar("caption", { length: 300 }),
-
-  type: mysqlEnum("type", [
-    "cover",       // hero/cover image
-    "gallery",     // gallery image
-    "map",         // property map
-    "harvest",     // harvest photo
-    "amenity",     // amenity photo
-  ]).default("gallery").notNull(),
-
-  sortOrder: int("sortOrder").default(0),
+  type: propertyImageTypeEnum("type").notNull().default("gallery"),
+  sortOrder: integer("sortOrder").default(0),
   active: boolean("active").default(true),
-
   uploadedByUserId: varchar("uploadedByUserId", { length: 36 }),
   createdAt: bigint("createdAt", { mode: "number" }).notNull(),
-}, (t) => ({
-  propertyIdx: index("pi_property_idx").on(t.propertyId),
-}));
+}, (t) => [
+  index("pi_property_idx").on(t.propertyId),
+]);
 
 export type PropertyImage = typeof propertyImages.$inferSelect;
 export type InsertPropertyImage = typeof propertyImages.$inferInsert;
 
 // ─── Property Amenities ───────────────────────────────────────────────────────
 
-/**
- * Amenity tags per property.
- * Allows flexible tagging without schema changes.
- */
-export const propertyAmenities = mysqlTable("property_amenities", {
-  id: int("id").autoincrement().primaryKey(),
-  propertyId: int("propertyId").notNull(),     // FK → hunting_properties
-
-  amenity: mysqlEnum("amenity", [
-    "heated_blind",
-    "atv_access",
-    "water_access",
-    "electricity",
-    "cell_service",
-    "wifi",
-    "restroom",
-    "food_plot",
-    "feeder",
-    "trail_camera",
-    "boat_launch",
-    "dog_kennel",
-    "cleaning_station",
-    "storage",
-    "parking",
-    "handicap_accessible",
-  ]).notNull(),
-
+export const propertyAmenities = pgTable("property_amenities", {
+  id: integer("id").generatedAlwaysAsIdentity().primaryKey(),
+  propertyId: integer("propertyId").notNull(),
+  amenity: propertyAmenityEnum("amenity").notNull(),
   notes: varchar("notes", { length: 200 }),
-}, (t) => ({
-  propertyIdx: index("pa_property_idx").on(t.propertyId),
-}));
+}, (t) => [
+  index("pa_property_idx").on(t.propertyId),
+]);
 
 export type PropertyAmenity = typeof propertyAmenities.$inferSelect;
 export type InsertPropertyAmenity = typeof propertyAmenities.$inferInsert;

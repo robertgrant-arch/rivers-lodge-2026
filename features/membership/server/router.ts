@@ -7,7 +7,7 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { eq, desc, and, or, like, sql, lt } from "drizzle-orm";
-import { drizzle } from "drizzle-orm/mysql2";
+import { drizzle } from "drizzle-orm/node-postgres";
 import { publicProcedure, protectedProcedure, router } from "../../_core/server/trpc";
 import { notifyOwner } from "../../_core/server/notification";
 import { verifyCaptcha } from "@core/server/captcha";
@@ -212,7 +212,7 @@ export const membershipRouter = router({
         joinDate: input.joinDate ?? new Date().toISOString().split("T")[0],
         renewalDate: input.renewalDate ?? null,
         notes: input.notes ?? null,
-      } as any).$returningId();
+      } as any).returning({ id: members.id });
       await logAudit({
         actingUserId: ctx.user.id,
         actingUserName: ctx.user.email ?? "Staff",

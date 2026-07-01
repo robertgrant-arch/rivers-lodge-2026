@@ -1,19 +1,19 @@
 import {
-  int,
-  mysqlEnum,
-  mysqlTable,
+  integer,
+  pgEnum,
+  pgTable,
   text,
   timestamp,
   varchar,
-} from "drizzle-orm/mysql-core";
+} from "drizzle-orm/pg-core";
 
-// ─── Seasonal Updates ─────────────────────────────────────────────────────────
+export const updateCategoryEnum = pgEnum("update_category", ["whitetail", "waterfowl", "turkey", "fishing", "general"]);
 
-export const seasonalUpdates = mysqlTable("seasonal_updates", {
-  id: int("id").autoincrement().primaryKey(),
+export const seasonalUpdates = pgTable("seasonal_updates", {
+  id: integer("id").generatedAlwaysAsIdentity().primaryKey(),
   title: varchar("title", { length: 255 }).notNull(),
   body: text("body").notNull(),
-  category: mysqlEnum("category", ["whitetail", "waterfowl", "turkey", "fishing", "general"]).default("general").notNull(),
+  category: updateCategoryEnum("category").notNull().default("general"),
   publishedAt: timestamp("publishedAt").defaultNow().notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });

@@ -4,32 +4,26 @@
  * Also ensures the owner has a linked member record (founding tier).
  * Run with: node scripts/seed-seasons.mjs
  */
-import { createConnection } from "mysql2/promise";
+import pg from "pg";
 import * as dotenv from "dotenv";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
 
+const { Client } = pg;
 const __dirname = dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: join(__dirname, "../.env") });
 
 const DB_URL = process.env.DATABASE_URL;
 if (!DB_URL) { console.error("DATABASE_URL not set"); process.exit(1); }
 
-const url = new URL(DB_URL);
-const conn = await createConnection({
-  host: url.hostname,
-  port: parseInt(url.port || "3306"),
-  user: url.username,
-  password: url.password,
-  database: url.pathname.slice(1),
-  ssl: { rejectUnauthorized: false },
-});
+const conn = new Client({ connectionString: DB_URL });
+await conn.connect();
 
-const now = Date.now();
+const now = new Date();
 
 // ─── 1. Fetch current property IDs ───────────────────────────────────────────
-const [properties] = await conn.execute(
-  "SELECT id, name, primaryActivity FROM hunting_properties ORDER BY id"
+const { rows: properties } = await conn.query(
+  "SELECT id, name, \"primaryActivity\" FROM hunting_properties ORDER BY id"
 );
 
 if (properties.length === 0) {
@@ -84,21 +78,22 @@ for (const prop of properties) {
   }
 
   // Check if seasons already exist for this property
-  const [[existing]] = await conn.execute(
-    "SELECT COUNT(*) as cnt FROM property_seasons WHERE propertyId = ?",
+  const { rows: existingRows } = await conn.query(
+    "SELECT COUNT(*) as cnt FROM property_seasons WHERE \"propertyId\" = $1",
     [prop.id]
   );
+  const existing = existingRows[0];
 
-  if (existing.cnt > 0) {
+  if (parseInt(existing.cnt) > 0) {
     console.log(`  Skipping ${prop.name} — ${existing.cnt} season(s) already exist`);
     continue;
   }
 
   for (const season of seasons) {
-    await conn.execute(
+    await conn.query(
       `INSERT INTO property_seasons
-       (propertyId, name, activity, startDate, endDate, active, createdAt)
-       VALUES (?, ?, ?, ?, ?, 1, ?)`,
+       ("propertyId", name, activity, "startDate", "endDate", active, "createdAt")
+       VALUES ($1, $2, $3, $4, $5, true, $6)`,
       [prop.id, season.name, season.activity, season.startDate, season.endDate, now]
     );
     console.log(`  Seeded season: ${prop.name} → "${season.name}" (${season.startDate} – ${season.endDate})`);
@@ -124,11 +119,11 @@ for (const prop of properties) {
   const rules = rulesByActivity[prop.primaryActivity];
   if (!rules) continue;
 
-  await conn.execute(
+  await conn.query(
     `UPDATE property_booking_rules
-     SET advanceBookingDays = ?, maxConsecutiveDays = ?, maxDaysPerSeason = ?,
-         maxGuestsPerBooking = ?, updatedAt = ?
-     WHERE propertyId = ?`,
+     SET "advanceBookingDays" = $1, "maxConsecutiveDays" = $2, "maxDaysPerSeason" = $3,
+         "maxGuestsPerBooking" = $4, "updatedAt" = $5
+     WHERE "propertyId" = $6`,
     [rules.advanceBookingDays, rules.maxConsecutiveDays, rules.maxDaysPerSeason,
      rules.maxGuestsPerBooking, now, prop.id]
   );
@@ -137,22 +132,25 @@ for (const prop of properties) {
 
 // ─── 5. Ensure owner has a member record ─────────────────────────────────────
 console.log("\nChecking owner member record...");
-const [[ownerUser]] = await conn.execute(
-  "SELECT id, name FROM users ORDER BY id ASC LIMIT 1"
-).catch(() => [[null]]);
+let ownerUser = null;
+try {
+  const { rows } = await conn.query("SELECT id, name FROM users ORDER BY id ASC LIMIT 1");
+  ownerUser = rows[0] ?? null;
+} catch (_) {}
 
 if (ownerUser) {
-  const [[existingMember]] = await conn.execute(
-    "SELECT id, memberNumber, tier FROM members WHERE userId = ? LIMIT 1",
+  const { rows: memberRows } = await conn.query(
+    "SELECT id, \"memberNumber\", tier FROM members WHERE \"userId\" = $1 LIMIT 1",
     [ownerUser.id]
   );
+  const existingMember = memberRows[0];
 
   if (!existingMember) {
     const year = new Date().getFullYear();
     const memberNumber = `RL-${year}-0001`;
-    await conn.execute(
-      `INSERT INTO members (userId, memberNumber, tier, active, joinDate)
-       VALUES (?, ?, ?, 1, ?)`,
+    await conn.query(
+      `INSERT INTO members ("userId", "memberNumber", tier, active, "joinDate")
+       VALUES ($1, $2, $3, true, $4)`,
       [ownerUser.id, memberNumber, "founding", new Date().toISOString().split("T")[0]]
     );
     console.log(`  Created member record for ${ownerUser.name} (userId=${ownerUser.id}): ${memberNumber}, founding tier`);

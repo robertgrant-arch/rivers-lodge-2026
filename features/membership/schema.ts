@@ -1,18 +1,19 @@
 import {
   boolean,
   date,
-  int,
-  mysqlEnum,
-  mysqlTable,
+  integer,
+  pgEnum,
+  pgTable,
   text,
   timestamp,
   varchar,
-} from "drizzle-orm/mysql-core";
+} from "drizzle-orm/pg-core";
 
-// ─── Membership Applications ──────────────────────────────────────────────────
+export const applicationStatusEnum = pgEnum("application_status", ["pending", "approved", "declined"]);
+export const memberTierEnum = pgEnum("member_tier", ["standard", "premier", "founding"]);
 
-export const membershipApplications = mysqlTable("membership_applications", {
-  id: int("id").autoincrement().primaryKey(),
+export const membershipApplications = pgTable("membership_applications", {
+  id: integer("id").generatedAlwaysAsIdentity().primaryKey(),
   name: varchar("name", { length: 255 }).notNull(),
   email: varchar("email", { length: 320 }).notNull(),
   phone: varchar("phone", { length: 50 }),
@@ -21,26 +22,24 @@ export const membershipApplications = mysqlTable("membership_applications", {
   interests: text("interests"),
   referral: text("referral"),
   message: text("message"),
-  status: mysqlEnum("status", ["pending", "approved", "declined"]).default("pending").notNull(),
+  status: applicationStatusEnum("status").notNull().default("pending"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
 export type MembershipApplication = typeof membershipApplications.$inferSelect;
 export type InsertMembershipApplication = typeof membershipApplications.$inferInsert;
 
-// ─── Members ──────────────────────────────────────────────────────────────────
-
-export const members = mysqlTable("members", {
-  id: int("id").autoincrement().primaryKey(),
+export const members = pgTable("members", {
+  id: integer("id").generatedAlwaysAsIdentity().primaryKey(),
   userId: varchar("userId", { length: 36 }).notNull(),
   memberNumber: varchar("memberNumber", { length: 50 }),
-  tier: mysqlEnum("tier", ["standard", "premier", "founding"]).default("standard").notNull(),
+  tier: memberTierEnum("tier").notNull().default("standard"),
   joinDate: date("joinDate"),
   renewalDate: date("renewalDate"),
-  active: boolean("active").default(true).notNull(),
+  active: boolean("active").notNull().default(true),
   notes: text("notes"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().$onUpdate(() => new Date()).notNull(),
 });
 
 export type Member = typeof members.$inferSelect;

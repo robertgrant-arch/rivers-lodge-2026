@@ -109,9 +109,9 @@ describe("inquiries.submit — captcha gate", () => {
     const inserts: string[] = [];
     const mockDb = {
       transaction: async (cb: (tx: any) => Promise<any>) => cb({
-        insert: () => ({ values: () => Promise.resolve([{ insertId: 1 }]) }),
+        insert: () => ({ values: () => ({ returning: () => Promise.resolve([{ id: 1 }]) }) }),
       }),
-      insert: () => ({ values: () => { inserts.push("lead"); return Promise.resolve([{ insertId: 1 }]); } }),
+      insert: () => ({ values: () => { inserts.push("lead"); return { returning: () => Promise.resolve([{ id: 1 }]) }; } }),
     };
     const { getDb } = await import("@core/server/db");
     vi.mocked(getDb).mockResolvedValue(mockDb as any);

@@ -9,11 +9,11 @@ import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 import { TRPCError } from "@trpc/server";
 import type { TrpcContext } from "@core/server/context";
 
-// ─── Mock the DB pool (no real MySQL needed) ──────────────────────────────────
+// ─── Mock the DB pool (no real PostgreSQL needed) ────────────────────────────
 // The admin router uses its own getDb() (drizzle(DATABASE_URL)).  We stub the
-// DATABASE_URL env var and mock drizzle-orm/mysql2 so no connection is made.
+// DATABASE_URL env var and mock drizzle-orm/node-postgres so no connection is made.
 
-vi.mock("drizzle-orm/mysql2", () => ({
+vi.mock("drizzle-orm/node-postgres", () => ({
   drizzle: vi.fn(() => mockDb),
 }));
 
@@ -71,7 +71,7 @@ function adminCtx(): TrpcContext {
 
 describe("portal.dashboard.dashboardSummary", () => {
   beforeEach(() => {
-    vi.stubEnv("DATABASE_URL", "mysql://user:pass@localhost:3306/testdb");
+    vi.stubEnv("DATABASE_URL", "postgresql://user:pass@localhost:5432/testdb");
     vi.clearAllMocks();
 
     // Default: all selects return empty arrays
@@ -169,7 +169,7 @@ describe("portal.dashboard.dashboardSummary", () => {
 
 describe("portal.dashboard.cmsTab", () => {
   beforeEach(() => {
-    vi.stubEnv("DATABASE_URL", "mysql://user:pass@localhost:3306/testdb");
+    vi.stubEnv("DATABASE_URL", "postgresql://user:pass@localhost:5432/testdb");
     vi.clearAllMocks();
     mockSelect.mockReturnValue(buildSelectChain([]));
   });

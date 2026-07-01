@@ -1,6 +1,6 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 // Central schema barrel — re-exports all feature schema tables.
-// No mysqlTable definitions live here.
+// No pgTable definitions live here (schema is split across feature modules).
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export * from "@features/auth/schema";

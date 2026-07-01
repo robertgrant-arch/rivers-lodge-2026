@@ -3,13 +3,13 @@
  * Seeds all canonical property data into the CMS tables.
  * Run with: node seed-cms.mjs
  */
-import mysql from "mysql2/promise";
+import pg from "pg";
 import * as dotenv from "dotenv";
 dotenv.config();
 
-// Use raw mysql2 connection — drizzle db.execute() does not support ? placeholders
-const connection = await mysql.createConnection(process.env.DATABASE_URL);
-const db = { execute: (sql, params) => connection.execute(sql, params) };
+const { Client } = pg;
+const client = new Client({ connectionString: process.env.DATABASE_URL });
+await client.connect();
 
 // ─── CDN URL helpers ──────────────────────────────────────────────────────────
 const CDN = {
@@ -87,9 +87,9 @@ const amenities = [
 ];
 
 for (const a of amenities) {
-  await db.execute(
-    `INSERT INTO cms_amenities (slug, label, icon, category, sortOrder, active) VALUES (?, ?, ?, ?, ?, 1)
-     ON DUPLICATE KEY UPDATE label=VALUES(label), icon=VALUES(icon), category=VALUES(category), sortOrder=VALUES(sortOrder)`,
+  await client.query(
+    `INSERT INTO cms_amenities (slug, label, icon, category, "sortOrder", active) VALUES ($1, $2, $3, $4, $5, true)
+     ON CONFLICT (slug) DO UPDATE SET label=EXCLUDED.label, icon=EXCLUDED.icon, category=EXCLUDED.category, "sortOrder"=EXCLUDED."sortOrder"`,
     [a.slug, a.label, a.icon, a.category, a.sortOrder]
   );
 }
@@ -206,23 +206,23 @@ const lodgingUnits = [
 ];
 
 for (const unit of lodgingUnits) {
-  await db.execute(
-    `INSERT INTO cms_lodging_units 
-      (slug, name, shortDescription, longDescription, squareFootage, bedrooms, bathrooms, maxGuests,
-       heroImage, galleryImages, amenityIds, features, priceNote, availableForWeddings, availableForMembers,
-       sortOrder, status, seoTitle, seoDescription)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-     ON DUPLICATE KEY UPDATE
-       name=VALUES(name), shortDescription=VALUES(shortDescription), longDescription=VALUES(longDescription),
-       squareFootage=VALUES(squareFootage), bedrooms=VALUES(bedrooms), bathrooms=VALUES(bathrooms),
-       maxGuests=VALUES(maxGuests), heroImage=VALUES(heroImage), galleryImages=VALUES(galleryImages),
-       amenityIds=VALUES(amenityIds), features=VALUES(features), priceNote=VALUES(priceNote),
-       availableForWeddings=VALUES(availableForWeddings), availableForMembers=VALUES(availableForMembers),
-       sortOrder=VALUES(sortOrder), status=VALUES(status), seoTitle=VALUES(seoTitle), seoDescription=VALUES(seoDescription)`,
+  await client.query(
+    `INSERT INTO cms_lodging_units
+      (slug, name, "shortDescription", "longDescription", "squareFootage", bedrooms, bathrooms, "maxGuests",
+       "heroImage", "galleryImages", "amenityIds", features, "priceNote", "availableForWeddings", "availableForMembers",
+       "sortOrder", status, "seoTitle", "seoDescription")
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
+     ON CONFLICT (slug) DO UPDATE SET
+       name=EXCLUDED.name, "shortDescription"=EXCLUDED."shortDescription", "longDescription"=EXCLUDED."longDescription",
+       "squareFootage"=EXCLUDED."squareFootage", bedrooms=EXCLUDED.bedrooms, bathrooms=EXCLUDED.bathrooms,
+       "maxGuests"=EXCLUDED."maxGuests", "heroImage"=EXCLUDED."heroImage", "galleryImages"=EXCLUDED."galleryImages",
+       "amenityIds"=EXCLUDED."amenityIds", features=EXCLUDED.features, "priceNote"=EXCLUDED."priceNote",
+       "availableForWeddings"=EXCLUDED."availableForWeddings", "availableForMembers"=EXCLUDED."availableForMembers",
+       "sortOrder"=EXCLUDED."sortOrder", status=EXCLUDED.status, "seoTitle"=EXCLUDED."seoTitle", "seoDescription"=EXCLUDED."seoDescription"`,
     [unit.slug, unit.name, unit.shortDescription, unit.longDescription, unit.squareFootage,
      unit.bedrooms, unit.bathrooms, unit.maxGuests, unit.heroImage, unit.galleryImages,
-     unit.amenityIds, unit.features, unit.priceNote, unit.availableForWeddings ? 1 : 0,
-     unit.availableForMembers ? 1 : 0, unit.sortOrder, unit.status, unit.seoTitle, unit.seoDescription]
+     unit.amenityIds, unit.features, unit.priceNote, unit.availableForWeddings,
+     unit.availableForMembers, unit.sortOrder, unit.status, unit.seoTitle, unit.seoDescription]
   );
 }
 console.log(`  ✓ ${lodgingUnits.length} lodging units seeded`);
@@ -323,18 +323,18 @@ const eventSpaces = [
 ];
 
 for (const space of eventSpaces) {
-  await db.execute(
+  await client.query(
     `INSERT INTO cms_event_spaces
-      (slug, name, division, shortDescription, longDescription, capacitySeated, capacityReception,
-       heroImage, galleryImages, amenityIds, features, indoorOutdoor, sortOrder, status, seoTitle, seoDescription)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-     ON DUPLICATE KEY UPDATE
-       name=VALUES(name), division=VALUES(division), shortDescription=VALUES(shortDescription),
-       longDescription=VALUES(longDescription), capacitySeated=VALUES(capacitySeated),
-       capacityReception=VALUES(capacityReception), heroImage=VALUES(heroImage),
-       galleryImages=VALUES(galleryImages), amenityIds=VALUES(amenityIds), features=VALUES(features),
-       indoorOutdoor=VALUES(indoorOutdoor), sortOrder=VALUES(sortOrder), status=VALUES(status),
-       seoTitle=VALUES(seoTitle), seoDescription=VALUES(seoDescription)`,
+      (slug, name, division, "shortDescription", "longDescription", "capacitySeated", "capacityReception",
+       "heroImage", "galleryImages", "amenityIds", features, "indoorOutdoor", "sortOrder", status, "seoTitle", "seoDescription")
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+     ON CONFLICT (slug) DO UPDATE SET
+       name=EXCLUDED.name, division=EXCLUDED.division, "shortDescription"=EXCLUDED."shortDescription",
+       "longDescription"=EXCLUDED."longDescription", "capacitySeated"=EXCLUDED."capacitySeated",
+       "capacityReception"=EXCLUDED."capacityReception", "heroImage"=EXCLUDED."heroImage",
+       "galleryImages"=EXCLUDED."galleryImages", "amenityIds"=EXCLUDED."amenityIds", features=EXCLUDED.features,
+       "indoorOutdoor"=EXCLUDED."indoorOutdoor", "sortOrder"=EXCLUDED."sortOrder", status=EXCLUDED.status,
+       "seoTitle"=EXCLUDED."seoTitle", "seoDescription"=EXCLUDED."seoDescription"`,
     [space.slug, space.name, space.division, space.shortDescription, space.longDescription,
      space.capacitySeated, space.capacityReception, space.heroImage, space.galleryImages,
      space.amenityIds, space.features, space.indoorOutdoor, space.sortOrder, space.status,
@@ -373,19 +373,19 @@ const packages = [
 ];
 
 for (const pkg of packages) {
-  await db.execute(
+  await client.query(
     `INSERT INTO cms_packages
-      (slug, name, division, tagline, description, includes, startingPrice, priceNote,
-       heroImage, spaceIds, lodgingIds, featured, sortOrder, status)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-     ON DUPLICATE KEY UPDATE
-       name=VALUES(name), division=VALUES(division), tagline=VALUES(tagline),
-       description=VALUES(description), includes=VALUES(includes), startingPrice=VALUES(startingPrice),
-       priceNote=VALUES(priceNote), heroImage=VALUES(heroImage), spaceIds=VALUES(spaceIds),
-       lodgingIds=VALUES(lodgingIds), featured=VALUES(featured), sortOrder=VALUES(sortOrder), status=VALUES(status)`,
+      (slug, name, division, tagline, description, includes, "startingPrice", "priceNote",
+       "heroImage", "spaceIds", "lodgingIds", featured, "sortOrder", status)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+     ON CONFLICT (slug) DO UPDATE SET
+       name=EXCLUDED.name, division=EXCLUDED.division, tagline=EXCLUDED.tagline,
+       description=EXCLUDED.description, includes=EXCLUDED.includes, "startingPrice"=EXCLUDED."startingPrice",
+       "priceNote"=EXCLUDED."priceNote", "heroImage"=EXCLUDED."heroImage", "spaceIds"=EXCLUDED."spaceIds",
+       "lodgingIds"=EXCLUDED."lodgingIds", featured=EXCLUDED.featured, "sortOrder"=EXCLUDED."sortOrder", status=EXCLUDED.status`,
     [pkg.slug, pkg.name, pkg.division, pkg.tagline, pkg.description, pkg.includes,
      pkg.startingPrice, pkg.priceNote, pkg.heroImage, pkg.spaceIds, pkg.lodgingIds,
-     pkg.featured ? 1 : 0, pkg.sortOrder, pkg.status]
+     pkg.featured, pkg.sortOrder, pkg.status]
   );
 }
 console.log(`  ✓ ${packages.length} packages seeded`);
@@ -401,11 +401,11 @@ const galleries = [
 ];
 
 for (const g of galleries) {
-  await db.execute(
-    `INSERT INTO cms_galleries (slug, name, category, description, coverImage, sortOrder, status)
-     VALUES (?, ?, ?, ?, ?, ?, ?)
-     ON DUPLICATE KEY UPDATE name=VALUES(name), description=VALUES(description),
-       coverImage=VALUES(coverImage), sortOrder=VALUES(sortOrder), status=VALUES(status)`,
+  await client.query(
+    `INSERT INTO cms_galleries (slug, name, category, description, "coverImage", "sortOrder", status)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)
+     ON CONFLICT (slug) DO UPDATE SET name=EXCLUDED.name, description=EXCLUDED.description,
+       "coverImage"=EXCLUDED."coverImage", "sortOrder"=EXCLUDED."sortOrder", status=EXCLUDED.status`,
     [g.slug, g.name, g.category, g.description, g.coverImage, g.sortOrder, g.status]
   );
 }
@@ -458,10 +458,10 @@ const galleryImageData = [
 ];
 
 // Clear existing gallery images and re-seed
-await db.execute(`DELETE FROM cms_gallery_images`);
+await client.query(`DELETE FROM cms_gallery_images`);
 for (const img of galleryImageData) {
-  await db.execute(
-    `INSERT INTO cms_gallery_images (galleryId, url, altText, sortOrder) VALUES (?, ?, ?, ?)`,
+  await client.query(
+    `INSERT INTO cms_gallery_images ("galleryId", url, "altText", "sortOrder") VALUES ($1, $2, $3, $4)`,
     [img.galleryId, img.url, img.altText, img.sortOrder]
   );
 }
@@ -503,10 +503,10 @@ const testimonials = [
 ];
 
 for (const t of testimonials) {
-  await db.execute(
-    `INSERT INTO cms_testimonials (authorName, authorTitle, quote, rating, division, featured, sortOrder, status)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-    [t.authorName, t.authorTitle, t.quote, t.rating, t.division, t.featured ? 1 : 0, t.sortOrder, t.status]
+  await client.query(
+    `INSERT INTO cms_testimonials ("authorName", "authorTitle", quote, rating, division, featured, "sortOrder", status)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+    [t.authorName, t.authorTitle, t.quote, t.rating, t.division, t.featured, t.sortOrder, t.status]
   );
 }
 console.log(`  ✓ ${testimonials.length} testimonials seeded`);
@@ -552,8 +552,8 @@ const faqs = [
 ];
 
 for (const faq of faqs) {
-  await db.execute(
-    `INSERT INTO cms_faqs (question, answer, division, sortOrder, status) VALUES (?, ?, ?, ?, ?)`,
+  await client.query(
+    `INSERT INTO cms_faqs (question, answer, division, "sortOrder", status) VALUES ($1, $2, $3, $4, $5)`,
     [faq.question, faq.answer, faq.division, faq.sortOrder, faq.status]
   );
 }
@@ -605,13 +605,13 @@ const contactRoutes = [
 ];
 
 for (const route of contactRoutes) {
-  await db.execute(
-    `INSERT INTO cms_contact_routes (inquiryType, label, autoReplySubject, autoReplyBody, notifyOwner, active)
-     VALUES (?, ?, ?, ?, ?, ?)
-     ON DUPLICATE KEY UPDATE label=VALUES(label), autoReplySubject=VALUES(autoReplySubject),
-       autoReplyBody=VALUES(autoReplyBody), notifyOwner=VALUES(notifyOwner), active=VALUES(active)`,
+  await client.query(
+    `INSERT INTO cms_contact_routes ("inquiryType", label, "autoReplySubject", "autoReplyBody", "notifyOwner", active)
+     VALUES ($1, $2, $3, $4, $5, $6)
+     ON CONFLICT ("inquiryType") DO UPDATE SET label=EXCLUDED.label, "autoReplySubject"=EXCLUDED."autoReplySubject",
+       "autoReplyBody"=EXCLUDED."autoReplyBody", "notifyOwner"=EXCLUDED."notifyOwner", active=EXCLUDED.active`,
     [route.inquiryType, route.label, route.autoReplySubject, route.autoReplyBody,
-     route.notifyOwner ? 1 : 0, route.active ? 1 : 0]
+     route.notifyOwner, route.active]
   );
 }
 console.log(`  ✓ ${contactRoutes.length} contact routes seeded`);
@@ -697,9 +697,9 @@ const singletons = [
 ];
 
 for (const s of singletons) {
-  await db.execute(
-    `INSERT INTO cms_singletons (\`key\`, label, data, status) VALUES (?, ?, ?, ?)
-     ON DUPLICATE KEY UPDATE label=VALUES(label), data=VALUES(data), status=VALUES(status)`,
+  await client.query(
+    `INSERT INTO cms_singletons (key, label, data, status) VALUES ($1, $2, $3, $4)
+     ON CONFLICT (key) DO UPDATE SET label=EXCLUDED.label, data=EXCLUDED.data, status=EXCLUDED.status`,
     [s.key, s.label, s.data, s.status]
   );
 }
@@ -753,17 +753,17 @@ const memberContent = [
 ];
 
 for (const mc of memberContent) {
-  await db.execute(
+  await client.query(
     `INSERT INTO cms_member_content
-      (title, slug, contentType, body, season, species, startDate, endDate, tierAccess, featured, status, publishedAt)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-     ON DUPLICATE KEY UPDATE title=VALUES(title), body=VALUES(body), season=VALUES(season),
-       startDate=VALUES(startDate), endDate=VALUES(endDate), status=VALUES(status)`,
+      (title, slug, "contentType", body, season, species, "startDate", "endDate", "tierAccess", featured, status, "publishedAt")
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+     ON CONFLICT (slug) DO UPDATE SET title=EXCLUDED.title, body=EXCLUDED.body, season=EXCLUDED.season,
+       "startDate"=EXCLUDED."startDate", "endDate"=EXCLUDED."endDate", status=EXCLUDED.status`,
     [mc.title, mc.slug, mc.contentType, mc.body, mc.season, mc.species,
-     mc.startDate, mc.endDate, mc.tierAccess, mc.featured ? 1 : 0, mc.status, mc.publishedAt]
+     mc.startDate, mc.endDate, mc.tierAccess, mc.featured, mc.status, mc.publishedAt]
   );
 }
 console.log(`  ✓ ${memberContent.length} member content records seeded`);
 
 console.log("\n✅ All CMS data seeded successfully.");
-await connection.end();
+await client.end();

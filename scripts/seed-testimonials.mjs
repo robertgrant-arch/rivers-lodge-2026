@@ -1,8 +1,10 @@
-import { createConnection } from "mysql2/promise";
+import pg from "pg";
 import * as dotenv from "dotenv";
 dotenv.config();
 
-const db = await createConnection(process.env.DATABASE_URL);
+const { Client } = pg;
+const db = new Client({ connectionString: process.env.DATABASE_URL });
+await db.connect();
 
 const testimonials = [
   // Weddings
@@ -92,8 +94,8 @@ const testimonials = [
 ];
 
 // Check if testimonials already exist
-const [existing] = await db.execute("SELECT COUNT(*) as count FROM cms_testimonials");
-const count = existing[0].count;
+const { rows: existing } = await db.query("SELECT COUNT(*) as count FROM cms_testimonials");
+const count = parseInt(existing[0].count);
 console.log(`Existing testimonials: ${count}`);
 
 if (count > 0) {
@@ -103,10 +105,10 @@ if (count > 0) {
 }
 
 for (const t of testimonials) {
-  await db.execute(
-    `INSERT INTO cms_testimonials (authorName, authorTitle, quote, rating, division, featured, sortOrder, status)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-    [t.authorName, t.authorTitle, t.quote, t.rating, t.division, t.featured ? 1 : 0, t.sortOrder, t.status]
+  await db.query(
+    `INSERT INTO cms_testimonials ("authorName", "authorTitle", quote, rating, division, featured, "sortOrder", status)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+    [t.authorName, t.authorTitle, t.quote, t.rating, t.division, t.featured, t.sortOrder, t.status]
   );
   console.log(`✓ Inserted: ${t.authorName}`);
 }

@@ -96,8 +96,11 @@ function makeMockDb() {
             : "unknown";
       inserts.push({ table, values });
       const id = nextId++;
-      // Drizzle mysql2 insert returns an array: [OkPacket, ...]
-      return Promise.resolve([{ insertId: id }]);
+      const result = [{ id }];
+      return {
+        returning: (_fields: unknown) => Promise.resolve(result),
+        then: (resolve: (v: typeof result) => unknown) => Promise.resolve(result).then(resolve),
+      };
     },
   });
 
@@ -233,10 +236,9 @@ describe("inquiries.submit", () => {
     const failingDb = {
       transaction: async <T>(cb: (tx: typeof failingDb) => Promise<T>) => cb(failingDb),
       insert: (_table: unknown) => ({
-        values: (_vals: unknown) => {
-          // Simulate DB error on the first insert
-          return Promise.reject(new Error("Deadlock detected"));
-        },
+        values: (_vals: unknown) => ({
+          returning: (_fields: unknown) => Promise.reject(new Error("Deadlock detected")),
+        }),
       }),
     };
 

@@ -4,28 +4,24 @@
  * Verifies that concurrent getDb() calls share a single promise and therefore
  * never create more than one connection pool.
  *
- * We test without a real MySQL server: mysql.createPool() is synchronous and
+ * We test without a real PostgreSQL server: pg.Pool() is synchronous and
  * doesn't connect immediately, so the pool object is created whether or not
- * the database is reachable.  We mock mysql2/promise so no OS-level TCP work
- * happens at all.
+ * the database is reachable.  We mock pg so no OS-level TCP work happens.
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-// ─── Mock mysql2/promise so no real TCP connection is attempted ───────────────
+// ─── Mock pg so no real TCP connection is attempted ───────────────────────────
 
-vi.mock("mysql2/promise", () => {
-  const mockPool = {
-    query: vi.fn().mockResolvedValue([[{ 1: 1 }], []]),
-    end: vi.fn().mockResolvedValue(undefined),
-  };
-  return {
-    default: { createPool: vi.fn().mockReturnValue(mockPool) },
-    createPool: vi.fn().mockReturnValue(mockPool),
-  };
-});
+const mockPool = {
+  query: vi.fn().mockResolvedValue({ rows: [{ "?column?": 1 }] }),
+  end: vi.fn().mockResolvedValue(undefined),
+};
+const MockPool = vi.fn().mockImplementation(() => mockPool);
 
-vi.mock("drizzle-orm/mysql2", () => ({
+vi.mock("pg", () => ({ Pool: MockPool }));
+
+vi.mock("drizzle-orm/node-postgres", () => ({
   drizzle: vi.fn().mockImplementation((pool: unknown) => ({ _pool: pool, _type: "drizzle-mock" })),
 }));
 
@@ -40,7 +36,7 @@ async function freshDb() {
 
 describe("getDb — promise caching (fix #2)", () => {
   beforeEach(() => {
-    vi.stubEnv("DATABASE_URL", "mysql://user:pass@localhost:3306/testdb");
+    vi.stubEnv("DATABASE_URL", "postgresql://user:pass@localhost:5432/testdb");
   });
 
   afterEach(() => {
@@ -51,11 +47,9 @@ describe("getDb — promise caching (fix #2)", () => {
   it("returns the same Promise object on concurrent calls (no race)", async () => {
     const { getDb } = await freshDb();
 
-    // Fire both calls without awaiting between them.
     const p1 = getDb();
     const p2 = getDb();
 
-    // Must be the exact same promise — the second call saw _dbPromise already set.
     expect(p1).toBe(p2);
   });
 
@@ -69,15 +63,13 @@ describe("getDb — promise caching (fix #2)", () => {
   });
 
   it("creates exactly one pool across concurrent calls", async () => {
-    const mysql = await import("mysql2/promise");
-    const createPoolSpy = vi.mocked((mysql as any).default?.createPool ?? mysql.createPool);
-    createPoolSpy.mockClear();
+    MockPool.mockClear();
 
     const { getDb } = await freshDb();
 
     await Promise.all([getDb(), getDb(), getDb()]);
 
-    expect(createPoolSpy).toHaveBeenCalledTimes(1);
+    expect(MockPool).toHaveBeenCalledTimes(1);
   });
 
   it("returns null when DATABASE_URL is not set", async () => {
@@ -96,7 +88,7 @@ describe("checkDbHealth", () => {
   });
 
   it("returns true when SELECT 1 succeeds", async () => {
-    vi.stubEnv("DATABASE_URL", "mysql://user:pass@localhost:3306/testdb");
+    vi.stubEnv("DATABASE_URL", "postgresql://user:pass@localhost:5432/testdb");
     const { checkDbHealth } = await freshDb();
 
     const result = await checkDbHealth();
@@ -112,15 +104,9 @@ describe("checkDbHealth", () => {
   });
 
   it("returns false when pool.query rejects", async () => {
-    vi.stubEnv("DATABASE_URL", "mysql://user:pass@localhost:3306/testdb");
+    vi.stubEnv("DATABASE_URL", "postgresql://user:pass@localhost:5432/testdb");
 
-    // Override the pool mock to fail on query.
-    const mysql = await import("mysql2/promise");
-    const mockPool = {
-      query: vi.fn().mockRejectedValue(new Error("Connection refused")),
-      end: vi.fn(),
-    };
-    vi.mocked((mysql as any).default?.createPool ?? mysql.createPool).mockReturnValueOnce(mockPool as any);
+    mockPool.query.mockRejectedValueOnce(new Error("Connection refused"));
 
     const { checkDbHealth } = await freshDb();
     const result = await checkDbHealth();

@@ -3,37 +3,32 @@
  * Seeds demo hunting properties, booking rules, and pricing into the database.
  * Run with: node scripts/seed-properties.mjs
  */
-import { createConnection } from "mysql2/promise";
+import pg from "pg";
 import * as dotenv from "dotenv";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
 
+const { Client } = pg;
 const __dirname = dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: join(__dirname, "../.env") });
 
 const DB_URL = process.env.DATABASE_URL;
 if (!DB_URL) { console.error("DATABASE_URL not set"); process.exit(1); }
 
-const url = new URL(DB_URL);
-const conn = await createConnection({
-  host: url.hostname,
-  port: parseInt(url.port || "3306"),
-  user: url.username,
-  password: url.password,
-  database: url.pathname.slice(1),
-  ssl: { rejectUnauthorized: false },
-});
+const conn = new Client({ connectionString: DB_URL });
+await conn.connect();
 console.log("Connected to database.");
 
 // ─── Check if already seeded ─────────────────────────────────────────────────
-const [[{ cnt }]] = await conn.execute("SELECT COUNT(*) as cnt FROM hunting_properties");
+const { rows: countRows } = await conn.query("SELECT COUNT(*) as cnt FROM hunting_properties");
+const cnt = parseInt(countRows[0].cnt);
 if (cnt > 0) {
   console.log(`Already seeded (${cnt} properties). Skipping.`);
   await conn.end();
   process.exit(0);
 }
 
-const now = Date.now();
+const now = new Date();
 
 // ─── Properties ──────────────────────────────────────────────────────────────
 const properties = [
@@ -47,16 +42,16 @@ const properties = [
     acreage: "40.00",
     maxHunters: 2,
     primaryActivity: "deer",
-    hasHeatedBlind: 1,
-    hasAtvAccess: 1,
-    hasWaterAccess: 0,
-    hasElectricity: 0,
-    hasCellService: 1,
+    hasHeatedBlind: true,
+    hasAtvAccess: true,
+    hasWaterAccess: false,
+    hasElectricity: false,
+    hasCellService: true,
     gpsLat: "38.3412000",
     gpsLng: "-94.7651000",
     coverImageUrl: "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=800&q=80",
-    active: 1,
-    featuredOnPublicSite: 1,
+    active: true,
+    featuredOnPublicSite: true,
     sortOrder: 1,
   },
   {
@@ -69,16 +64,16 @@ const properties = [
     acreage: "18.50",
     maxHunters: 4,
     primaryActivity: "duck",
-    hasHeatedBlind: 0,
-    hasAtvAccess: 0,
-    hasWaterAccess: 1,
-    hasElectricity: 0,
-    hasCellService: 1,
+    hasHeatedBlind: false,
+    hasAtvAccess: false,
+    hasWaterAccess: true,
+    hasElectricity: false,
+    hasCellService: true,
     gpsLat: "38.3389000",
     gpsLng: "-94.7698000",
     coverImageUrl: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=800&q=80",
-    active: 1,
-    featuredOnPublicSite: 1,
+    active: true,
+    featuredOnPublicSite: true,
     sortOrder: 2,
   },
   {
@@ -91,16 +86,16 @@ const properties = [
     acreage: "12.00",
     maxHunters: 4,
     primaryActivity: "bass",
-    hasHeatedBlind: 0,
-    hasAtvAccess: 1,
-    hasWaterAccess: 1,
-    hasElectricity: 1,
-    hasCellService: 1,
+    hasHeatedBlind: false,
+    hasAtvAccess: true,
+    hasWaterAccess: true,
+    hasElectricity: true,
+    hasCellService: true,
     gpsLat: "38.3445000",
     gpsLng: "-94.7612000",
     coverImageUrl: "https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=800&q=80",
-    active: 1,
-    featuredOnPublicSite: 1,
+    active: true,
+    featuredOnPublicSite: true,
     sortOrder: 3,
   },
   {
@@ -113,16 +108,16 @@ const properties = [
     acreage: "65.00",
     maxHunters: 2,
     primaryActivity: "turkey",
-    hasHeatedBlind: 0,
-    hasAtvAccess: 1,
-    hasWaterAccess: 0,
-    hasElectricity: 0,
-    hasCellService: 1,
+    hasHeatedBlind: false,
+    hasAtvAccess: true,
+    hasWaterAccess: false,
+    hasElectricity: false,
+    hasCellService: true,
     gpsLat: "38.3467000",
     gpsLng: "-94.7589000",
     coverImageUrl: "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?w=800&q=80",
-    active: 1,
-    featuredOnPublicSite: 0,
+    active: true,
+    featuredOnPublicSite: false,
     sortOrder: 4,
   },
   {
@@ -135,27 +130,28 @@ const properties = [
     acreage: "350.00",
     maxHunters: 6,
     primaryActivity: "quail",
-    hasHeatedBlind: 0,
-    hasAtvAccess: 1,
-    hasWaterAccess: 0,
-    hasElectricity: 0,
-    hasCellService: 1,
+    hasHeatedBlind: false,
+    hasAtvAccess: true,
+    hasWaterAccess: false,
+    hasElectricity: false,
+    hasCellService: true,
     gpsLat: "38.3501000",
     gpsLng: "-94.7543000",
     coverImageUrl: "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&q=80",
-    active: 1,
-    featuredOnPublicSite: 1,
+    active: true,
+    featuredOnPublicSite: true,
     sortOrder: 5,
   },
 ];
 
 for (const prop of properties) {
-  const [result] = await conn.execute(
-    `INSERT INTO hunting_properties 
-     (name, shortName, slug, type, description, shortDescription, acreage, maxHunters, primaryActivity,
-      hasHeatedBlind, hasAtvAccess, hasWaterAccess, hasElectricity, hasCellService,
-      gpsLat, gpsLng, coverImageUrl, active, featuredOnPublicSite, sortOrder, createdAt, updatedAt)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+  const { rows: inserted } = await conn.query(
+    `INSERT INTO hunting_properties
+     (name, "shortName", slug, type, description, "shortDescription", acreage, "maxHunters", "primaryActivity",
+      "hasHeatedBlind", "hasAtvAccess", "hasWaterAccess", "hasElectricity", "hasCellService",
+      "gpsLat", "gpsLng", "coverImageUrl", active, "featuredOnPublicSite", "sortOrder", "createdAt", "updatedAt")
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22)
+     RETURNING id`,
     [
       prop.name, prop.shortName, prop.slug, prop.type, prop.description, prop.shortDescription,
       prop.acreage, prop.maxHunters, prop.primaryActivity,
@@ -164,44 +160,47 @@ for (const prop of properties) {
       prop.active, prop.featuredOnPublicSite, prop.sortOrder, now, now,
     ]
   );
-  const propertyId = result.insertId;
+  const propertyId = inserted[0].id;
   console.log(`  Inserted: ${prop.name} (id=${propertyId})`);
 
   // Insert booking rules
-  await conn.execute(
-    `INSERT INTO property_booking_rules 
-     (propertyId, advanceBookingDays, minAdvanceHours, maxConsecutiveDays, maxDaysPerSeason,
-      requiresApproval, allowGuests, maxGuestsPerBooking, cancellationHours,
-      harvestReportRequired, harvestReportDays, updatedAt)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [propertyId, 90, 24, 3, 20, 0, 1, 3, 48, 1, 3, now]
+  await conn.query(
+    `INSERT INTO property_booking_rules
+     ("propertyId", "advanceBookingDays", "minAdvanceHours", "maxConsecutiveDays", "maxDaysPerSeason",
+      "requiresApproval", "allowGuests", "maxGuestsPerBooking", "cancellationHours",
+      "harvestReportRequired", "harvestReportDays", "updatedAt")
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
+    [propertyId, 90, 24, 3, 20, false, true, 3, 48, true, 3, now]
   );
 
   // Insert member pricing (free for members)
-  await conn.execute(
-    `INSERT INTO property_pricing 
-     (propertyId, pricePerDay, depositAmount, currency, active, createdAt)
-     VALUES (?, ?, ?, ?, ?, ?)`,
-    [propertyId, "0.00", "0.00", "USD", 1, now]
+  await conn.query(
+    `INSERT INTO property_pricing
+     ("propertyId", "pricePerDay", "depositAmount", currency, active, "createdAt")
+     VALUES ($1, $2, $3, $4, $5, $6)`,
+    [propertyId, "0.00", "0.00", "USD", true, now]
   );
 }
 
 // ─── Also ensure the owner has a member record ────────────────────────────────
-const [[ownerUser]] = await conn.execute(
-  "SELECT id FROM users ORDER BY id ASC LIMIT 1"
-).catch(() => [[null]]);
+let ownerUser = null;
+try {
+  const { rows } = await conn.query("SELECT id FROM users ORDER BY id ASC LIMIT 1");
+  ownerUser = rows[0] ?? null;
+} catch (_) {}
 
 if (ownerUser) {
-  const [[existingMember]] = await conn.execute(
-    "SELECT id FROM members WHERE userId = ? LIMIT 1",
+  const { rows: memberRows } = await conn.query(
+    "SELECT id FROM members WHERE \"userId\" = $1 LIMIT 1",
     [ownerUser.id]
   );
+  const existingMember = memberRows[0];
   if (!existingMember) {
     const year = new Date().getFullYear();
-    await conn.execute(
-      `INSERT INTO members (userId, memberNumber, tier, active, joinDate)
-       VALUES (?, ?, ?, ?, ?)`,
-      [ownerUser.id, `RL-${year}-0001`, "founding", 1, new Date().toISOString().split("T")[0]]
+    await conn.query(
+      `INSERT INTO members ("userId", "memberNumber", tier, active, "joinDate")
+       VALUES ($1, $2, $3, $4, $5)`,
+      [ownerUser.id, `RL-${year}-0001`, "founding", true, new Date().toISOString().split("T")[0]]
     );
     console.log(`  Created member record for userId=${ownerUser.id} (RL-${year}-0001, founding)`);
   } else {

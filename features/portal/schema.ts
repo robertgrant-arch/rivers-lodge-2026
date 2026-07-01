@@ -3,23 +3,75 @@ import {
   boolean,
   date,
   decimal,
-  int,
-  json,
-  mysqlEnum,
-  mysqlTable,
+  integer,
+  pgEnum,
+  pgTable,
   text,
   timestamp,
   varchar,
-} from "drizzle-orm/mysql-core";
+} from "drizzle-orm/pg-core";
+
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+export const weddingStatusEnum = pgEnum("wedding_status", [
+  "inquiry", "contacted", "site_visit", "proposal_sent",
+  "contract_out", "confirmed", "completed", "cancelled",
+]);
+export const bookingSourceEnum = pgEnum("booking_source", ["website", "referral", "direct", "social", "vendor"]);
+export const corporateStatusEnum = pgEnum("corporate_status", [
+  "inquiry", "contacted", "proposal_sent",
+  "contract_out", "confirmed", "completed", "cancelled",
+]);
+export const corporateEventTypeEnum = pgEnum("corporate_event_type", [
+  "team_retreat", "board_meeting", "incentive_trip",
+  "company_hunt", "private_buyout", "other",
+]);
+export const corporateSourceEnum = pgEnum("corporate_source", ["website", "referral", "direct", "repeat"]);
+export const huntFishStatusEnum = pgEnum("hunt_fish_status", [
+  "requested", "confirmed", "in_progress", "completed", "cancelled",
+]);
+export const huntFishBookingTypeEnum = pgEnum("hunt_fish_booking_type", [
+  "guided_hunt", "self_guided_hunt", "fishing", "sporting_clays",
+]);
+export const huntFishSpeciesEnum = pgEnum("hunt_fish_species", [
+  "whitetail", "waterfowl", "turkey", "bass", "catfish", "crappie", "clays", "other",
+]);
+export const clientTypeEnum = pgEnum("client_type", ["member", "corporate_group", "guest"]);
+export const seasonConfigSpeciesEnum = pgEnum("season_config_species", [
+  "whitetail", "waterfowl", "turkey", "bass", "catfish", "crappie", "clays", "all",
+]);
+export const portalBlockedReasonEnum = pgEnum("portal_blocked_reason", [
+  "maintenance", "private_use", "seasonal_closure", "buffer", "other",
+]);
+export const portalBlockedScopeEnum = pgEnum("portal_blocked_scope", [
+  "entire_property", "specific_venue", "specific_lodging",
+]);
+export const portalBookingTypeEnum = pgEnum("portal_booking_type", [
+  "wedding", "corporate", "member_booking", "hunt_fish",
+]);
+export const portalDocFileTypeEnum = pgEnum("portal_doc_file_type", [
+  "contract", "proposal", "waiver", "photo", "floor_plan", "other",
+]);
+export const waiverTemplateTypeEnum = pgEnum("waiver_template_type", [
+  "general", "hunt", "fish", "sporting_clays", "event",
+]);
+export const portalWaiverStatusEnum = pgEnum("portal_waiver_status", [
+  "pending", "sent", "signed", "expired",
+]);
+export const auditActionTypeEnum = pgEnum("audit_action_type", [
+  "create", "update", "delete", "status_change", "login", "export", "override",
+]);
+export const notificationPriorityEnum = pgEnum("notification_priority", [
+  "critical", "high", "medium", "low",
+]);
+export const taskStatusEnum = pgEnum("task_status", ["open", "in_progress", "completed", "cancelled"]);
+export const taskPriorityEnum = pgEnum("task_priority", ["high", "medium", "low"]);
 
 // ─── Wedding Bookings ─────────────────────────────────────────────────────────
 
-export const weddingBookings = mysqlTable("wedding_bookings", {
-  id: int("id").autoincrement().primaryKey(),
-  status: mysqlEnum("status", [
-    "inquiry", "contacted", "site_visit", "proposal_sent",
-    "contract_out", "confirmed", "completed", "cancelled"
-  ]).default("inquiry").notNull(),
+export const weddingBookings = pgTable("wedding_bookings", {
+  id: integer("id").generatedAlwaysAsIdentity().primaryKey(),
+  status: weddingStatusEnum("status").notNull().default("inquiry"),
   coupleName: varchar("coupleName", { length: 255 }).notNull(),
   contactEmail: varchar("contactEmail", { length: 320 }).notNull(),
   contactPhone: varchar("contactPhone", { length: 50 }),
@@ -27,8 +79,8 @@ export const weddingBookings = mysqlTable("wedding_bookings", {
   ceremonyVenue: varchar("ceremonyVenue", { length: 100 }),
   receptionVenue: varchar("receptionVenue", { length: 100 }),
   lodgingNotes: text("lodgingNotes"),
-  guestCountEstimate: int("guestCountEstimate"),
-  guestCountFinal: int("guestCountFinal"),
+  guestCountEstimate: integer("guestCountEstimate"),
+  guestCountFinal: integer("guestCountFinal"),
   ceremonyTime: varchar("ceremonyTime", { length: 20 }),
   receptionEndTime: varchar("receptionEndTime", { length: 20 }),
   rehearsalDate: date("rehearsalDate"),
@@ -40,97 +92,85 @@ export const weddingBookings = mysqlTable("wedding_bookings", {
   depositReceivedDate: date("depositReceivedDate"),
   balanceDueDate: date("balanceDueDate"),
   balanceReceivedDate: date("balanceReceivedDate"),
-  source: mysqlEnum("source", ["website", "referral", "direct", "social", "vendor"]).default("website"),
+  source: bookingSourceEnum("source").default("website"),
   referredBy: varchar("referredBy", { length: 255 }),
   assignedUserId: varchar("assignedUserId", { length: 36 }),
   notes: text("notes"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().$onUpdate(() => new Date()).notNull(),
 });
 export type WeddingBooking = typeof weddingBookings.$inferSelect;
 export type InsertWeddingBooking = typeof weddingBookings.$inferInsert;
 
 // ─── Corporate Bookings ───────────────────────────────────────────────────────
 
-export const corporateBookings = mysqlTable("corporate_bookings", {
-  id: int("id").autoincrement().primaryKey(),
-  status: mysqlEnum("status", [
-    "inquiry", "contacted", "proposal_sent",
-    "contract_out", "confirmed", "completed", "cancelled"
-  ]).default("inquiry").notNull(),
+export const corporateBookings = pgTable("corporate_bookings", {
+  id: integer("id").generatedAlwaysAsIdentity().primaryKey(),
+  status: corporateStatusEnum("status").notNull().default("inquiry"),
   companyName: varchar("companyName", { length: 255 }).notNull(),
   contactName: varchar("contactName", { length: 255 }).notNull(),
   contactEmail: varchar("contactEmail", { length: 320 }).notNull(),
   contactPhone: varchar("contactPhone", { length: 50 }),
-  eventType: mysqlEnum("eventType", [
-    "team_retreat", "board_meeting", "incentive_trip",
-    "company_hunt", "private_buyout", "other"
-  ]).default("other"),
+  eventType: corporateEventTypeEnum("eventType").default("other"),
   arrivalDate: date("arrivalDate"),
   departureDate: date("departureDate"),
   venueNotes: text("venueNotes"),
   lodgingNotes: text("lodgingNotes"),
-  attendeeCount: int("attendeeCount"),
+  attendeeCount: integer("attendeeCount"),
   cateringRequired: boolean("cateringRequired").default(false),
   avRequired: boolean("avRequired").default(false),
   huntFishAddon: boolean("huntFishAddon").default(false),
-  linkedHuntFishId: int("linkedHuntFishId"),
+  linkedHuntFishId: integer("linkedHuntFishId"),
   contractValue: decimal("contractValue", { precision: 10, scale: 2 }),
   depositAmount: decimal("depositAmount", { precision: 10, scale: 2 }),
   depositReceivedDate: date("depositReceivedDate"),
   balanceDueDate: date("balanceDueDate"),
   balanceReceivedDate: date("balanceReceivedDate"),
-  source: mysqlEnum("source", ["website", "referral", "direct", "repeat"]).default("website"),
+  source: corporateSourceEnum("source").default("website"),
   repeatClient: boolean("repeatClient").default(false),
   assignedUserId: varchar("assignedUserId", { length: 36 }),
   notes: text("notes"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().$onUpdate(() => new Date()).notNull(),
 });
 export type CorporateBooking = typeof corporateBookings.$inferSelect;
 export type InsertCorporateBooking = typeof corporateBookings.$inferInsert;
 
 // ─── Hunt & Fish Bookings ─────────────────────────────────────────────────────
 
-export const huntFishBookings = mysqlTable("hunt_fish_bookings", {
-  id: int("id").autoincrement().primaryKey(),
-  status: mysqlEnum("status", [
-    "requested", "confirmed", "in_progress", "completed", "cancelled"
-  ]).default("requested").notNull(),
-  bookingType: mysqlEnum("bookingType", [
-    "guided_hunt", "self_guided_hunt", "fishing", "sporting_clays"
-  ]).notNull(),
-  species: mysqlEnum("species", [
-    "whitetail", "waterfowl", "turkey", "bass", "catfish", "crappie", "clays", "other"
-  ]).default("other"),
-  clientType: mysqlEnum("clientType", ["member", "corporate_group", "guest"]).default("member"),
+export const huntFishBookings = pgTable("hunt_fish_bookings", {
+  id: integer("id").generatedAlwaysAsIdentity().primaryKey(),
+  status: huntFishStatusEnum("status").notNull().default("requested"),
+  bookingType: huntFishBookingTypeEnum("bookingType").notNull(),
+  species: huntFishSpeciesEnum("species").default("other"),
+  clientType: clientTypeEnum("clientType").default("member"),
   clientName: varchar("clientName", { length: 255 }).notNull(),
   clientEmail: varchar("clientEmail", { length: 320 }),
-  memberId: int("memberId"),
-  linkedCorporateId: int("linkedCorporateId"),
-  linkedMemberBookingId: int("linkedMemberBookingId"),
+  memberId: integer("memberId"),
+  linkedCorporateId: integer("linkedCorporateId"),
+  linkedMemberBookingId: integer("linkedMemberBookingId"),
   bookingDate: date("bookingDate").notNull(),
   startTime: varchar("startTime", { length: 20 }),
   endTime: varchar("endTime", { length: 20 }),
-  partySize: int("partySize").default(1),
+  partySize: integer("partySize").default(1),
   guideUserId: varchar("guideUserId", { length: 36 }),
   standLocation: varchar("standLocation", { length: 255 }),
   season: varchar("season", { length: 100 }),
   totalCharge: decimal("totalCharge", { precision: 10, scale: 2 }),
   notes: text("notes"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().$onUpdate(() => new Date()).notNull(),
 });
 export type HuntFishBooking = typeof huntFishBookings.$inferSelect;
 export type InsertHuntFishBooking = typeof huntFishBookings.$inferInsert;
 
 // ─── Harvest Records ──────────────────────────────────────────────────────────
 
-export const harvestRecords = mysqlTable("harvest_records", {
-  id: int("id").autoincrement().primaryKey(),
-  huntFishBookingId: int("huntFishBookingId").notNull(),
+export const harvestRecords = pgTable("harvest_records", {
+  id: integer("id").generatedAlwaysAsIdentity().primaryKey(),
+  huntFishBookingId: integer("huntFishBookingId").notNull(),
   species: varchar("species", { length: 100 }).notNull(),
-  count: int("count").default(1),
+  count: integer("count").default(1),
   details: text("details"),
   photoKey: varchar("photoKey", { length: 500 }),
   guideNotes: text("guideNotes"),
@@ -142,37 +182,33 @@ export type InsertHarvestRecord = typeof harvestRecords.$inferInsert;
 
 // ─── Season Configurations ────────────────────────────────────────────────────
 
-export const seasonConfigs = mysqlTable("season_configs", {
-  id: int("id").autoincrement().primaryKey(),
+export const seasonConfigs = pgTable("season_configs", {
+  id: integer("id").generatedAlwaysAsIdentity().primaryKey(),
   seasonName: varchar("seasonName", { length: 100 }).notNull(),
-  species: mysqlEnum("species", [
-    "whitetail", "waterfowl", "turkey", "bass", "catfish", "crappie", "clays", "all"
-  ]).notNull(),
+  species: seasonConfigSpeciesEnum("species").notNull(),
   openDate: date("openDate").notNull(),
   closeDate: date("closeDate").notNull(),
-  dailyBagLimit: int("dailyBagLimit"),
-  seasonBagLimit: int("seasonBagLimit"),
-  availableStands: json("availableStands"),
+  dailyBagLimit: integer("dailyBagLimit"),
+  seasonBagLimit: integer("seasonBagLimit"),
+  availableStands: text("availableStands"),
   guideRate: decimal("guideRate", { precision: 10, scale: 2 }),
   memberNotes: text("memberNotes"),
-  active: boolean("active").default(true).notNull(),
+  active: boolean("active").notNull().default(true),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().$onUpdate(() => new Date()).notNull(),
 });
 export type SeasonConfig = typeof seasonConfigs.$inferSelect;
 export type InsertSeasonConfig = typeof seasonConfigs.$inferInsert;
 
 // ─── Portal Blocked Dates ─────────────────────────────────────────────────────
 
-export const portalBlockedDates = mysqlTable("portal_blocked_dates", {
-  id: int("id").autoincrement().primaryKey(),
+export const portalBlockedDates = pgTable("portal_blocked_dates", {
+  id: integer("id").generatedAlwaysAsIdentity().primaryKey(),
   startDate: date("startDate").notNull(),
   endDate: date("endDate").notNull(),
-  reason: mysqlEnum("reason", [
-    "maintenance", "private_use", "seasonal_closure", "buffer", "other"
-  ]).default("other"),
+  reason: portalBlockedReasonEnum("reason").default("other"),
   reasonNotes: text("reasonNotes"),
-  scope: mysqlEnum("scope", ["entire_property", "specific_venue", "specific_lodging"]).default("entire_property"),
+  scope: portalBlockedScopeEnum("scope").default("entire_property"),
   scopeTarget: varchar("scopeTarget", { length: 100 }),
   createdByUserId: varchar("createdByUserId", { length: 36 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
@@ -182,11 +218,11 @@ export type InsertPortalBlockedDate = typeof portalBlockedDates.$inferInsert;
 
 // ─── Portal Staff Assignments ─────────────────────────────────────────────────
 
-export const portalStaffAssignments = mysqlTable("portal_staff_assignments", {
-  id: int("id").autoincrement().primaryKey(),
+export const portalStaffAssignments = pgTable("portal_staff_assignments", {
+  id: integer("id").generatedAlwaysAsIdentity().primaryKey(),
   staffUserId: varchar("staffUserId", { length: 36 }).notNull(),
-  bookingType: mysqlEnum("bookingType", ["wedding", "corporate", "member_booking", "hunt_fish"]).notNull(),
-  bookingId: int("bookingId").notNull(),
+  bookingType: portalBookingTypeEnum("bookingType").notNull(),
+  bookingId: integer("bookingId").notNull(),
   role: varchar("role", { length: 100 }),
   assignedAt: timestamp("assignedAt").defaultNow().notNull(),
 });
@@ -194,15 +230,15 @@ export type PortalStaffAssignment = typeof portalStaffAssignments.$inferSelect;
 
 // ─── Portal Documents ─────────────────────────────────────────────────────────
 
-export const portalDocuments = mysqlTable("portal_documents", {
-  id: int("id").autoincrement().primaryKey(),
+export const portalDocuments = pgTable("portal_documents", {
+  id: integer("id").generatedAlwaysAsIdentity().primaryKey(),
   fileName: varchar("fileName", { length: 255 }).notNull(),
-  fileType: mysqlEnum("fileType", ["contract", "proposal", "waiver", "photo", "floor_plan", "other"]).default("other"),
+  fileType: portalDocFileTypeEnum("fileType").default("other"),
   s3Key: varchar("s3Key", { length: 500 }).notNull(),
   uploadedByUserId: varchar("uploadedByUserId", { length: 36 }),
   linkedEntityType: varchar("linkedEntityType", { length: 50 }),
-  linkedEntityId: int("linkedEntityId"),
-  version: int("version").default(1),
+  linkedEntityId: integer("linkedEntityId"),
+  version: integer("version").default(1),
   notes: text("notes"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
@@ -210,29 +246,29 @@ export type PortalDocument = typeof portalDocuments.$inferSelect;
 
 // ─── Waiver Templates ─────────────────────────────────────────────────────────
 
-export const waiverTemplates = mysqlTable("waiver_templates", {
-  id: int("id").autoincrement().primaryKey(),
+export const waiverTemplates = pgTable("waiver_templates", {
+  id: integer("id").generatedAlwaysAsIdentity().primaryKey(),
   templateName: varchar("templateName", { length: 255 }).notNull(),
-  templateType: mysqlEnum("templateType", ["general", "hunt", "fish", "sporting_clays", "event"]).default("general"),
+  templateType: waiverTemplateTypeEnum("templateType").default("general"),
   bodyText: text("bodyText").notNull(),
-  version: int("version").default(1).notNull(),
-  active: boolean("active").default(true).notNull(),
+  version: integer("version").notNull().default(1),
+  active: boolean("active").notNull().default(true),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().$onUpdate(() => new Date()).notNull(),
 });
 export type WaiverTemplate = typeof waiverTemplates.$inferSelect;
 
 // ─── Portal Waivers ───────────────────────────────────────────────────────────
 
-export const portalWaivers = mysqlTable("portal_waivers", {
-  id: int("id").autoincrement().primaryKey(),
-  templateId: int("templateId"),
+export const portalWaivers = pgTable("portal_waivers", {
+  id: integer("id").generatedAlwaysAsIdentity().primaryKey(),
+  templateId: integer("templateId"),
   signatoryName: varchar("signatoryName", { length: 255 }).notNull(),
   signatoryEmail: varchar("signatoryEmail", { length: 320 }),
   linkedBookingType: varchar("linkedBookingType", { length: 50 }),
-  linkedBookingId: int("linkedBookingId"),
-  linkedMemberId: int("linkedMemberId"),
-  status: mysqlEnum("status", ["pending", "sent", "signed", "expired"]).default("pending").notNull(),
+  linkedBookingId: integer("linkedBookingId"),
+  linkedMemberId: integer("linkedMemberId"),
+  status: portalWaiverStatusEnum("status").notNull().default("pending"),
   signingToken: varchar("signingToken", { length: 128 }).unique(),
   sentAt: timestamp("sentAt"),
   signedAt: timestamp("signedAt"),
@@ -246,13 +282,11 @@ export type PortalWaiver = typeof portalWaivers.$inferSelect;
 
 // ─── Portal Audit Log ─────────────────────────────────────────────────────────
 
-export const portalAuditLog = mysqlTable("portal_audit_log", {
-  id: bigint("id", { mode: "number" }).autoincrement().primaryKey(),
+export const portalAuditLog = pgTable("portal_audit_log", {
+  id: bigint("id", { mode: "number" }).generatedAlwaysAsIdentity().primaryKey(),
   actingUserId: varchar("actingUserId", { length: 36 }),
   actingUserName: varchar("actingUserName", { length: 255 }),
-  actionType: mysqlEnum("actionType", [
-    "create", "update", "delete", "status_change", "login", "export", "override"
-  ]).notNull(),
+  actionType: auditActionTypeEnum("actionType").notNull(),
   entityType: varchar("entityType", { length: 100 }).notNull(),
   entityId: varchar("entityId", { length: 50 }),
   fieldChanged: varchar("fieldChanged", { length: 100 }),
@@ -266,48 +300,48 @@ export type PortalAuditLog = typeof portalAuditLog.$inferSelect;
 
 // ─── Portal Notifications ─────────────────────────────────────────────────────
 
-export const portalNotifications = mysqlTable("portal_notifications", {
-  id: int("id").autoincrement().primaryKey(),
+export const portalNotifications = pgTable("portal_notifications", {
+  id: integer("id").generatedAlwaysAsIdentity().primaryKey(),
   recipientUserId: varchar("recipientUserId", { length: 36 }).notNull(),
   title: varchar("title", { length: 255 }).notNull(),
   body: text("body"),
-  priority: mysqlEnum("priority", ["critical", "high", "medium", "low"]).default("medium"),
+  priority: notificationPriorityEnum("priority").default("medium"),
   entityType: varchar("entityType", { length: 100 }),
-  entityId: int("entityId"),
-  read: boolean("read").default(false).notNull(),
+  entityId: integer("entityId"),
+  read: boolean("read").notNull().default(false),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 export type PortalNotification = typeof portalNotifications.$inferSelect;
 
 // ─── Portal Tasks ─────────────────────────────────────────────────────────────
 
-export const portalTasks = mysqlTable("portal_tasks", {
-  id: int("id").autoincrement().primaryKey(),
+export const portalTasks = pgTable("portal_tasks", {
+  id: integer("id").generatedAlwaysAsIdentity().primaryKey(),
   assignedToUserId: varchar("assignedToUserId", { length: 36 }).notNull(),
   createdByUserId: varchar("createdByUserId", { length: 36 }),
   title: varchar("title", { length: 255 }).notNull(),
   notes: text("notes"),
   dueDate: date("dueDate"),
-  status: mysqlEnum("status", ["open", "in_progress", "completed", "cancelled"]).default("open").notNull(),
-  priority: mysqlEnum("priority", ["high", "medium", "low"]).default("medium"),
+  status: taskStatusEnum("status").notNull().default("open"),
+  priority: taskPriorityEnum("priority").default("medium"),
   entityType: varchar("entityType", { length: 100 }),
-  entityId: int("entityId"),
+  entityId: integer("entityId"),
   completedAt: timestamp("completedAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().$onUpdate(() => new Date()).notNull(),
 });
 export type PortalTask = typeof portalTasks.$inferSelect;
 
 // ─── Portal Notes / Timeline ──────────────────────────────────────────────────
 
-export const portalNotes = mysqlTable("portal_notes", {
-  id: int("id").autoincrement().primaryKey(),
+export const portalNotes = pgTable("portal_notes", {
+  id: integer("id").generatedAlwaysAsIdentity().primaryKey(),
   authorUserId: varchar("authorUserId", { length: 36 }).notNull(),
   authorName: varchar("authorName", { length: 255 }),
   entityType: varchar("entityType", { length: 100 }).notNull(),
-  entityId: int("entityId").notNull(),
+  entityId: integer("entityId").notNull(),
   body: text("body").notNull(),
-  internal: boolean("internal").default(true).notNull(),
+  internal: boolean("internal").notNull().default(true),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 export type PortalNote = typeof portalNotes.$inferSelect;

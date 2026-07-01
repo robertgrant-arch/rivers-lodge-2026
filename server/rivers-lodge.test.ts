@@ -24,7 +24,8 @@ function createAdminContext(): { ctx: TrpcContext; clearedCookies: { name: strin
       clearCookie: (name: string, options: Record<string, unknown>) => {
         clearedCookies.push({ name, options });
       },
-    } as TrpcContext["res"],
+      setHeader: () => {},
+    } as unknown as TrpcContext["res"],
   };
   return { ctx, clearedCookies };
 }
@@ -35,7 +36,8 @@ function createPublicContext(): TrpcContext {
     req: { protocol: "https", headers: {} } as TrpcContext["req"],
     res: {
       clearCookie: () => {},
-    } as TrpcContext["res"],
+      setHeader: () => {},
+    } as unknown as TrpcContext["res"],
   };
 }
 
@@ -54,7 +56,7 @@ function createMemberContext(): TrpcContext {
   return {
     user,
     req: { protocol: "https", headers: {} } as TrpcContext["req"],
-    res: { clearCookie: () => {} } as TrpcContext["res"],
+    res: { clearCookie: () => {}, setHeader: () => {} } as unknown as TrpcContext["res"],
   };
 }
 
