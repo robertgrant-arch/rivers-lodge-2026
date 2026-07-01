@@ -79,36 +79,25 @@ type LodgingProp = {
   supporting: string[];
 };
 
-const fallbackBySlug = Object.fromEntries(FALLBACK_LODGING.map(u => [u.slug, u]));
-
 export default function Lodging() {
   const { data: cmsUnits } = trpc.cms.getLodgingUnits.useQuery();
 
-  const lodgingProperties: LodgingProp[] = (cmsUnits && cmsUnits.length > 0)
-    ? cmsUnits.map((unit) => {
-        const fb = fallbackBySlug[unit.slug];
-        const cmsHero: string = (unit as { heroImage?: string | null }).heroImage || "";
-        const cmsGallery: string[] = Array.isArray((unit as { galleryImages?: unknown }).galleryImages)
-          ? ((unit as { galleryImages: string[] }).galleryImages)
-          : [];
-        const hero = cmsHero || (cmsGallery.length > 0 ? cmsGallery[0] : "") || fb?.hero || "";
-        const supporting = cmsGallery.length > 1
-          ? cmsGallery.slice(1)
-          : fb?.supporting ?? [];
-        return {
-          slug: unit.slug,
-          name: unit.name,
-          tagline: unit.shortDescription ?? "",
-          sqft: unit.squareFootage ? `${unit.squareFootage.toLocaleString()} sq ft` : null,
-          bedrooms: unit.bedrooms,
-          maxGuests: unit.maxGuests,
-          desc: unit.longDescription ?? "",
-          features: Array.isArray(unit.features) ? (unit.features as string[]) : [],
-          hero,
-          supporting,
-        };
-      })
-    : FALLBACK_LODGING;
+  // Images always come from FALLBACK_LODGING so verified local paths are never
+  // overridden by empty CMS fields. CMS text content is merged when slugs match.
+  const lodgingProperties: LodgingProp[] = FALLBACK_LODGING.map((fb) => {
+    const cms = cmsUnits?.find((u) => u.slug === fb.slug);
+    if (!cms) return fb;
+    return {
+      ...fb,
+      name: cms.name ?? fb.name,
+      tagline: cms.shortDescription ?? fb.tagline,
+      sqft: cms.squareFootage ? `${cms.squareFootage.toLocaleString()} sq ft` : fb.sqft,
+      bedrooms: cms.bedrooms ?? fb.bedrooms,
+      maxGuests: cms.maxGuests ?? undefined,
+      desc: cms.longDescription ?? fb.desc,
+      features: Array.isArray(cms.features) ? (cms.features as string[]) : fb.features,
+    };
+  });
 
   return (
     <PublicLayout>

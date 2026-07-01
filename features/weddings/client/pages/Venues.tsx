@@ -68,30 +68,22 @@ type VenueProp = {
   supporting: string[];
 };
 
-const fallbackBySlug = Object.fromEntries(FALLBACK_VENUES.map(v => [v.slug, v]));
-
 export default function Venues() {
   const { data: cmsSpaces } = trpc.cms.getEventSpaces.useQuery();
 
-  const venues: VenueProp[] = (cmsSpaces && cmsSpaces.length > 0)
-    ? cmsSpaces.map((space) => {
-        const fb = fallbackBySlug[space.slug];
-        const cmsHero = space.heroImage ?? (Array.isArray(space.galleryImages) ? (space.galleryImages as string[])[0] : "") ?? "";
-        const cmsGallery: string[] = Array.isArray(space.galleryImages) ? (space.galleryImages as string[]) : [];
-        const hero = cmsHero || fb?.hero || "";
-        const supporting = cmsGallery.length > 1 ? cmsGallery.slice(1) : fb?.supporting ?? [];
-        return {
-          slug: space.slug,
-          name: space.name,
-          type: space.indoorOutdoor === "indoor" ? "Indoor" : space.indoorOutdoor === "outdoor" ? "Outdoor" : "Indoor / Outdoor",
-          capacity: { ceremony: space.capacitySeated, reception: space.capacityReception },
-          desc: space.longDescription ?? space.shortDescription ?? "",
-          details: Array.isArray(space.features) ? (space.features as string[]) : [],
-          hero,
-          supporting,
-        };
-      })
-    : FALLBACK_VENUES;
+  // Images always come from FALLBACK_VENUES so verified local paths are never
+  // overridden by empty CMS fields. CMS text content is merged when slugs match.
+  const venues: VenueProp[] = FALLBACK_VENUES.map((fb) => {
+    const cms = cmsSpaces?.find((s) => s.slug === fb.slug);
+    if (!cms) return fb;
+    return {
+      ...fb,
+      type: cms.indoorOutdoor === "indoor" ? "Indoor" : cms.indoorOutdoor === "outdoor" ? "Outdoor" : "Indoor / Outdoor",
+      capacity: { ceremony: cms.capacitySeated, reception: cms.capacityReception },
+      desc: cms.longDescription ?? cms.shortDescription ?? fb.desc,
+      details: Array.isArray(cms.features) ? (cms.features as string[]) : fb.details,
+    };
+  });
 
   return (
     <PublicLayout>
