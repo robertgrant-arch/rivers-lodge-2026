@@ -11,6 +11,6 @@ export default defineConfig({
   dialect: "postgresql",
   dbCredentials: {
     url: connectionString,
-    ssl: process.env.NODE_ENV === "production",
+    ssl: connectionString.includes("render.com") || process.env.NODE_ENV === "production",
   },
 });
