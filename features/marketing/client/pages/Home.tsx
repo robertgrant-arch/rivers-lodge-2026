@@ -119,6 +119,7 @@ function useFadeUp(threshold = 0.12) {
 export default function Home() {
   const estateRef    = useFadeUp();
   const stayRef      = useFadeUp();
+  const storyRef     = useFadeUp();
   const memberRef    = useFadeUp();
 
   return (
@@ -225,7 +226,7 @@ export default function Home() {
       </section>
 
       {/* ── 04. Teaser: About ───────────────────────────────────────────── */}
-      <section className="fade-up section bg-background">
+      <section ref={storyRef} className="fade-up section bg-background">
         <div className="max-w-[1440px] mx-auto px-5 lg:px-14">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
             <div>
