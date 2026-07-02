@@ -84,7 +84,12 @@ export const authRouter = router({
     .input(
       z.object({
         token: z.string().min(1),
-        password: z.string().min(12),
+        password: z
+          .string()
+          .min(12, "Password must be at least 12 characters")
+          .regex(/[A-Z]/, "Password must include an uppercase letter")
+          .regex(/[0-9]/, "Password must include a number")
+          .regex(/[^A-Za-z0-9]/, "Password must include a special character"),
         confirmPassword: z.string(),
       }),
     )
@@ -128,7 +133,12 @@ export const authRouter = router({
     .input(
       z.object({
         currentPassword: z.string().min(1),
-        newPassword: z.string().min(12),
+        newPassword: z
+          .string()
+          .min(12, "Password must be at least 12 characters")
+          .regex(/[A-Z]/, "Password must include an uppercase letter")
+          .regex(/[0-9]/, "Password must include a number")
+          .regex(/[^A-Za-z0-9]/, "Password must include a special character"),
         confirmPassword: z.string(),
       }),
     )
