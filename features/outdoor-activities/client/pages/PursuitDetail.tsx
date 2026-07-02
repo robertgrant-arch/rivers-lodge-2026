@@ -115,13 +115,13 @@ export default function PursuitDetail({ slug }: Props) {
               <div style={{ height: "1px", width: "2rem", backgroundColor: ACCENT, marginBottom: "1.25rem" }} />
               <p className="eyebrow text-muted-brand">Gallery</p>
             </div>
-            <div className={pursuit.galleryImgs.length === 1 ? "grid gap-px bg-border grid-cols-1" : "grid gap-px bg-border grid-cols-1 sm:grid-cols-2"}>
+            <div className={"grid gap-px bg-border grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"}>
               {pursuit.galleryImgs.map((img, i) => (
-                <div key={i} className="bg-[#2B2823]">
+                <div key={i} className="relative bg-[#2B2823] aspect-[4/3]"><div className="absolute inset-0 flex items-center justify-center"><span className="eyebrow text-muted-brand">EMPTY #{i + 2}</span></div>
                   <img
                     src={img.src}
                     alt={img.alt}
-                    className="w-full h-auto block"
+                    className="relative w-full h-full object-cover block"
                     loading="lazy"
                     decoding="async"
                     onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
