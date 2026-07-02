@@ -44,7 +44,7 @@ export const VENUES: LodgingVenue[] = [
       "Kansas City designer interiors",
     ],
     galleryImgs: [
-          { src: "/img/lodge-2-gallery.jpg", alt: "The Lodge — Photo 2" },
+      { src: "/img/lodge-2-gallery.jpg", alt: "The Lodge — Photo 2" },
       { src: "/img/lodge-3-gallery.jpg", alt: "The Lodge — Photo 3" },
       { src: "/img/lodge-6-gallery.jpg", alt: "The Lodge — Photo 4" },
       { src: "/img/lodge-8-gallery.jpg", alt: "The Lodge — Photo 5" },
@@ -84,8 +84,8 @@ export const VENUES: LodgingVenue[] = [
     slug: "the-annex",
     title: "The Annex",
     teaser: "Four bedrooms, modern farmhouse design — steps from Rivers Barn.",
-    heroImg: "", /* TODO: upload annex-hero.jpg */
-    heroAlt: "The Annex at Rivers Lodge",
+    heroImg: "",
+    heroAlt: "The Annex — HERO / EMPTY #1",
     group: "stay",
     bedrooms: 4,
     capacity: "10 guests",
@@ -102,12 +102,12 @@ export const VENUES: LodgingVenue[] = [
       "Bridal suite configuration available",
     ],
     galleryImgs: [
-      { src: "", alt: "The Annex — Photo 1" },
-      { src: "", alt: "The Annex — Photo 2" },
-      { src: "", alt: "The Annex — Photo 3" },
-      { src: "", alt: "The Annex — Photo 4" },
-      { src: "", alt: "The Annex — Photo 5" },
-      { src: "", alt: "The Annex — Photo 6" },
+      { src: "", alt: "The Annex — EMPTY #2" },
+      { src: "", alt: "The Annex — EMPTY #3" },
+      { src: "", alt: "The Annex — EMPTY #4" },
+      { src: "", alt: "The Annex — EMPTY #5" },
+      { src: "", alt: "The Annex — EMPTY #6" },
+      { src: "", alt: "The Annex — EMPTY #7" },
     ],
   },
   {
@@ -173,8 +173,8 @@ export const VENUES: LodgingVenue[] = [
     slug: "big-tine-house",
     title: "Big Tine House",
     teaser: "A spacious lodge-style house on the estate — ideal for large groups.",
-    heroImg: "", /* TODO: upload big-tine-house-hero.jpg */
-    heroAlt: "Big Tine House at Rivers Lodge",
+    heroImg: "",
+    heroAlt: "Big Tine House — HERO / EMPTY #8",
     group: "stay",
     description: [
       "Big Tine House is a spacious lodge-style accommodation on the Rivers Lodge estate, designed for larger groups who want the full private-estate experience. Comfortable communal spaces, multiple bedrooms, and easy access to the property's hunting and fishing grounds make it a natural choice for member retreats and large family gatherings.",
@@ -188,20 +188,20 @@ export const VENUES: LodgingVenue[] = [
       "Available for member retreats",
     ],
     galleryImgs: [
-      { src: "", alt: "Big Tine House — Photo 1" },
-      { src: "", alt: "Big Tine House — Photo 2" },
-      { src: "", alt: "Big Tine House — Photo 3" },
-      { src: "", alt: "Big Tine House — Photo 4" },
-      { src: "", alt: "Big Tine House — Photo 5" },
-      { src: "", alt: "Big Tine House — Photo 6" },
+      { src: "", alt: "Big Tine House — EMPTY #9" },
+      { src: "", alt: "Big Tine House — EMPTY #10" },
+      { src: "", alt: "Big Tine House — EMPTY #11" },
+      { src: "", alt: "Big Tine House — EMPTY #12" },
+      { src: "", alt: "Big Tine House — EMPTY #13" },
+      { src: "", alt: "Big Tine House — EMPTY #14" },
     ],
   },
   {
     slug: "trego-road",
     title: "Trego Road",
     teaser: "A secluded retreat at the property boundary — built for solitude.",
-    heroImg: "", /* TODO: upload trego-road-hero.jpg */
-    heroAlt: "Trego Road property at Rivers Lodge",
+    heroImg: "",
+    heroAlt: "Trego Road — HERO / EMPTY #15",
     group: "stay",
     description: [
       "Trego Road sits at the far edge of the Rivers Lodge estate, separated from the main campus by timber and open prairie. It is the most private accommodation on the property — ideal for guests who want to be on the land but off the grid of main lodge activity.",
@@ -215,12 +215,12 @@ export const VENUES: LodgingVenue[] = [
       "Member favorite",
     ],
     galleryImgs: [
-      { src: "", alt: "Trego Road — Photo 1" },
-      { src: "", alt: "Trego Road — Photo 2" },
-      { src: "", alt: "Trego Road — Photo 3" },
-      { src: "", alt: "Trego Road — Photo 4" },
-      { src: "", alt: "Trego Road — Photo 5" },
-      { src: "", alt: "Trego Road — Photo 6" },
+      { src: "", alt: "Trego Road — EMPTY #16" },
+      { src: "", alt: "Trego Road — EMPTY #17" },
+      { src: "", alt: "Trego Road — EMPTY #18" },
+      { src: "", alt: "Trego Road — EMPTY #19" },
+      { src: "", alt: "Trego Road — EMPTY #20" },
+      { src: "", alt: "Trego Road — EMPTY #21" },
     ],
   },
   {
@@ -245,20 +245,20 @@ export const VENUES: LodgingVenue[] = [
       "Ceremony & reception capable",
     ],
     galleryImgs: [
-      { src: "", alt: "The Barn — Photo 1" },
-      { src: "", alt: "The Barn — Photo 2" },
-      { src: "", alt: "The Barn — Photo 3" },
-      { src: "", alt: "The Barn — Photo 4" },
-      { src: "", alt: "The Barn — Photo 5" },
-      { src: "", alt: "The Barn — Photo 6" },
+      { src: "", alt: "The Barn — EMPTY #22" },
+      { src: "", alt: "The Barn — EMPTY #23" },
+      { src: "", alt: "The Barn — EMPTY #24" },
+      { src: "", alt: "The Barn — EMPTY #25" },
+      { src: "", alt: "The Barn — EMPTY #26" },
+      { src: "", alt: "The Barn — EMPTY #27" },
     ],
   },
   {
     slug: "the-green-drake",
     title: "The Green Drake",
     teaser: "An intimate gathering space at the water's edge.",
-    heroImg: "", /* TODO: upload green-drake-hero.jpg */
-    heroAlt: "The Green Drake at Rivers Lodge",
+    heroImg: "",
+    heroAlt: "The Green Drake — HERO / EMPTY #28",
     group: "gather",
     capacity: "40 guests",
     description: [
@@ -274,12 +274,12 @@ export const VENUES: LodgingVenue[] = [
       "Ideal for dinners & off-sites",
     ],
     galleryImgs: [
-      { src: "", alt: "The Green Drake — Photo 1" },
-      { src: "", alt: "The Green Drake — Photo 2" },
-      { src: "", alt: "The Green Drake — Photo 3" },
-      { src: "", alt: "The Green Drake — Photo 4" },
-      { src: "", alt: "The Green Drake — Photo 5" },
-      { src: "", alt: "The Green Drake — Photo 6" },
+      { src: "", alt: "The Green Drake — EMPTY #29" },
+      { src: "", alt: "The Green Drake — EMPTY #30" },
+      { src: "", alt: "The Green Drake — EMPTY #31" },
+      { src: "", alt: "The Green Drake — EMPTY #32" },
+      { src: "", alt: "The Green Drake — EMPTY #33" },
+      { src: "", alt: "The Green Drake — EMPTY #34" },
     ],
   },
   {
@@ -301,12 +301,12 @@ export const VENUES: LodgingVenue[] = [
       "Private use by arrangement",
     ],
     galleryImgs: [
-      { src: "", alt: "The Clubhouse — Photo 1" },
-      { src: "", alt: "The Clubhouse — Photo 2" },
-      { src: "", alt: "The Clubhouse — Photo 3" },
-      { src: "", alt: "The Clubhouse — Photo 4" },
-      { src: "", alt: "The Clubhouse — Photo 5" },
-      { src: "", alt: "The Clubhouse — Photo 6" },
+      { src: "", alt: "The Clubhouse — EMPTY #35" },
+      { src: "", alt: "The Clubhouse — EMPTY #36" },
+      { src: "", alt: "The Clubhouse — EMPTY #37" },
+      { src: "", alt: "The Clubhouse — EMPTY #38" },
+      { src: "", alt: "The Clubhouse — EMPTY #39" },
+      { src: "", alt: "The Clubhouse — EMPTY #40" },
     ],
   },
 ];
@@ -315,5 +315,5 @@ export function getVenue(slug: string): LodgingVenue | undefined {
   return VENUES.find((v) => v.slug === slug);
 }
 
-export const STAY_VENUES  = VENUES.filter((v) => v.group === "stay");
+export const STAY_VENUES = VENUES.filter((v) => v.group === "stay");
 export const GATHER_VENUES = VENUES.filter((v) => v.group === "gather");
