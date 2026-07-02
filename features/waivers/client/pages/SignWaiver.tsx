@@ -4,9 +4,13 @@ import { trpc } from '@shared/lib/trpc';
 import { Button } from '@shared/ui/button';
 import { Input } from '@shared/ui/input';
 import { Label } from '@shared/ui/label';
-import { Card, CardContent, CardHeader, CardTitle } from '@shared/ui/card';
 import { CheckCircle, AlertCircle, FileText, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+
+function fmt(d: string | Date | null | undefined) {
+  if (!d) return "";
+  return new Date(d).toLocaleString("en-US", { dateStyle: "long", timeStyle: "short" });
+}
 
 export default function SignWaiver() {
   const params = useParams<{ token: string }>();
@@ -21,151 +25,141 @@ export default function SignWaiver() {
   );
 
   const signMutation = trpc.portal.waivers.sign.useMutation({
-    onSuccess: () => {
-      setSigned(true);
-      toast.success("Waiver signed successfully");
-    },
+    onSuccess: () => { setSigned(true); toast.success("Waiver signed successfully"); },
     onError: (e) => toast.error(e.message),
   });
 
   const handleSign = () => {
-    if (!signatoryName.trim()) {
-      toast.error("Please enter your full legal name");
-      return;
-    }
-    if (!agreed) {
-      toast.error("Please confirm you have read and agree to the waiver");
-      return;
-    }
-    signMutation.mutate({ token, signatoryName: signatoryName.trim() });
+    if (!signatoryName.trim()) { toast.error("Please enter your full legal name"); return; }
+    if (!agreed) { toast.error("Please confirm your consent to sign"); return; }
+    signMutation.mutate({
+      token,
+      signatoryName: signatoryName.trim(),
+      signatureData: signatoryName.trim(),
+      consentAccepted: true,
+      userAgent: typeof navigator !== "undefined" ? navigator.userAgent.slice(0, 500) : undefined,
+    });
   };
 
-  // ── Loading ──────────────────────────────────────────────────────────────────
+  // ── Loading ──
   if (waiverQuery.isLoading) {
     return (
-      <div className="min-h-screen bg-[#F5EEE2] flex items-center justify-center">
-        <div className="flex flex-col items-center gap-3 text-muted-foreground">
+      <div className="min-h-screen bg-[#2B2823] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3 text-[#BABAAE]">
           <Loader2 className="w-8 h-8 animate-spin" />
-          <p className="text-sm">Loading waiver…</p>
+          <p className="font-sans text-sm tracking-[0.06em]">Loading waiver…</p>
         </div>
       </div>
     );
   }
 
-  // ── Error / Not found ────────────────────────────────────────────────────────
+  // ── Error / Not found / already-signed / expired / revoked ──
   if (waiverQuery.error) {
-    const isAlreadySigned = waiverQuery.error.message.toLowerCase().includes("already signed");
+    const msg = waiverQuery.error.message.toLowerCase();
+    const isSigned = msg.includes("already signed");
     return (
-      <div className="min-h-screen bg-[#F5EEE2] flex items-center justify-center px-4">
-        <Card className="max-w-md w-full">
-          <CardContent className="pt-8 pb-8 text-center space-y-4">
-            {isAlreadySigned ? (
-              <>
-                <CheckCircle className="w-12 h-12 text-green-500 mx-auto" />
-                <h2 className="text-xl font-semibold">Already Signed</h2>
-                <p className="text-muted-foreground text-sm">
-                  This waiver has already been signed. No further action is needed.
-                </p>
-              </>
-            ) : (
-              <>
-                <AlertCircle className="w-12 h-12 text-destructive mx-auto" />
-                <h2 className="text-xl font-semibold">Waiver Not Found</h2>
-                <p className="text-muted-foreground text-sm">
-                  This waiver link is invalid or has expired. Please contact Rivers Lodge &amp; Hunt Club for assistance.
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  <a href="mailto:info@theriverslodge.com" className="underline underline-offset-4">
-                    info@theriverslodge.com
-                  </a>
-                </p>
-              </>
-            )}
-          </CardContent>
-        </Card>
+      <div className="min-h-screen bg-[#2B2823] flex items-center justify-center px-4">
+        <div className="max-w-md w-full bg-[#363330] border border-[#57544E] p-8 text-center space-y-4">
+          {isSigned ? (
+            <>
+              <CheckCircle className="w-12 h-12 text-[#6B7250] mx-auto" />
+              <h2 className="font-sans text-xl font-medium text-[#E0D3BD]">Already Signed</h2>
+              <p className="text-sm text-[#BABAAE]">This waiver has already been signed. No further action is needed.</p>
+            </>
+          ) : (
+            <>
+              <AlertCircle className="w-12 h-12 text-[#9B4D19] mx-auto" />
+              <h2 className="font-sans text-xl font-medium text-[#E0D3BD]">Unable to Open Waiver</h2>
+              <p className="text-sm text-[#BABAAE]">{waiverQuery.error.message}</p>
+              <p className="text-xs text-[#BABAAE]/70">
+                <a href="mailto:info@theriverslodge.com" className="underline underline-offset-4 hover:text-[#E0D3BD]">info@theriverslodge.com</a>
+              </p>
+            </>
+          )}
+        </div>
       </div>
     );
   }
 
-  // ── Success ──────────────────────────────────────────────────────────────────
+  // ── Success ──
   if (signed) {
     return (
-      <div className="min-h-screen bg-[#F5EEE2] flex items-center justify-center px-4">
-        <Card className="max-w-md w-full">
-          <CardContent className="pt-8 pb-8 text-center space-y-4">
-            <CheckCircle className="w-14 h-14 text-green-500 mx-auto" />
-            <h2 className="text-2xl font-semibold">Waiver Signed</h2>
-            <p className="text-muted-foreground text-sm">
-              Thank you, <strong>{signatoryName}</strong>. Your waiver has been recorded successfully. You will receive a confirmation from the Rivers Lodge team.
-            </p>
-            <div className="pt-2">
-              <a
-                href="/"
-                className="text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground transition-colors"
-              >
-                Return to Rivers Lodge &amp; Hunt Club
-              </a>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="min-h-screen bg-[#2B2823] flex items-center justify-center px-4">
+        <div className="max-w-md w-full bg-[#363330] border border-[#57544E] p-8 text-center space-y-4">
+          <CheckCircle className="w-14 h-14 text-[#6B7250] mx-auto" />
+          <h2 className="font-sans text-2xl font-medium text-[#E0D3BD]">Waiver Signed</h2>
+          <p className="text-sm text-[#BABAAE]">
+            Thank you, <strong className="text-[#E0D3BD]">{signatoryName}</strong>. Your waiver has been recorded and is now a permanent, read-only record. A confirmation is on file with the Rivers Lodge team.
+          </p>
+          <a href="/" className="inline-block font-sans text-xs tracking-[0.08em] uppercase text-[#BABAAE] underline underline-offset-4 hover:text-[#E0D3BD]">
+            Return to Rivers Lodge &amp; Hunt Club
+          </a>
+        </div>
       </div>
     );
   }
 
-  const { waiver, template } = waiverQuery.data!;
-  const waiverTitle = template?.templateName ?? "Liability Waiver & Release";
-  const waiverContent = template?.bodyText ?? `By signing this document, you acknowledge and agree to the terms and conditions set forth by Rivers Lodge & Hunt Club. You understand and accept all risks associated with the activities at the property, including but not limited to hunting, fishing, equestrian activities, and use of all facilities. You release Rivers Lodge & Hunt Club, its owners, employees, and agents from any liability for injury, loss, or damage arising from your participation in any activities on the property.`;
+  const data = waiverQuery.data!;
+  const { waiver, title, body, consentText } = data;
 
   return (
-    <div className="min-h-screen bg-[#F5EEE2] py-12 px-4">
+    <div className="min-h-screen bg-[#2B2823] py-12 px-4">
       <div className="max-w-2xl mx-auto space-y-6">
         {/* Header */}
-        <div className="text-center space-y-2">
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <FileText className="w-6 h-6 text-[#9B4D19]" />
-            <span className="text-sm font-medium tracking-widest uppercase text-muted-foreground">
+        <div className="text-center space-y-3">
+          <div className="flex items-center justify-center gap-2">
+            <FileText className="w-5 h-5 text-[#9B4D19]" />
+            <span className="font-sans text-xs font-semibold tracking-[0.16em] uppercase text-[#9B4D19]">
               Rivers Lodge &amp; Hunt Club
             </span>
           </div>
-          <h1 className="text-3xl font-serif font-semibold text-foreground">{waiverTitle}</h1>
+          <h1 className="font-sans text-2xl font-medium tracking-tight text-[#E0D3BD]">{title}</h1>
           {waiver.signatoryName && (
-            <p className="text-muted-foreground text-sm">
-              Prepared for: <strong>{waiver.signatoryName}</strong>
-            </p>
+            <p className="text-sm text-[#BABAAE]">Prepared for <strong className="text-[#E0D3BD]">{waiver.signatoryName}</strong></p>
+          )}
+          {waiver.expiresAt && (
+            <p className="font-sans text-xs tracking-[0.06em] text-[#BABAAE]/70">Please complete by {fmt(waiver.expiresAt)}</p>
           )}
         </div>
 
-        {/* Waiver Content */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Waiver Terms</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="prose prose-sm max-w-none text-foreground/80 leading-relaxed whitespace-pre-wrap text-sm">
-              {waiverContent}
-            </div>
-          </CardContent>
-        </Card>
+        {waiver.customMessage && (
+          <div className="bg-[#363330] border border-[#57544E] border-l-2 border-l-[#9B4D19] p-4">
+            <p className="text-sm text-[#BABAAE] italic">{waiver.customMessage}</p>
+          </div>
+        )}
 
-        {/* Signature Section */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Electronic Signature</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-5">
-            <p className="text-sm text-muted-foreground">
-              By entering your full legal name below and clicking "Sign Waiver," you are providing your electronic signature and agree that it is legally equivalent to a handwritten signature.
-            </p>
+        {/* Waiver body */}
+        <div className="bg-[#363330] border border-[#57544E]">
+          <div className="px-5 py-3 border-b border-[#57544E]">
+            <p className="font-sans text-xs tracking-[0.12em] uppercase text-[#BABAAE]">Waiver Terms</p>
+          </div>
+          <div className="px-5 py-5 max-h-[45vh] overflow-y-auto">
+            <div className="whitespace-pre-wrap text-sm leading-relaxed text-[#E0D3BD]/90">{body}</div>
+          </div>
+        </div>
 
+        {/* Signature */}
+        <div className="bg-[#363330] border border-[#57544E]">
+          <div className="px-5 py-3 border-b border-[#57544E]">
+            <p className="font-sans text-xs tracking-[0.12em] uppercase text-[#BABAAE]">Electronic Signature</p>
+          </div>
+          <div className="px-5 py-5 space-y-5">
             <div className="space-y-1.5">
-              <Label htmlFor="sig-name">Full Legal Name <span className="text-destructive">*</span></Label>
+              <Label htmlFor="sig-name" className="font-sans text-xs tracking-[0.1em] uppercase text-[#BABAAE]">
+                Full Legal Name <span className="text-[#9B4D19]">*</span>
+              </Label>
               <Input
                 id="sig-name"
-                placeholder="Enter your full legal name"
+                placeholder="Type your full legal name"
                 value={signatoryName}
                 onChange={(e) => setSignatoryName(e.target.value)}
-                className="text-base"
+                className="bg-[#2B2823] border-[#57544E] text-[#E0D3BD] placeholder:text-[#57544E] rounded-none focus-visible:ring-[#9B4D19] focus-visible:ring-1 focus-visible:border-[#9B4D19]"
               />
+              {signatoryName.trim() && (
+                <p className="pt-1 text-2xl text-[#E0D3BD]" style={{ fontFamily: "'Crimson Text', Georgia, serif", fontStyle: "italic" }}>
+                  {signatoryName}
+                </p>
+              )}
             </div>
 
             <label className="flex items-start gap-3 cursor-pointer group">
@@ -173,37 +167,25 @@ export default function SignWaiver() {
                 type="checkbox"
                 checked={agreed}
                 onChange={(e) => setAgreed(e.target.checked)}
-                className="mt-0.5 w-4 h-4 rounded border-border accent-[#9B4D19]"
+                className="mt-0.5 w-4 h-4 accent-[#9B4D19]"
               />
-              <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors">
-                I have read and understand the waiver above, and I agree to its terms and conditions. I confirm that I am 18 years of age or older, or am the legal guardian of the minor named in this waiver.
-              </span>
+              <span className="text-sm text-[#BABAAE] group-hover:text-[#E0D3BD] transition-colors">{consentText}</span>
             </label>
 
             <Button
               onClick={handleSign}
               disabled={signMutation.isPending || !signatoryName.trim() || !agreed}
-              className="w-full bg-[#7A3A10] hover:bg-[#682F0D] text-white"
-              size="lg"
+              className="w-full bg-[#9B4D19] hover:bg-[#7a3c14] text-[#E0D3BD] font-sans text-xs tracking-[0.12em] uppercase rounded-none h-11"
             >
-              {signMutation.isPending ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Signing…
-                </>
-              ) : (
-                "Sign Waiver"
-              )}
+              {signMutation.isPending ? (<><Loader2 className="w-4 h-4 mr-2 animate-spin" />Signing…</>) : "Sign Waiver"}
             </Button>
 
-            <p className="text-xs text-muted-foreground text-center">
-              Your signature will be recorded with a timestamp. For questions, contact{" "}
-              <a href="mailto:info@theriverslodge.com" className="underline underline-offset-4">
-                info@theriverslodge.com
-              </a>
+            <p className="text-xs text-[#BABAAE]/70 text-center">
+              Your signature is recorded with a secure timestamp and audit metadata. Questions?{" "}
+              <a href="mailto:info@theriverslodge.com" className="underline underline-offset-4 hover:text-[#E0D3BD]">info@theriverslodge.com</a>
             </p>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
     </div>
   );

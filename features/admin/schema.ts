@@ -17,6 +17,7 @@ export {
   portalDocuments,
   // Waiver management (templates + portal waivers)
   waiverTemplates,
+  waiverTemplateVersions,
   portalWaivers,
   // Ops infrastructure
   portalAuditLog,

@@ -166,6 +166,49 @@ export async function sendInviteEmail(
   });
 }
 
+export async function sendWaiverEmail(opts: {
+  to: string;
+  signerName: string;
+  waiverTitle: string;
+  signingUrl: string;
+  senderName: string;
+  customMessage?: string | null;
+  expiresAt?: Date | null;
+}): Promise<boolean> {
+  const { to, signerName, waiverTitle, signingUrl, senderName, customMessage, expiresAt } = opts;
+  const expiryLine = expiresAt
+    ? `This request expires on ${expiresAt.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}.`
+    : `Please complete this at your earliest convenience.`;
+  const subject = `Action needed: sign your ${waiverTitle} — ${BRAND}`;
+  const text = [
+    `Hello ${signerName},`,
+    ``,
+    `${senderName} at ${BRAND} has requested that you review and sign the following waiver: ${waiverTitle}.`,
+    customMessage ? `\n${customMessage}\n` : ``,
+    `Review and sign here:`,
+    signingUrl,
+    ``,
+    expiryLine,
+    ``,
+    `If you did not expect this, you can ignore this email.`,
+  ].filter(Boolean).join("\n");
+  const html = shell(`
+    <p style="margin:0 0 16px;">Hello <strong>${signerName}</strong>,</p>
+    <p style="margin:0 0 16px;"><strong>${senderName}</strong> at <strong>${BRAND}</strong> has requested that you review and sign the following waiver:</p>
+    <p style="margin:0 0 20px;font-size:16px;color:#E0D3BD;"><strong>${waiverTitle}</strong></p>
+    ${customMessage ? `<p style="margin:0 0 20px;color:#BABAAE;border-left:2px solid #9B4D19;padding-left:12px;">${customMessage}</p>` : ""}
+    <p style="margin:0 0 24px;">
+      <a href="${signingUrl}"
+         style="display:inline-block;background:#9B4D19;color:#E0D3BD;text-decoration:none;
+                padding:12px 24px;font-size:13px;letter-spacing:0.1em;text-transform:uppercase;">
+        Review &amp; Sign Waiver
+      </a>
+    </p>
+    <p style="margin:0;color:#BABAAE;font-size:12px;">${expiryLine} If you did not expect this, ignore this email.</p>
+  `);
+  return send({ to, subject, text, html, logLabel: "waiver signing URL", logLine: signingUrl });
+}
+
 export async function sendPasswordResetNotification(
   to: string,
   actingAdminEmail: string,

@@ -57,7 +57,7 @@ export const waiverTemplateTypeEnum = pgEnum("waiver_template_type", [
   "general", "hunt", "fish", "sporting_clays", "event",
 ]);
 export const portalWaiverStatusEnum = pgEnum("portal_waiver_status", [
-  "pending", "sent", "signed", "expired",
+  "draft", "active", "pending", "sent", "viewed", "signed", "expired", "revoked", "archived",
 ]);
 export const auditActionTypeEnum = pgEnum("audit_action_type", [
   "create", "update", "delete", "status_change", "login", "export", "override",
@@ -274,36 +274,81 @@ export const waiverTemplates = pgTable("waiver_templates", {
   id: integer("id").generatedAlwaysAsIdentity().primaryKey(),
   templateName: varchar("templateName", { length: 255 }).notNull(),
   templateType: waiverTemplateTypeEnum("templateType").default("general"),
+  description: text("description"),
   bodyText: text("bodyText").notNull(),
+  fileKey: varchar("fileKey", { length: 500 }),
+  fileName: varchar("fileName", { length: 255 }),
+  expiresInDays: integer("expiresInDays"),
   version: integer("version").notNull().default(1),
   active: boolean("active").notNull().default(true),
+  archived: boolean("archived").notNull().default(false),
+  createdByUserId: varchar("createdByUserId", { length: 36 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().$onUpdate(() => new Date()).notNull(),
 });
 export type WaiverTemplate = typeof waiverTemplates.$inferSelect;
+
+// Immutable per-version snapshots so signed waivers always reference the exact
+// template content that was in force at signing time.
+export const waiverTemplateVersions = pgTable("waiver_template_versions", {
+  id: integer("id").generatedAlwaysAsIdentity().primaryKey(),
+  templateId: integer("templateId").notNull(),
+  version: integer("version").notNull(),
+  templateName: varchar("templateName", { length: 255 }).notNull(),
+  templateType: waiverTemplateTypeEnum("templateType").default("general"),
+  bodyText: text("bodyText").notNull(),
+  fileKey: varchar("fileKey", { length: 500 }),
+  fileName: varchar("fileName", { length: 255 }),
+  createdByUserId: varchar("createdByUserId", { length: 36 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (t) => [
+  index("wtv_template_idx").on(t.templateId, t.version),
+]);
+export type WaiverTemplateVersion = typeof waiverTemplateVersions.$inferSelect;
 
 // ─── Portal Waivers ───────────────────────────────────────────────────────────
 
 export const portalWaivers = pgTable("portal_waivers", {
   id: integer("id").generatedAlwaysAsIdentity().primaryKey(),
   templateId: integer("templateId"),
+  // Snapshot of the exact template version in force when this waiver was sent.
+  templateVersionId: integer("templateVersionId"),
+  templateVersion: integer("templateVersion"),
+  snapshotTitle: varchar("snapshotTitle", { length: 255 }),
+  snapshotBody: text("snapshotBody"),
   signatoryName: varchar("signatoryName", { length: 255 }).notNull(),
   signatoryEmail: varchar("signatoryEmail", { length: 320 }),
   linkedBookingType: varchar("linkedBookingType", { length: 50 }),
   linkedBookingId: integer("linkedBookingId"),
   linkedMemberId: integer("linkedMemberId"),
-  status: portalWaiverStatusEnum("status").notNull().default("pending"),
+  status: portalWaiverStatusEnum("status").notNull().default("sent"),
   signingToken: varchar("signingToken", { length: 128 }).unique(),
+  senderUserId: varchar("senderUserId", { length: 36 }),
+  senderName: varchar("senderName", { length: 255 }),
+  customMessage: text("customMessage"),
+  expiresAt: timestamp("expiresAt"),
   sentAt: timestamp("sentAt"),
+  viewedAt: timestamp("viewedAt"),
   signedAt: timestamp("signedAt"),
+  revokedAt: timestamp("revokedAt"),
+  revokedByUserId: varchar("revokedByUserId", { length: 36 }),
+  consentAccepted: boolean("consentAccepted").notNull().default(false),
+  consentText: text("consentText"),
+  signatureName: varchar("signatureName", { length: 255 }),
+  signatureData: text("signatureData"),
   signedPdfKey: varchar("signedPdfKey", { length: 500 }),
+  deliveryStatus: varchar("deliveryStatus", { length: 32 }),
   ipAddress: varchar("ipAddress", { length: 64 }),
+  userAgent: varchar("userAgent", { length: 512 }),
   isMinor: boolean("isMinor").default(false),
   guardianName: varchar("guardianName", { length: 255 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 }, (t) => [
   index("pw_status_idx").on(t.status),
   index("pw_linked_booking_idx").on(t.linkedBookingType, t.linkedBookingId),
+  index("pw_email_idx").on(t.signatoryEmail),
+  index("pw_template_idx").on(t.templateId),
+  index("pw_created_at_idx").on(t.createdAt),
 ]);
 export type PortalWaiver = typeof portalWaivers.$inferSelect;
 

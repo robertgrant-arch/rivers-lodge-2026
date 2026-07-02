@@ -13,6 +13,7 @@ import {
   portalStaffAssignments,
   portalDocuments,
   waiverTemplates,
+  waiverTemplateVersions,
   portalWaivers,
   portalAuditLog,
   portalNotifications,
@@ -34,7 +35,8 @@ import {
 } from "@features/cms/schema";
 import { randomBytes, createHash } from "crypto";
 import { invites } from "@features/auth/schema";
-import { sendInviteEmail, sendPasswordResetNotification } from "@core/server/mailer";
+import { sendInviteEmail, sendPasswordResetNotification, sendWaiverEmail } from "@core/server/mailer";
+import { storagePut, storageGetSignedUrl } from "@core/server/storage";
 import { ENV } from "@core/server/env";
 import { getPortalDb } from "@core/server/db";
 
@@ -835,106 +837,368 @@ const huntFishPortalRouter = router({
 });
 
 // ─── Waivers Router ───────────────────────────────────────────────────────────
+const WAIVER_TYPES = ["general", "hunt", "fish", "sporting_clays", "event"] as const;
+const DEFAULT_CONSENT =
+  "I have read and understand this waiver, and I agree to its terms. I consent to signing electronically, and I understand my electronic signature is legally binding and equivalent to a handwritten signature.";
+const DEFAULT_WAIVER_BODY =
+  "By signing this document, you acknowledge and agree to the terms and conditions set forth by Rivers Lodge & Hunt Club. You understand and accept all risks associated with the activities at the property, including but not limited to hunting, fishing, equestrian activities, and use of all facilities. You release Rivers Lodge & Hunt Club, its owners, employees, and agents from any liability for injury, loss, or damage arising from your participation in any activities on the property.";
+
+// Write an immutable version snapshot for a template; returns its id.
+async function snapshotTemplateVersion(
+  db: ReturnType<typeof getDb>,
+  tpl: { id: number; version: number; templateName: string; templateType: any; bodyText: string; fileKey: string | null; fileName: string | null },
+  userId: string,
+): Promise<number> {
+  const [row] = await db.insert(waiverTemplateVersions).values({
+    templateId: tpl.id,
+    version: tpl.version,
+    templateName: tpl.templateName,
+    templateType: tpl.templateType,
+    bodyText: tpl.bodyText,
+    fileKey: tpl.fileKey,
+    fileName: tpl.fileName,
+    createdByUserId: userId,
+  }).returning({ id: waiverTemplateVersions.id });
+  return row.id;
+}
+
 const waiversPortalRouter = router({
-  templates: portalProcedure.query(async () => {
-    const db = getDb();
-    return db.select().from(waiverTemplates).where(eq(waiverTemplates.active, true));
-  }),
+  // ─── Templates ───
+  templates: portalProcedure
+    .input(z.object({ includeArchived: z.boolean().optional() }).optional())
+    .query(async ({ input }) => {
+      const db = getDb();
+      return db.select().from(waiverTemplates)
+        .where(input?.includeArchived ? undefined : eq(waiverTemplates.archived, false))
+        .orderBy(desc(waiverTemplates.updatedAt));
+    }),
+
+  templateGet: portalProcedure
+    .input(z.object({ id: z.number() }))
+    .query(async ({ input }) => {
+      const db = getDb();
+      const [template] = await db.select().from(waiverTemplates).where(eq(waiverTemplates.id, input.id));
+      if (!template) throw new TRPCError({ code: "NOT_FOUND" });
+      const versions = await db.select().from(waiverTemplateVersions)
+        .where(eq(waiverTemplateVersions.templateId, input.id))
+        .orderBy(desc(waiverTemplateVersions.version));
+      return { template, versions };
+    }),
 
   createTemplate: ownerProcedure
     .input(z.object({
-      templateName: z.string(),
-      templateType: z.enum(["general", "hunt", "fish", "sporting_clays", "event"]),
-      bodyText: z.string(),
+      templateName: z.string().min(1).max(255),
+      templateType: z.enum(WAIVER_TYPES).default("general"),
+      description: z.string().max(2000).optional(),
+      bodyText: z.string().min(1),
+      fileKey: z.string().max(500).optional(),
+      fileName: z.string().max(255).optional(),
+      expiresInDays: z.number().int().min(1).max(3650).optional(),
     }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       const db = getDb();
-      const [result] = await db.insert(waiverTemplates).values(input as any).returning({ id: waiverTemplates.id });
-      return { id: result.id };
+      const [tpl] = await db.insert(waiverTemplates).values({
+        templateName: input.templateName,
+        templateType: input.templateType,
+        description: input.description ?? null,
+        bodyText: input.bodyText,
+        fileKey: input.fileKey ?? null,
+        fileName: input.fileName ?? null,
+        expiresInDays: input.expiresInDays ?? null,
+        version: 1,
+        active: true,
+        archived: false,
+        createdByUserId: ctx.user.id,
+      }).returning();
+      await snapshotTemplateVersion(db, tpl, ctx.user.id);
+      await logAudit({ actingUserId: ctx.user.id, actingUserName: ctx.user.email ?? "Admin", actionType: "create", entityType: "WaiverTemplate", entityId: String(tpl.id), newValue: input.templateName });
+      return { id: tpl.id };
     }),
 
+  updateTemplate: ownerProcedure
+    .input(z.object({
+      id: z.number(),
+      templateName: z.string().min(1).max(255).optional(),
+      templateType: z.enum(WAIVER_TYPES).optional(),
+      description: z.string().max(2000).nullable().optional(),
+      bodyText: z.string().min(1).optional(),
+      fileKey: z.string().max(500).nullable().optional(),
+      fileName: z.string().max(255).nullable().optional(),
+      expiresInDays: z.number().int().min(1).max(3650).nullable().optional(),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const db = getDb();
+      const [tpl] = await db.select().from(waiverTemplates).where(eq(waiverTemplates.id, input.id));
+      if (!tpl) throw new TRPCError({ code: "NOT_FOUND" });
+      // Content changes create a new immutable version; metadata edits do not.
+      const contentChanged =
+        (input.bodyText !== undefined && input.bodyText !== tpl.bodyText) ||
+        (input.fileKey !== undefined && (input.fileKey ?? null) !== tpl.fileKey) ||
+        (input.templateName !== undefined && input.templateName !== tpl.templateName) ||
+        (input.templateType !== undefined && input.templateType !== tpl.templateType);
+      const nextVersion = contentChanged ? tpl.version + 1 : tpl.version;
+      const merged = {
+        templateName: input.templateName ?? tpl.templateName,
+        templateType: (input.templateType ?? tpl.templateType) as any,
+        description: input.description !== undefined ? input.description : tpl.description,
+        bodyText: input.bodyText ?? tpl.bodyText,
+        fileKey: input.fileKey !== undefined ? input.fileKey : tpl.fileKey,
+        fileName: input.fileName !== undefined ? input.fileName : tpl.fileName,
+        expiresInDays: input.expiresInDays !== undefined ? input.expiresInDays : tpl.expiresInDays,
+        version: nextVersion,
+      };
+      await db.update(waiverTemplates).set(merged).where(eq(waiverTemplates.id, input.id));
+      if (contentChanged) await snapshotTemplateVersion(db, { id: tpl.id, ...merged }, ctx.user.id);
+      await logAudit({ actingUserId: ctx.user.id, actingUserName: ctx.user.email ?? "Admin", actionType: "update", entityType: "WaiverTemplate", entityId: String(input.id), notes: contentChanged ? `New version v${nextVersion}` : "Metadata update" });
+      return { success: true, version: nextVersion };
+    }),
+
+  setTemplateActive: ownerProcedure
+    .input(z.object({ id: z.number(), active: z.boolean() }))
+    .mutation(async ({ input, ctx }) => {
+      const db = getDb();
+      await db.update(waiverTemplates).set({ active: input.active }).where(eq(waiverTemplates.id, input.id));
+      await logAudit({ actingUserId: ctx.user.id, actingUserName: ctx.user.email ?? "Admin", actionType: "status_change", entityType: "WaiverTemplate", entityId: String(input.id), newValue: input.active ? "active" : "inactive" });
+      return { success: true };
+    }),
+
+  archiveTemplate: ownerProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ input, ctx }) => {
+      const db = getDb();
+      // Never hard-delete — signed records reference historical versions. Archive only.
+      await db.update(waiverTemplates).set({ archived: true, active: false }).where(eq(waiverTemplates.id, input.id));
+      await logAudit({ actingUserId: ctx.user.id, actingUserName: ctx.user.email ?? "Admin", actionType: "status_change", entityType: "WaiverTemplate", entityId: String(input.id), newValue: "archived" });
+      return { success: true };
+    }),
+
+  uploadDocument: ownerProcedure
+    .input(z.object({
+      fileName: z.string().min(1).max(255),
+      contentType: z.string().max(120),
+      dataBase64: z.string().min(1),
+    }))
+    .mutation(async ({ input }) => {
+      const allowed = [
+        "application/pdf", "image/png", "image/jpeg",
+        "application/msword",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      ];
+      if (!allowed.includes(input.contentType)) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Unsupported file type. Allowed: PDF, PNG, JPEG, DOC, DOCX." });
+      }
+      const buffer = Buffer.from(input.dataBase64, "base64");
+      if (buffer.length === 0) throw new TRPCError({ code: "BAD_REQUEST", message: "Empty file" });
+      if (buffer.length > 10 * 1024 * 1024) throw new TRPCError({ code: "BAD_REQUEST", message: "File exceeds the 10 MB limit." });
+      const safeName = input.fileName.replace(/[^a-zA-Z0-9._-]/g, "_").slice(-120);
+      try {
+        const { key } = await storagePut(`waiver-templates/${safeName}`, buffer, input.contentType);
+        return { fileKey: key, fileName: input.fileName };
+      } catch {
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "File storage is not configured. Set BUILT_IN_FORGE_API_URL and BUILT_IN_FORGE_API_KEY, or paste the waiver text instead." });
+      }
+    }),
+
+  // ─── Sent waivers ───
   list: portalProcedure
     .input(z.object({
       status: z.string().optional(),
+      templateId: z.number().optional(),
+      search: z.string().optional(),
       linkedBookingType: z.string().optional(),
       linkedBookingId: z.number().optional(),
-    }))
+      dateFrom: z.string().optional(),
+      dateTo: z.string().optional(),
+    }).optional())
     .query(async ({ input }) => {
       const db = getDb();
-      const conditions = [];
-      if (input.status) conditions.push(eq(portalWaivers.status, input.status as any));
-      if (input.linkedBookingType) conditions.push(eq(portalWaivers.linkedBookingType, input.linkedBookingType));
-      if (input.linkedBookingId) conditions.push(eq(portalWaivers.linkedBookingId, input.linkedBookingId));
-      const query = conditions.length > 0
-        ? db.select().from(portalWaivers).where(and(...conditions))
-        : db.select().from(portalWaivers);
-      return query.orderBy(desc(portalWaivers.createdAt)).limit(100);
+      const c: any[] = [];
+      if (input?.status && input.status !== "all") c.push(eq(portalWaivers.status, input.status as any));
+      if (input?.templateId) c.push(eq(portalWaivers.templateId, input.templateId));
+      if (input?.linkedBookingType) c.push(eq(portalWaivers.linkedBookingType, input.linkedBookingType));
+      if (input?.linkedBookingId) c.push(eq(portalWaivers.linkedBookingId, input.linkedBookingId));
+      if (input?.search) c.push(or(like(portalWaivers.signatoryName, `%${input.search}%`), like(portalWaivers.signatoryEmail, `%${input.search}%`)));
+      if (input?.dateFrom) c.push(gte(portalWaivers.createdAt, new Date(input.dateFrom)));
+      if (input?.dateTo) c.push(lte(portalWaivers.createdAt, new Date(input.dateTo)));
+      return db.select().from(portalWaivers)
+        .where(c.length ? and(...c) : undefined)
+        .orderBy(desc(portalWaivers.createdAt)).limit(200);
     }),
 
-  send: portalProcedure
+  get: portalProcedure
+    .input(z.object({ id: z.number() }))
+    .query(async ({ input }) => {
+      const db = getDb();
+      const [waiver] = await db.select().from(portalWaivers).where(eq(portalWaivers.id, input.id));
+      if (!waiver) throw new TRPCError({ code: "NOT_FOUND" });
+      const [template] = waiver.templateId
+        ? await db.select().from(waiverTemplates).where(eq(waiverTemplates.id, waiver.templateId))
+        : [null];
+      const audit = await db.select().from(portalAuditLog)
+        .where(and(eq(portalAuditLog.entityType, "Waiver"), eq(portalAuditLog.entityId, String(waiver.id))))
+        .orderBy(desc(portalAuditLog.createdAt)).limit(50);
+      return { waiver, template, audit };
+    }),
+
+  send: ownerProcedure
     .input(z.object({
       templateId: z.number(),
-      signatoryName: z.string(),
-      signatoryEmail: z.string().email(),
+      recipients: z.array(z.object({
+        signatoryName: z.string().min(1),
+        signatoryEmail: z.string().email(),
+      })).min(1).max(50),
       linkedBookingType: z.string().optional(),
       linkedBookingId: z.number().optional(),
+      linkedMemberId: z.number().optional(),
+      customMessage: z.string().max(2000).optional(),
+      dueDate: z.string().optional(),
     }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       const db = getDb();
-      const token = randomBytes(32).toString("hex");
-      const [result] = await db.insert(portalWaivers).values({
-        templateId: input.templateId,
-        signatoryName: input.signatoryName,
-        signatoryEmail: input.signatoryEmail,
-        linkedBookingType: input.linkedBookingType ?? null,
-        linkedBookingId: input.linkedBookingId ?? null,
-        status: "sent",
-        signingToken: token,
-        sentAt: new Date(),
-      }).returning({ id: portalWaivers.id });
-      return { id: result.id, signingToken: token, signingUrl: `/sign-waiver/${token}` };
+      const [tpl] = await db.select().from(waiverTemplates).where(eq(waiverTemplates.id, input.templateId));
+      if (!tpl) throw new TRPCError({ code: "NOT_FOUND", message: "Template not found" });
+      if (!tpl.active || tpl.archived) throw new TRPCError({ code: "BAD_REQUEST", message: "Template is not active" });
+      // Resolve (or create) the current immutable version snapshot.
+      let [ver] = await db.select().from(waiverTemplateVersions)
+        .where(and(eq(waiverTemplateVersions.templateId, tpl.id), eq(waiverTemplateVersions.version, tpl.version)))
+        .limit(1);
+      if (!ver) {
+        const vid = await snapshotTemplateVersion(db, tpl, ctx.user.id);
+        [ver] = await db.select().from(waiverTemplateVersions).where(eq(waiverTemplateVersions.id, vid));
+      }
+      const nowTs = new Date();
+      const explicitDue = input.dueDate ? new Date(input.dueDate) : null;
+      const ruleExpiry = tpl.expiresInDays ? new Date(nowTs.getTime() + tpl.expiresInDays * 86400000) : null;
+      const expiresAt = explicitDue ?? ruleExpiry;
+      const results: Array<{ id: number; email: string; signingUrl: string; emailSent: boolean }> = [];
+      for (const r of input.recipients) {
+        const token = randomBytes(32).toString("hex");
+        const [row] = await db.insert(portalWaivers).values({
+          templateId: tpl.id,
+          templateVersionId: ver.id,
+          templateVersion: ver.version,
+          snapshotTitle: ver.templateName,
+          snapshotBody: ver.bodyText,
+          signatoryName: r.signatoryName,
+          signatoryEmail: r.signatoryEmail,
+          linkedBookingType: input.linkedBookingType ?? null,
+          linkedBookingId: input.linkedBookingId ?? null,
+          linkedMemberId: input.linkedMemberId ?? null,
+          status: "sent",
+          signingToken: token,
+          senderUserId: ctx.user.id,
+          senderName: ctx.user.email ?? "Rivers Lodge",
+          customMessage: input.customMessage ?? null,
+          expiresAt,
+          sentAt: nowTs,
+        }).returning({ id: portalWaivers.id });
+        const signingUrl = `${ENV.appBaseUrl}/sign-waiver/${token}`;
+        const emailSent = await sendWaiverEmail({
+          to: r.signatoryEmail, signerName: r.signatoryName, waiverTitle: ver.templateName,
+          signingUrl, senderName: ctx.user.email ?? "Rivers Lodge", customMessage: input.customMessage, expiresAt,
+        });
+        await db.update(portalWaivers).set({ deliveryStatus: emailSent ? "sent" : "not_sent" }).where(eq(portalWaivers.id, row.id));
+        await logAudit({ actingUserId: ctx.user.id, actingUserName: ctx.user.email ?? "Admin", actionType: "create", entityType: "Waiver", entityId: String(row.id), notes: `Sent to ${r.signatoryEmail}${emailSent ? "" : " (email not delivered)"}` });
+        results.push({ id: row.id, email: r.signatoryEmail, signingUrl, emailSent });
+      }
+      return { sent: results.length, results };
     }),
 
+  resend: ownerProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ input, ctx }) => {
+      const db = getDb();
+      const [w] = await db.select().from(portalWaivers).where(eq(portalWaivers.id, input.id));
+      if (!w) throw new TRPCError({ code: "NOT_FOUND" });
+      if (w.status === "signed") throw new TRPCError({ code: "BAD_REQUEST", message: "Waiver already signed" });
+      if (w.status === "revoked") throw new TRPCError({ code: "BAD_REQUEST", message: "Waiver was revoked" });
+      const signingUrl = `${ENV.appBaseUrl}/sign-waiver/${w.signingToken}`;
+      const emailSent = await sendWaiverEmail({
+        to: w.signatoryEmail ?? "", signerName: w.signatoryName, waiverTitle: w.snapshotTitle ?? "Liability Waiver",
+        signingUrl, senderName: ctx.user.email ?? "Rivers Lodge", customMessage: w.customMessage, expiresAt: w.expiresAt,
+      });
+      await db.update(portalWaivers).set({ sentAt: new Date(), status: "sent", deliveryStatus: emailSent ? "sent" : "not_sent" }).where(eq(portalWaivers.id, input.id));
+      await logAudit({ actingUserId: ctx.user.id, actingUserName: ctx.user.email ?? "Admin", actionType: "update", entityType: "Waiver", entityId: String(input.id), notes: `Resent to ${w.signatoryEmail}` });
+      return { success: true, emailSent, signingUrl };
+    }),
+
+  revoke: ownerProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ input, ctx }) => {
+      const db = getDb();
+      const [w] = await db.select().from(portalWaivers).where(eq(portalWaivers.id, input.id));
+      if (!w) throw new TRPCError({ code: "NOT_FOUND" });
+      if (w.status === "signed") throw new TRPCError({ code: "BAD_REQUEST", message: "Cannot revoke a signed waiver" });
+      await db.update(portalWaivers).set({ status: "revoked", revokedAt: new Date(), revokedByUserId: ctx.user.id }).where(eq(portalWaivers.id, input.id));
+      await logAudit({ actingUserId: ctx.user.id, actingUserName: ctx.user.email ?? "Admin", actionType: "status_change", entityType: "Waiver", entityId: String(input.id), newValue: "revoked" });
+      return { success: true };
+    }),
+
+  downloadUrl: portalProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ input }) => {
+      const db = getDb();
+      const [w] = await db.select().from(portalWaivers).where(eq(portalWaivers.id, input.id));
+      if (!w?.signedPdfKey) throw new TRPCError({ code: "NOT_FOUND", message: "No signed document available" });
+      const url = await storageGetSignedUrl(w.signedPdfKey);
+      return { url };
+    }),
+
+  // ─── Public signing ───
   getByToken: publicProcedure
     .input(z.object({ token: z.string() }))
     .query(async ({ input }) => {
       const db = getDb();
       const [waiver] = await db.select().from(portalWaivers).where(eq(portalWaivers.signingToken, input.token));
-      if (!waiver) throw new TRPCError({ code: "NOT_FOUND", message: "Waiver not found or expired" });
+      if (!waiver) throw new TRPCError({ code: "NOT_FOUND", message: "Waiver not found" });
+      if (waiver.status === "revoked") throw new TRPCError({ code: "BAD_REQUEST", message: "This waiver request has been revoked" });
       if (waiver.status === "signed") throw new TRPCError({ code: "BAD_REQUEST", message: "Waiver already signed" });
-      const [template] = waiver.templateId
-        ? await db.select().from(waiverTemplates).where(eq(waiverTemplates.id, waiver.templateId))
-        : [null];
-      return { waiver, template };
+      if (waiver.expiresAt && waiver.expiresAt.getTime() < Date.now()) {
+        if (waiver.status !== "expired") await db.update(portalWaivers).set({ status: "expired" }).where(eq(portalWaivers.id, waiver.id));
+        throw new TRPCError({ code: "BAD_REQUEST", message: "This waiver request has expired" });
+      }
+      // Track first view.
+      if (waiver.status === "sent" && !waiver.viewedAt) {
+        await db.update(portalWaivers).set({ status: "viewed", viewedAt: new Date() }).where(eq(portalWaivers.id, waiver.id));
+      }
+      return {
+        waiver,
+        title: waiver.snapshotTitle ?? "Liability Waiver & Release",
+        body: waiver.snapshotBody ?? DEFAULT_WAIVER_BODY,
+        consentText: DEFAULT_CONSENT,
+      };
     }),
 
   sign: publicProcedure
     .input(z.object({
       token: z.string(),
-      signatoryName: z.string(),
+      signatoryName: z.string().min(1).max(255),
+      signatureData: z.string().max(200000).optional(),
+      consentAccepted: z.boolean(),
       ipAddress: z.string().optional(),
+      userAgent: z.string().optional(),
     }))
     .mutation(async ({ input }) => {
       const db = getDb();
       const [waiver] = await db.select().from(portalWaivers).where(eq(portalWaivers.signingToken, input.token));
       if (!waiver) throw new TRPCError({ code: "NOT_FOUND" });
       if (waiver.status === "signed") throw new TRPCError({ code: "BAD_REQUEST", message: "Already signed" });
+      if (waiver.status === "revoked") throw new TRPCError({ code: "BAD_REQUEST", message: "This waiver has been revoked" });
+      if (waiver.expiresAt && waiver.expiresAt.getTime() < Date.now()) {
+        await db.update(portalWaivers).set({ status: "expired" }).where(eq(portalWaivers.id, waiver.id));
+        throw new TRPCError({ code: "BAD_REQUEST", message: "This waiver has expired" });
+      }
+      if (!input.consentAccepted) throw new TRPCError({ code: "BAD_REQUEST", message: "Consent is required to sign" });
       const signedAt = new Date();
-      const [template] = waiver.templateId
-        ? await db.select().from(waiverTemplates).where(eq(waiverTemplates.id, waiver.templateId))
-        : [null];
-      const waiverTitle = template?.templateName ?? "Liability Waiver & Release";
-      const waiverContent = template?.bodyText ?? "By signing this document, you acknowledge and agree to the terms and conditions set forth by Rivers Lodge & Hunt Club. You understand and accept all risks associated with the activities at the property, including but not limited to hunting, fishing, equestrian activities, and use of all facilities. You release Rivers Lodge & Hunt Club, its owners, employees, and agents from any liability for injury, loss, or damage arising from your participation in any activities on the property.";
+      const waiverTitle = waiver.snapshotTitle ?? "Liability Waiver & Release";
+      const waiverContent = waiver.snapshotBody ?? DEFAULT_WAIVER_BODY;
       let signedPdfKey: string | null = null;
       try {
         const { key } = await generateAndStoreWaiverPdf({
-          waiverTitle,
-          waiverContent,
+          waiverTitle, waiverContent,
           signatoryName: input.signatoryName,
           signatoryEmail: waiver.signatoryEmail ?? null,
-          signedAt,
-          ipAddress: input.ipAddress ?? null,
-          waiverToken: input.token,
+          signedAt, ipAddress: input.ipAddress ?? null, waiverToken: input.token,
         });
         signedPdfKey = key;
       } catch (pdfErr) {
@@ -944,9 +1208,15 @@ const waiversPortalRouter = router({
         status: "signed",
         signedAt,
         signatoryName: input.signatoryName,
+        signatureName: input.signatoryName,
+        signatureData: input.signatureData ?? null,
+        consentAccepted: true,
+        consentText: DEFAULT_CONSENT,
         ipAddress: input.ipAddress ?? null,
+        userAgent: input.userAgent ?? null,
         ...(signedPdfKey ? { signedPdfKey } : {}),
       }).where(eq(portalWaivers.signingToken, input.token));
+      await logAudit({ actingUserId: waiver.senderUserId ?? "system", actingUserName: input.signatoryName, actionType: "status_change", entityType: "Waiver", entityId: String(waiver.id), newValue: "signed", notes: `Signed by ${input.signatoryName}` });
       return { success: true, pdfKey: signedPdfKey };
     }),
 });
