@@ -94,7 +94,7 @@ export default function Lodging() {
           >
             {/* Full-bleed compact hero */}
             <div className="relative min-h-[70vh] flex items-end overflow-hidden">
-              <div className="absolute inset-0 bg-[#2B2823]" aria-hidden="true" />
+              {prop.heroImg ? ( <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${prop.heroImg})` }} aria-hidden="true" /> ) : ( <div className="absolute inset-0 bg-[#2B2823] flex items-center justify-center" aria-hidden="true"><span className="text-[11px] tracking-[0.12em] uppercase font-sans text-[#6E655C]">{prop.heroAlt}</span></div> )}
               <div
                 className="absolute inset-0 pointer-events-none"
                 style={{ background: "linear-gradient(to top, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.45) 55%, transparent 100%)" }}
@@ -207,7 +207,7 @@ export default function Lodging() {
           >
             {/* Full-bleed compact hero */}
             <div className="relative min-h-[70vh] flex items-end overflow-hidden">
-              <div className="absolute inset-0 bg-[#1E1C19]" aria-hidden="true" />
+              {venue.heroImg ? ( <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${venue.heroImg})` }} aria-hidden="true" /> ) : ( <div className="absolute inset-0 bg-[#1E1C19] flex items-center justify-center" aria-hidden="true"><span className="text-[11px] tracking-[0.12em] uppercase font-sans text-[#6E655C]">{venue.heroAlt}</span></div> )}
               <div
                 className="absolute inset-0 pointer-events-none"
                 style={{ background: "linear-gradient(to top, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.45) 55%, transparent 100%)" }}
