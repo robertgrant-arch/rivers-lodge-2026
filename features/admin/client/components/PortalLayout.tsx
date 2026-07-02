@@ -57,6 +57,15 @@ const ADMIN_ROLE = "admin";
 
 const adminNavItem = { icon: Shield, label: "Users", path: "/ops/users" };
 
+// Refined, brand-consistent sidebar classes (shared across nav groups)
+const groupLabelCls =
+  "px-3 mb-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-sidebar-foreground/40";
+const navButtonCls =
+  "w-full rounded-none text-sidebar-foreground/80 transition-colors " +
+  "hover:bg-[#423F3B]/50 hover:text-sidebar-foreground " +
+  "data-[active=true]:bg-[#9B4D19]/15 data-[active=true]:text-[#E0D3BD] data-[active=true]:font-medium " +
+  "data-[active=true]:shadow-[inset_2px_0_0_0_#9B4D19]";
+
 const navGroups = [
   {
     label: "Overview",
@@ -158,33 +167,33 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
     <SidebarProvider>
       <div className="flex min-h-screen w-full bg-background">
         <Sidebar className="border-r border-sidebar-border" style={{ "--sidebar-width": "260px" } as React.CSSProperties}>
-          <SidebarHeader className="px-4 py-4 border-b border-sidebar-border">
+          <SidebarHeader className="px-4 h-16 flex justify-center border-b border-sidebar-border">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-[#9B4D19] flex items-center justify-center flex-shrink-0">
+              <div className="w-9 h-9 bg-[#9B4D19] flex items-center justify-center flex-shrink-0">
                 <Shield className="w-4 h-4 text-[#E0D3BD]" />
               </div>
-              <div className="min-w-0">
+              <div className="min-w-0 leading-tight">
                 <p className="text-sm font-semibold text-sidebar-foreground truncate">Operations Portal</p>
-                <p className="text-xs text-sidebar-foreground/60 truncate">Rivers Lodge</p>
+                <p className="text-[11px] tracking-[0.1em] uppercase text-sidebar-foreground/50 truncate mt-0.5">Rivers Lodge</p>
               </div>
             </div>
           </SidebarHeader>
 
-          <SidebarContent className="px-2 py-2">
+          <SidebarContent className="px-3 py-4 gap-0">
             {navGroups.map((group) => (
-              <SidebarGroup key={group.label} className="mb-1">
-                <SidebarGroupLabel className="text-xs font-medium text-sidebar-foreground/50 uppercase tracking-wider px-2 mb-1">
+              <SidebarGroup key={group.label} className="mb-5 p-0">
+                <SidebarGroupLabel className={groupLabelCls}>
                   {group.label}
                 </SidebarGroupLabel>
-                <SidebarMenu>
+                <SidebarMenu className="gap-0.5">
                   {group.items.map((item) => {
                     const isActive = location === item.path || (item.path !== "/ops" && location.startsWith(item.path));
                     return (
                       <SidebarMenuItem key={item.path}>
-                        <SidebarMenuButton asChild isActive={isActive} className="w-full">
-                          <Link href={item.path} className="flex items-center gap-3 px-3 py-2 text-sm">
+                        <SidebarMenuButton asChild isActive={isActive} className={navButtonCls}>
+                          <Link href={item.path} className="flex items-center gap-3 px-3 py-2 text-[13px]">
                             <item.icon className="w-4 h-4 flex-shrink-0" />
-                            <span>{item.label}</span>
+                            <span className="truncate">{item.label}</span>
                           </Link>
                         </SidebarMenuButton>
                       </SidebarMenuItem>
@@ -194,20 +203,20 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
               </SidebarGroup>
             ))}
             {user?.role === "admin" && (
-              <SidebarGroup className="mb-1">
-                <SidebarGroupLabel className="text-xs font-medium text-sidebar-foreground/50 uppercase tracking-wider px-2 mb-1">
+              <SidebarGroup className="mb-0 p-0">
+                <SidebarGroupLabel className={groupLabelCls}>
                   Admin
                 </SidebarGroupLabel>
-                <SidebarMenu>
+                <SidebarMenu className="gap-0.5">
                   <SidebarMenuItem>
                     <SidebarMenuButton
                       asChild
                       isActive={location === adminNavItem.path || location.startsWith(adminNavItem.path)}
-                      className="w-full"
+                      className={navButtonCls}
                     >
-                      <Link href={adminNavItem.path} className="flex items-center gap-3 px-3 py-2 text-sm">
+                      <Link href={adminNavItem.path} className="flex items-center gap-3 px-3 py-2 text-[13px]">
                         <adminNavItem.icon className="w-4 h-4 flex-shrink-0" />
-                        <span>{adminNavItem.label}</span>
+                        <span className="truncate">{adminNavItem.label}</span>
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -216,31 +225,31 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
             )}
           </SidebarContent>
 
-          <SidebarFooter className="px-3 py-3 border-t border-sidebar-border">
+          <SidebarFooter className="p-2 border-t border-sidebar-border">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-3 w-full px-2 py-2 hover:bg-sidebar-accent transition-colors text-left">
+                <button className="flex items-center gap-3 w-full px-2.5 py-2.5 rounded-none hover:bg-[#423F3B]/60 transition-colors text-left group">
                   <Avatar className="w-8 h-8 flex-shrink-0">
                     <AvatarFallback className="bg-[#9B4D19] text-[#E0D3BD] text-xs font-semibold">
                       {initials}
                     </AvatarFallback>
                   </Avatar>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-sidebar-foreground truncate">{user.email ?? "Staff"}</p>
-                    <p className="text-xs text-sidebar-foreground/60 truncate">{roleLabel}</p>
+                  <div className="min-w-0 flex-1 leading-tight">
+                    <p className="text-[13px] font-medium text-sidebar-foreground truncate">{user.email ?? "Staff"}</p>
+                    <p className="text-[11px] tracking-[0.08em] uppercase text-sidebar-foreground/50 truncate mt-0.5">{roleLabel}</p>
                   </div>
-                  <ChevronDown className="w-3 h-3 text-sidebar-foreground/50 flex-shrink-0" />
+                  <ChevronDown className="w-3.5 h-3.5 text-sidebar-foreground/40 group-hover:text-sidebar-foreground/70 transition-colors flex-shrink-0" />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuContent align="end" className="w-[--radix-dropdown-menu-trigger-width] min-w-52">
                 <DropdownMenuItem asChild>
-                  <Link href="/" className="flex items-center gap-2">
+                  <Link href="/" className="flex items-center gap-2 cursor-pointer">
                     <Home className="w-4 h-4" />
                     Public Site
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => logout()} className="text-destructive">
+                <DropdownMenuItem onClick={() => logout()} className="text-destructive cursor-pointer">
                   <LogOut className="w-4 h-4 mr-2" />
                   Sign Out
                 </DropdownMenuItem>
