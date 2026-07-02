@@ -59,6 +59,11 @@ export default function LodgingVenueDetail({ slug }: { slug: string }) {
             style={{ background: "linear-gradient(to bottom, transparent 0%, oklch(0 0 0/0.12) 40%, oklch(0 0 0/0.82) 100%)" }}
           />
         </div>
+{!venue.heroImg && (
+<div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+<span className="text-white/80 text-[15px] tracking-[0.18em] uppercase font-sans">{venue.heroAlt}</span>
+</div>
+)}
         <div className="relative z-10 max-w-[1440px] mx-auto px-5 lg:px-14 w-full">
           <div style={{ height: "1px", width: "2rem", backgroundColor: ACCENT, marginBottom: "1.25rem" }} />
           <p className="eyebrow text-white/50 mb-4">{groupLabel}</p>
@@ -100,8 +105,8 @@ export default function LodgingVenueDetail({ slug }: { slug: string }) {
                     onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
                   />
                 ) : (
-                  <span className="text-[10px] tracking-[0.18em] uppercase font-sans text-white/30 select-none pointer-events-none">
-                    Photo {i + 1}
+                    <span className="text-[13px] tracking-[0.18em] uppercase font-sans text-white/70 select-none pointer-events-none">
+                                          {img.alt}
                   </span>
                 )}
               </div>
