@@ -10,4 +10,8 @@ export const ENV = {
   // Email (invite / password-reset delivery). See _core/server/mailer.ts.
   resendApiKey: process.env.RESEND_API_KEY ?? "",
   mailFrom: process.env.MAIL_FROM ?? "",
+  // LLM (newsletter drafting, etc.). Uses the Forge proxy if configured,
+  // otherwise falls back to OpenAI directly. See _core/server/llm.ts.
+  openaiApiKey: process.env.OPENAI_API_KEY ?? "",
+  openaiModel: process.env.OPENAI_MODEL ?? "gpt-4o-mini",
 };

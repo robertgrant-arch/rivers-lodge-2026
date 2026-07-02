@@ -209,15 +209,46 @@ const normalizeToolChoice = (
   return toolChoice;
 };
 
-const resolveApiUrl = () =>
-  ENV.forgeApiUrl && ENV.forgeApiUrl.trim().length > 0
-    ? `${ENV.forgeApiUrl.replace(/\/$/, "")}/v1/chat/completions`
-    : "https://forge.manus.im/v1/chat/completions";
+type LlmProvider = {
+  url: string;
+  apiKey: string;
+  model: string;
+  /** true when talking to the OpenAI API directly (vs. the Forge proxy). */
+  isOpenAI: boolean;
+};
 
-const assertApiKey = () => {
-  if (!ENV.forgeApiKey) {
-    throw new Error("OPENAI_API_KEY is not configured");
+/**
+ * Choose the LLM backend. Prefer the Forge proxy when it's configured
+ * (BUILT_IN_FORGE_API_KEY); otherwise fall back to OpenAI directly
+ * (OPENAI_API_KEY). Returns null when neither is set.
+ */
+const resolveProvider = (): LlmProvider | null => {
+  if (ENV.forgeApiKey) {
+    const url =
+      ENV.forgeApiUrl && ENV.forgeApiUrl.trim().length > 0
+        ? `${ENV.forgeApiUrl.replace(/\/$/, "")}/v1/chat/completions`
+        : "https://forge.manus.im/v1/chat/completions";
+    return { url, apiKey: ENV.forgeApiKey, model: "gemini-2.5-flash", isOpenAI: false };
   }
+  if (ENV.openaiApiKey) {
+    return {
+      url: "https://api.openai.com/v1/chat/completions",
+      apiKey: ENV.openaiApiKey,
+      model: ENV.openaiModel || "gpt-4o-mini",
+      isOpenAI: true,
+    };
+  }
+  return null;
+};
+
+const requireProvider = (): LlmProvider => {
+  const provider = resolveProvider();
+  if (!provider) {
+    throw new Error(
+      "No LLM provider configured. Set OPENAI_API_KEY (or BUILT_IN_FORGE_API_KEY) in the environment.",
+    );
+  }
+  return provider;
 };
 
 const normalizeResponseFormat = ({
@@ -266,7 +297,7 @@ const normalizeResponseFormat = ({
 };
 
 export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
-  assertApiKey();
+  const provider = requireProvider();
 
   const {
     messages,
@@ -280,7 +311,7 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
   } = params;
 
   const payload: Record<string, unknown> = {
-    model: "gemini-2.5-flash",
+    model: provider.model,
     messages: messages.map(normalizeMessage),
   };
 
@@ -296,9 +327,15 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
     payload.tool_choice = normalizedToolChoice;
   }
 
-  payload.max_tokens = 32768
-  payload.thinking = {
-    "budget_tokens": 128
+  if (provider.isOpenAI) {
+    // OpenAI chat-completions rejects the Forge-only `thinking` param, and
+    // its max output is far below 32k — cap to a safe value for drafting.
+    payload.max_tokens = 4096;
+  } else {
+    payload.max_tokens = 32768;
+    payload.thinking = {
+      "budget_tokens": 128,
+    };
   }
 
   const normalizedResponseFormat = normalizeResponseFormat({
@@ -312,11 +349,11 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
     payload.response_format = normalizedResponseFormat;
   }
 
-  const response = await fetch(resolveApiUrl(), {
+  const response = await fetch(provider.url, {
     method: "POST",
     headers: {
       "content-type": "application/json",
-      authorization: `Bearer ${ENV.forgeApiKey}`,
+      authorization: `Bearer ${provider.apiKey}`,
     },
     body: JSON.stringify(payload),
   });
