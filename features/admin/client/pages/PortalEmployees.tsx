@@ -1,5 +1,4 @@
 import { Button } from '@shared/ui/button';
-import { Card, CardContent } from '@shared/ui/card';
 import {
   Dialog,
   DialogContent,
@@ -7,6 +6,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@shared/ui/dialog';
+import { Input } from '@shared/ui/input';
 import { Label } from '@shared/ui/label';
 import {
   Select,
@@ -17,11 +17,13 @@ import {
 } from '@shared/ui/select';
 import { Skeleton } from '@shared/ui/skeleton';
 import { trpc } from '@shared/lib/trpc';
-import { Mail, UserCheck } from "lucide-react";
+import { Check, Copy, Mail, Shield, UserPlus } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
-const ROLES = [
+type StaffRole = "admin" | "member";
+
+const ROLES: { value: StaffRole; label: string }[] = [
   { value: "admin", label: "Admin" },
   { value: "member", label: "Member" },
 ];
@@ -31,13 +33,84 @@ function formatDate(d: string | Date | null | undefined) {
   return new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
 
+// ── Invite link box (matches Users & Access) ─────────────────────────────────
+function InviteLinkBox({ url, onDone }: { url: string; onDone: () => void }) {
+  const [copied, setCopied] = useState(false);
+  function handleCopy() {
+    navigator.clipboard.writeText(url).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }
+  return (
+    <div className="mt-4 bg-[#2B2823] border border-[#57544E] p-4 space-y-3">
+      <p className="font-sans text-xs tracking-[0.12em] uppercase text-[#BABAAE]">
+        Invite Link Generated
+      </p>
+      <div className="flex items-center gap-2">
+        <code className="flex-1 font-mono text-xs text-[#E0D3BD] bg-[#363330] border border-[#57544E] px-3 py-2 select-all break-all">
+          {url}
+        </code>
+        <button
+          onClick={handleCopy}
+          className="shrink-0 p-2 border border-[#57544E] text-[#BABAAE] hover:border-[#9B4D19] hover:text-[#9B4D19] transition-colors"
+          title="Copy link"
+        >
+          {copied ? <Check className="w-4 h-4 text-[#6B7250]" /> : <Copy className="w-4 h-4" />}
+        </button>
+      </div>
+      <div className="flex justify-end">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onDone}
+          className="font-sans text-xs tracking-[0.1em] uppercase text-[#BABAAE] hover:text-[#E0D3BD]"
+        >
+          Done
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function RoleLabel({ role }: { role: string }) {
+  if (role === "admin") {
+    return (
+      <span className="flex items-center gap-1 text-[#9B4D19] text-sm">
+        <Shield className="w-3.5 h-3.5" />
+        Admin
+      </span>
+    );
+  }
+  return <span className="text-sm text-[#BABAAE] capitalize">{role?.replace(/_/g, " ") || "—"}</span>;
+}
+
 export default function PortalEmployees() {
-  const [editingUser, setEditingUser] = useState<{ id: string; email: string | null; role: string } | null>(null);
-  const [newRole, setNewRole] = useState("staff");
   const utils = trpc.useUtils();
 
-  // employees.list returns users[] with staff roles (no extra fields beyond users table)
+  // ── Invite form state ──
+  const [email, setEmail] = useState("");
+  const [role, setRole] = useState<StaffRole>("admin");
+  const [inviteUrl, setInviteUrl] = useState<string | null>(null);
+
+  // ── Change-role dialog state ──
+  const [editingUser, setEditingUser] = useState<{ id: string; email: string | null; role: string } | null>(null);
+  const [newRole, setNewRole] = useState<StaffRole>("admin");
+
   const employeesQuery = trpc.portal.employees.list.useQuery();
+  const employees = employeesQuery.data ?? [];
+
+  const inviteMutation = trpc.portal.users.invite.useMutation({
+    onSuccess: (data: { inviteUrl: string; emailSent: boolean }) => {
+      setInviteUrl(data.inviteUrl);
+      setEmail("");
+      setRole("admin");
+      utils.portal.employees.list.invalidate();
+      utils.portal.users.list.invalidate();
+      toast.success("Invitation created");
+    },
+    onError: (e) => toast.error(e.message),
+  });
 
   const updateRoleMutation = trpc.portal.employees.updateRole.useMutation({
     onSuccess: () => {
@@ -48,103 +121,189 @@ export default function PortalEmployees() {
     onError: (e) => toast.error(e.message),
   });
 
-  const employees = employeesQuery.data ?? [];
+  function handleInvite() {
+    if (!email.trim()) return;
+    inviteMutation.mutate({ email: email.trim(), role });
+  }
 
   return (
-    <div className="p-6 space-y-6 max-w-7xl mx-auto">
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-            <UserCheck className="w-6 h-6 text-teal-600" />
-            Employees & Staff
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Portal users with staff roles. To add a new staff member, have them sign in first, then assign their role here.
-          </p>
-        </div>
+    <div className="min-h-screen bg-background px-6 py-10 max-w-5xl mx-auto space-y-8">
+      {/* Page header */}
+      <div>
+        <p className="font-sans text-xs tracking-[0.12em] uppercase text-[#BABAAE] mb-1">
+          Operations
+        </p>
+        <h1 className="font-sans text-2xl font-medium tracking-tight text-[#E0D3BD]">
+          Employees &amp; Staff
+        </h1>
+        <p className="font-sans text-sm text-[#BABAAE] mt-1">
+          Invite staff and administrators to the operations portal and manage their access.
+        </p>
       </div>
 
-      <Card>
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border bg-muted/30">
-                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">Name</th>
-                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">Email</th>
-                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">Portal Role</th>
-                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">Last Sign-In</th>
-                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {employeesQuery.isLoading ? (
-                  [1,2,3].map(i => <tr key={i} className="border-b border-border"><td colSpan={5} className="px-4 py-3"><Skeleton className="h-5 w-full" /></td></tr>)
-                ) : employees.length === 0 ? (
-                  <tr><td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">No staff accounts found. Staff must sign in before they can be assigned a role.</td></tr>
-                ) : employees.map(e => (
-                  <tr key={e.id} className="border-b border-border hover:bg-muted/30 transition-colors">
-                    <td className="px-4 py-3">
-                      <p className="font-medium text-foreground">{e.email ?? "—"}</p>
-                    </td>
-                    <td className="px-4 py-3">
-                      {e.email && (
-                        <div className="flex items-center gap-1.5 text-muted-foreground text-xs">
-                          <Mail className="w-3 h-3" />
-                          <a href={`mailto:${e.email}`} className="hover:text-foreground">{e.email}</a>
-                        </div>
-                      )}
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className="px-2 py-0.5 rounded text-xs font-medium bg-muted text-muted-foreground capitalize">
-                        {e.role?.replace(/_/g, " ")}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-muted-foreground text-xs">{formatDate(e.lastLoginAt)}</td>
-                    <td className="px-4 py-3">
-                      <Button size="sm" variant="outline" className="text-xs h-7 px-2"
-                        onClick={() => {
-                          setEditingUser({ id: e.id, email: e.email, role: e.role });
-                          setNewRole(e.role);
-                        }}>
-                        Change Role
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+      {/* Invite form */}
+      <div className="bg-[#363330] border border-[#57544E] p-6 space-y-5">
+        <p className="font-sans text-xs tracking-[0.12em] uppercase text-[#BABAAE]">
+          Add Employee
+        </p>
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="flex-1 space-y-1.5">
+            <Label className="font-sans text-xs tracking-[0.1em] uppercase text-[#BABAAE]">
+              Email Address
+            </Label>
+            <Input
+              type="email"
+              placeholder="name@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleInvite()}
+              className="bg-[#2B2823] border-[#57544E] text-[#E0D3BD] placeholder:text-[#57544E] rounded-none focus-visible:ring-[#9B4D19] focus-visible:ring-1 focus-visible:border-[#9B4D19]"
+            />
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Role Edit Dialog */}
-      <Dialog open={editingUser !== null} onOpenChange={() => setEditingUser(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Change Role — {editingUser?.email ?? "User"}</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-3 py-2">
-            <Label>Portal Role</Label>
-            <Select value={newRole} onValueChange={setNewRole}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {ROLES.map(r => <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>)}
+          <div className="w-full sm:w-40 space-y-1.5">
+            <Label className="font-sans text-xs tracking-[0.1em] uppercase text-[#BABAAE]">
+              Role
+            </Label>
+            <Select value={role} onValueChange={(v) => setRole(v as StaffRole)}>
+              <SelectTrigger className="bg-[#2B2823] border-[#57544E] text-[#E0D3BD] rounded-none focus:ring-[#9B4D19] focus:ring-1">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-[#363330] border-[#57544E] rounded-none text-[#E0D3BD]">
+                {ROLES.map((r) => (
+                  <SelectItem key={r.value} value={r.value} className="focus:bg-[#423F3B] focus:text-[#E0D3BD]">
+                    {r.label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
-            <p className="text-xs text-muted-foreground">
+          </div>
+          <div className="flex items-end">
+            <Button
+              onClick={handleInvite}
+              disabled={!email.trim() || inviteMutation.isPending}
+              className="bg-[#9B4D19] hover:bg-[#7a3c14] text-[#E0D3BD] font-sans text-xs tracking-[0.1em] uppercase rounded-none h-10 px-5"
+            >
+              <UserPlus className="w-3.5 h-3.5 mr-2" />
+              {inviteMutation.isPending ? "Sending…" : "Add Employee"}
+            </Button>
+          </div>
+        </div>
+
+        <p className="font-sans text-xs text-[#BABAAE]/70">
+          An invitation link is generated for the new employee to set their password. Admins get
+          full access to the operations portal; members get the member portal.
+        </p>
+
+        {inviteUrl && <InviteLinkBox url={inviteUrl} onDone={() => setInviteUrl(null)} />}
+      </div>
+
+      {/* Staff table */}
+      <div>
+        <p className="font-sans text-xs tracking-[0.12em] uppercase text-[#BABAAE] mb-4">
+          Current Staff
+        </p>
+
+        {employeesQuery.isLoading ? (
+          <div className="space-y-2">
+            {[1, 2, 3].map((i) => (
+              <Skeleton key={i} className="h-14 bg-[#363330]" />
+            ))}
+          </div>
+        ) : employees.length === 0 ? (
+          <div className="bg-[#363330] border border-[#57544E] p-8 text-center">
+            <p className="text-sm text-[#BABAAE]">No staff accounts yet. Add one above.</p>
+          </div>
+        ) : (
+          <div className="bg-[#363330] border border-[#57544E]">
+            {/* Header */}
+            <div className="grid grid-cols-[1fr_120px_140px_120px] gap-x-4 px-5 py-3 border-b border-[#57544E]">
+              <span className="font-sans text-xs tracking-[0.12em] uppercase text-[#BABAAE]">Email</span>
+              <span className="font-sans text-xs tracking-[0.12em] uppercase text-[#BABAAE]">Role</span>
+              <span className="font-sans text-xs tracking-[0.12em] uppercase text-[#BABAAE]">Last Sign-In</span>
+              <span />
+            </div>
+            {/* Rows */}
+            <div className="divide-y divide-[#57544E]">
+              {employees.map((e) => (
+                <div
+                  key={e.id}
+                  className="grid grid-cols-[1fr_120px_140px_120px] gap-x-4 items-center px-5 py-3.5 hover:bg-[#423F3B]/50 transition-colors"
+                >
+                  <div className="min-w-0 flex items-center gap-1.5">
+                    <Mail className="w-3 h-3 text-[#BABAAE] shrink-0" />
+                    <span className="text-sm text-[#E0D3BD] truncate">{e.email ?? "—"}</span>
+                  </div>
+                  <div>
+                    <RoleLabel role={e.role} />
+                  </div>
+                  <span className="text-sm text-[#BABAAE]">{formatDate(e.lastLoginAt)}</span>
+                  <div className="flex justify-end">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="border-[#57544E] text-[#E0D3BD] hover:border-[#9B4D19] hover:text-[#9B4D19] rounded-none font-sans text-xs tracking-[0.08em] uppercase h-8 px-3"
+                      onClick={() => {
+                        setEditingUser({ id: e.id, email: e.email, role: e.role });
+                        setNewRole((e.role === "admin" ? "admin" : "member"));
+                      }}
+                    >
+                      Change Role
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Role edit dialog */}
+      <Dialog open={editingUser !== null} onOpenChange={() => setEditingUser(null)}>
+        <DialogContent className="bg-[#363330] border border-[#57544E] rounded-none text-[#E0D3BD] max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-sans font-medium text-[#E0D3BD]">
+              Change Role — {editingUser?.email ?? "User"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <Label className="font-sans text-xs tracking-[0.1em] uppercase text-[#BABAAE]">
+              Portal Role
+            </Label>
+            <Select value={newRole} onValueChange={(v) => setNewRole(v as StaffRole)}>
+              <SelectTrigger className="bg-[#2B2823] border-[#57544E] text-[#E0D3BD] rounded-none focus:ring-[#9B4D19] focus:ring-1">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-[#363330] border-[#57544E] rounded-none text-[#E0D3BD]">
+                {ROLES.map((r) => (
+                  <SelectItem key={r.value} value={r.value} className="focus:bg-[#423F3B] focus:text-[#E0D3BD]">
+                    {r.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-[#BABAAE]">
               This controls which sections of the portal this user can access.
             </p>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setEditingUser(null)}>Cancel</Button>
+          <DialogFooter className="gap-2">
             <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setEditingUser(null)}
+              className="font-sans text-xs tracking-[0.1em] uppercase text-[#BABAAE] hover:text-[#E0D3BD]"
+            >
+              Cancel
+            </Button>
+            <Button
+              size="sm"
               onClick={() => {
                 if (!editingUser) return;
-                updateRoleMutation.mutate({ userId: editingUser.id, role: newRole as any });
+                updateRoleMutation.mutate({ userId: editingUser.id, role: newRole });
               }}
-              disabled={updateRoleMutation.isPending}>
-              {updateRoleMutation.isPending ? "Saving..." : "Save Role"}
+              disabled={updateRoleMutation.isPending}
+              className="bg-[#9B4D19] hover:bg-[#7a3c14] text-[#E0D3BD] font-sans text-xs tracking-[0.1em] uppercase rounded-none"
+            >
+              {updateRoleMutation.isPending ? "Saving…" : "Save Role"}
             </Button>
           </DialogFooter>
         </DialogContent>
