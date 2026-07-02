@@ -156,7 +156,7 @@ export const PURSUITS: Pursuit[] = [
       "Members may fish without guide; non-members by guided trip only",
     ],
   },
-];
+  {     slug: "five-stand",     title: "Five Stand",     teaser: "Sporting clays and five-stand shooting for members and guests.",     heroImg: "/img/five-stand.jpg",     heroAlt: "Five stand sporting clays at Rivers Lodge",     description: [       "The Rivers Lodge five-stand course offers a fast, social clay-shooting experience just steps from the lodge. Five shooting stations present a rotating variety of clay targets that simulate flushing upland birds, crossing waterfowl, and incoming doves.",       "Whether you are warming up before a hunt or spending an afternoon on the course, five-stand is ideal for shooters of every skill level. Instruction and loaner shotguns are available through the hunt manager.",     ],     galleryImgs: [],     season: [       { label: "Availability", value: "Year-round" },     ],     regulations: [       "Eye and ear protection required at all times",       "Shooting only from designated stations",       "Follow all range safety officer instructions",     ],   }, ];
 
 export function getPursuit(slug: string): Pursuit | undefined {
   return PURSUITS.find((p) => p.slug === slug);
