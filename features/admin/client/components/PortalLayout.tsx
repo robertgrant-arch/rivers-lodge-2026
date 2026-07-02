@@ -21,6 +21,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarProvider,
+  SidebarSeparator,
   SidebarTrigger,
 } from '@shared/ui/sidebar';
 import { trpc } from '@shared/lib/trpc';
@@ -57,11 +58,16 @@ const ADMIN_ROLE = "admin";
 
 const adminNavItem = { icon: Shield, label: "Users", path: "/ops/users" };
 
-// Refined, brand-consistent sidebar classes (shared across nav groups)
+// Refined, brand-consistent sidebar classes (shared across nav groups).
+// Note: SidebarMenuButton ships a built-in `p-2` from the shared UI primitive
+// (features/_shared/ui/sidebar.tsx, also used by DashboardLayout) — we don't
+// touch that file since it's shared. Instead we zero it out here (`p-0`) and
+// let the inner <Link> own all padding, so nav items line up with the group
+// label at the same 32px inset instead of sitting ~8px deeper than it.
 const groupLabelCls =
   "px-3 mb-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-sidebar-foreground/40";
 const navButtonCls =
-  "w-full rounded-none text-sidebar-foreground/80 transition-colors " +
+  "w-full rounded-none p-0 h-auto text-sidebar-foreground/80 transition-colors " +
   "hover:bg-[#423F3B]/50 hover:text-sidebar-foreground " +
   "data-[active=true]:bg-[#9B4D19]/15 data-[active=true]:text-[#E0D3BD] data-[active=true]:font-medium " +
   "data-[active=true]:shadow-[inset_2px_0_0_0_#9B4D19]";
@@ -180,56 +186,65 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
           </SidebarHeader>
 
           <SidebarContent className="px-3 py-4 gap-0">
-            {navGroups.map((group) => (
-              <SidebarGroup key={group.label} className="mb-5 p-0">
-                <SidebarGroupLabel className={groupLabelCls}>
-                  {group.label}
-                </SidebarGroupLabel>
-                <SidebarMenu className="gap-0.5">
-                  {group.items.map((item) => {
-                    const isActive = location === item.path || (item.path !== "/ops" && location.startsWith(item.path));
-                    return (
-                      <SidebarMenuItem key={item.path}>
-                        <SidebarMenuButton asChild isActive={isActive} className={navButtonCls}>
-                          <Link href={item.path} className="flex items-center gap-3 px-3 py-2 text-[13px]">
-                            <item.icon className="w-4 h-4 flex-shrink-0" />
-                            <span className="truncate">{item.label}</span>
-                          </Link>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    );
-                  })}
-                </SidebarMenu>
-              </SidebarGroup>
+            {navGroups.map((group, i) => (
+              <div key={group.label}>
+                {i > 0 && <SidebarSeparator className="mb-4 mt-1" />}
+                <SidebarGroup className="mb-4 p-0">
+                  <SidebarGroupLabel className={groupLabelCls}>
+                    {group.label}
+                  </SidebarGroupLabel>
+                  <SidebarMenu className="gap-0.5">
+                    {group.items.map((item) => {
+                      const isActive = location === item.path || (item.path !== "/ops" && location.startsWith(item.path));
+                      return (
+                        <SidebarMenuItem key={item.path}>
+                          <SidebarMenuButton asChild isActive={isActive} className={navButtonCls}>
+                            <Link href={item.path} className="flex items-center gap-3 px-3 py-2 text-[13px]">
+                              <item.icon className="w-4 h-4 flex-shrink-0" />
+                              <span className="truncate">{item.label}</span>
+                            </Link>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      );
+                    })}
+                  </SidebarMenu>
+                </SidebarGroup>
+              </div>
             ))}
             {user?.role === "admin" && (
-              <SidebarGroup className="mb-0 p-0">
-                <SidebarGroupLabel className={groupLabelCls}>
-                  Admin
-                </SidebarGroupLabel>
-                <SidebarMenu className="gap-0.5">
-                  <SidebarMenuItem>
-                    <SidebarMenuButton
-                      asChild
-                      isActive={location === adminNavItem.path || location.startsWith(adminNavItem.path)}
-                      className={navButtonCls}
-                    >
-                      <Link href={adminNavItem.path} className="flex items-center gap-3 px-3 py-2 text-[13px]">
-                        <adminNavItem.icon className="w-4 h-4 flex-shrink-0" />
-                        <span className="truncate">{adminNavItem.label}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                </SidebarMenu>
-              </SidebarGroup>
+              <div>
+                <SidebarSeparator className="mb-4 mt-1" />
+                <SidebarGroup className="mb-0 p-0">
+                  <SidebarGroupLabel className={groupLabelCls}>
+                    Admin
+                  </SidebarGroupLabel>
+                  <SidebarMenu className="gap-0.5">
+                    <SidebarMenuItem>
+                      <SidebarMenuButton
+                        asChild
+                        isActive={location === adminNavItem.path || location.startsWith(adminNavItem.path)}
+                        className={navButtonCls}
+                      >
+                        <Link href={adminNavItem.path} className="flex items-center gap-3 px-3 py-2 text-[13px]">
+                          <adminNavItem.icon className="w-4 h-4 flex-shrink-0" />
+                          <span className="truncate">{adminNavItem.label}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  </SidebarMenu>
+                </SidebarGroup>
+              </div>
             )}
           </SidebarContent>
 
           <SidebarFooter className="p-2 border-t border-sidebar-border">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-3 w-full px-2.5 py-2.5 rounded-none hover:bg-[#423F3B]/60 transition-colors text-left group">
-                  <Avatar className="w-8 h-8 flex-shrink-0">
+                <button
+                  className="flex items-center gap-3 w-full px-2.5 py-2.5 rounded-none text-left group transition-colors
+                             hover:bg-[#423F3B]/60 data-[state=open]:bg-[#423F3B]/70"
+                >
+                  <Avatar className="w-8 h-8 flex-shrink-0 ring-1 ring-[#57544E]">
                     <AvatarFallback className="bg-[#9B4D19] text-[#E0D3BD] text-xs font-semibold">
                       {initials}
                     </AvatarFallback>
@@ -238,7 +253,11 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
                     <p className="text-[13px] font-medium text-sidebar-foreground truncate">{user.email ?? "Staff"}</p>
                     <p className="text-[11px] tracking-[0.08em] uppercase text-sidebar-foreground/50 truncate mt-0.5">{roleLabel}</p>
                   </div>
-                  <ChevronDown className="w-3.5 h-3.5 text-sidebar-foreground/40 group-hover:text-sidebar-foreground/70 transition-colors flex-shrink-0" />
+                  <ChevronDown
+                    className="w-3.5 h-3.5 text-sidebar-foreground/40 flex-shrink-0 transition-transform duration-200
+                               group-hover:text-sidebar-foreground/70 group-data-[state=open]:text-sidebar-foreground/70
+                               group-data-[state=open]:rotate-180"
+                  />
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-[--radix-dropdown-menu-trigger-width] min-w-52">
