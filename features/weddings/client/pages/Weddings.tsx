@@ -9,9 +9,10 @@ import SEOHead, { structuredData } from '@shared/components/SEOHead';
 import StickyInquiryCTA from "@/components/StickyInquiryCTA";
 
 const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined;
-// redeploy: weddings venue images + estate placeholder 2026-06-30
+// redeploy: estate hero overlay 2026-07-03
 
 const HERO = "/img/wedding%20hero.JPG";
+const ESTATE_HERO = "";
 
 function useFadeUp(t = 0.12) {
 const ref = useRef<HTMLElement>(null);
@@ -56,7 +57,6 @@ form.message ? `\n${form.message}` : "",
 ].filter(Boolean).join("\n");
 submit.mutate({ type: "wedding", name: form.name, email: form.email, phone: form.phone || undefined, message: fullMessage, captchaToken });
 };
-
 if (submitted) {
 return (
 <div className="border border-border p-10 bg-surface">
@@ -127,23 +127,23 @@ From intimate ceremonies on the River Lawn to grand receptions in the Rivers Bar
 </div>
 </div>
 </section>
-{/* Intro */}
-<section className="section bg-background">
-<div className="max-w-[1440px] mx-auto px-5 lg:px-14">
-{/* Estate hero placeholder */}
-<div className="relative bg-[#2B2823] aspect-[21/9] w-full mb-14 overflow-hidden">
+{/* Intro — Estate Hero with overlaid content */}
+<section className="relative flex items-end overflow-hidden bg-[#2B2823]" style={{ minHeight: "70vh" }}>
+<div className="absolute inset-0">
 <div className="absolute inset-0 flex items-center justify-center">
 <span className="eyebrow text-muted-brand">EMPTY #1 — Private Estate Hero</span>
 </div>
-<img src={"" || undefined} alt="EMPTY #1 — Private Estate Hero" className="relative w-full h-full object-cover block" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
+<img src={ESTATE_HERO || undefined} alt="EMPTY #1 — Private Estate Hero" className="absolute inset-0 w-full h-full object-cover block" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
+<div className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(to bottom, oklch(0 0 0/0.30) 0%, oklch(0 0 0/0.55) 60%, oklch(0 0 0/0.82) 100%)" }} />
 </div>
+<div className="relative z-10 max-w-[1440px] mx-auto px-5 lg:px-14 w-full py-20 lg:py-28">
 <div className="max-w-2xl">
 <div style={{ height: "1px", width: "2rem", backgroundColor: "#9B4D19", marginBottom: "1.25rem" }} />
-<p className="eyebrow text-muted-brand mb-4">The Experience</p>
-<h2 className="font-serif font-light text-warm leading-tight mb-8" style={{ fontSize: "clamp(1.875rem,3.5vw,3rem)" }}>
+<p className="eyebrow text-white/50 mb-4">The Experience</p>
+<h2 className="font-serif font-light text-white leading-tight mb-8" style={{ fontSize: "clamp(1.875rem,3.5vw,3rem)" }}>
 Not a venue. <br /><em className="italic">A private estate.</em>
 </h2>
-<div className="space-y-5 font-sans text-muted-brand leading-relaxed" style={{ fontSize: "0.9375rem" }}>
+<div className="space-y-5 font-sans text-white/70 leading-relaxed" style={{ fontSize: "0.9375rem" }}>
 <p>When you book a wedding at Rivers Lodge, you book the entire estate. Your guests are the only guests. The ceremony lawns, Rivers Barn, Timber Edge, and your reserved lodging are all exclusively yours for the weekend.</p>
 <p>We work with a limited number of couples each year to ensure every wedding receives the full attention of our team. The result is a weekend that feels less like an event and more like a private gathering on land that belongs to you — at least for those three days.</p>
 </div>
