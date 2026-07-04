@@ -22,6 +22,16 @@ import {
   InsertMessage,
   blockedDates,
   InsertBlockedDate,
+  activities,
+  slotTemplates,
+  properties,
+  propertyActivities,
+  propertySlots,
+  InsertActivity,
+  InsertSlotTemplate,
+  InsertProperty,
+  InsertPropertyActivity,
+  InsertPropertySlot,
 } from "../db/schema";
 
 // Re-export table references consumed by feature routers
@@ -649,5 +659,172 @@ export async function upsertCmsSingleton(data: InsertCmsSingleton) {
     target: cmsSingletons.key,
     set: { label: data.label, data: data.data, status: data.status },
   });
+}
+
+// ─── Activities ────────────────────────────────────────────────────────────────
+
+export async function getAllActivities() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(activities).where(eq(activities.active, true)).orderBy(activities.sortOrder);
+}
+
+export async function getActivityById(id: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(activities).where(eq(activities.id, id)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function getActivityByKey(key: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(activities).where(eq(activities.key, key)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function createActivity(data: InsertActivity) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(activities).values(data).returning();
+  return result[0];
+}
+
+export async function updateActivity(id: number, data: Partial<InsertActivity>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(activities).set(data).where(eq(activities.id, id));
+}
+
+// ─── Slot Templates ────────────────────────────────────────────────────────────
+
+export async function getAllSlotTemplates() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(slotTemplates).where(eq(slotTemplates.active, true));
+}
+
+export async function getSlotTemplateById(id: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(slotTemplates).where(eq(slotTemplates.id, id)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function getSlotTemplateByKey(key: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(slotTemplates).where(eq(slotTemplates.key, key)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function createSlotTemplate(data: InsertSlotTemplate) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(slotTemplates).values(data).returning();
+  return result[0];
+}
+
+export async function updateSlotTemplate(id: number, data: Partial<InsertSlotTemplate>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(slotTemplates).set(data).where(eq(slotTemplates.id, id));
+}
+
+// ─── Properties ────────────────────────────────────────────────────────────────
+
+export async function getAllProperties() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(properties).where(eq(properties.active, true)).orderBy(properties.sortOrder);
+}
+
+export async function getPropertyById(id: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(properties).where(eq(properties.id, id)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function getPropertyBySlug(slug: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(properties).where(eq(properties.slug, slug)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function createProperty(data: InsertProperty) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(properties).values(data).returning();
+  return result[0];
+}
+
+export async function updateProperty(id: number, data: Partial<InsertProperty>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(properties).set(data).where(eq(properties.id, id));
+}
+
+// ─── Property Activities ───────────────────────────────────────────────────────
+
+export async function getPropertyActivities(propertyId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(propertyActivities).where(eq(propertyActivities.propertyId, propertyId));
+}
+
+export async function setPropertyActivities(propertyId: number, activityIds: number[]) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  // Delete existing
+  await db.delete(propertyActivities).where(eq(propertyActivities.propertyId, propertyId));
+  // Insert new
+  if (activityIds.length > 0) {
+    await db.insert(propertyActivities).values(activityIds.map((activityId) => ({ propertyId, activityId })));
+  }
+}
+
+// ─── Property Slots ────────────────────────────────────────────────────────────
+
+export async function getPropertySlots(propertyId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(propertySlots).where(eq(propertySlots.propertyId, propertyId));
+}
+
+export async function getPropertySlotByIds(propertyId: number, slotTemplateId: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db
+    .select()
+    .from(propertySlots)
+    .where(and(eq(propertySlots.propertyId, propertyId), eq(propertySlots.slotTemplateId, slotTemplateId)))
+    .limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function createPropertySlot(data: InsertPropertySlot) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(propertySlots).values(data).returning();
+  return result[0];
+}
+
+export async function updatePropertySlot(id: number, data: Partial<InsertPropertySlot>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(propertySlots).set(data).where(eq(propertySlots.id, id));
+}
+
+export async function setPropertySlots(propertyId: number, slots: InsertPropertySlot[]) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  // Delete existing
+  await db.delete(propertySlots).where(eq(propertySlots.propertyId, propertyId));
+  // Insert new
+  if (slots.length > 0) {
+    await db.insert(propertySlots).values(slots);
+  }
 }
 
