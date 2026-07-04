@@ -412,6 +412,8 @@ function EditPropertyForm({
     locationNotes: initial.locationNotes ?? "",
     gateCode: initial.gateCode ?? "",
     mapUrl: initial.mapUrl ?? "",
+    mapFile: null as File | null,
+    mapFileName: "",
     autoApprove: initial.autoApprove ?? true,
     overnightExclusive: initial.overnightExclusive ?? false,
     advanceNoticeHours: initial.advanceNoticeHours ?? 0,
@@ -422,6 +424,30 @@ function EditPropertyForm({
   });
 
   const set = (key: string, value: any) => setForm((f) => ({ ...f, [key]: value }));
+
+  const handleMapFileSelect = (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+
+    const file = files[0];
+
+    // Validate file type
+    const validTypes = ["application/pdf", "image/png", "image/jpeg"];
+    if (!validTypes.includes(file.type)) {
+      toast.error("Map must be PDF, PNG, or JPG");
+      return;
+    }
+
+    // Validate file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("Map file exceeds 10MB limit");
+      return;
+    }
+
+    set("mapFile", file);
+    set("mapFileName", file.name);
+    set("mapUrl", URL.createObjectURL(file)); // Create preview URL
+    toast.success(`Map "${file.name}" selected (${(file.size / 1024 / 1024).toFixed(1)}MB)`);
+  };
 
   const handleSubmit = () => {
     if (!form.name.trim()) { toast.error("Property name is required."); return; }

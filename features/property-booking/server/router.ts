@@ -180,7 +180,7 @@ export const propertyBookingRouter = router({
         const conditions = [];
         if (!input?.includeInactive) conditions.push(eq(huntingProperties.active, true));
         if (input?.activity) conditions.push(eq(huntingProperties.primaryActivity, input.activity as any));
-        if (input?.type) conditions.push(eq(huntingProperties.type, input.type as any));
+        // Note: type filtering removed in favor of types array; filtering by specific type not yet implemented for JSON array
 
         const props = await db
           .select()
