@@ -60,17 +60,9 @@ export const huntingProperties = mysqlTable("hunting_properties", {
   slug: varchar("slug", { length: 80 }).notNull().unique(),  // "stand-7-north-pasture"
   shortName: varchar("shortName", { length: 40 }),           // "Stand 7" (for calendar labels)
 
-  // Classification
-  type: mysqlEnum("type", [
-    "stand",        // elevated deer stand
-    "blind",        // ground blind (duck, turkey, deer)
-    "field",        // open field (dove, quail)
-    "pond",         // fishing pond / duck pond
-    "creek",        // creek / river fishing
-    "food_plot",    // food plot area
-    "zone",         // general hunting zone / pasture
-    "lodge",        // lodge property (for overnight stays)
-  ]).notNull(),
+  // Classification (now supports multiple types per property)
+  types: json("types"),  // string[] e.g. ["stand", "blind"] — migration wraps current type in array
+  // Note: existing type column kept for backwards compatibility during migration
 
   // Primary activity for this property
   primaryActivity: mysqlEnum("primaryActivity", [
@@ -112,6 +104,15 @@ export const huntingProperties = mysqlTable("hunting_properties", {
   // Media
   coverImageUrl: varchar("coverImageUrl", { length: 500 }),
   mapImageUrl: varchar("mapImageUrl", { length: 500 }),
+  mapUrl: varchar("mapUrl", { length: 500 }),  // PDF or image map uploaded by admin
+
+  // Booking defaults (from property-slot-config)
+  autoApprove: boolean("autoApprove").default(true),  // Default auto-approve for slots at this property
+  overnightExclusive: boolean("overnightExclusive").default(false),  // Block same-day PM + next-day AM if overnight booked
+  advanceNoticeHours: int("advanceNoticeHours").default(0),  // Minimum hours before booking
+
+  // Admin-only field
+  gateCode: varchar("gateCode", { length: 255 }),  // Access code (store encrypted if available)
 
   // Status
   active: boolean("active").default(true).notNull(),
@@ -129,6 +130,27 @@ export const huntingProperties = mysqlTable("hunting_properties", {
 
 export type HuntingProperty = typeof huntingProperties.$inferSelect;
 export type InsertHuntingProperty = typeof huntingProperties.$inferInsert;
+
+// ─── Property Photos ──────────────────────────────────────────────────────────
+
+/**
+ * Photo gallery for each property.
+ * Members see photos in gallery + first photo as hero; gate_code never exposed.
+ */
+export const propertyPhotos = mysqlTable("property_photos", {
+  id: int("id").autoincrement().primaryKey(),
+  propertyId: int("propertyId").notNull(),   // FK → hunting_properties
+  url: varchar("url", { length: 500 }).notNull(),   // S3 URL or similar
+  caption: varchar("caption", { length: 280 }),     // Optional photo description
+  sortOrder: int("sortOrder").default(0).notNull(),  // 0 = first photo (hero)
+  createdAt: bigint("createdAt", { mode: "number" }).notNull(),
+}, (t) => ({
+  propertyIdx: index("pp_property_idx").on(t.propertyId),
+  sortIdx: index("pp_sort_idx").on(t.propertyId, t.sortOrder),
+}));
+
+export type PropertyPhoto = typeof propertyPhotos.$inferSelect;
+export type InsertPropertyPhoto = typeof propertyPhotos.$inferInsert;
 
 // ─── Property Seasons ─────────────────────────────────────────────────────────
 
