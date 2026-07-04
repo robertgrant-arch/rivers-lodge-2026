@@ -30,6 +30,8 @@ import {
   bookingWaitlist,
   propertyImages,
   propertyAmenities,
+  activities,
+  propertyActivities,
 } from '@core/db/property-booking-schema';
 import { members } from '@core/db/schema';
 import { eq, and, gte, lte, sql, desc, asc, or, isNull, ne } from "drizzle-orm";
@@ -876,6 +878,83 @@ export const propertyBookingRouter = router({
 
   admin: router({
 
+    // ── Catalog: Activities ────────────────────────────────────────────────────
+
+    catalog: router({
+      activities: router({
+        /** List all activities (active and inactive) */
+        list: protectedProcedure
+          .query(async () => {
+            const db = await getDb();
+            if (!db) return [];
+            return db.select().from(activities).orderBy(activities.sortOrder);
+          }),
+
+        /** Create a new activity */
+        create: protectedProcedure
+          .input(z.object({
+            key: z.string().min(1).max(50),
+            label: z.string().min(1).max(100),
+            icon: z.string().max(50).optional(),
+            sortOrder: z.number().int().default(0),
+          }))
+          .mutation(async ({ ctx, input }: { ctx: any; input: any }) => {
+            requireAdmin(ctx.user.role);
+            const db = await getDb();
+            if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+
+            // Check if key already exists
+            const existing = await db.select().from(activities).where(eq(activities.key, input.key)).limit(1);
+            if (existing.length > 0) {
+              throw new TRPCError({ code: "CONFLICT", message: `Activity with key "${input.key}" already exists` });
+            }
+
+            const result = await db.insert(activities).values({
+              key: input.key,
+              label: input.label,
+              icon: input.icon ?? null,
+              sortOrder: input.sortOrder,
+              active: true,
+            });
+
+            return { id: (result as any)[0]?.insertId ?? (result as any).insertId };
+          }),
+
+        /** Update an activity */
+        update: protectedProcedure
+          .input(z.object({
+            id: z.number().int().positive(),
+            label: z.string().min(1).max(100).optional(),
+            icon: z.string().max(50).optional(),
+            sortOrder: z.number().int().optional(),
+            active: z.boolean().optional(),
+          }))
+          .mutation(async ({ ctx, input }: { ctx: any; input: any }) => {
+            requireAdmin(ctx.user.role);
+            const db = await getDb();
+            if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+
+            const { id, ...updates } = input;
+            await db.update(activities).set(updates).where(eq(activities.id, id));
+
+            return { success: true };
+          }),
+
+        /** Archive an activity (soft delete) */
+        archive: protectedProcedure
+          .input(z.number().int().positive())
+          .mutation(async ({ ctx, input: activityId }: { ctx: any; input: number }) => {
+            requireAdmin(ctx.user.role);
+            const db = await getDb();
+            if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+
+            await db.update(activities).set({ active: false }).where(eq(activities.id, activityId));
+
+            return { success: true };
+          }),
+      }),
+    }),
+
     properties: router({
 
       /** Create a new property */
@@ -892,6 +971,7 @@ export const propertyBookingRouter = router({
             "bass", "catfish", "crappie", "mixed_hunt", "mixed_fish", "hunt_and_fish",
           ]),
           secondaryActivities: z.array(z.string()).optional(),
+          activityIds: z.array(z.number().int().positive()).optional(),  // Activities available at this property
           description: z.string().optional(),
           shortDescription: z.string().max(280).optional(),
           acreage: z.number().positive().optional(),
@@ -982,6 +1062,13 @@ export const propertyBookingRouter = router({
             updatedAt: ts,
           } as any);
 
+          // Set property activities
+          if (input.activityIds && input.activityIds.length > 0) {
+            await db.delete(propertyActivities).where(eq(propertyActivities.propertyId, propertyId));
+            const rows = input.activityIds.map((activityId: number) => ({ propertyId, activityId }));
+            await db.insert(propertyActivities).values(rows);
+          }
+
           return { propertyId };
         }),
 
@@ -1016,6 +1103,32 @@ export const propertyBookingRouter = router({
             .update(huntingProperties)
             .set({ ...updates, updatedAt: now() } as any)
             .where(eq(huntingProperties.id, id));
+
+          return { success: true };
+        }),
+
+      /** Update activities for a property */
+      updateActivities: protectedProcedure
+        .input(z.object({
+          propertyId: z.number().int().positive(),
+          activityIds: z.array(z.number().int().positive()),
+        }))
+        .mutation(async ({ ctx, input }: { ctx: any; input: any }) => {
+          requireAdmin(ctx.user.role);
+          const db = await getDb();
+          if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+
+          // Delete existing activities
+          await db.delete(propertyActivities).where(eq(propertyActivities.propertyId, input.propertyId));
+
+          // Insert new ones
+          if (input.activityIds.length > 0) {
+            const rows = input.activityIds.map((activityId: number) => ({
+              propertyId: input.propertyId,
+              activityId,
+            }));
+            await db.insert(propertyActivities).values(rows);
+          }
 
           return { success: true };
         }),

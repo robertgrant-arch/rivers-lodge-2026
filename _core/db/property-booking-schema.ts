@@ -131,6 +131,45 @@ export const huntingProperties = mysqlTable("hunting_properties", {
 export type HuntingProperty = typeof huntingProperties.$inferSelect;
 export type InsertHuntingProperty = typeof huntingProperties.$inferInsert;
 
+// ─── Activities Catalog ───────────────────────────────────────────────────────
+
+/**
+ * Catalog of available activities.
+ * Used for property filtering and booking classification.
+ */
+export const activities = mysqlTable("activities", {
+  id: int("id").autoincrement().primaryKey(),
+  key: varchar("key", { length: 50 }).notNull().unique(),  // "deer", "duck", "turkey", etc.
+  label: varchar("label", { length: 100 }).notNull(),      // "Whitetail Deer", "Waterfowl", etc.
+  icon: varchar("icon", { length: 50 }),                   // Icon name or emoji
+  sortOrder: int("sortOrder").default(0).notNull(),
+  active: boolean("active").default(true).notNull(),
+}, (t) => ({
+  keyIdx: uniqueIndex("a_key_idx").on(t.key),
+  activeIdx: index("a_active_idx").on(t.active),
+}));
+
+export type Activity = typeof activities.$inferSelect;
+export type InsertActivity = typeof activities.$inferInsert;
+
+// ─── Property Activities (Join Table) ──────────────────────────────────────────
+
+/**
+ * Maps properties to their available activities.
+ * A property can offer multiple activities (e.g., Stand 7 for both deer and turkey).
+ */
+export const propertyActivities = mysqlTable("property_activities", {
+  propertyId: int("propertyId").notNull(),   // FK → hunting_properties
+  activityId: int("activityId").notNull(),   // FK → activities
+}, (t) => ({
+  pk: [t.propertyId, t.activityId], // Composite primary key
+  propertyIdx: index("pa_property_idx").on(t.propertyId),
+  activityIdx: index("pa_activity_idx").on(t.activityId),
+}));
+
+export type PropertyActivity = typeof propertyActivities.$inferSelect;
+export type InsertPropertyActivity = typeof propertyActivities.$inferInsert;
+
 // ─── Property Photos ──────────────────────────────────────────────────────────
 
 /**

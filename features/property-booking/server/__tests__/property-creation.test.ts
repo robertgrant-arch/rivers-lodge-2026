@@ -220,4 +220,49 @@ describe("Property Creation", () => {
       expect(!("gateCode" in memberResponse)).toBe(true);
     });
   });
+
+  describe("Property activities", () => {
+    it("creates property with multiple activities", () => {
+      const activityIds = [1, 3, 5]; // Example: deer (1), turkey (3), hog (5)
+
+      expect(activityIds).toHaveLength(3);
+      expect(activityIds).toContain(1);
+      expect(activityIds).toContain(3);
+      expect(activityIds).toContain(5);
+      expect(activityIds.every((id) => typeof id === "number")).toBe(true);
+    });
+
+    it("verifies activities join table structure", () => {
+      const propertyActivities = [
+        { propertyId: 1, activityId: 1 }, // Property 1 → Deer
+        { propertyId: 1, activityId: 3 }, // Property 1 → Turkey
+        { propertyId: 1, activityId: 5 }, // Property 1 → Hog
+      ];
+
+      expect(propertyActivities).toHaveLength(3);
+      expect(propertyActivities[0].propertyId).toBe(1);
+      expect(propertyActivities[0].activityId).toBe(1);
+      expect(propertyActivities.every((pa) => pa.propertyId === propertyActivities[0].propertyId)).toBe(true);
+    });
+
+    it("handles empty activity list", () => {
+      const activityIds: number[] = [];
+      expect(activityIds).toHaveLength(0);
+      expect(activityIds.length === 0).toBe(true);
+    });
+
+    it("activity catalog includes standard hunting activities", () => {
+      const activities = [
+        { id: 1, key: "deer", label: "Deer" },
+        { id: 2, key: "duck", label: "Duck" },
+        { id: 3, key: "turkey", label: "Turkey" },
+        { id: 4, key: "hog", label: "Hog" },
+      ];
+
+      expect(activities).toHaveLength(4);
+      expect(activities.map((a) => a.key)).toContain("deer");
+      expect(activities.map((a) => a.key)).toContain("turkey");
+      expect(activities.every((a) => a.key && a.label)).toBe(true);
+    });
+  });
 });

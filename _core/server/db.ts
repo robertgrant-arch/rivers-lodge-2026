@@ -21,6 +21,12 @@ import {
   blockedDates,
   InsertBlockedDate,
 } from "../db/schema";
+import {
+  activities,
+  InsertActivity,
+  propertyActivities,
+  InsertPropertyActivity,
+} from "../db/property-booking-schema";
 
 // Re-export table references consumed by feature routers
 export { messages };
@@ -320,6 +326,69 @@ export async function deleteBlockedDate(id: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
   await db.delete(blockedDates).where(eq(blockedDates.id, id));
+}
+
+// ─── Activities & Property Activities ──────────────────────────────────────────
+
+export async function getAllActivities(activeOnly: boolean = true) {
+  const db = await getDb();
+  if (!db) return [];
+  if (activeOnly) {
+    return db.select().from(activities).where(eq(activities.active, true)).orderBy(activities.sortOrder);
+  }
+  return db.select().from(activities).orderBy(activities.sortOrder);
+}
+
+export async function getActivityById(id: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select().from(activities).where(eq(activities.id, id)).limit(1);
+  return result.length > 0 ? result[0] : null;
+}
+
+export async function getActivityByKey(key: string) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select().from(activities).where(eq(activities.key, key)).limit(1);
+  return result.length > 0 ? result[0] : null;
+}
+
+export async function createActivity(data: InsertActivity) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(activities).values(data);
+  return (result as any)[0]?.insertId ?? (result as any).insertId;
+}
+
+export async function updateActivity(id: number, data: Partial<InsertActivity>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(activities).set(data).where(eq(activities.id, id));
+}
+
+export async function getPropertyActivities(propertyId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db
+    .select({ id: activities.id, key: activities.key, label: activities.label, icon: activities.icon })
+    .from(propertyActivities)
+    .innerJoin(activities, eq(propertyActivities.activityId, activities.id))
+    .where(eq(propertyActivities.propertyId, propertyId))
+    .orderBy(activities.sortOrder);
+}
+
+export async function setPropertyActivities(propertyId: number, activityIds: number[]) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  // Delete existing activities for this property
+  await db.delete(propertyActivities).where(eq(propertyActivities.propertyId, propertyId));
+
+  // Insert new ones
+  if (activityIds.length > 0) {
+    const rows = activityIds.map((activityId) => ({ propertyId, activityId }));
+    await db.insert(propertyActivities).values(rows);
+  }
 }
 
 // ─── CMS: Amenities ───────────────────────────────────────────────────────────

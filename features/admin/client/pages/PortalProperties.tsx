@@ -93,6 +93,8 @@ function CreatePropertyForm({
     locationNotes: "",
     gateCode: "",
     mapUrl: "",
+    mapFile: null as File | null,
+    mapFileName: "",
     autoApprove: true,
     overnightExclusive: false,
     advanceNoticeHours: 0,
@@ -116,6 +118,30 @@ function CreatePropertyForm({
   const handleNameChange = (v: string) => {
     set("name", v);
     set("slug", v.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""));
+  };
+
+  const handleMapFileSelect = (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+
+    const file = files[0];
+
+    // Validate file type
+    const validTypes = ["application/pdf", "image/png", "image/jpeg"];
+    if (!validTypes.includes(file.type)) {
+      toast.error("Map must be PDF, PNG, or JPG");
+      return;
+    }
+
+    // Validate file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("Map file exceeds 10MB limit");
+      return;
+    }
+
+    set("mapFile", file);
+    set("mapFileName", file.name);
+    set("mapUrl", URL.createObjectURL(file)); // Create preview URL
+    toast.success(`Map "${file.name}" selected (${(file.size / 1024 / 1024).toFixed(1)}MB)`);
   };
 
   const handleSubmit = () => {
@@ -279,14 +305,31 @@ function CreatePropertyForm({
         </div>
 
         <div className="space-y-1.5">
-          <Label className="text-stone-300 text-sm">Map URL (PDF or image link)</Label>
-          <Input
-            type="url"
-            value={form.mapUrl}
-            onChange={(e) => set("mapUrl", e.target.value)}
-            placeholder="https://example.com/property-map.pdf"
-            className="bg-stone-800 border-stone-700 text-stone-100"
-          />
+          <Label className="text-stone-300 text-sm">Property Map (PDF, PNG, or JPG)</Label>
+          <div className="flex items-center gap-2">
+            <input
+              type="file"
+              accept=".pdf,.png,.jpg,.jpeg"
+              onChange={(e) => handleMapFileSelect(e.target.files)}
+              className="hidden"
+              id="map-upload"
+            />
+            <label htmlFor="map-upload" className="flex-1 cursor-pointer">
+              <Button variant="outline" className="w-full bg-stone-800 border-stone-700 text-stone-300 hover:bg-stone-700">
+                <Upload className="w-4 h-4 mr-2" />
+                {form.mapFileName || "Choose file"}
+              </Button>
+            </label>
+            {form.mapFileName && (
+              <button
+                onClick={() => { set("mapFile", null); set("mapFileName", ""); set("mapUrl", ""); }}
+                className="p-2 hover:bg-stone-700 rounded"
+              >
+                <X className="w-4 h-4 text-stone-400" />
+              </button>
+            )}
+          </div>
+          {form.mapFile && <p className="text-xs text-stone-400">{form.mapFile.name} ({(form.mapFile.size / 1024 / 1024).toFixed(1)}MB)</p>}
         </div>
       </div>
 
@@ -482,14 +525,31 @@ function EditPropertyForm({
         </div>
 
         <div className="space-y-1.5">
-          <Label className="text-stone-300 text-sm">Map URL (PDF or image link)</Label>
-          <Input
-            type="url"
-            value={form.mapUrl}
-            onChange={(e) => set("mapUrl", e.target.value)}
-            placeholder="https://example.com/property-map.pdf"
-            className="bg-stone-800 border-stone-700 text-stone-100"
-          />
+          <Label className="text-stone-300 text-sm">Property Map (PDF, PNG, or JPG)</Label>
+          <div className="flex items-center gap-2">
+            <input
+              type="file"
+              accept=".pdf,.png,.jpg,.jpeg"
+              onChange={(e) => handleMapFileSelect(e.target.files)}
+              className="hidden"
+              id="map-upload"
+            />
+            <label htmlFor="map-upload" className="flex-1 cursor-pointer">
+              <Button variant="outline" className="w-full bg-stone-800 border-stone-700 text-stone-300 hover:bg-stone-700">
+                <Upload className="w-4 h-4 mr-2" />
+                {form.mapFileName || "Choose file"}
+              </Button>
+            </label>
+            {form.mapFileName && (
+              <button
+                onClick={() => { set("mapFile", null); set("mapFileName", ""); set("mapUrl", ""); }}
+                className="p-2 hover:bg-stone-700 rounded"
+              >
+                <X className="w-4 h-4 text-stone-400" />
+              </button>
+            )}
+          </div>
+          {form.mapFile && <p className="text-xs text-stone-400">{form.mapFile.name} ({(form.mapFile.size / 1024 / 1024).toFixed(1)}MB)</p>}
         </div>
       </div>
 
