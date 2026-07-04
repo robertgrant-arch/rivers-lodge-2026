@@ -14,6 +14,7 @@ import {
   InsertPropertySlot,
 } from "../schema";
 import { getPortalDb } from "@core/server/db";
+import { shouldAutoApproveBiking, checkOvernightConflicts, BookingRequest } from "./bookingLogic";
 import {
   getAllActivities,
   getActivityById,
@@ -308,6 +309,56 @@ const memberPropertiesRouter = router({
             };
           }),
         overnightExclusive: property.overnightExclusive,
+      };
+    }),
+
+  requestBooking: memberProcedure
+    .input(
+      z.object({
+        propertyId: z.number().int(),
+        slotTemplateId: z.number().int(),
+        date: z.string(),
+        partySize: z.number().int().min(1),
+      }),
+    )
+    .mutation(async ({ input, ctx }) => {
+      const bookingReq: BookingRequest = {
+        propertyId: input.propertyId,
+        slotTemplateId: input.slotTemplateId,
+        date: input.date,
+        partySize: input.partySize,
+      };
+
+      // Check auto-approve status
+      const approvalStatus = await shouldAutoApproveBiking(bookingReq);
+
+      // Check for overnight conflicts
+      const overnightConflict = await checkOvernightConflicts(
+        input.propertyId,
+        input.date,
+        input.slotTemplateId,
+      );
+
+      if (overnightConflict.hasConflict && overnightConflict.conflictingSlotIds?.length) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "This overnight slot conflicts with existing daytime bookings on the same or next day",
+        });
+      }
+
+      if (!approvalStatus.autoApproved && approvalStatus.reason) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: approvalStatus.reason,
+        });
+      }
+
+      return {
+        success: true,
+        autoApproved: approvalStatus.autoApproved,
+        message: approvalStatus.autoApproved
+          ? "Booking confirmed!"
+          : "Booking submitted for approval",
       };
     }),
 });
