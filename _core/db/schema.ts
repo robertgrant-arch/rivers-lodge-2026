@@ -12,3 +12,4 @@ export * from "@features/waivers/schema";
 export * from "@features/messages/schema";
 export * from "@features/cms/schema";
 export * from "@features/reports/schema";
+export * from "@features/property-slot-config/schema";

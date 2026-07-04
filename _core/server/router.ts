@@ -13,6 +13,7 @@ import { reportsRouter } from 'features/reports/server/router';
 import { adminRouter as portalRouter } from 'features/admin/server/router';
 import { updatesRouter } from 'features/updates/server/router';
 import { memberPortalRouter } from 'features/portal/server/router';
+import { propertySlotConfigRouter } from 'features/property-slot-config/server/router';
 
 export const appRouter = router({
   auth: authRouter,
@@ -30,6 +31,7 @@ export const appRouter = router({
   portal: portalRouter,
   updates: updatesRouter,
   memberPortal: memberPortalRouter,
+  propertySlotConfig: propertySlotConfigRouter,
 });
 
 export type AppRouter = typeof appRouter;
