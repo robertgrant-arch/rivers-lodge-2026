@@ -22,7 +22,7 @@ import {
 import { Switch } from '@shared/ui/switch';
 import { Checkbox } from '@shared/ui/checkbox';
 import {
-  TreePine, Plus, Pencil, Loader2, AlertCircle, Users,
+  TreePine, Plus, Pencil, Loader2, AlertCircle, Users, Eye, EyeOff, Upload, X,
   ChevronDown, ChevronUp, Thermometer, Truck, Waves, Zap, Wifi,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -79,6 +79,7 @@ function CreatePropertyForm({
     slug: "",
     type: "stand" as string,
     primaryActivity: "deer" as string,
+    activities: [] as string[],
     description: "",
     shortDescription: "",
     acreage: "",
@@ -91,16 +92,65 @@ function CreatePropertyForm({
     gpsLat: "",
     gpsLng: "",
     locationNotes: "",
+    gateCode: "",
+    mapUrl: "",
+    mapFile: null as File | null,
+    mapFileName: "",
+    showGateCode: false,
     active: true,
     featuredOnPublicSite: true,
     sortOrder: 0,
   });
+  const [isUploadingMap, setIsUploadingMap] = useState(false);
 
   const set = (key: string, value: any) => setForm((f) => ({ ...f, [key]: value }));
+  const uploadMap = trpc.propertyBooking.admin.properties.uploadMap.useMutation();
+  const { data: availableActivities } = trpc.propertyBooking.properties.activities.useQuery();
 
   const handleNameChange = (v: string) => {
     set("name", v);
     set("slug", v.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""));
+  };
+
+  const handleMapFileSelect = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    const file = files[0];
+    const validTypes = ["application/pdf", "image/png", "image/jpeg"];
+    if (!validTypes.includes(file.type)) {
+      toast.error("Map must be PDF, PNG, or JPG");
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("Map file exceeds 10MB limit");
+      return;
+    }
+
+    setIsUploadingMap(true);
+    try {
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const base64 = (e.target?.result as string).split(',')[1];
+        try {
+          const result = await uploadMap.mutateAsync({
+            fileData: base64,
+            fileName: file.name,
+            contentType: file.type as "application/pdf" | "image/png" | "image/jpeg",
+          });
+          set("mapUrl", result.mapUrl);
+          set("mapFile", file);
+          set("mapFileName", file.name);
+          toast.success(`Map "${file.name}" uploaded`);
+        } catch (err: any) {
+          toast.error(`Upload failed: ${err.message}`);
+        } finally {
+          setIsUploadingMap(false);
+        }
+      };
+      reader.readAsDataURL(file);
+    } catch (err) {
+      toast.error("Failed to read file");
+      setIsUploadingMap(false);
+    }
   };
 
   const handleSubmit = () => {
@@ -111,6 +161,7 @@ function CreatePropertyForm({
       slug: form.slug,
       type: form.type,
       primaryActivity: form.primaryActivity,
+      activities: form.activities,
       description: form.description || undefined,
       shortDescription: form.shortDescription || undefined,
       acreage: form.acreage ? parseFloat(form.acreage) : undefined,
@@ -123,6 +174,8 @@ function CreatePropertyForm({
       gpsLat: form.gpsLat ? parseFloat(form.gpsLat) : undefined,
       gpsLng: form.gpsLng ? parseFloat(form.gpsLng) : undefined,
       locationNotes: form.locationNotes || undefined,
+      gateCode: form.gateCode || undefined,
+      mapUrl: form.mapUrl || undefined,
       active: form.active,
       featuredOnPublicSite: form.featuredOnPublicSite,
       sortOrder: Number(form.sortOrder),
@@ -166,6 +219,28 @@ function CreatePropertyForm({
               ))}
             </SelectContent>
           </Select>
+        </div>
+      </div>
+
+      <div className="border border-stone-700 rounded-lg p-4 space-y-3">
+        <p className="text-xs font-semibold text-stone-400 uppercase tracking-wider">Available Activities</p>
+        <div className="flex flex-wrap gap-4">
+          {availableActivities?.map((a) => (
+            <label key={a.value} className="flex items-center gap-2 cursor-pointer">
+              <Checkbox
+                checked={form.activities.includes(a.value)}
+                onCheckedChange={(v) => {
+                  if (v) {
+                    set("activities", [...form.activities, a.value]);
+                  } else {
+                    set("activities", form.activities.filter((act) => act !== a.value));
+                  }
+                }}
+                className="border-stone-600"
+              />
+              <span className="text-sm text-stone-300">{a.label}</span>
+            </label>
+          ))}
         </div>
       </div>
 
@@ -231,6 +306,67 @@ function CreatePropertyForm({
           className="bg-stone-800 border-stone-700 text-stone-100 resize-none" />
       </div>
 
+      <div className="border border-stone-700 rounded-lg p-4 space-y-3">
+        <p className="text-xs font-semibold text-stone-400 uppercase tracking-wider">Admin-Only Fields</p>
+
+        <div className="space-y-1.5">
+          <Label className="text-stone-300 text-sm">Gate Code (access code)</Label>
+          <div className="relative">
+            <Input
+              type={form.showGateCode ? "text" : "password"}
+              value={form.gateCode}
+              onChange={(e) => set("gateCode", e.target.value)}
+              placeholder="Access code (encrypted)"
+              className="bg-stone-800 border-stone-700 text-stone-100 pr-10"
+            />
+            <button
+              type="button"
+              onClick={() => set("showGateCode", !form.showGateCode)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-200"
+            >
+              {form.showGateCode ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            </button>
+          </div>
+        </div>
+
+        <div className="space-y-1.5">
+          <Label className="text-stone-300 text-sm">Property Map (PDF, PNG, or JPG)</Label>
+          <div className="flex items-center gap-2">
+            <input
+              type="file"
+              accept=".pdf,.png,.jpg,.jpeg"
+              onChange={(e) => handleMapFileSelect(e.target.files)}
+              className="hidden"
+              id="map-upload"
+              disabled={isUploadingMap}
+            />
+            <label htmlFor="map-upload" className="flex-1 cursor-pointer">
+              <Button variant="outline" disabled={isUploadingMap} className="w-full bg-stone-800 border-stone-700 text-stone-300 hover:bg-stone-700 disabled:opacity-50">
+                {isUploadingMap ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Uploading...
+                  </>
+                ) : (
+                  <>
+                    <Upload className="w-4 h-4 mr-2" />
+                    {form.mapFileName || "Choose file"}
+                  </>
+                )}
+              </Button>
+            </label>
+            {form.mapFile && !isUploadingMap && (
+              <button
+                onClick={() => { set("mapFile", null); set("mapUrl", ""); set("mapFileName", ""); }}
+                className="p-2 hover:bg-stone-700 rounded"
+              >
+                <X className="w-4 h-4 text-stone-400" />
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Label className="text-stone-300 text-sm">Sort Order</Label>
@@ -276,6 +412,7 @@ function EditPropertyForm({
     name: initial.name ?? "",
     shortDescription: initial.shortDescription ?? "",
     description: initial.description ?? "",
+    activities: [] as string[],
     maxHunters: initial.maxHunters ?? 2,
     hasHeatedBlind: initial.hasHeatedBlind ?? false,
     hasAtvAccess: initial.hasAtvAccess ?? false,
@@ -283,12 +420,61 @@ function EditPropertyForm({
     hasElectricity: initial.hasElectricity ?? false,
     hasCellService: initial.hasCellService ?? true,
     locationNotes: initial.locationNotes ?? "",
+    gateCode: initial.gateCode ?? "",
+    mapUrl: initial.mapUrl ?? "",
+    mapFile: null as File | null,
+    mapFileName: "",
+    showGateCode: false,
     active: initial.active ?? true,
     featuredOnPublicSite: initial.featuredOnPublicSite ?? true,
     sortOrder: initial.sortOrder ?? 0,
   });
+  const [isUploadingMap, setIsUploadingMap] = useState(false);
 
   const set = (key: string, value: any) => setForm((f) => ({ ...f, [key]: value }));
+  const uploadMap = trpc.propertyBooking.admin.properties.uploadMap.useMutation();
+  const { data: availableActivities } = trpc.propertyBooking.properties.activities.useQuery();
+
+  const handleMapFileSelect = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    const file = files[0];
+    const validTypes = ["application/pdf", "image/png", "image/jpeg"];
+    if (!validTypes.includes(file.type)) {
+      toast.error("Map must be PDF, PNG, or JPG");
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("Map file exceeds 10MB limit");
+      return;
+    }
+
+    setIsUploadingMap(true);
+    try {
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const base64 = (e.target?.result as string).split(',')[1];
+        try {
+          const result = await uploadMap.mutateAsync({
+            fileData: base64,
+            fileName: file.name,
+            contentType: file.type as "application/pdf" | "image/png" | "image/jpeg",
+          });
+          set("mapUrl", result.mapUrl);
+          set("mapFile", file);
+          set("mapFileName", file.name);
+          toast.success(`Map "${file.name}" uploaded`);
+        } catch (err: any) {
+          toast.error(`Upload failed: ${err.message}`);
+        } finally {
+          setIsUploadingMap(false);
+        }
+      };
+      reader.readAsDataURL(file);
+    } catch (err) {
+      toast.error("Failed to read file");
+      setIsUploadingMap(false);
+    }
+  };
 
   const handleSubmit = () => {
     if (!form.name.trim()) { toast.error("Property name is required."); return; }
@@ -297,6 +483,7 @@ function EditPropertyForm({
       name: form.name,
       shortDescription: form.shortDescription || undefined,
       description: form.description || undefined,
+      activities: form.activities,
       maxHunters: Number(form.maxHunters),
       hasHeatedBlind: form.hasHeatedBlind,
       hasAtvAccess: form.hasAtvAccess,
@@ -304,6 +491,8 @@ function EditPropertyForm({
       hasElectricity: form.hasElectricity,
       hasCellService: form.hasCellService,
       locationNotes: form.locationNotes || undefined,
+      gateCode: form.gateCode || undefined,
+      mapUrl: form.mapUrl || undefined,
       active: form.active,
       featuredOnPublicSite: form.featuredOnPublicSite,
       sortOrder: Number(form.sortOrder),
@@ -328,6 +517,28 @@ function EditPropertyForm({
         <Label className="text-stone-300 text-sm">Full Description</Label>
         <Textarea value={form.description} onChange={(e) => set("description", e.target.value)}
           rows={3} className="bg-stone-800 border-stone-700 text-stone-100 resize-none" />
+      </div>
+
+      <div className="border border-stone-700 rounded-lg p-4 space-y-3">
+        <p className="text-xs font-semibold text-stone-400 uppercase tracking-wider">Available Activities</p>
+        <div className="flex flex-wrap gap-4">
+          {availableActivities?.map((a) => (
+            <label key={a.value} className="flex items-center gap-2 cursor-pointer">
+              <Checkbox
+                checked={form.activities.includes(a.value)}
+                onCheckedChange={(v) => {
+                  if (v) {
+                    set("activities", [...form.activities, a.value]);
+                  } else {
+                    set("activities", form.activities.filter((act) => act !== a.value));
+                  }
+                }}
+                className="border-stone-600"
+              />
+              <span className="text-sm text-stone-300">{a.label}</span>
+            </label>
+          ))}
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
@@ -361,6 +572,67 @@ function EditPropertyForm({
         <Label className="text-stone-300 text-sm">Location Notes / Directions</Label>
         <Textarea value={form.locationNotes} onChange={(e) => set("locationNotes", e.target.value)}
           rows={2} className="bg-stone-800 border-stone-700 text-stone-100 resize-none" />
+      </div>
+
+      <div className="border border-stone-700 rounded-lg p-4 space-y-3">
+        <p className="text-xs font-semibold text-stone-400 uppercase tracking-wider">Admin-Only Fields</p>
+
+        <div className="space-y-1.5">
+          <Label className="text-stone-300 text-sm">Gate Code (access code)</Label>
+          <div className="relative">
+            <Input
+              type={form.showGateCode ? "text" : "password"}
+              value={form.gateCode}
+              onChange={(e) => set("gateCode", e.target.value)}
+              placeholder="Access code (encrypted)"
+              className="bg-stone-800 border-stone-700 text-stone-100 pr-10"
+            />
+            <button
+              type="button"
+              onClick={() => set("showGateCode", !form.showGateCode)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-200"
+            >
+              {form.showGateCode ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            </button>
+          </div>
+        </div>
+
+        <div className="space-y-1.5">
+          <Label className="text-stone-300 text-sm">Property Map (PDF, PNG, or JPG)</Label>
+          <div className="flex items-center gap-2">
+            <input
+              type="file"
+              accept=".pdf,.png,.jpg,.jpeg"
+              onChange={(e) => handleMapFileSelect(e.target.files)}
+              className="hidden"
+              id="map-upload-edit"
+              disabled={isUploadingMap}
+            />
+            <label htmlFor="map-upload-edit" className="flex-1 cursor-pointer">
+              <Button variant="outline" disabled={isUploadingMap} className="w-full bg-stone-800 border-stone-700 text-stone-300 hover:bg-stone-700 disabled:opacity-50">
+                {isUploadingMap ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Uploading...
+                  </>
+                ) : (
+                  <>
+                    <Upload className="w-4 h-4 mr-2" />
+                    {form.mapFileName || "Choose file"}
+                  </>
+                )}
+              </Button>
+            </label>
+            {form.mapFile && !isUploadingMap && (
+              <button
+                onClick={() => { set("mapFile", null); set("mapUrl", ""); set("mapFileName", ""); }}
+                className="p-2 hover:bg-stone-700 rounded"
+              >
+                <X className="w-4 h-4 text-stone-400" />
+              </button>
+            )}
+          </div>
+        </div>
       </div>
 
       <div className="flex items-center gap-4 justify-end">

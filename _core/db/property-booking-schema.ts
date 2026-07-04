@@ -124,6 +124,8 @@ export const huntingProperties = pgTable("hunting_properties", {
   locationNotes: varchar("locationNotes", { length: 300 }),
   coverImageUrl: varchar("coverImageUrl", { length: 500 }),
   mapImageUrl: varchar("mapImageUrl", { length: 500 }),
+  mapUrl: varchar("mapUrl", { length: 500 }), // Uploaded PDF/image map
+  gateCode: varchar("gateCode", { length: 255 }), // Admin-only access code (encrypted)
   active: boolean("active").notNull().default(true),
   featuredOnPublicSite: boolean("featuredOnPublicSite").default(true),
   sortOrder: integer("sortOrder").default(0),
@@ -137,6 +139,23 @@ export const huntingProperties = pgTable("hunting_properties", {
 
 export type HuntingProperty = typeof huntingProperties.$inferSelect;
 export type InsertHuntingProperty = typeof huntingProperties.$inferInsert;
+
+// ─── Property Activities (Join) ────────────────────────────────────────────────
+// Link which activities are available at each property (many-to-many)
+
+export const propertyActivities = pgTable(
+  "property_activities",
+  {
+    propertyId: integer("propertyId").notNull().references(() => huntingProperties.id, { onDelete: "cascade" }),
+    activity: propertyActivityEnum("activity").notNull(),
+  },
+  (t) => ({
+    pk: [t.propertyId, t.activity],
+  }),
+);
+
+export type PropertyActivity = typeof propertyActivities.$inferSelect;
+export type InsertPropertyActivity = typeof propertyActivities.$inferInsert;
 
 // ─── Property Seasons ─────────────────────────────────────────────────────────
 

@@ -15,6 +15,7 @@ import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { router, publicProcedure, protectedProcedure } from '@core/server/trpc';
 import { getDb } from '@core/server/db';
+import { storagePut } from '@core/server/storage';
 import {
   huntingProperties,
   propertySeasons,
@@ -30,6 +31,7 @@ import {
   bookingWaitlist,
   propertyImages,
   propertyAmenities,
+  propertyActivities,
 } from '@core/db/property-booking-schema';
 import { members } from '@core/db/schema';
 import { eq, and, gte, lte, sql, desc, asc, or, isNull, ne } from "drizzle-orm";
@@ -206,6 +208,19 @@ export const propertyBookingRouter = router({
         return props.map((p: any) => ({
           ...p,
           coverImageUrl: p.coverImageUrl ?? imageMap.get(p.id) ?? null,
+        }));
+      }),
+
+    /** List all available activities for properties */
+    activities: publicProcedure
+      .query(async () => {
+        const activityEnum = [
+          "deer", "duck", "turkey", "quail", "dove", "hog",
+          "bass", "catfish", "crappie", "mixed_hunt", "mixed_fish", "hunt_and_fish",
+        ];
+        return activityEnum.map((value) => ({
+          value,
+          label: value.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase()),
         }));
       }),
 
@@ -892,6 +907,10 @@ export const propertyBookingRouter = router({
             "bass", "catfish", "crappie", "mixed_hunt", "mixed_fish", "hunt_and_fish",
           ]),
           secondaryActivities: z.array(z.string()).optional(),
+          activities: z.array(z.enum([
+            "deer", "duck", "turkey", "quail", "dove", "hog",
+            "bass", "catfish", "crappie", "mixed_hunt", "mixed_fish", "hunt_and_fish",
+          ])).optional(),
           description: z.string().optional(),
           shortDescription: z.string().max(280).optional(),
           acreage: z.number().positive().optional(),
@@ -906,6 +925,8 @@ export const propertyBookingRouter = router({
           locationNotes: z.string().max(300).optional(),
           coverImageUrl: z.string().url().optional(),
           mapImageUrl: z.string().url().optional(),
+          mapUrl: z.string().url().optional(),
+          gateCode: z.string().max(255).optional(),
           active: z.boolean().default(true),
           featuredOnPublicSite: z.boolean().default(true),
           sortOrder: z.number().int().default(0),
@@ -924,6 +945,8 @@ export const propertyBookingRouter = router({
             gpsLng: input.gpsLng ? String(input.gpsLng) : null,
             coverImageUrl: input.coverImageUrl ?? null,
             mapImageUrl: input.mapImageUrl ?? null,
+            mapUrl: input.mapUrl ?? null,
+            gateCode: input.gateCode ?? null,
             shortName: input.shortName ?? null,
             shortDescription: input.shortDescription ?? null,
             description: input.description ?? null,
@@ -939,6 +962,15 @@ export const propertyBookingRouter = router({
 
           // Drizzle node-postgres insert returns the inserted row via $returningId()
           const propertyId = Number((result as any)[0]?.insertId ?? (result as any).insertId);
+
+          // Save selected activities to join table
+          if (input.activities && input.activities.length > 0) {
+            const activityRows = input.activities.map((activity: string) => ({
+              propertyId,
+              activity,
+            }));
+            await db.insert(propertyActivities).values(activityRows as any);
+          }
 
           // Create default booking rules
           await db.insert(propertyBookingRules).values({
@@ -979,23 +1011,44 @@ export const propertyBookingRouter = router({
           sortOrder: z.number().int().optional(),
           coverImageUrl: z.string().url().optional(),
           mapImageUrl: z.string().url().optional(),
+          mapUrl: z.string().url().optional(),
+          gateCode: z.string().max(255).optional(),
           locationNotes: z.string().max(300).optional(),
           hasHeatedBlind: z.boolean().optional(),
           hasAtvAccess: z.boolean().optional(),
           hasWaterAccess: z.boolean().optional(),
           hasElectricity: z.boolean().optional(),
           hasCellService: z.boolean().optional(),
+          activities: z.array(z.enum([
+            "deer", "duck", "turkey", "quail", "dove", "hog",
+            "bass", "catfish", "crappie", "mixed_hunt", "mixed_fish", "hunt_and_fish",
+          ])).optional(),
         }))
         .mutation(async ({ ctx, input }: { ctx: any; input: any }) => {
           requireAdmin(ctx.user.role);
           const db = await getDb();
           if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
 
-          const { id, ...updates } = input;
+          const { id, activities, ...updates } = input;
           await db
             .update(huntingProperties)
             .set({ ...updates, updatedAt: now() } as any)
             .where(eq(huntingProperties.id, id));
+
+          // Update activities if provided
+          if (activities !== undefined) {
+            // Delete existing activities for this property
+            await db.delete(propertyActivities).where(eq(propertyActivities.propertyId, id));
+
+            // Insert new activities
+            if (activities.length > 0) {
+              const activityRows = activities.map((activity: string) => ({
+                propertyId: id,
+                activity,
+              }));
+              await db.insert(propertyActivities).values(activityRows as any);
+            }
+          }
 
           return { success: true };
         }),
@@ -1084,6 +1137,29 @@ export const propertyBookingRouter = router({
           }
 
           return { success: true };
+        }),
+
+      /** Upload property map file (PDF, PNG, JPG) */
+      uploadMap: protectedProcedure
+        .input(z.object({
+          fileData: z.string(), // base64 encoded file
+          fileName: z.string().max(255),
+          contentType: z.enum(["application/pdf", "image/png", "image/jpeg"]),
+        }))
+        .mutation(async ({ ctx, input }: { ctx: any; input: any }) => {
+          requireAdmin(ctx.user.role);
+
+          // Decode base64
+          const buffer = Buffer.from(input.fileData, 'base64');
+
+          // Upload to S3
+          const { url } = await storagePut(
+            `properties/maps/${Date.now()}-${input.fileName}`,
+            buffer,
+            input.contentType,
+          );
+
+          return { mapUrl: url };
         }),
     }),
 
