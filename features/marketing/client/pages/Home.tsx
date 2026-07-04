@@ -168,7 +168,7 @@ export default function Home() {
               src="/img/Ohana%20Aerial.jpg"
               alt="Aerial view of Rivers Lodge estate on the Marais des Cygnes"
               label="Estate aerial"
-              className="aspect-[4/3] overflow-hidden w-full"
+              className="order-first lg:order-first aspect-[4/3] overflow-hidden w-full"
               width={1200}
               height={900}
               sizes="(max-width: 1024px) 100vw, 50vw"
@@ -287,7 +287,7 @@ export default function Home() {
               src="/img/3C0A0165.jpg"
               alt="Rivers Lodge & Hunt Club estate"
               label="Estate"
-              className="aspect-[4/3] overflow-hidden w-full"
+              className="order-first lg:order-first aspect-[4/3] overflow-hidden w-full"
               width={1200}
               height={900}
               sizes="(max-width: 1024px) 100vw, 50vw"
@@ -305,7 +305,7 @@ export default function Home() {
               src="/img/3C0A0165.jpg"
               alt="Upland bird hunting at Rivers Lodge & Hunt Club"
               label="Membership / outdoors"
-              className="aspect-[4/3] overflow-hidden w-full"
+              className="order-first lg:order-first aspect-[4/3] overflow-hidden w-full"
               width={1200}
               height={900}
               sizes="(max-width: 1024px) 100vw, 50vw"
