@@ -149,7 +149,7 @@ export default function Home() {
             className="font-sans text-white/70 max-w-lg mb-10 leading-relaxed"
             style={{ fontSize: "clamp(0.9375rem,1.2vw,1.0625rem)" }}
           >
-            A private estate on the Marais des Cygnes — one hour south of Kansas City. A destination wedding venue, a working hunt club, and a membership for those who live by the land and the season.
+            A private estate on the Marais des Cygnes — one hour south of Kansas City. An exclusive membership club, a wedding venue, and a premier outdoor destination for those who love the outdoors with a touch of luxury.
           </p>
           <div className="flex flex-col sm:flex-row gap-4">
             <Link href="/membership" className="btn-primary">Explore Membership</Link>
@@ -184,7 +184,7 @@ export default function Home() {
                 Thousands of acres. One event at a time.
               </h2>
               <p className="font-sans text-muted-brand leading-relaxed mb-10" style={{ fontSize: "0.9375rem" }}>
-                Managed timber, river bottom, and open fields along the Marais des Cygnes. The Rivers Lodge is a working land estate — available exclusively, to one group at a time. Whether you arrive for a wedding weekend or a season of hunting, the entire property is yours.
+                The Rivers Lodge is a land portfolio — available exclusively, to one group or member at a time. Whether you arrive for a wedding weekend, a booked hunt, a corporate event, or a member Do-It-Yourself hunt, you will be alone and the property is entirely yours.
               </p>
               <Link href="/about/property" className="btn-ghost">Discover the Property</Link>
             </div>
@@ -204,10 +204,10 @@ export default function Home() {
           className="font-serif font-light text-warm leading-tight mb-6"
           style={{ fontSize: "clamp(1.875rem,3.5vw,3rem)" }}
         >
-          A season for every pursuit.
+          An activity for everyone.
         </h2>
         <p className="font-sans text-muted-brand leading-relaxed mb-10" style={{ fontSize: "0.9375rem" }}>
-          Trophy whitetail, managed waterfowl impoundments, upland fields, and quiet river bottoms for fly rod and float. Every pursuit at Rivers Lodge is guided, private, and shaped by the land itself.
+          Whether you enjoy hiking, five-stand, fishing, upland, waterfowl, archery, or whitetail, we have something for everyone. Our world-class guides can create an incredible experience — or go Do-It-Yourself with our exclusive private options.
         </p>
         <Link href="/outdoor-activities" className="btn-ghost">Choose Your Pursuit</Link>
       </div>
