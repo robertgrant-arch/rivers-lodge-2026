@@ -22,8 +22,8 @@ import {
 import { Switch } from '@shared/ui/switch';
 import { Checkbox } from '@shared/ui/checkbox';
 import {
-  TreePine, Plus, Pencil, Loader2, AlertCircle, Users,
-  ChevronDown, ChevronUp, Thermometer, Truck, Waves, Zap, Wifi,
+  TreePine, Plus, Pencil, Loader2, AlertCircle, Users, Eye, EyeOff,
+  ChevronDown, ChevronUp, Thermometer, Truck, Waves, Zap, Wifi, X, Upload,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -77,7 +77,7 @@ function CreatePropertyForm({
   const [form, setForm] = useState({
     name: "",
     slug: "",
-    type: "stand" as string,
+    types: [] as string[],
     primaryActivity: "deer" as string,
     description: "",
     shortDescription: "",
@@ -91,12 +91,27 @@ function CreatePropertyForm({
     gpsLat: "",
     gpsLng: "",
     locationNotes: "",
+    gateCode: "",
+    mapUrl: "",
+    autoApprove: true,
+    overnightExclusive: false,
+    advanceNoticeHours: 0,
     active: true,
     featuredOnPublicSite: true,
     sortOrder: 0,
+    showGateCode: false,
   });
 
   const set = (key: string, value: any) => setForm((f) => ({ ...f, [key]: value }));
+
+  const handleTypeToggle = (typeValue: string) => {
+    setForm((f) => ({
+      ...f,
+      types: f.types.includes(typeValue)
+        ? f.types.filter((t) => t !== typeValue)
+        : [...f.types, typeValue],
+    }));
+  };
 
   const handleNameChange = (v: string) => {
     set("name", v);
@@ -106,10 +121,11 @@ function CreatePropertyForm({
   const handleSubmit = () => {
     if (!form.name.trim()) { toast.error("Property name is required."); return; }
     if (!form.slug.trim()) { toast.error("Slug is required."); return; }
+    if (form.types.length === 0) { toast.error("Select at least one property type."); return; }
     onSave({
       name: form.name,
       slug: form.slug,
-      type: form.type,
+      types: form.types,
       primaryActivity: form.primaryActivity,
       description: form.description || undefined,
       shortDescription: form.shortDescription || undefined,
@@ -123,6 +139,11 @@ function CreatePropertyForm({
       gpsLat: form.gpsLat ? parseFloat(form.gpsLat) : undefined,
       gpsLng: form.gpsLng ? parseFloat(form.gpsLng) : undefined,
       locationNotes: form.locationNotes || undefined,
+      gateCode: form.gateCode || undefined,
+      mapUrl: form.mapUrl || undefined,
+      autoApprove: form.autoApprove,
+      overnightExclusive: form.overnightExclusive,
+      advanceNoticeHours: Number(form.advanceNoticeHours),
       active: form.active,
       featuredOnPublicSite: form.featuredOnPublicSite,
       sortOrder: Number(form.sortOrder),
@@ -144,29 +165,32 @@ function CreatePropertyForm({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="space-y-1.5">
-          <Label className="text-stone-300 text-sm">Property Type</Label>
-          <Select value={form.type} onValueChange={(v) => set("type", v)}>
-            <SelectTrigger className="bg-stone-800 border-stone-700 text-stone-100"><SelectValue /></SelectTrigger>
-            <SelectContent className="bg-stone-800 border-stone-700">
-              {PROPERTY_TYPES.map((t) => (
-                <SelectItem key={t.value} value={t.value} className="text-stone-100">{t.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+      <div className="space-y-2">
+        <Label className="text-stone-300 text-sm">Property Types (select one or more) *</Label>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 bg-stone-800 border border-stone-700 rounded-lg p-4">
+          {PROPERTY_TYPES.map((t) => (
+            <label key={t.value} className="flex items-center gap-2 cursor-pointer">
+              <Checkbox
+                checked={form.types.includes(t.value)}
+                onCheckedChange={() => handleTypeToggle(t.value)}
+                className="border-stone-600"
+              />
+              <span className="text-sm text-stone-300">{t.label}</span>
+            </label>
+          ))}
         </div>
-        <div className="space-y-1.5">
-          <Label className="text-stone-300 text-sm">Primary Activity</Label>
-          <Select value={form.primaryActivity} onValueChange={(v) => set("primaryActivity", v)}>
-            <SelectTrigger className="bg-stone-800 border-stone-700 text-stone-100"><SelectValue /></SelectTrigger>
-            <SelectContent className="bg-stone-800 border-stone-700">
-              {ACTIVITIES.map((a) => (
-                <SelectItem key={a.value} value={a.value} className="text-stone-100">{a.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+      </div>
+
+      <div className="space-y-1.5">
+        <Label className="text-stone-300 text-sm">Primary Activity</Label>
+        <Select value={form.primaryActivity} onValueChange={(v) => set("primaryActivity", v)}>
+          <SelectTrigger className="bg-stone-800 border-stone-700 text-stone-100"><SelectValue /></SelectTrigger>
+          <SelectContent className="bg-stone-800 border-stone-700">
+            {ACTIVITIES.map((a) => (
+              <SelectItem key={a.value} value={a.value} className="text-stone-100">{a.label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="space-y-1.5">
@@ -231,6 +255,66 @@ function CreatePropertyForm({
           className="bg-stone-800 border-stone-700 text-stone-100 resize-none" />
       </div>
 
+      <div className="border border-stone-700 rounded-lg p-4 space-y-4">
+        <p className="text-xs font-semibold text-stone-400 uppercase tracking-wider">Admin-Only Fields</p>
+
+        <div className="space-y-1.5">
+          <Label className="text-stone-300 text-sm">Gate Code (not shown to members)</Label>
+          <div className="relative">
+            <Input
+              type={form.showGateCode ? "text" : "password"}
+              value={form.gateCode}
+              onChange={(e) => set("gateCode", e.target.value)}
+              placeholder="e.g., 1234 or gate-access-code"
+              className="bg-stone-800 border-stone-700 text-stone-100 pr-10"
+            />
+            <button
+              type="button"
+              onClick={() => set("showGateCode", !form.showGateCode)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-200"
+            >
+              {form.showGateCode ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            </button>
+          </div>
+        </div>
+
+        <div className="space-y-1.5">
+          <Label className="text-stone-300 text-sm">Map URL (PDF or image link)</Label>
+          <Input
+            type="url"
+            value={form.mapUrl}
+            onChange={(e) => set("mapUrl", e.target.value)}
+            placeholder="https://example.com/property-map.pdf"
+            className="bg-stone-800 border-stone-700 text-stone-100"
+          />
+        </div>
+      </div>
+
+      <div className="border border-stone-700 rounded-lg p-4 space-y-4">
+        <p className="text-xs font-semibold text-stone-400 uppercase tracking-wider">Booking Defaults</p>
+
+        <div className="flex items-center gap-3">
+          <Switch checked={form.autoApprove} onCheckedChange={(v) => set("autoApprove", v)} />
+          <Label className="text-stone-300 text-sm cursor-pointer">Auto-approve bookings by default</Label>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <Switch checked={form.overnightExclusive} onCheckedChange={(v) => set("overnightExclusive", v)} />
+          <Label className="text-stone-300 text-sm cursor-pointer">Overnight slots block same-day PM + next-day AM</Label>
+        </div>
+
+        <div className="space-y-1.5">
+          <Label className="text-stone-300 text-sm">Advance Notice (hours before booking)</Label>
+          <Input
+            type="number"
+            min={0}
+            value={form.advanceNoticeHours}
+            onChange={(e) => set("advanceNoticeHours", e.target.value)}
+            className="bg-stone-800 border-stone-700 text-stone-100"
+          />
+        </div>
+      </div>
+
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Label className="text-stone-300 text-sm">Sort Order</Label>
@@ -283,9 +367,15 @@ function EditPropertyForm({
     hasElectricity: initial.hasElectricity ?? false,
     hasCellService: initial.hasCellService ?? true,
     locationNotes: initial.locationNotes ?? "",
+    gateCode: initial.gateCode ?? "",
+    mapUrl: initial.mapUrl ?? "",
+    autoApprove: initial.autoApprove ?? true,
+    overnightExclusive: initial.overnightExclusive ?? false,
+    advanceNoticeHours: initial.advanceNoticeHours ?? 0,
     active: initial.active ?? true,
     featuredOnPublicSite: initial.featuredOnPublicSite ?? true,
     sortOrder: initial.sortOrder ?? 0,
+    showGateCode: false,
   });
 
   const set = (key: string, value: any) => setForm((f) => ({ ...f, [key]: value }));
@@ -304,6 +394,11 @@ function EditPropertyForm({
       hasElectricity: form.hasElectricity,
       hasCellService: form.hasCellService,
       locationNotes: form.locationNotes || undefined,
+      gateCode: form.gateCode || undefined,
+      mapUrl: form.mapUrl || undefined,
+      autoApprove: form.autoApprove,
+      overnightExclusive: form.overnightExclusive,
+      advanceNoticeHours: Number(form.advanceNoticeHours),
       active: form.active,
       featuredOnPublicSite: form.featuredOnPublicSite,
       sortOrder: Number(form.sortOrder),
@@ -363,6 +458,66 @@ function EditPropertyForm({
           rows={2} className="bg-stone-800 border-stone-700 text-stone-100 resize-none" />
       </div>
 
+      <div className="border border-stone-700 rounded-lg p-4 space-y-4">
+        <p className="text-xs font-semibold text-stone-400 uppercase tracking-wider">Admin-Only Fields</p>
+
+        <div className="space-y-1.5">
+          <Label className="text-stone-300 text-sm">Gate Code (not shown to members)</Label>
+          <div className="relative">
+            <Input
+              type={form.showGateCode ? "text" : "password"}
+              value={form.gateCode}
+              onChange={(e) => set("gateCode", e.target.value)}
+              placeholder="e.g., 1234 or gate-access-code"
+              className="bg-stone-800 border-stone-700 text-stone-100 pr-10"
+            />
+            <button
+              type="button"
+              onClick={() => set("showGateCode", !form.showGateCode)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-200"
+            >
+              {form.showGateCode ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            </button>
+          </div>
+        </div>
+
+        <div className="space-y-1.5">
+          <Label className="text-stone-300 text-sm">Map URL (PDF or image link)</Label>
+          <Input
+            type="url"
+            value={form.mapUrl}
+            onChange={(e) => set("mapUrl", e.target.value)}
+            placeholder="https://example.com/property-map.pdf"
+            className="bg-stone-800 border-stone-700 text-stone-100"
+          />
+        </div>
+      </div>
+
+      <div className="border border-stone-700 rounded-lg p-4 space-y-4">
+        <p className="text-xs font-semibold text-stone-400 uppercase tracking-wider">Booking Defaults</p>
+
+        <div className="flex items-center gap-3">
+          <Switch checked={form.autoApprove} onCheckedChange={(v) => set("autoApprove", v)} />
+          <Label className="text-stone-300 text-sm cursor-pointer">Auto-approve bookings by default</Label>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <Switch checked={form.overnightExclusive} onCheckedChange={(v) => set("overnightExclusive", v)} />
+          <Label className="text-stone-300 text-sm cursor-pointer">Overnight slots block same-day PM + next-day AM</Label>
+        </div>
+
+        <div className="space-y-1.5">
+          <Label className="text-stone-300 text-sm">Advance Notice (hours before booking)</Label>
+          <Input
+            type="number"
+            min={0}
+            value={form.advanceNoticeHours}
+            onChange={(e) => set("advanceNoticeHours", e.target.value)}
+            className="bg-stone-800 border-stone-700 text-stone-100"
+          />
+        </div>
+      </div>
+
       <div className="flex items-center gap-4 justify-end">
         <div className="flex items-center gap-2">
           <Label className="text-stone-300 text-sm">Featured</Label>
@@ -389,7 +544,9 @@ function EditPropertyForm({
 function PropertyRow({ property, onEdit }: { property: any; onEdit: () => void }) {
   const [expanded, setExpanded] = useState(false);
 
-  const typeLabel = PROPERTY_TYPES.find((t) => t.value === property.type)?.label ?? property.type;
+  // Handle both old single-type and new multi-type formats
+  const types = Array.isArray(property.types) ? property.types : (property.type ? [property.type] : []);
+  const typeLabels = types.map((t: string) => PROPERTY_TYPES.find((pt) => pt.value === t)?.label ?? t).join(", ");
   const actLabel = ACTIVITIES.find((a) => a.value === property.primaryActivity)?.label ?? property.primaryActivity;
 
   return (
@@ -410,7 +567,7 @@ function PropertyRow({ property, onEdit }: { property: any; onEdit: () => void }
             )}
           </div>
           <div className="flex flex-wrap gap-3 mt-1 text-xs text-stone-400">
-            <span>{typeLabel}</span>
+            <span>{typeLabels || "No type"}</span>
             <span>·</span>
             <span>{actLabel}</span>
             <span>·</span>
