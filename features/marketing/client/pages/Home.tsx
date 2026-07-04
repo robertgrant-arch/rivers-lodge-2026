@@ -192,6 +192,39 @@ export default function Home() {
         </div>
       </section>
 
+            {/* ── 02b. Teaser: Outdoor Pursuits ─────────────────────────────────── */}
+<section className="fade-up section bg-background">
+  <div className="max-w-[1440px] mx-auto px-5 lg:px-14">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+      {/* Text — left on desktop */}
+      <div className="order-2 lg:order-1">
+        <div className="gold-rule mb-5" />
+        <p className="eyebrow text-muted-brand mb-4">Outdoor Pursuits</p>
+        <h2
+          className="font-serif font-light text-warm leading-tight mb-6"
+          style={{ fontSize: "clamp(1.875rem,3.5vw,3rem)" }}
+        >
+          A season for every pursuit.
+        </h2>
+        <p className="font-sans text-muted-brand leading-relaxed mb-10" style={{ fontSize: "0.9375rem" }}>
+          Trophy whitetail, managed waterfowl impoundments, upland fields, and quiet river bottoms for fly rod and float. Every pursuit at Rivers Lodge is guided, private, and shaped by the land itself.
+        </p>
+        <Link href="/outdoor-activities" className="btn-ghost">Choose Your Pursuit</Link>
+      </div>
+      {/* Image — right on desktop */}
+      <Picture
+        src="/img/EMPTY-1.jpg"
+        alt="EMPTY #1 — Outdoor Pursuits hero placeholder"
+        label="EMPTY #1"
+        className="aspect-[4/3] overflow-hidden w-full order-1 lg:order-2"
+        width={1200}
+        height={900}
+        sizes="(max-width: 1024px) 100vw, 50vw"
+      />
+    </div>
+  </div>
+</section>
+
       {/* ── 03. Teaser: Stay & Gather ────────────────────────────────────── */}
       <section ref={stayRef} className="fade-up section bg-surface">
         <div className="max-w-[1440px] mx-auto px-5 lg:px-14">
