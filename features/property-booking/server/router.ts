@@ -1434,4 +1434,39 @@ export const propertyBookingRouter = router({
         }),
     }),
   }),
+
+  // ── Admin: Properties (dedicated admin endpoint for ops portal) ──────────────
+
+  adminProperties: router({
+
+    /** List all properties (admin view) — with full details for admin ops */
+    list: protectedProcedure
+      .input(z.object({
+        includeInactive: z.boolean().optional(),
+      }).optional())
+      .query(async ({ ctx, input }: { ctx: any; input: any }) => {
+        requireAdmin(ctx.user.role);
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+
+        const conditions = [];
+        if (!input?.includeInactive) conditions.push(eq(huntingProperties.active, true));
+
+        const props = await db
+          .select()
+          .from(huntingProperties)
+          .where(conditions.length ? and(...conditions) : undefined)
+          .orderBy(asc(huntingProperties.sortOrder), asc(huntingProperties.name));
+
+        // Normalize response: provide safe defaults for nullable JSON fields
+        return props.map((p: any) => ({
+          ...p,
+          bookingModes: Array.isArray(p.bookingModes) ? p.bookingModes : ["AM", "PM"],
+          secondaryActivities: Array.isArray(p.secondaryActivities) ? p.secondaryActivities : null,
+          maxWaterfowlHunters: p.maxWaterfowlHunters ?? null,
+          maxTotalPeople: p.maxTotalPeople ?? null,
+          overnightEnabled: p.overnightEnabled ?? true,
+        }));
+      }),
+  }),
 });

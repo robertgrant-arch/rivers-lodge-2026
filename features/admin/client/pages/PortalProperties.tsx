@@ -877,7 +877,7 @@ export default function PortalProperties() {
 
   const utils = trpc.useUtils();
 
-  const { data: properties, isLoading, error } = trpc.propertyBooking.properties.list.useQuery(
+  const { data: properties, isLoading, error } = trpc.propertyBooking.adminProperties.list.useQuery(
     { includeInactive: true },
     { staleTime: 30 * 1000 },
   );
@@ -885,7 +885,7 @@ export default function PortalProperties() {
   const create = trpc.propertyBooking.admin.properties.create.useMutation({
     onSuccess: () => {
       toast.success("Property created successfully.");
-      utils.propertyBooking.properties.list.invalidate();
+      utils.propertyBooking.adminProperties.list.invalidate();
       setShowCreate(false);
     },
     onError: (err: any) => toast.error(`Failed to create: ${err.message}`),
@@ -894,7 +894,7 @@ export default function PortalProperties() {
   const update = trpc.propertyBooking.admin.properties.update.useMutation({
     onSuccess: () => {
       toast.success("Property updated.");
-      utils.propertyBooking.properties.list.invalidate();
+      utils.propertyBooking.adminProperties.list.invalidate();
       setEditTarget(null);
     },
     onError: (err: any) => toast.error(`Failed to update: ${err.message}`),
