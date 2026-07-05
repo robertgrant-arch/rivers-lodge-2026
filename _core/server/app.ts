@@ -133,7 +133,7 @@ async function startServer() {
     if (schemaCheck.ok) {
       res.status(200).json({ ok: true, message: "hunting_properties schema is valid" });
     } else {
-      res.status(500).json({ ok: false, ...schemaCheck });
+      res.status(500).json({ ...schemaCheck });
     }
   });
 
