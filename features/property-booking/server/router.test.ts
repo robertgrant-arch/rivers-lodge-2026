@@ -133,4 +133,48 @@ describe("Property Booking - Activities", () => {
     await db.delete(propertyActivities).where(eq(propertyActivities.propertyId, propertyId));
     await db.delete(huntingProperties).where(eq(huntingProperties.id, propertyId));
   });
+
+  it("should handle null bookingModes and maxWaterfowlHunters safely", async () => {
+    const now = Date.now();
+
+    // Create property with null bookingModes (simulating legacy pre-PR#57 data)
+    const result = await db
+      .insert(huntingProperties)
+      .values({
+        name: "Legacy Property - Null Fields",
+        slug: "legacy-null-fields",
+        type: "stand",
+        primaryActivity: "deer",
+        active: true,
+        featuredOnPublicSite: true,
+        sortOrder: 0,
+        createdAt: now,
+        updatedAt: now,
+        maxHunters: 2,
+        hasCellService: true,
+        // Explicitly null for backward-compat test
+        bookingModes: null,
+        maxWaterfowlHunters: null,
+        maxTotalPeople: null,
+        overnightEnabled: true,
+      })
+      .returning({ id: huntingProperties.id });
+
+    const propertyId = result[0].id;
+    expect(propertyId).toBeGreaterThan(0);
+
+    // Verify the property was created with null values
+    const [created] = await db
+      .select()
+      .from(huntingProperties)
+      .where(eq(huntingProperties.id, propertyId));
+
+    expect(created).toBeDefined();
+    expect(created.bookingModes).toBeNull();
+    expect(created.maxWaterfowlHunters).toBeNull();
+    expect(created.maxTotalPeople).toBeNull();
+
+    // Cleanup
+    await db.delete(huntingProperties).where(eq(huntingProperties.id, propertyId));
+  });
 });

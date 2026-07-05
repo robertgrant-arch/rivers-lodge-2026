@@ -136,6 +136,44 @@ function requireAdmin(role: string) {
   }
 }
 
+// ─── Backfill Migration Helpers ───────────────────────────────────────────────
+
+/** Backfill null bookingModes with safe defaults (for PR #57 compatibility) */
+async function backfillBookingModes(db: any): Promise<number> {
+  const properties = await db
+    .select({ id: huntingProperties.id })
+    .from(huntingProperties)
+    .where(isNull(huntingProperties.bookingModes));
+
+  let updated = 0;
+  for (const prop of properties) {
+    await db
+      .update(huntingProperties)
+      .set({ bookingModes: ["AM", "PM"], updatedAt: now() })
+      .where(eq(huntingProperties.id, prop.id));
+    updated++;
+  }
+  return updated;
+}
+
+/** Backfill null overnightEnabled with true (for PR #57 compatibility) */
+async function backfillOvernightEnabled(db: any): Promise<number> {
+  const properties = await db
+    .select({ id: huntingProperties.id })
+    .from(huntingProperties)
+    .where(isNull(huntingProperties.overnightEnabled));
+
+  let updated = 0;
+  for (const prop of properties) {
+    await db
+      .update(huntingProperties)
+      .set({ overnightEnabled: true, updatedAt: now() })
+      .where(eq(huntingProperties.id, prop.id));
+    updated++;
+  }
+  return updated;
+}
+
 // ─── Input Schemas ────────────────────────────────────────────────────────────
 
 const createBookingInput = z.object({
@@ -205,9 +243,15 @@ export const propertyBookingRouter = router({
 
         const imageMap = new Map(images.map((img: any) => [img.propertyId, img.url]));
 
+        // Normalize response: provide safe defaults for nullable JSON fields
         return props.map((p: any) => ({
           ...p,
           coverImageUrl: p.coverImageUrl ?? imageMap.get(p.id) ?? null,
+          bookingModes: Array.isArray(p.bookingModes) ? p.bookingModes : ["AM", "PM"],
+          secondaryActivities: Array.isArray(p.secondaryActivities) ? p.secondaryActivities : null,
+          maxWaterfowlHunters: p.maxWaterfowlHunters ?? null,
+          maxTotalPeople: p.maxTotalPeople ?? null,
+          overnightEnabled: p.overnightEnabled ?? true,
         }));
       }),
 
@@ -250,7 +294,17 @@ export const propertyBookingRouter = router({
             .orderBy(asc(propertyImages.sortOrder)),
         ]);
 
-        return { property, rules: rules[0] ?? null, seasons, amenities, images };
+        // Normalize response: provide safe defaults for nullable fields
+        const normalized = {
+          ...property,
+          bookingModes: Array.isArray(property.bookingModes) ? property.bookingModes : ["AM", "PM"],
+          secondaryActivities: Array.isArray(property.secondaryActivities) ? property.secondaryActivities : null,
+          maxWaterfowlHunters: property.maxWaterfowlHunters ?? null,
+          maxTotalPeople: property.maxTotalPeople ?? null,
+          overnightEnabled: property.overnightEnabled ?? true,
+        };
+
+        return { property: normalized, rules: rules[0] ?? null, seasons, amenities, images };
       }),
 
     /** Get availability for a property over a date range */
@@ -1172,6 +1226,25 @@ export const propertyBookingRouter = router({
           );
 
           return { mapUrl: url };
+        }),
+
+      /** Maintenance: Backfill null bookingModes and overnightEnabled (for PR #57 compat) */
+      backfillDefaults: protectedProcedure
+        .mutation(async ({ ctx }: { ctx: any }) => {
+          requireAdmin(ctx.user.role);
+          const db = await getDb();
+          if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+
+          const modesUpdated = await backfillBookingModes(db);
+          const overnightUpdated = await backfillOvernightEnabled(db);
+
+          return {
+            success: true,
+            backfilled: {
+              bookingModes: modesUpdated,
+              overnightEnabled: overnightUpdated,
+            },
+          };
         }),
     }),
 
