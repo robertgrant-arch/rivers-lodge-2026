@@ -113,9 +113,12 @@ export const huntingProperties = pgTable("hunting_properties", {
   description: text("description"),
   shortDescription: varchar("shortDescription", { length: 280 }),
   acreage: decimal("acreage", { precision: 8, scale: 2 }),
-  maxHunters: integer("maxHunters").notNull().default(2),
-  maxWaterfowlHunters: integer("maxWaterfowlHunters"),
-  maxTotalPeople: integer("maxTotalPeople"),
+  maxHunters: integer("maxHunters").notNull().default(2), // Deprecated: use maxDeerHunters, maxWaterfowlHunters, maxUplandHunters instead
+  maxWaterfowlHunters: integer("maxWaterfowlHunters"), // Deprecated: use the new maxWaterfowlHunters field below
+  maxTotalPeople: integer("maxTotalPeople"), // Deprecated: use maxGuests instead
+  maxDeerHunters: integer("maxDeerHunters").default(0),
+  maxUplandHunters: integer("maxUplandHunters").default(0),
+  maxGuests: integer("maxGuests").default(0),
   hasHeatedBlind: boolean("hasHeatedBlind").default(false),
   hasAtvAccess: boolean("hasAtvAccess").default(false),
   hasWaterAccess: boolean("hasWaterAccess").default(false),

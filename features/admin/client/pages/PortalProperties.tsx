@@ -90,7 +90,10 @@ function CreatePropertyForm({
     shortDescription: "",
     acreage: "",
     maxHunters: 2,
+    maxDeerHunters: 0,
     maxWaterfowlHunters: "" as any,
+    maxUplandHunters: 0,
+    maxGuests: 0,
     maxTotalPeople: "" as any,
     bookingModes: ["AM", "PM"] as string[],
     overnightEnabled: true,
@@ -190,7 +193,10 @@ function CreatePropertyForm({
       shortDescription: form.shortDescription || undefined,
       acreage: form.acreage ? parseFloat(form.acreage) : undefined,
       maxHunters: Number(form.maxHunters),
+      maxDeerHunters: Number(form.maxDeerHunters),
       maxWaterfowlHunters: form.maxWaterfowlHunters ? Number(form.maxWaterfowlHunters) : undefined,
+      maxUplandHunters: Number(form.maxUplandHunters),
+      maxGuests: Number(form.maxGuests),
       maxTotalPeople: form.maxTotalPeople ? Number(form.maxTotalPeople) : undefined,
       bookingModes: finalBookingModes,
       overnightEnabled: form.overnightEnabled,
@@ -305,16 +311,28 @@ function CreatePropertyForm({
         <p className="text-xs font-semibold text-stone-400 uppercase tracking-wider">Capacity Settings</p>
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
+            <Label className="text-stone-300 text-sm">Max Deer Hunters</Label>
+            <Input type="number" min={0} value={form.maxDeerHunters}
+              onChange={(e) => set("maxDeerHunters", parseInt(e.target.value) || 0)}
+              className="bg-stone-800 border-stone-700 text-stone-100" />
+          </div>
+          <div className="space-y-1.5">
             <Label className="text-stone-300 text-sm">Max Waterfowl Hunters</Label>
             <Input type="number" min={0} value={form.maxWaterfowlHunters}
               onChange={(e) => set("maxWaterfowlHunters", e.target.value)}
               placeholder="Leave blank if not applicable" className="bg-stone-800 border-stone-700 text-stone-100" />
           </div>
           <div className="space-y-1.5">
-            <Label className="text-stone-300 text-sm">Max Total People</Label>
-            <Input type="number" min={0} value={form.maxTotalPeople}
-              onChange={(e) => set("maxTotalPeople", e.target.value)}
-              placeholder="Leave blank if not applicable" className="bg-stone-800 border-stone-700 text-stone-100" />
+            <Label className="text-stone-300 text-sm">Max Upland Hunters</Label>
+            <Input type="number" min={0} value={form.maxUplandHunters}
+              onChange={(e) => set("maxUplandHunters", parseInt(e.target.value) || 0)}
+              className="bg-stone-800 border-stone-700 text-stone-100" />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-stone-300 text-sm">Max Guests</Label>
+            <Input type="number" min={0} value={form.maxGuests}
+              onChange={(e) => set("maxGuests", parseInt(e.target.value) || 0)}
+              className="bg-stone-800 border-stone-700 text-stone-100" />
           </div>
         </div>
       </div>
@@ -488,7 +506,10 @@ function EditPropertyForm({
     description: initial.description ?? "",
     slug: initial.slug ?? "", activities: (Array.isArray(initial.activities) ? initial.activities.map((v: any) => typeof v === 'string' ? v : (v?.value ?? v?.activity ?? '')).filter(Boolean) : []) as string[],
     maxHunters: initial.maxHunters ?? 2,
+    maxDeerHunters: initial.maxDeerHunters ?? 0,
     maxWaterfowlHunters: initial.maxWaterfowlHunters ?? "",
+    maxUplandHunters: initial.maxUplandHunters ?? 0,
+    maxGuests: initial.maxGuests ?? 0,
     maxTotalPeople: initial.maxTotalPeople ?? "",
     bookingModes: initial.bookingModes ?? ["AM", "PM"],
     overnightEnabled: initial.overnightEnabled ?? true,
@@ -577,7 +598,10 @@ function EditPropertyForm({
       description: form.description || undefined,
       activities: form.activities,
       maxHunters: Number(form.maxHunters),
+      maxDeerHunters: Number(form.maxDeerHunters),
       maxWaterfowlHunters: form.maxWaterfowlHunters ? Number(form.maxWaterfowlHunters) : undefined,
+      maxUplandHunters: Number(form.maxUplandHunters),
+      maxGuests: Number(form.maxGuests),
       maxTotalPeople: form.maxTotalPeople ? Number(form.maxTotalPeople) : undefined,
       bookingModes: finalBookingModes,
       overnightEnabled: form.overnightEnabled,
@@ -655,16 +679,28 @@ function EditPropertyForm({
         <p className="text-xs font-semibold text-stone-400 uppercase tracking-wider">Capacity Settings</p>
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
+            <Label className="text-stone-300 text-sm">Max Deer Hunters</Label>
+            <Input type="number" min={0} value={form.maxDeerHunters}
+              onChange={(e) => set("maxDeerHunters", parseInt(e.target.value) || 0)}
+              className="bg-stone-800 border-stone-700 text-stone-100" />
+          </div>
+          <div className="space-y-1.5">
             <Label className="text-stone-300 text-sm">Max Waterfowl Hunters</Label>
             <Input type="number" min={0} value={form.maxWaterfowlHunters}
               onChange={(e) => set("maxWaterfowlHunters", e.target.value)}
               placeholder="Leave blank if not applicable" className="bg-stone-800 border-stone-700 text-stone-100" />
           </div>
           <div className="space-y-1.5">
-            <Label className="text-stone-300 text-sm">Max Total People</Label>
-            <Input type="number" min={0} value={form.maxTotalPeople}
-              onChange={(e) => set("maxTotalPeople", e.target.value)}
-              placeholder="Leave blank if not applicable" className="bg-stone-800 border-stone-700 text-stone-100" />
+            <Label className="text-stone-300 text-sm">Max Upland Hunters</Label>
+            <Input type="number" min={0} value={form.maxUplandHunters}
+              onChange={(e) => set("maxUplandHunters", parseInt(e.target.value) || 0)}
+              className="bg-stone-800 border-stone-700 text-stone-100" />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-stone-300 text-sm">Max Guests</Label>
+            <Input type="number" min={0} value={form.maxGuests}
+              onChange={(e) => set("maxGuests", parseInt(e.target.value) || 0)}
+              className="bg-stone-800 border-stone-700 text-stone-100" />
           </div>
         </div>
       </div>
@@ -806,6 +842,17 @@ function PropertyRow({ property, onEdit }: { property: any; onEdit: () => void }
   const typeLabel = PROPERTY_TYPES.find((t) => t.value === property.type)?.label ?? property.type;
   const activityLabels = (() => { const list = Array.isArray(property.activities) && property.activities.length > 0 ? property.activities : (property.primaryActivity ? [property.primaryActivity] : []); const seen = new Set<string>(); const out: string[] = []; for (const v of list) { const val = typeof v === 'string' ? v : (v?.value ?? v?.activity ?? ''); if (!val || seen.has(val)) continue; seen.add(val); out.push(ACTIVITIES.find((a) => a.value === val)?.label ?? val); } return out; })();
 
+  const capacityItems = [
+    { label: "Deer", value: property.maxDeerHunters },
+    { label: "Waterfowl", value: property.maxWaterfowlHunters },
+    { label: "Upland", value: property.maxUplandHunters },
+    { label: "Guests", value: property.maxGuests },
+  ].filter((item) => item.value > 0);
+
+  const capacityDisplay = capacityItems.length > 0
+    ? capacityItems.map((item) => `${item.label} ${item.value}`).join(" · ")
+    : `Up to ${property.maxHunters}`;
+
   return (
     <div className="bg-stone-900 border border-stone-700 rounded-lg overflow-hidden">
       <div className="flex items-center gap-4 p-4">
@@ -813,7 +860,6 @@ function PropertyRow({ property, onEdit }: { property: any; onEdit: () => void }
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="font-semibold text-stone-100">{property.name}</span>
-            <span className="text-xs text-stone-500 font-mono">{property.slug}</span>
             {property.active ? (
               <Badge className="bg-emerald-900/30 text-emerald-300 border-emerald-700 text-xs">Active</Badge>
             ) : (
@@ -828,7 +874,7 @@ function PropertyRow({ property, onEdit }: { property: any; onEdit: () => void }
             <span>·</span>
             <span>{activityLabels.length > 0 ? activityLabels.join(", ") : "—"}</span>
             <span>·</span>
-            <span className="flex items-center gap-1"><Users className="w-3 h-3" />Up to {property.maxHunters}</span>
+            <span className="flex items-center gap-1"><Users className="w-3 h-3" />{capacityDisplay}</span>
             {property.acreage && <><span>·</span><span>{property.acreage} ac</span></>}
           </div>
         </div>
@@ -859,6 +905,12 @@ function PropertyRow({ property, onEdit }: { property: any; onEdit: () => void }
               ))}
             </div>
           )}
+          <div className="grid grid-cols-2 gap-2 text-xs text-stone-400 bg-stone-800/50 p-2 rounded">
+            {property.maxDeerHunters > 0 && <span>Deer Hunters: {property.maxDeerHunters}</span>}
+            {property.maxWaterfowlHunters && <span>Waterfowl Hunters: {property.maxWaterfowlHunters}</span>}
+            {property.maxUplandHunters > 0 && <span>Upland Hunters: {property.maxUplandHunters}</span>}
+            {property.maxGuests > 0 && <span>Guests: {property.maxGuests}</span>}
+          </div>
           <div className="flex flex-wrap gap-2">
             {AMENITY_FIELDS.filter((a) => property[a.key]).map((a) => (
               <span key={a.key} className="flex items-center gap-1 text-xs text-stone-400 bg-stone-800 px-2 py-0.5 rounded">
