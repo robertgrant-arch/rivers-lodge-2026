@@ -10,18 +10,8 @@ import { serveStatic, setupVite } from "./vite";
 import { submitLimiter, loginLimiter, acceptInviteLimiter, changePasswordLimiter } from "./rateLimit";
 import { resolvePort } from "./port";
 import { checkDbHealth } from "./db";
-import { runMigrations } from "./migrate";
 
 async function startServer() {
-  // Run database migrations before starting the server
-  // This ensures the schema is up-to-date before handling requests
-  try {
-    await runMigrations();
-  } catch (error) {
-    console.error("[App] Failed to run migrations — server will not start");
-    throw error;
-  }
-
   const app = express();
   const server = createServer(app);
 

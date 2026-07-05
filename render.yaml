@@ -5,7 +5,7 @@ services:
     region: oregon
     plan: starter
     branch: main
-    buildCommand: pnpm install --frozen-lockfile && pnpm build
+    buildCommand: pnpm install --frozen-lockfile && DATABASE_URL="$DATABASE_URL" pnpm drizzle-kit migrate && pnpm build
     startCommand: pnpm start
     healthCheckPath: /api/health
     envVars:
