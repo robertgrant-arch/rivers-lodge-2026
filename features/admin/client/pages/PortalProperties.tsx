@@ -85,7 +85,7 @@ function CreatePropertyForm({
     slug: "",
     type: "stand" as string,
     primaryActivity: "deer" as string,
-    activities: [] as string[],
+    slug: initial.slug ?? "", activities: (Array.isArray(initial.activities) ? initial.activities.map((v: any) => typeof v === 'string' ? v : (v?.value ?? v?.activity ?? '')).filter(Boolean) : []) as string[],
     description: "",
     shortDescription: "",
     acreage: "",
@@ -486,7 +486,7 @@ function EditPropertyForm({
     name: initial.name ?? "",
     shortDescription: initial.shortDescription ?? "",
     description: initial.description ?? "",
-    activities: [] as string[],
+    slug: initial.slug ?? "", activities: (Array.isArray(initial.activities) ? initial.activities.map((v: any) => typeof v === 'string' ? v : (v?.value ?? v?.activity ?? '')).filter(Boolean) : []) as string[],
     maxHunters: initial.maxHunters ?? 2,
     maxWaterfowlHunters: initial.maxWaterfowlHunters ?? "",
     maxTotalPeople: initial.maxTotalPeople ?? "",
@@ -801,10 +801,10 @@ function EditPropertyForm({
 // ─── Property Row ─────────────────────────────────────────────────────────────
 
 function PropertyRow({ property, onEdit }: { property: any; onEdit: () => void }) {
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(true);
 
   const typeLabel = PROPERTY_TYPES.find((t) => t.value === property.type)?.label ?? property.type;
-  const actLabel = ACTIVITIES.find((a) => a.value === property.primaryActivity)?.label ?? property.primaryActivity;
+  const activityLabels = (() => { const list = Array.isArray(property.activities) && property.activities.length > 0 ? property.activities : (property.primaryActivity ? [property.primaryActivity] : []); const seen = new Set<string>(); const out: string[] = []; for (const v of list) { const val = typeof v === 'string' ? v : (v?.value ?? v?.activity ?? ''); if (!val || seen.has(val)) continue; seen.add(val); out.push(ACTIVITIES.find((a) => a.value === val)?.label ?? val); } return out; })();
 
   return (
     <div className="bg-stone-900 border border-stone-700 rounded-lg overflow-hidden">
@@ -824,9 +824,9 @@ function PropertyRow({ property, onEdit }: { property: any; onEdit: () => void }
             )}
           </div>
           <div className="flex flex-wrap gap-3 mt-1 text-xs text-stone-400">
-            <span>{typeLabel}</span>
+            <span className="hidden">{typeLabel}</span>
             <span>·</span>
-            <span>{actLabel}</span>
+            <span>{activityLabels.length > 0 ? activityLabels.join(", ") : "—"}</span>
             <span>·</span>
             <span className="flex items-center gap-1"><Users className="w-3 h-3" />Up to {property.maxHunters}</span>
             {property.acreage && <><span>·</span><span>{property.acreage} ac</span></>}
@@ -846,7 +846,7 @@ function PropertyRow({ property, onEdit }: { property: any; onEdit: () => void }
       {expanded && (
         <div className="border-t border-stone-800 px-4 pb-4 pt-3 space-y-3">
           {property.shortDescription && (
-            <p className="text-sm text-stone-300">{property.shortDescription}</p>
+            <p className="text-sm text-stone-300">{property.shortDescription}</p>{property.description && (<p className="text-xs text-stone-400 whitespace-pre-wrap">{property.description}</p>)}{activityLabels.length > 0 && (<div className="flex flex-wrap gap-1"><span className="text-stone-500 text-xs mr-1">Activities:</span>{activityLabels.map((l) => (<span key={l} className="text-xs text-stone-300 bg-stone-800 px-2 py-0.5 rounded">{l}</span>))}</div>)}
           )}
           <div className="flex flex-wrap gap-2">
             {AMENITY_FIELDS.filter((a) => property[a.key]).map((a) => (
@@ -913,7 +913,7 @@ export default function PortalProperties() {
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-stone-100">Hunting Properties</h1>
+          <h1 className="text-2xl font-bold text-stone-100">Properties</h1>
           <p className="text-stone-400 mt-1 text-sm">
             {activeCount} active · {(properties ?? []).length} total
           </p>
@@ -986,7 +986,7 @@ export default function PortalProperties() {
       <Dialog open={showCreate} onOpenChange={setShowCreate}>
         <DialogContent className="bg-stone-900 border-stone-700 text-stone-100 max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-stone-100">Add Hunting Property</DialogTitle>
+            <DialogTitle className="text-stone-100">Add Property</DialogTitle>
           </DialogHeader>
           <CreatePropertyForm
             onSave={(data) => create.mutate(data)}
