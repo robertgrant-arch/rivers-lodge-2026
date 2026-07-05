@@ -1,15 +1,15 @@
 /**
- * Drizzle Migration Runner
- * ========================
- * Runs pending migrations on app startup using drizzle-orm's migrate function.
+ * Database Migration Runner
+ * ==========================
+ * Runs pending SQL migrations on app startup.
  * Ensures database schema is up-to-date before the server starts handling requests.
  */
 
-import { migrate } from "drizzle-orm/postgres-js/migrator";
-import { sql } from "drizzle-orm";
 import { getDb } from "./db";
 import path from "path";
 import { fileURLToPath } from "url";
+import { readdir, readFile } from "fs/promises";
+import { sql } from "drizzle-orm";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -24,10 +24,27 @@ export async function runMigrations(): Promise<void> {
     const migrationsFolder = path.join(__dirname, "..", "db", "migrations");
     console.log(`[Migrations] Running migrations from ${migrationsFolder}...`);
 
-    // Run migrations using drizzle-orm's migrate function
-    await migrate(db, {
-      migrationsFolder,
-    } as any);
+    // Read all .sql files in the migrations folder
+    const files = await readdir(migrationsFolder);
+    const sqlFiles = files.filter(f => f.endsWith(".sql")).sort();
+
+    if (sqlFiles.length === 0) {
+      console.log("[Migrations] No migration files found");
+      return;
+    }
+
+    // Execute each migration file
+    for (const file of sqlFiles) {
+      const filePath = path.join(migrationsFolder, file);
+      const sqlContent = await readFile(filePath, "utf-8");
+
+      console.log(`[Migrations] Running ${file}...`);
+
+      // Execute the SQL directly
+      await db.execute(sql.raw(sqlContent));
+
+      console.log(`[Migrations]   ✓ ${file} completed`);
+    }
 
     console.log("[Migrations] ✅ All migrations completed successfully");
   } catch (error: any) {
@@ -36,10 +53,7 @@ export async function runMigrations(): Promise<void> {
     if (error.stack) {
       console.error(error.stack);
     }
-    // In production, we could either:
-    // 1. Throw and crash the app (strict mode)
-    // 2. Log and continue (graceful degradation)
-    // For now, we throw to ensure the app doesn't start with an incomplete schema.
+    // In production, we crash the app to prevent silent data issues
     throw error;
   }
 }
