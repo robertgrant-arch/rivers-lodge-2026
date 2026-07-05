@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 
 /**
- * Run Drizzle Migrations
- * ======================
- * Guaranteed migration runner for Render deploy.
- * Executes all pending SQL migrations from _core/db/migrations/
+ * Run SQL Migrations
+ * ==================
+ * Executes all .sql files from _core/db/migrations/ directly against the database.
+ * Uses raw psql execution instead of drizzle-kit to avoid metadata/journal issues.
  *
  * Usage: node scripts/run-migrations.mjs
  * Exit codes:
@@ -22,7 +22,7 @@ console.log('[Migrations] Starting migration runner...');
 
 // Check if DATABASE_URL is set
 if (!process.env.DATABASE_URL) {
-  console.warn('[Migrations] DATABASE_URL not set — skipping migrations (database unavailable)');
+  console.warn('[Migrations] DATABASE_URL not set — skipping migrations');
   process.exit(0);
 }
 
@@ -47,19 +47,36 @@ if (files.length === 0) {
 console.log(`[Migrations] Found ${files.length} migration file(s):`);
 files.forEach(f => console.log(`  - ${f}`));
 
-// Run drizzle-kit migrate
-console.log('[Migrations] Running: pnpm drizzle-kit migrate');
+// Execute each SQL file directly with psql
+let succeeded = 0;
+let failed = 0;
 
-try {
-  const output = execSync('pnpm drizzle-kit migrate', {
-    stdio: 'inherit',
-    env: process.env,
-  });
+for (const file of files) {
+  const filepath = join(migrationsDir, file);
+  const sql = readFileSync(filepath, 'utf8');
 
-  console.log('[Migrations] ✅ Migrations completed successfully');
-  process.exit(0);
-} catch (error) {
-  console.error('[Migrations] ❌ Migration failed');
-  console.error(error.message);
+  console.log(`[Migrations] Executing ${file}...`);
+
+  try {
+    execSync(`psql "$DATABASE_URL" -v ON_ERROR_STOP=1`, {
+      input: sql,
+      stdio: 'inherit',
+      env: process.env,
+    });
+    console.log(`[Migrations] ✅ ${file} completed`);
+    succeeded++;
+  } catch (error) {
+    console.error(`[Migrations] ❌ ${file} failed`);
+    console.error(error.message);
+    failed++;
+  }
+}
+
+console.log(`[Migrations] Results: ${succeeded} succeeded, ${failed} failed`);
+
+if (failed > 0) {
   process.exit(1);
 }
+
+console.log('[Migrations] ✅ All migrations completed successfully');
+process.exit(0);
