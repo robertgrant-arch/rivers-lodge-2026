@@ -63,6 +63,12 @@ const AMENITY_FIELDS = [
   { key: "hasCellService", label: "Cell Service", icon: <Wifi className="w-3.5 h-3.5" /> },
 ];
 
+const BOOKING_MODES = [
+  { value: "AM", label: "Morning (AM)" },
+  { value: "PM", label: "Afternoon (PM)" },
+  { value: "Overnight", label: "Overnight" },
+];
+
 // ─── Create Form ──────────────────────────────────────────────────────────────
 
 function CreatePropertyForm({
@@ -84,6 +90,10 @@ function CreatePropertyForm({
     shortDescription: "",
     acreage: "",
     maxHunters: 2,
+    maxWaterfowlHunters: "" as any,
+    maxTotalPeople: "" as any,
+    bookingModes: ["AM", "PM"] as string[],
+    overnightEnabled: true,
     hasHeatedBlind: false,
     hasAtvAccess: false,
     hasWaterAccess: false,
@@ -156,6 +166,20 @@ function CreatePropertyForm({
   const handleSubmit = () => {
     if (!form.name.trim()) { toast.error("Property name is required."); return; }
     if (!form.slug.trim()) { toast.error("Slug is required."); return; }
+
+    // Validate capacity fields
+    if (form.maxWaterfowlHunters && Number(form.maxWaterfowlHunters) < 0) {
+      toast.error("Max Waterfowl Hunters cannot be negative"); return;
+    }
+    if (form.maxTotalPeople && Number(form.maxTotalPeople) < 0) {
+      toast.error("Max Total People cannot be negative"); return;
+    }
+
+    // Filter booking modes based on overnightEnabled
+    const finalBookingModes = form.overnightEnabled
+      ? form.bookingModes
+      : form.bookingModes.filter(mode => mode !== "Overnight");
+
     onSave({
       name: form.name,
       slug: form.slug,
@@ -166,6 +190,10 @@ function CreatePropertyForm({
       shortDescription: form.shortDescription || undefined,
       acreage: form.acreage ? parseFloat(form.acreage) : undefined,
       maxHunters: Number(form.maxHunters),
+      maxWaterfowlHunters: form.maxWaterfowlHunters ? Number(form.maxWaterfowlHunters) : undefined,
+      maxTotalPeople: form.maxTotalPeople ? Number(form.maxTotalPeople) : undefined,
+      bookingModes: finalBookingModes,
+      overnightEnabled: form.overnightEnabled,
       hasHeatedBlind: form.hasHeatedBlind,
       hasAtvAccess: form.hasAtvAccess,
       hasWaterAccess: form.hasWaterAccess,
@@ -270,6 +298,52 @@ function CreatePropertyForm({
           <Input type="number" step="0.1" value={form.acreage}
             onChange={(e) => set("acreage", e.target.value)}
             placeholder="40.5" className="bg-stone-800 border-stone-700 text-stone-100" />
+        </div>
+      </div>
+
+      <div className="border border-stone-700 rounded-lg p-4 space-y-3">
+        <p className="text-xs font-semibold text-stone-400 uppercase tracking-wider">Capacity Settings</p>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <Label className="text-stone-300 text-sm">Max Waterfowl Hunters</Label>
+            <Input type="number" min={0} value={form.maxWaterfowlHunters}
+              onChange={(e) => set("maxWaterfowlHunters", e.target.value)}
+              placeholder="Leave blank if not applicable" className="bg-stone-800 border-stone-700 text-stone-100" />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-stone-300 text-sm">Max Total People</Label>
+            <Input type="number" min={0} value={form.maxTotalPeople}
+              onChange={(e) => set("maxTotalPeople", e.target.value)}
+              placeholder="Leave blank if not applicable" className="bg-stone-800 border-stone-700 text-stone-100" />
+          </div>
+        </div>
+      </div>
+
+      <div className="border border-stone-700 rounded-lg p-4 space-y-3">
+        <p className="text-xs font-semibold text-stone-400 uppercase tracking-wider">Booking Modes</p>
+        <div className="space-y-3">
+          <div className="flex flex-wrap gap-4">
+            {BOOKING_MODES.map((mode) => (
+              <label key={mode.value} className="flex items-center gap-2 cursor-pointer">
+                <Checkbox
+                  checked={form.bookingModes.includes(mode.value)}
+                  onCheckedChange={(v) => {
+                    if (v) {
+                      set("bookingModes", [...form.bookingModes, mode.value]);
+                    } else {
+                      set("bookingModes", form.bookingModes.filter(m => m !== mode.value));
+                    }
+                  }}
+                  className="border-stone-600"
+                />
+                <span className="text-sm text-stone-300">{mode.label}</span>
+              </label>
+            ))}
+          </div>
+          <div className="flex items-center gap-2 pt-2">
+            <Switch checked={form.overnightEnabled} onCheckedChange={(v) => set("overnightEnabled", v)} />
+            <Label className="text-stone-300 text-sm cursor-pointer">Overnight bookings enabled</Label>
+          </div>
         </div>
       </div>
 
@@ -414,6 +488,10 @@ function EditPropertyForm({
     description: initial.description ?? "",
     activities: [] as string[],
     maxHunters: initial.maxHunters ?? 2,
+    maxWaterfowlHunters: initial.maxWaterfowlHunters ?? "",
+    maxTotalPeople: initial.maxTotalPeople ?? "",
+    bookingModes: initial.bookingModes ?? ["AM", "PM"],
+    overnightEnabled: initial.overnightEnabled ?? true,
     hasHeatedBlind: initial.hasHeatedBlind ?? false,
     hasAtvAccess: initial.hasAtvAccess ?? false,
     hasWaterAccess: initial.hasWaterAccess ?? false,
@@ -478,6 +556,20 @@ function EditPropertyForm({
 
   const handleSubmit = () => {
     if (!form.name.trim()) { toast.error("Property name is required."); return; }
+
+    // Validate capacity fields
+    if (form.maxWaterfowlHunters && Number(form.maxWaterfowlHunters) < 0) {
+      toast.error("Max Waterfowl Hunters cannot be negative"); return;
+    }
+    if (form.maxTotalPeople && Number(form.maxTotalPeople) < 0) {
+      toast.error("Max Total People cannot be negative"); return;
+    }
+
+    // Filter booking modes based on overnightEnabled
+    const finalBookingModes = form.overnightEnabled
+      ? form.bookingModes
+      : form.bookingModes.filter(mode => mode !== "Overnight");
+
     onSave({
       id: initial.id,
       name: form.name,
@@ -485,6 +577,10 @@ function EditPropertyForm({
       description: form.description || undefined,
       activities: form.activities,
       maxHunters: Number(form.maxHunters),
+      maxWaterfowlHunters: form.maxWaterfowlHunters ? Number(form.maxWaterfowlHunters) : undefined,
+      maxTotalPeople: form.maxTotalPeople ? Number(form.maxTotalPeople) : undefined,
+      bookingModes: finalBookingModes,
+      overnightEnabled: form.overnightEnabled,
       hasHeatedBlind: form.hasHeatedBlind,
       hasAtvAccess: form.hasAtvAccess,
       hasWaterAccess: form.hasWaterAccess,
@@ -552,6 +648,52 @@ function EditPropertyForm({
           <Label className="text-stone-300 text-sm">Sort Order</Label>
           <Input type="number" value={form.sortOrder} onChange={(e) => set("sortOrder", e.target.value)}
             className="bg-stone-800 border-stone-700 text-stone-100" />
+        </div>
+      </div>
+
+      <div className="border border-stone-700 rounded-lg p-4 space-y-3">
+        <p className="text-xs font-semibold text-stone-400 uppercase tracking-wider">Capacity Settings</p>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <Label className="text-stone-300 text-sm">Max Waterfowl Hunters</Label>
+            <Input type="number" min={0} value={form.maxWaterfowlHunters}
+              onChange={(e) => set("maxWaterfowlHunters", e.target.value)}
+              placeholder="Leave blank if not applicable" className="bg-stone-800 border-stone-700 text-stone-100" />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-stone-300 text-sm">Max Total People</Label>
+            <Input type="number" min={0} value={form.maxTotalPeople}
+              onChange={(e) => set("maxTotalPeople", e.target.value)}
+              placeholder="Leave blank if not applicable" className="bg-stone-800 border-stone-700 text-stone-100" />
+          </div>
+        </div>
+      </div>
+
+      <div className="border border-stone-700 rounded-lg p-4 space-y-3">
+        <p className="text-xs font-semibold text-stone-400 uppercase tracking-wider">Booking Modes</p>
+        <div className="space-y-3">
+          <div className="flex flex-wrap gap-4">
+            {BOOKING_MODES.map((mode) => (
+              <label key={mode.value} className="flex items-center gap-2 cursor-pointer">
+                <Checkbox
+                  checked={form.bookingModes.includes(mode.value)}
+                  onCheckedChange={(v) => {
+                    if (v) {
+                      set("bookingModes", [...form.bookingModes, mode.value]);
+                    } else {
+                      set("bookingModes", form.bookingModes.filter(m => m !== mode.value));
+                    }
+                  }}
+                  className="border-stone-600"
+                />
+                <span className="text-sm text-stone-300">{mode.label}</span>
+              </label>
+            ))}
+          </div>
+          <div className="flex items-center gap-2 pt-2">
+            <Switch checked={form.overnightEnabled} onCheckedChange={(v) => set("overnightEnabled", v)} />
+            <Label className="text-stone-300 text-sm cursor-pointer">Overnight bookings enabled</Label>
+          </div>
         </div>
       </div>
 
