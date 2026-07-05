@@ -5,6 +5,7 @@
   "license": "MIT",
   "scripts": {
     "dev": "NODE_ENV=development tsx watch _core/server/app.ts",
+    "prebuild": "node scripts/run-migrations.mjs",
     "build": "node scripts/generate-image-variants.mjs && vite build && esbuild _core/server/app.ts --platform=node --packages=external --bundle --format=esm --outfile=dist/index.js",
     "start": "NODE_ENV=production node dist/index.js",
     "check": "tsc --noEmit",
