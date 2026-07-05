@@ -5,8 +5,9 @@ services:
     region: oregon
     plan: starter
     branch: main
+    preDeployCommand: node scripts/run-migrations.mjs
     buildCommand: pnpm install --frozen-lockfile && pnpm build
-    startCommand: node scripts/run-migrations.mjs && pnpm start
+    startCommand: pnpm start
     healthCheckPath: /api/health
     envVars:
       - key: NODE_ENV

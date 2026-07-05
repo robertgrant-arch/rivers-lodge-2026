@@ -122,48 +122,6 @@ async function startServer() {
     res.json({ ok: true, db: dbOk ? "up" : "degraded" });
   });
 
-  // Admin migration endpoint - requires CLERK_SECRET_KEY in X-Admin-Secret header
-  // This ensures only the Render environment (which has CLERK_SECRET_KEY) can trigger migrations
-  app.post("/api/admin/migrate", async (req, res) => {
-    const clerkSecret = process.env.CLERK_SECRET_KEY;
-    const headerSecret = req.headers["x-admin-secret"];
-
-    if (!clerkSecret) {
-      res.status(503).json({ error: "Admin environment not configured" });
-      return;
-    }
-
-    if (headerSecret !== clerkSecret) {
-      res.status(401).json({ error: "Unauthorized" });
-      return;
-    }
-
-    try {
-      const { execSync } = await import("child_process");
-      console.log("[Admin] Running migrations...");
-
-      const output = execSync("node scripts/run-migrations.mjs", {
-        env: { ...process.env },
-        stdio: "pipe",
-        encoding: "utf-8",
-      });
-
-      console.log("[Admin] Migration output:", output);
-
-      res.json({
-        success: true,
-        message: "Migrations completed",
-        output: output.substring(0, 500),
-      });
-    } catch (error: any) {
-      console.error("[Admin] Migration failed:", error.message);
-      res.status(500).json({
-        error: "Migration failed",
-        message: error.message?.substring(0, 300),
-      });
-    }
-  });
-
   // tRPC API
   app.use(
     "/api/trpc",
