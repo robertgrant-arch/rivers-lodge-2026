@@ -19,7 +19,13 @@ export async function runStartupMigration() {
     // @ts-expect-error pg module installed at runtime
     const pgModule = await import("pg");
     const Pool = pgModule.Pool;
-    const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+
+    // Use same SSL config as tRPC/Drizzle client (required for Render managed Postgres)
+    const ssl = process.env.DATABASE_URL?.includes("render.com") || process.env.NODE_ENV === "production"
+      ? { rejectUnauthorized: false }
+      : undefined;
+
+    const pool = new Pool({ connectionString: process.env.DATABASE_URL, ssl });
 
     try {
       console.log("[startup-migration] connecting to database...");
@@ -65,9 +71,13 @@ export async function runStartupMigration() {
     }
   } catch (error) {
     // Log the error prominently but don't block server startup
-    console.error("[startup-migration] ⚠️  schema migration error (server will continue):");
+    console.error("[startup-migration:error] schema migration failed (server will continue):");
     if (error instanceof Error) {
-      console.error(`  ${error.message}`);
+      console.error(`  message: ${error.message}`);
+      if ((error as any).code) {
+        console.error(`  code: ${(error as any).code}`);
+      }
+      console.error(`  stack: ${error.stack}`);
     } else {
       console.error(`  ${String(error)}`);
     }
@@ -98,7 +108,13 @@ export async function checkHuntingPropertiesSchema() {
     // @ts-expect-error pg module installed at runtime
     const pgModule = await import("pg");
     const Pool = pgModule.Pool;
-    const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+
+    // Use same SSL config as tRPC/Drizzle client (required for Render managed Postgres)
+    const ssl = process.env.DATABASE_URL?.includes("render.com") || process.env.NODE_ENV === "production"
+      ? { rejectUnauthorized: false }
+      : undefined;
+
+    const pool = new Pool({ connectionString: process.env.DATABASE_URL, ssl });
 
     try {
       const client = await pool.connect();
