@@ -20,12 +20,13 @@ export async function runStartupMigration() {
     const pgModule = await import("pg");
     const Pool = pgModule.Pool;
 
-    // Use same SSL config as tRPC/Drizzle client (required for Render managed Postgres)
-    const ssl = process.env.DATABASE_URL?.includes("render.com") || process.env.NODE_ENV === "production"
-      ? { rejectUnauthorized: false }
-      : undefined;
-
-    const pool = new Pool({ connectionString: process.env.DATABASE_URL, ssl });
+    // Always enable SSL for Postgres connections (Render requires it).
+    // Render uses various internal hostnames (.internal, .oregon-postgres.render.com, dpg-*.internal)
+    // so conditional checks on hostname are unreliable. Use unconditional SSL.
+    const pool = new Pool({
+      connectionString: process.env.DATABASE_URL,
+      ssl: { rejectUnauthorized: false },
+    });
 
     try {
       console.log("[startup-migration] connecting to database...");
@@ -109,12 +110,13 @@ export async function checkHuntingPropertiesSchema() {
     const pgModule = await import("pg");
     const Pool = pgModule.Pool;
 
-    // Use same SSL config as tRPC/Drizzle client (required for Render managed Postgres)
-    const ssl = process.env.DATABASE_URL?.includes("render.com") || process.env.NODE_ENV === "production"
-      ? { rejectUnauthorized: false }
-      : undefined;
-
-    const pool = new Pool({ connectionString: process.env.DATABASE_URL, ssl });
+    // Always enable SSL for Postgres connections (Render requires it).
+    // Render uses various internal hostnames (.internal, .oregon-postgres.render.com, dpg-*.internal)
+    // so conditional checks on hostname are unreliable. Use unconditional SSL.
+    const pool = new Pool({
+      connectionString: process.env.DATABASE_URL,
+      ssl: { rejectUnauthorized: false },
+    });
 
     try {
       const client = await pool.connect();
