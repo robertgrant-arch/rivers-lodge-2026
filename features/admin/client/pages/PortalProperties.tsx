@@ -85,7 +85,7 @@ function CreatePropertyForm({
     slug: "",
     type: "stand" as string,
     primaryActivity: "deer" as string,
-    slug: initial.slug ?? "", activities: (Array.isArray(initial.activities) ? initial.activities.map((v: any) => typeof v === 'string' ? v : (v?.value ?? v?.activity ?? '')).filter(Boolean) : []) as string[],
+    activities: [] as string[],
     description: "",
     shortDescription: "",
     acreage: "",
@@ -178,7 +178,7 @@ function CreatePropertyForm({
     // Filter booking modes based on overnightEnabled
     const finalBookingModes = form.overnightEnabled
       ? form.bookingModes
-      : form.bookingModes.filter(mode => mode !== "Overnight");
+      : form.bookingModes.filter((mode: string) => mode !== "Overnight");
 
     onSave({
       name: form.name,
@@ -331,7 +331,7 @@ function CreatePropertyForm({
                     if (v) {
                       set("bookingModes", [...form.bookingModes, mode.value]);
                     } else {
-                      set("bookingModes", form.bookingModes.filter(m => m !== mode.value));
+                      set("bookingModes", form.bookingModes.filter((m: string) => m !== mode.value));
                     }
                   }}
                   className="border-stone-600"
@@ -568,7 +568,7 @@ function EditPropertyForm({
     // Filter booking modes based on overnightEnabled
     const finalBookingModes = form.overnightEnabled
       ? form.bookingModes
-      : form.bookingModes.filter(mode => mode !== "Overnight");
+      : form.bookingModes.filter((mode: string) => mode !== "Overnight");
 
     onSave({
       id: initial.id,
@@ -681,7 +681,7 @@ function EditPropertyForm({
                     if (v) {
                       set("bookingModes", [...form.bookingModes, mode.value]);
                     } else {
-                      set("bookingModes", form.bookingModes.filter(m => m !== mode.value));
+                      set("bookingModes", form.bookingModes.filter((m: string) => m !== mode.value));
                     }
                   }}
                   className="border-stone-600"
@@ -846,7 +846,18 @@ function PropertyRow({ property, onEdit }: { property: any; onEdit: () => void }
       {expanded && (
         <div className="border-t border-stone-800 px-4 pb-4 pt-3 space-y-3">
           {property.shortDescription && (
-            <p className="text-sm text-stone-300">{property.shortDescription}</p>{property.description && (<p className="text-xs text-stone-400 whitespace-pre-wrap">{property.description}</p>)}{activityLabels.length > 0 && (<div className="flex flex-wrap gap-1"><span className="text-stone-500 text-xs mr-1">Activities:</span>{activityLabels.map((l) => (<span key={l} className="text-xs text-stone-300 bg-stone-800 px-2 py-0.5 rounded">{l}</span>))}</div>)}
+            <p className="text-sm text-stone-300">{property.shortDescription}</p>
+          )}
+          {property.description && (
+            <p className="text-xs text-stone-400 whitespace-pre-wrap">{property.description}</p>
+          )}
+          {activityLabels.length > 0 && (
+            <div className="flex flex-wrap gap-1">
+              <span className="text-stone-500 text-xs mr-1">Activities:</span>
+              {activityLabels.map((l) => (
+                <span key={l} className="text-xs text-stone-300 bg-stone-800 px-2 py-0.5 rounded">{l}</span>
+              ))}
+            </div>
           )}
           <div className="flex flex-wrap gap-2">
             {AMENITY_FIELDS.filter((a) => property[a.key]).map((a) => (
