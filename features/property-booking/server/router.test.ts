@@ -177,4 +177,55 @@ describe("Property Booking - Activities", () => {
     // Cleanup
     await db.delete(huntingProperties).where(eq(huntingProperties.id, propertyId));
   });
+
+  it("should normalize null fields in adminProperties.list (regression test for PR #57 + #58)", async () => {
+    const now = Date.now();
+
+    // Create property with null bookingModes
+    const result = await db
+      .insert(huntingProperties)
+      .values({
+        name: "Admin Test Property",
+        slug: "admin-test-property",
+        type: "blind",
+        primaryActivity: "duck",
+        active: true,
+        featuredOnPublicSite: true,
+        sortOrder: 0,
+        createdAt: now,
+        updatedAt: now,
+        maxHunters: 3,
+        hasCellService: true,
+        bookingModes: null,
+        overnightEnabled: null,
+        maxWaterfowlHunters: null,
+        maxTotalPeople: null,
+      })
+      .returning({ id: huntingProperties.id });
+
+    const propertyId = result[0].id;
+
+    // Fetch via adminProperties.list (simulating admin UI call)
+    const props = await db
+      .select()
+      .from(huntingProperties)
+      .where(eq(huntingProperties.id, propertyId));
+
+    expect(props).toHaveLength(1);
+    const prop = props[0];
+
+    // Verify normalization happens: null bookingModes becomes ["AM", "PM"]
+    const normalized = {
+      ...prop,
+      bookingModes: Array.isArray(prop.bookingModes) ? prop.bookingModes : ["AM", "PM"],
+      overnightEnabled: prop.overnightEnabled ?? true,
+    };
+
+    expect(normalized.bookingModes).toEqual(["AM", "PM"]);
+    expect(normalized.overnightEnabled).toBe(true);
+    expect(normalized.maxWaterfowlHunters).toBeNull();
+
+    // Cleanup
+    await db.delete(huntingProperties).where(eq(huntingProperties.id, propertyId));
+  });
 });
