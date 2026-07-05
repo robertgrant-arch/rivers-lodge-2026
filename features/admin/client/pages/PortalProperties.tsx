@@ -22,7 +22,7 @@ import {
 import { Switch } from '@shared/ui/switch';
 import { Checkbox } from '@shared/ui/checkbox';
 import {
-  TreePine, Plus, Pencil, Loader2, AlertCircle, Users,
+  TreePine, Plus, Pencil, Loader2, AlertCircle, Users, Eye, EyeOff, Upload, X,
   ChevronDown, ChevronUp, Thermometer, Truck, Waves, Zap, Wifi,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -63,6 +63,12 @@ const AMENITY_FIELDS = [
   { key: "hasCellService", label: "Cell Service", icon: <Wifi className="w-3.5 h-3.5" /> },
 ];
 
+const BOOKING_MODES = [
+  { value: "AM", label: "Morning (AM)" },
+  { value: "PM", label: "Afternoon (PM)" },
+  { value: "Overnight", label: "Overnight" },
+];
+
 // ─── Create Form ──────────────────────────────────────────────────────────────
 
 function CreatePropertyForm({
@@ -79,10 +85,15 @@ function CreatePropertyForm({
     slug: "",
     type: "stand" as string,
     primaryActivity: "deer" as string,
+    activities: [] as string[],
     description: "",
     shortDescription: "",
     acreage: "",
     maxHunters: 2,
+    maxWaterfowlHunters: "" as any,
+    maxTotalPeople: "" as any,
+    bookingModes: ["AM", "PM"] as string[],
+    overnightEnabled: true,
     hasHeatedBlind: false,
     hasAtvAccess: false,
     hasWaterAccess: false,
@@ -91,30 +102,98 @@ function CreatePropertyForm({
     gpsLat: "",
     gpsLng: "",
     locationNotes: "",
+    gateCode: "",
+    mapUrl: "",
+    mapFile: null as File | null,
+    mapFileName: "",
+    showGateCode: false,
     active: true,
     featuredOnPublicSite: true,
     sortOrder: 0,
   });
+  const [isUploadingMap, setIsUploadingMap] = useState(false);
 
   const set = (key: string, value: any) => setForm((f) => ({ ...f, [key]: value }));
+  const uploadMap = trpc.propertyBooking.admin.properties.uploadMap.useMutation();
+  const { data: availableActivities } = trpc.propertyBooking.properties.activities.useQuery();
 
   const handleNameChange = (v: string) => {
     set("name", v);
     set("slug", v.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""));
   };
 
+  const handleMapFileSelect = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    const file = files[0];
+    const validTypes = ["application/pdf", "image/png", "image/jpeg"];
+    if (!validTypes.includes(file.type)) {
+      toast.error("Map must be PDF, PNG, or JPG");
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("Map file exceeds 10MB limit");
+      return;
+    }
+
+    setIsUploadingMap(true);
+    try {
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const base64 = (e.target?.result as string).split(',')[1];
+        try {
+          const result = await uploadMap.mutateAsync({
+            fileData: base64,
+            fileName: file.name,
+            contentType: file.type as "application/pdf" | "image/png" | "image/jpeg",
+          });
+          set("mapUrl", result.mapUrl);
+          set("mapFile", file);
+          set("mapFileName", file.name);
+          toast.success(`Map "${file.name}" uploaded`);
+        } catch (err: any) {
+          toast.error(`Upload failed: ${err.message}`);
+        } finally {
+          setIsUploadingMap(false);
+        }
+      };
+      reader.readAsDataURL(file);
+    } catch (err) {
+      toast.error("Failed to read file");
+      setIsUploadingMap(false);
+    }
+  };
+
   const handleSubmit = () => {
     if (!form.name.trim()) { toast.error("Property name is required."); return; }
     if (!form.slug.trim()) { toast.error("Slug is required."); return; }
+
+    // Validate capacity fields
+    if (form.maxWaterfowlHunters && Number(form.maxWaterfowlHunters) < 0) {
+      toast.error("Max Waterfowl Hunters cannot be negative"); return;
+    }
+    if (form.maxTotalPeople && Number(form.maxTotalPeople) < 0) {
+      toast.error("Max Total People cannot be negative"); return;
+    }
+
+    // Filter booking modes based on overnightEnabled
+    const finalBookingModes = form.overnightEnabled
+      ? form.bookingModes
+      : form.bookingModes.filter(mode => mode !== "Overnight");
+
     onSave({
       name: form.name,
       slug: form.slug,
       type: form.type,
       primaryActivity: form.primaryActivity,
+      activities: form.activities,
       description: form.description || undefined,
       shortDescription: form.shortDescription || undefined,
       acreage: form.acreage ? parseFloat(form.acreage) : undefined,
       maxHunters: Number(form.maxHunters),
+      maxWaterfowlHunters: form.maxWaterfowlHunters ? Number(form.maxWaterfowlHunters) : undefined,
+      maxTotalPeople: form.maxTotalPeople ? Number(form.maxTotalPeople) : undefined,
+      bookingModes: finalBookingModes,
+      overnightEnabled: form.overnightEnabled,
       hasHeatedBlind: form.hasHeatedBlind,
       hasAtvAccess: form.hasAtvAccess,
       hasWaterAccess: form.hasWaterAccess,
@@ -123,6 +202,8 @@ function CreatePropertyForm({
       gpsLat: form.gpsLat ? parseFloat(form.gpsLat) : undefined,
       gpsLng: form.gpsLng ? parseFloat(form.gpsLng) : undefined,
       locationNotes: form.locationNotes || undefined,
+      gateCode: form.gateCode || undefined,
+      mapUrl: form.mapUrl || undefined,
       active: form.active,
       featuredOnPublicSite: form.featuredOnPublicSite,
       sortOrder: Number(form.sortOrder),
@@ -169,6 +250,28 @@ function CreatePropertyForm({
         </div>
       </div>
 
+      <div className="border border-stone-700 rounded-lg p-4 space-y-3">
+        <p className="text-xs font-semibold text-stone-400 uppercase tracking-wider">Available Activities</p>
+        <div className="flex flex-wrap gap-4">
+          {availableActivities?.map((a) => (
+            <label key={a.value} className="flex items-center gap-2 cursor-pointer">
+              <Checkbox
+                checked={form.activities.includes(a.value)}
+                onCheckedChange={(v) => {
+                  if (v) {
+                    set("activities", [...form.activities, a.value]);
+                  } else {
+                    set("activities", form.activities.filter((act) => act !== a.value));
+                  }
+                }}
+                className="border-stone-600"
+              />
+              <span className="text-sm text-stone-300">{a.label}</span>
+            </label>
+          ))}
+        </div>
+      </div>
+
       <div className="space-y-1.5">
         <Label className="text-stone-300 text-sm">Short Description (shown on cards)</Label>
         <Input value={form.shortDescription} onChange={(e) => set("shortDescription", e.target.value)}
@@ -195,6 +298,52 @@ function CreatePropertyForm({
           <Input type="number" step="0.1" value={form.acreage}
             onChange={(e) => set("acreage", e.target.value)}
             placeholder="40.5" className="bg-stone-800 border-stone-700 text-stone-100" />
+        </div>
+      </div>
+
+      <div className="border border-stone-700 rounded-lg p-4 space-y-3">
+        <p className="text-xs font-semibold text-stone-400 uppercase tracking-wider">Capacity Settings</p>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <Label className="text-stone-300 text-sm">Max Waterfowl Hunters</Label>
+            <Input type="number" min={0} value={form.maxWaterfowlHunters}
+              onChange={(e) => set("maxWaterfowlHunters", e.target.value)}
+              placeholder="Leave blank if not applicable" className="bg-stone-800 border-stone-700 text-stone-100" />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-stone-300 text-sm">Max Total People</Label>
+            <Input type="number" min={0} value={form.maxTotalPeople}
+              onChange={(e) => set("maxTotalPeople", e.target.value)}
+              placeholder="Leave blank if not applicable" className="bg-stone-800 border-stone-700 text-stone-100" />
+          </div>
+        </div>
+      </div>
+
+      <div className="border border-stone-700 rounded-lg p-4 space-y-3">
+        <p className="text-xs font-semibold text-stone-400 uppercase tracking-wider">Booking Modes</p>
+        <div className="space-y-3">
+          <div className="flex flex-wrap gap-4">
+            {BOOKING_MODES.map((mode) => (
+              <label key={mode.value} className="flex items-center gap-2 cursor-pointer">
+                <Checkbox
+                  checked={form.bookingModes.includes(mode.value)}
+                  onCheckedChange={(v) => {
+                    if (v) {
+                      set("bookingModes", [...form.bookingModes, mode.value]);
+                    } else {
+                      set("bookingModes", form.bookingModes.filter(m => m !== mode.value));
+                    }
+                  }}
+                  className="border-stone-600"
+                />
+                <span className="text-sm text-stone-300">{mode.label}</span>
+              </label>
+            ))}
+          </div>
+          <div className="flex items-center gap-2 pt-2">
+            <Switch checked={form.overnightEnabled} onCheckedChange={(v) => set("overnightEnabled", v)} />
+            <Label className="text-stone-300 text-sm cursor-pointer">Overnight bookings enabled</Label>
+          </div>
         </div>
       </div>
 
@@ -229,6 +378,67 @@ function CreatePropertyForm({
         <Textarea value={form.locationNotes} onChange={(e) => set("locationNotes", e.target.value)}
           rows={2} placeholder="Take the north gate, follow the gravel road 0.8 miles…"
           className="bg-stone-800 border-stone-700 text-stone-100 resize-none" />
+      </div>
+
+      <div className="border border-stone-700 rounded-lg p-4 space-y-3">
+        <p className="text-xs font-semibold text-stone-400 uppercase tracking-wider">Admin-Only Fields</p>
+
+        <div className="space-y-1.5">
+          <Label className="text-stone-300 text-sm">Gate Code (access code)</Label>
+          <div className="relative">
+            <Input
+              type={form.showGateCode ? "text" : "password"}
+              value={form.gateCode}
+              onChange={(e) => set("gateCode", e.target.value)}
+              placeholder="Access code (encrypted)"
+              className="bg-stone-800 border-stone-700 text-stone-100 pr-10"
+            />
+            <button
+              type="button"
+              onClick={() => set("showGateCode", !form.showGateCode)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-200"
+            >
+              {form.showGateCode ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            </button>
+          </div>
+        </div>
+
+        <div className="space-y-1.5">
+          <Label className="text-stone-300 text-sm">Property Map (PDF, PNG, or JPG)</Label>
+          <div className="flex items-center gap-2">
+            <input
+              type="file"
+              accept=".pdf,.png,.jpg,.jpeg"
+              onChange={(e) => handleMapFileSelect(e.target.files)}
+              className="hidden"
+              id="map-upload"
+              disabled={isUploadingMap}
+            />
+            <label htmlFor="map-upload" className="flex-1 cursor-pointer">
+              <Button variant="outline" disabled={isUploadingMap} className="w-full bg-stone-800 border-stone-700 text-stone-300 hover:bg-stone-700 disabled:opacity-50">
+                {isUploadingMap ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Uploading...
+                  </>
+                ) : (
+                  <>
+                    <Upload className="w-4 h-4 mr-2" />
+                    {form.mapFileName || "Choose file"}
+                  </>
+                )}
+              </Button>
+            </label>
+            {form.mapFile && !isUploadingMap && (
+              <button
+                onClick={() => { set("mapFile", null); set("mapUrl", ""); set("mapFileName", ""); }}
+                className="p-2 hover:bg-stone-700 rounded"
+              >
+                <X className="w-4 h-4 text-stone-400" />
+              </button>
+            )}
+          </div>
+        </div>
       </div>
 
       <div className="flex items-center justify-between">
@@ -276,34 +486,109 @@ function EditPropertyForm({
     name: initial.name ?? "",
     shortDescription: initial.shortDescription ?? "",
     description: initial.description ?? "",
+    activities: [] as string[],
     maxHunters: initial.maxHunters ?? 2,
+    maxWaterfowlHunters: initial.maxWaterfowlHunters ?? "",
+    maxTotalPeople: initial.maxTotalPeople ?? "",
+    bookingModes: initial.bookingModes ?? ["AM", "PM"],
+    overnightEnabled: initial.overnightEnabled ?? true,
     hasHeatedBlind: initial.hasHeatedBlind ?? false,
     hasAtvAccess: initial.hasAtvAccess ?? false,
     hasWaterAccess: initial.hasWaterAccess ?? false,
     hasElectricity: initial.hasElectricity ?? false,
     hasCellService: initial.hasCellService ?? true,
     locationNotes: initial.locationNotes ?? "",
+    gateCode: initial.gateCode ?? "",
+    mapUrl: initial.mapUrl ?? "",
+    mapFile: null as File | null,
+    mapFileName: "",
+    showGateCode: false,
     active: initial.active ?? true,
     featuredOnPublicSite: initial.featuredOnPublicSite ?? true,
     sortOrder: initial.sortOrder ?? 0,
   });
+  const [isUploadingMap, setIsUploadingMap] = useState(false);
 
   const set = (key: string, value: any) => setForm((f) => ({ ...f, [key]: value }));
+  const uploadMap = trpc.propertyBooking.admin.properties.uploadMap.useMutation();
+  const { data: availableActivities } = trpc.propertyBooking.properties.activities.useQuery();
+
+  const handleMapFileSelect = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    const file = files[0];
+    const validTypes = ["application/pdf", "image/png", "image/jpeg"];
+    if (!validTypes.includes(file.type)) {
+      toast.error("Map must be PDF, PNG, or JPG");
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("Map file exceeds 10MB limit");
+      return;
+    }
+
+    setIsUploadingMap(true);
+    try {
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const base64 = (e.target?.result as string).split(',')[1];
+        try {
+          const result = await uploadMap.mutateAsync({
+            fileData: base64,
+            fileName: file.name,
+            contentType: file.type as "application/pdf" | "image/png" | "image/jpeg",
+          });
+          set("mapUrl", result.mapUrl);
+          set("mapFile", file);
+          set("mapFileName", file.name);
+          toast.success(`Map "${file.name}" uploaded`);
+        } catch (err: any) {
+          toast.error(`Upload failed: ${err.message}`);
+        } finally {
+          setIsUploadingMap(false);
+        }
+      };
+      reader.readAsDataURL(file);
+    } catch (err) {
+      toast.error("Failed to read file");
+      setIsUploadingMap(false);
+    }
+  };
 
   const handleSubmit = () => {
     if (!form.name.trim()) { toast.error("Property name is required."); return; }
+
+    // Validate capacity fields
+    if (form.maxWaterfowlHunters && Number(form.maxWaterfowlHunters) < 0) {
+      toast.error("Max Waterfowl Hunters cannot be negative"); return;
+    }
+    if (form.maxTotalPeople && Number(form.maxTotalPeople) < 0) {
+      toast.error("Max Total People cannot be negative"); return;
+    }
+
+    // Filter booking modes based on overnightEnabled
+    const finalBookingModes = form.overnightEnabled
+      ? form.bookingModes
+      : form.bookingModes.filter(mode => mode !== "Overnight");
+
     onSave({
       id: initial.id,
       name: form.name,
       shortDescription: form.shortDescription || undefined,
       description: form.description || undefined,
+      activities: form.activities,
       maxHunters: Number(form.maxHunters),
+      maxWaterfowlHunters: form.maxWaterfowlHunters ? Number(form.maxWaterfowlHunters) : undefined,
+      maxTotalPeople: form.maxTotalPeople ? Number(form.maxTotalPeople) : undefined,
+      bookingModes: finalBookingModes,
+      overnightEnabled: form.overnightEnabled,
       hasHeatedBlind: form.hasHeatedBlind,
       hasAtvAccess: form.hasAtvAccess,
       hasWaterAccess: form.hasWaterAccess,
       hasElectricity: form.hasElectricity,
       hasCellService: form.hasCellService,
       locationNotes: form.locationNotes || undefined,
+      gateCode: form.gateCode || undefined,
+      mapUrl: form.mapUrl || undefined,
       active: form.active,
       featuredOnPublicSite: form.featuredOnPublicSite,
       sortOrder: Number(form.sortOrder),
@@ -330,6 +615,28 @@ function EditPropertyForm({
           rows={3} className="bg-stone-800 border-stone-700 text-stone-100 resize-none" />
       </div>
 
+      <div className="border border-stone-700 rounded-lg p-4 space-y-3">
+        <p className="text-xs font-semibold text-stone-400 uppercase tracking-wider">Available Activities</p>
+        <div className="flex flex-wrap gap-4">
+          {availableActivities?.map((a) => (
+            <label key={a.value} className="flex items-center gap-2 cursor-pointer">
+              <Checkbox
+                checked={form.activities.includes(a.value)}
+                onCheckedChange={(v) => {
+                  if (v) {
+                    set("activities", [...form.activities, a.value]);
+                  } else {
+                    set("activities", form.activities.filter((act) => act !== a.value));
+                  }
+                }}
+                className="border-stone-600"
+              />
+              <span className="text-sm text-stone-300">{a.label}</span>
+            </label>
+          ))}
+        </div>
+      </div>
+
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-1.5">
           <Label className="text-stone-300 text-sm">Max Hunters</Label>
@@ -341,6 +648,52 @@ function EditPropertyForm({
           <Label className="text-stone-300 text-sm">Sort Order</Label>
           <Input type="number" value={form.sortOrder} onChange={(e) => set("sortOrder", e.target.value)}
             className="bg-stone-800 border-stone-700 text-stone-100" />
+        </div>
+      </div>
+
+      <div className="border border-stone-700 rounded-lg p-4 space-y-3">
+        <p className="text-xs font-semibold text-stone-400 uppercase tracking-wider">Capacity Settings</p>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <Label className="text-stone-300 text-sm">Max Waterfowl Hunters</Label>
+            <Input type="number" min={0} value={form.maxWaterfowlHunters}
+              onChange={(e) => set("maxWaterfowlHunters", e.target.value)}
+              placeholder="Leave blank if not applicable" className="bg-stone-800 border-stone-700 text-stone-100" />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-stone-300 text-sm">Max Total People</Label>
+            <Input type="number" min={0} value={form.maxTotalPeople}
+              onChange={(e) => set("maxTotalPeople", e.target.value)}
+              placeholder="Leave blank if not applicable" className="bg-stone-800 border-stone-700 text-stone-100" />
+          </div>
+        </div>
+      </div>
+
+      <div className="border border-stone-700 rounded-lg p-4 space-y-3">
+        <p className="text-xs font-semibold text-stone-400 uppercase tracking-wider">Booking Modes</p>
+        <div className="space-y-3">
+          <div className="flex flex-wrap gap-4">
+            {BOOKING_MODES.map((mode) => (
+              <label key={mode.value} className="flex items-center gap-2 cursor-pointer">
+                <Checkbox
+                  checked={form.bookingModes.includes(mode.value)}
+                  onCheckedChange={(v) => {
+                    if (v) {
+                      set("bookingModes", [...form.bookingModes, mode.value]);
+                    } else {
+                      set("bookingModes", form.bookingModes.filter(m => m !== mode.value));
+                    }
+                  }}
+                  className="border-stone-600"
+                />
+                <span className="text-sm text-stone-300">{mode.label}</span>
+              </label>
+            ))}
+          </div>
+          <div className="flex items-center gap-2 pt-2">
+            <Switch checked={form.overnightEnabled} onCheckedChange={(v) => set("overnightEnabled", v)} />
+            <Label className="text-stone-300 text-sm cursor-pointer">Overnight bookings enabled</Label>
+          </div>
         </div>
       </div>
 
@@ -361,6 +714,67 @@ function EditPropertyForm({
         <Label className="text-stone-300 text-sm">Location Notes / Directions</Label>
         <Textarea value={form.locationNotes} onChange={(e) => set("locationNotes", e.target.value)}
           rows={2} className="bg-stone-800 border-stone-700 text-stone-100 resize-none" />
+      </div>
+
+      <div className="border border-stone-700 rounded-lg p-4 space-y-3">
+        <p className="text-xs font-semibold text-stone-400 uppercase tracking-wider">Admin-Only Fields</p>
+
+        <div className="space-y-1.5">
+          <Label className="text-stone-300 text-sm">Gate Code (access code)</Label>
+          <div className="relative">
+            <Input
+              type={form.showGateCode ? "text" : "password"}
+              value={form.gateCode}
+              onChange={(e) => set("gateCode", e.target.value)}
+              placeholder="Access code (encrypted)"
+              className="bg-stone-800 border-stone-700 text-stone-100 pr-10"
+            />
+            <button
+              type="button"
+              onClick={() => set("showGateCode", !form.showGateCode)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-200"
+            >
+              {form.showGateCode ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            </button>
+          </div>
+        </div>
+
+        <div className="space-y-1.5">
+          <Label className="text-stone-300 text-sm">Property Map (PDF, PNG, or JPG)</Label>
+          <div className="flex items-center gap-2">
+            <input
+              type="file"
+              accept=".pdf,.png,.jpg,.jpeg"
+              onChange={(e) => handleMapFileSelect(e.target.files)}
+              className="hidden"
+              id="map-upload-edit"
+              disabled={isUploadingMap}
+            />
+            <label htmlFor="map-upload-edit" className="flex-1 cursor-pointer">
+              <Button variant="outline" disabled={isUploadingMap} className="w-full bg-stone-800 border-stone-700 text-stone-300 hover:bg-stone-700 disabled:opacity-50">
+                {isUploadingMap ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Uploading...
+                  </>
+                ) : (
+                  <>
+                    <Upload className="w-4 h-4 mr-2" />
+                    {form.mapFileName || "Choose file"}
+                  </>
+                )}
+              </Button>
+            </label>
+            {form.mapFile && !isUploadingMap && (
+              <button
+                onClick={() => { set("mapFile", null); set("mapUrl", ""); set("mapFileName", ""); }}
+                className="p-2 hover:bg-stone-700 rounded"
+              >
+                <X className="w-4 h-4 text-stone-400" />
+              </button>
+            )}
+          </div>
+        </div>
       </div>
 
       <div className="flex items-center gap-4 justify-end">

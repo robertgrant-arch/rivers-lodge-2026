@@ -114,16 +114,22 @@ export const huntingProperties = pgTable("hunting_properties", {
   shortDescription: varchar("shortDescription", { length: 280 }),
   acreage: decimal("acreage", { precision: 8, scale: 2 }),
   maxHunters: integer("maxHunters").notNull().default(2),
+  maxWaterfowlHunters: integer("maxWaterfowlHunters"),
+  maxTotalPeople: integer("maxTotalPeople"),
   hasHeatedBlind: boolean("hasHeatedBlind").default(false),
   hasAtvAccess: boolean("hasAtvAccess").default(false),
   hasWaterAccess: boolean("hasWaterAccess").default(false),
   hasElectricity: boolean("hasElectricity").default(false),
   hasCellService: boolean("hasCellService").default(true),
+  bookingModes: json("bookingModes"), // ["AM", "PM"] or ["AM", "PM", "Overnight"]
+  overnightEnabled: boolean("overnightEnabled").notNull().default(true),
   gpsLat: decimal("gpsLat", { precision: 10, scale: 7 }),
   gpsLng: decimal("gpsLng", { precision: 10, scale: 7 }),
   locationNotes: varchar("locationNotes", { length: 300 }),
   coverImageUrl: varchar("coverImageUrl", { length: 500 }),
   mapImageUrl: varchar("mapImageUrl", { length: 500 }),
+  mapUrl: varchar("mapUrl", { length: 500 }), // Uploaded PDF/image map
+  gateCode: varchar("gateCode", { length: 255 }), // Admin-only access code (encrypted)
   active: boolean("active").notNull().default(true),
   featuredOnPublicSite: boolean("featuredOnPublicSite").default(true),
   sortOrder: integer("sortOrder").default(0),
@@ -137,6 +143,23 @@ export const huntingProperties = pgTable("hunting_properties", {
 
 export type HuntingProperty = typeof huntingProperties.$inferSelect;
 export type InsertHuntingProperty = typeof huntingProperties.$inferInsert;
+
+// ─── Property Activities (Join) ────────────────────────────────────────────────
+// Link which activities are available at each property (many-to-many)
+
+export const propertyActivities = pgTable(
+  "property_activities",
+  {
+    propertyId: integer("propertyId").notNull().references(() => huntingProperties.id, { onDelete: "cascade" }),
+    activity: propertyActivityEnum("activity").notNull(),
+  },
+  (t) => ({
+    pk: [t.propertyId, t.activity],
+  }),
+);
+
+export type PropertyActivity = typeof propertyActivities.$inferSelect;
+export type InsertPropertyActivity = typeof propertyActivities.$inferInsert;
 
 // ─── Property Seasons ─────────────────────────────────────────────────────────
 
