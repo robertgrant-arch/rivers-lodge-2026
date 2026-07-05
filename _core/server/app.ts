@@ -10,8 +10,13 @@ import { serveStatic, setupVite } from "./vite";
 import { submitLimiter, loginLimiter, acceptInviteLimiter, changePasswordLimiter } from "./rateLimit";
 import { resolvePort } from "./port";
 import { checkDbHealth } from "./db";
+import { runStartupMigration, checkHuntingPropertiesSchema } from "./startup-migration";
 
 async function startServer() {
+  // ── Startup schema migration ────────────────────────────────────────────────────
+  // Runs before tRPC server starts, ensures hunting_properties has all required columns
+  await runStartupMigration();
+
   const app = express();
   const server = createServer(app);
 
@@ -120,6 +125,16 @@ async function startServer() {
   app.get("/api/health", async (_req, res) => {
     const dbOk = await checkDbHealth().catch(() => false);
     res.json({ ok: true, db: dbOk ? "up" : "degraded" });
+  });
+
+  // Schema health check — diagnoses missing columns on hunting_properties
+  app.get("/api/health/schema", async (_req, res) => {
+    const schemaCheck = await checkHuntingPropertiesSchema();
+    if (schemaCheck.ok) {
+      res.status(200).json({ ok: true, message: "hunting_properties schema is valid" });
+    } else {
+      res.status(500).json({ ok: false, ...schemaCheck });
+    }
   });
 
   // tRPC API
