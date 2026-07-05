@@ -1063,7 +1063,7 @@ export const propertyBookingRouter = router({
       update: protectedProcedure
         .input(z.object({
           id: z.number().int().positive(),
-          name: z.string().min(2).max(120).optional(),
+          name: z.string().min(2).max(120).optional(), slug: z.string().min(2).max(80).regex(/^[a-z0-9-]+$/).optional(),
           shortName: z.string().max(40).optional(),
           description: z.string().optional(),
           shortDescription: z.string().max(280).optional(),
