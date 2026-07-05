@@ -122,6 +122,45 @@ async function startServer() {
     res.json({ ok: true, db: dbOk ? "up" : "degraded" });
   });
 
+  // Emergency migration endpoint (temporary for unblocking production)
+  // Requires DATABASE_URL to be set and a valid X-Migration-Secret header
+  app.post("/api/admin/run-migrations", async (req, res) => {
+    const secret = process.env.MIGRATION_SECRET || "emergency-unlock";
+    const headerSecret = req.headers["x-migration-secret"];
+
+    if (!process.env.DATABASE_URL) {
+      res.status(503).json({ error: "DATABASE_URL not configured" });
+      return;
+    }
+
+    if (headerSecret !== secret) {
+      res.status(401).json({ error: "Invalid migration secret" });
+      return;
+    }
+
+    try {
+      // Import and run migrations
+      const { execSync } = await import("child_process");
+      const output = execSync("node scripts/run-migrations.mjs", {
+        env: { ...process.env },
+        stdio: "pipe",
+        encoding: "utf-8",
+      });
+
+      res.json({
+        success: true,
+        message: "Migrations executed successfully",
+        output: output.substring(0, 500),
+      });
+    } catch (error: any) {
+      console.error("[Migration] Manual execution failed:", error.message);
+      res.status(500).json({
+        error: "Migration execution failed",
+        message: error.message?.substring(0, 200),
+      });
+    }
+  });
+
   // tRPC API
   app.use(
     "/api/trpc",
