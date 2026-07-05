@@ -1,13 +1,11 @@
 /**
  * Startup Schema Migration
  * ========================
- * Runs idempotent ALTER TABLE ADD COLUMN IF NOT EXISTS statements
- * before the tRPC server accepts requests.
+ * Runs idempotent DDL statements before the tRPC server accepts requests.
  *
- * All columns are derived from the Drizzle schema definition in
+ * All columns/tables are derived from the Drizzle schema definition in
  * _core/db/property-booking-schema.ts and matched exactly.
  */
-
 export async function runStartupMigration() {
   if (!process.env.DATABASE_URL) {
     console.warn("[startup-migration] DATABASE_URL not set — skipping schema migration");
@@ -21,8 +19,6 @@ export async function runStartupMigration() {
     const Pool = pgModule.Pool;
 
     // Always enable SSL for Postgres connections (Render requires it).
-    // Render uses various internal hostnames (.internal, .oregon-postgres.render.com, dpg-*.internal)
-    // so conditional checks on hostname are unreliable. Use unconditional SSL.
     const pool = new Pool({
       connectionString: process.env.DATABASE_URL,
       ssl: { rejectUnauthorized: false },
@@ -61,8 +57,27 @@ export async function runStartupMigration() {
           ADD COLUMN IF NOT EXISTS "featuredOnPublicSite" boolean DEFAULT true,
           ADD COLUMN IF NOT EXISTS "sortOrder" integer DEFAULT 0;
         `;
-
         await client.query(migration);
+
+        // property_activity enum + property_activities join table (idempotent).
+        // Create enum type if missing, then table if missing. Both are safe to re-run.
+        const activitiesMigration = `
+          DO $$ BEGIN
+            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'property_activity') THEN
+              CREATE TYPE property_activity AS ENUM (
+                'deer','duck','turkey','quail','dove','hog','bass','catfish','crappie','mixed_hunt','mixed_fish','hunt_and_fish'
+              );
+            END IF;
+          END $$;
+
+          CREATE TABLE IF NOT EXISTS property_activities (
+            "propertyId" integer NOT NULL REFERENCES hunting_properties(id) ON DELETE CASCADE,
+            "activity" property_activity NOT NULL,
+            PRIMARY KEY ("propertyId", "activity")
+          );
+        `;
+        await client.query(activitiesMigration);
+
         console.log("[startup-migration] ✅ schema migration completed successfully");
       } finally {
         client.release();
@@ -71,7 +86,6 @@ export async function runStartupMigration() {
       await pool.end();
     }
   } catch (error) {
-    // Log the error prominently but don't block server startup
     console.error("[startup-migration:error] schema migration failed (server will continue):");
     if (error instanceof Error) {
       console.error(`  message: ${error.message}`);
@@ -110,9 +124,6 @@ export async function checkHuntingPropertiesSchema() {
     const pgModule = await import("pg");
     const Pool = pgModule.Pool;
 
-    // Always enable SSL for Postgres connections (Render requires it).
-    // Render uses various internal hostnames (.internal, .oregon-postgres.render.com, dpg-*.internal)
-    // so conditional checks on hostname are unreliable. Use unconditional SSL.
     const pool = new Pool({
       connectionString: process.env.DATABASE_URL,
       ssl: { rejectUnauthorized: false },
@@ -122,20 +133,27 @@ export async function checkHuntingPropertiesSchema() {
       const client = await pool.connect();
       try {
         const result = await client.query(`
-          SELECT column_name
-          FROM information_schema.columns
+          SELECT column_name FROM information_schema.columns
           WHERE table_name = 'hunting_properties'
         `);
-
         const existingColumns = new Set(
           result.rows.map((r: any) => r.column_name)
         );
         const missing = expectedColumns.filter((col) => !existingColumns.has(col));
 
+        // Also check property_activities table existence
+        const activitiesResult = await client.query(`
+          SELECT column_name FROM information_schema.columns
+          WHERE table_name = 'property_activities'
+        `);
+        const activitiesCols = activitiesResult.rows.map((r: any) => r.column_name);
+        const activitiesOk = activitiesCols.includes("propertyId") && activitiesCols.includes("activity");
+
         return {
-          ok: missing.length === 0,
+          ok: missing.length === 0 && activitiesOk,
           missing: missing.length > 0 ? missing : undefined,
           actual: Array.from(existingColumns).sort(),
+          propertyActivitiesTable: { ok: activitiesOk, columns: activitiesCols },
         };
       } finally {
         client.release();
