@@ -172,6 +172,11 @@ export default function PropertyBrowser() {
     );
   }, [properties, searchQuery]);
 
+  // Debug: Log when component mounts to verify deployment
+  if (typeof window !== 'undefined') {
+    console.log('[PropertyBrowser] Component mounted - f91c7b3 deployed');
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
