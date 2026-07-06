@@ -57,42 +57,6 @@ const ACTIVITY_COLORS: Record<string, string> = {
   mixed_fish: "bg-sky-900/20 text-sky-300 border-sky-800",
 };
 
-// ─── Availability badge ───────────────────────────────────────────────────────
-
-function AvailabilityDot({ propertyId }: { propertyId: number }) {
-  const today = new Date().toISOString().split("T")[0];
-  const nextWeek = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
-
-  const { data } = trpc.propertyBooking.properties.availability.useQuery(
-    { propertyId, startDate: today, endDate: nextWeek },
-    { staleTime: 5 * 60 * 1000 },
-  );
-
-  if (!data) return null;
-
-  const openDays = data.filter((d) => d.status === "open" || d.status === "partial").length;
-  const color =
-    openDays === 0
-      ? "bg-red-500"
-      : openDays <= 2
-      ? "bg-amber-400"
-      : "bg-emerald-500";
-
-  const label =
-    openDays === 0
-      ? "Fully booked this week"
-      : openDays <= 2
-      ? `${openDays} day${openDays > 1 ? "s" : ""} available`
-      : `${openDays} days available`;
-
-  return (
-    <span className="flex items-center gap-1.5 text-xs text-stone-400">
-      <span className={`inline-block w-2 h-2 rounded-full ${color}`} />
-      {label}
-    </span>
-  );
-}
-
 // ─── Property Card ────────────────────────────────────────────────────────────
 
 function PropertyCard({ property }: { property: any }) {
