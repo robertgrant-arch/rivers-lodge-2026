@@ -192,7 +192,7 @@ function CreatePropertyForm({
       ? form.bookingModes
       : form.bookingModes.filter((mode: string) => mode !== "Overnight");
 
-    onSave({
+    const payload = {
       name: form.name,
       slug: form.slug,
       type: form.type,
@@ -220,7 +220,9 @@ function CreatePropertyForm({
       active: form.active,
       featuredOnPublicSite: form.featuredOnPublicSite,
       sortOrder: Number(form.sortOrder),
-    });
+    };
+    console.log("[CreatePropertyForm] submitting payload:", payload);
+    onSave(payload);
   };
 
   return (
@@ -937,7 +939,11 @@ export default function PortalProperties() {
       utils.propertyBooking.adminProperties.list.invalidate();
       setShowCreate(false);
     },
-    onError: (err: any) => toast.error(`Failed to create: ${err.message}`),
+    onError: (err: any) => {
+      console.error("[CreatePropertyForm] mutation error:", err);
+      const message = err?.message || err?.data?.message || JSON.stringify(err) || "Unknown error";
+      toast.error(`Failed to create: ${message}`);
+    },
   });
 
   const update = trpc.propertyBooking.admin.properties.update.useMutation({
