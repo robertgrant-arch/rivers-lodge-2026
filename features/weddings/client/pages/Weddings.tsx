@@ -171,12 +171,14 @@ Every space is yours.
 </h2>
 </div>
 <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-border">
-{venues.map((v, i) => (
+{venues.map((v, i) => {
+const venuePlaceholderId = String(i + 1).padStart(2, '0');
+return v.img ? (
 <div key={v.name} className="relative bg-[#2B2823] aspect-[4/3] overflow-hidden group">
 <div className="absolute inset-0 flex items-center justify-center">
-<span className="eyebrow text-muted-brand">{v.img ? v.name : `EMPTY #${i + 2} — ${v.name}`}</span>
+<span className="eyebrow text-muted-brand">{v.name}</span>
 </div>
-<img src={v.img || undefined} alt={v.name} className="absolute inset-0 w-full h-full object-cover block" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
+<img src={v.img} alt={v.name} className="absolute inset-0 w-full h-full object-cover block" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
 <div className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(to bottom, transparent 30%, oklch(0 0 0/0.82) 100%)" }} />
 <div className="absolute bottom-0 left-0 right-0 p-8">
 <div style={{ height: "1px", width: "1.5rem", backgroundColor: "#9B4D19", marginBottom: "0.75rem" }} />
@@ -184,7 +186,15 @@ Every space is yours.
 <p className="font-sans text-white/70 text-sm leading-relaxed">{v.desc}</p>
 </div>
 </div>
-))}
+) : (
+<div key={v.name} className="bg-background p-8 flex flex-col">
+<div style={{ height: "1px", width: "1.5rem", backgroundColor: "#9B4D19", marginBottom: "0.75rem" }} />
+<h3 className="font-serif text-warm text-2xl mb-3">{v.name}</h3>
+<p className="font-sans text-muted-brand text-sm leading-relaxed flex-1">{v.desc}</p>
+<p className="text-[10px] text-muted-brand mt-4 uppercase tracking-wide" data-placeholder-id={venuePlaceholderId}>Slot {venuePlaceholderId}</p>
+</div>
+);
+})}
 </div>
 </div>
 </section>
