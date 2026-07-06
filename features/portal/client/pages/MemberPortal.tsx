@@ -976,7 +976,7 @@ export default function MemberPortal() {
           {tab === "properties" && <PropertyBrowser />}
 
           {/* ── Profile Tab ───────────────────────────────────────────── */}
-        {tab === "profile" && (
+          {tab === "profile" && (
           <div className="max-w-2xl">
             <h2 className="font-serif text-3xl text-white mb-2">My Profile</h2>
             <p className="text-sm font-sans text-white/40 mb-8">Your membership details and account information.</p>
@@ -1086,6 +1086,8 @@ export default function MemberPortal() {
           )}
         </DialogContent>
       </Dialog>
+
+    </div>
 
     </PublicLayout>
   );
