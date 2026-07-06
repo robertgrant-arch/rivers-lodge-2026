@@ -178,10 +178,10 @@ export default function PropertyBrowser() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 px-4 py-8 sm:px-6 lg:px-8">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-stone-100">Properties</h1>
+        <h1 className="text-3xl font-bold text-white mb-2">Properties</h1>
         <p className="text-stone-400 mt-1 text-sm">
           Browse available properties and book your next outing directly.
         </p>
