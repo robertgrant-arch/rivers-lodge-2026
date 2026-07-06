@@ -1035,9 +1035,9 @@ export const propertyBookingRouter = router({
               ...input,
               primaryActivity: input.primaryActivity ?? null,
               secondaryActivities: input.secondaryActivities ?? null,
-              acreage: input.acreage ? String(input.acreage) : null,
-              gpsLat: input.gpsLat ? String(input.gpsLat) : null,
-              gpsLng: input.gpsLng ? String(input.gpsLng) : null,
+              acreage: input.acreage ?? null,
+              gpsLat: input.gpsLat ?? null,
+              gpsLng: input.gpsLng ?? null,
               coverImageUrl: input.coverImageUrl ?? null,
               mapImageUrl: input.mapImageUrl ?? null,
               mapUrl: input.mapUrl ?? null,
@@ -1124,17 +1124,35 @@ export const propertyBookingRouter = router({
             console.error("  type:", error?.constructor?.name);
             console.error("  message:", error instanceof Error ? error.message : String(error));
             console.error("  stack:", error instanceof Error ? error.stack : "N/A");
-            if (error instanceof Error && 'code' in error) {
-              console.error("  code:", (error as any).code);
-            }
-            if (error instanceof Error && 'detail' in error) {
-              console.error("  detail:", (error as any).detail);
-            }
+
+            const pgCode = (error as any)?.code;
+            const pgDetail = (error as any)?.detail;
+            const pgMessage = (error as any)?.message;
+
+            if (pgCode) console.error("  PostgreSQL code:", pgCode);
+            if (pgDetail) console.error("  PostgreSQL detail:", pgDetail);
 
             if (error instanceof TRPCError) throw error;
+
+            // Parse PostgreSQL error codes for user-friendly messages
+            let userMessage = "Failed to create property";
+            if (pgCode === "23502") {
+              const match = pgDetail?.match(/Key \((\w+)\)=/) || [];
+              const field = match[1] || "unknown field";
+              userMessage = `Missing required field: ${field}`;
+            } else if (pgCode === "23514") {
+              userMessage = "One or more field values failed validation constraints";
+            } else if (pgCode === "22P02") {
+              userMessage = "Invalid value for enum field (type, activity, etc.)";
+            } else if (pgCode === "23505") {
+              userMessage = "Property slug already exists";
+            } else if (pgMessage) {
+              userMessage = pgMessage;
+            }
+
             throw new TRPCError({
               code: "INTERNAL_SERVER_ERROR",
-              message: error instanceof Error ? error.message : "Unknown error creating property",
+              message: userMessage,
             });
           }
         }),
