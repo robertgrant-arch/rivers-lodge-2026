@@ -8,6 +8,9 @@ export interface Pursuit {
   galleryImgs: { src: string; alt: string; objectPosition?: string }[];
   season: { label: string; value: string }[];
   regulations: string[];
+  // Unique placeholder ID for tiles that need photos/stats (e.g., "01", "02")
+  // Used to match supplied images/numbers to correct tile slots. Must be stable and unique.
+  placeholderId?: string;
 }
 
 export const PURSUITS: Pursuit[] = [
@@ -39,6 +42,7 @@ export const PURSUITS: Pursuit[] = [
       "Hunter orange required during firearms seasons",
       "All harvests must be reported to hunt manager within 2 hours",
     ],
+    placeholderId: "01",
   },
   {
     slug: "waterfowl",
@@ -95,6 +99,7 @@ export const PURSUITS: Pursuit[] = [
       "Limit 8 quail / 4 pheasant per hunter per day",
       "Sporting clays open to members and event guests",
     ],
+    placeholderId: "02",
   },
   {
     slug: "turkey",

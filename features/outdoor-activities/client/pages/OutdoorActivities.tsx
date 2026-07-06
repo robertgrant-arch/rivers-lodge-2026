@@ -138,9 +138,10 @@ export default function OutdoorActivities() {
               >
                 {/* Image or Placeholder */}
                 {(pursuit.slug === "whitetail" || pursuit.slug === "upland-birds") ? (
-                  <div className="aspect-[4/3] overflow-hidden bg-stone-800 flex flex-col items-center justify-center">
-                    <p className="text-5xl font-light text-amber-900/60 mb-3">###</p>
-                    <p className="text-[11px] text-stone-500 text-center px-4 leading-tight uppercase tracking-wide">Placeholder<br/>Bill decides<br/>e.g., acres or stat</p>
+                  <div className="aspect-[4/3] overflow-hidden bg-stone-800 flex flex-col items-center justify-center space-y-2">
+                    <p className="text-sm font-light text-amber-900/60 uppercase tracking-wide">Placeholder #{pursuit.placeholderId}</p>
+                    <p className="text-xs font-light text-amber-900/50 uppercase tracking-wider">{pursuit.title}</p>
+                    <p className="text-[10px] text-stone-500 text-center px-4 leading-tight uppercase tracking-wide mt-2">Bill decides<br/>e.g., acres or stat</p>
                   </div>
                 ) : (
                   <Picture
