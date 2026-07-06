@@ -187,7 +187,7 @@ return v.img ? (
 </div>
 </div>
 ) : (
-<div key={v.name} className="bg-background p-8 flex flex-col">
+<div key={v.name} className={`bg-background p-8 flex flex-col ${i === venues.length - 1 && venues.length % 2 === 1 ? 'md:col-span-2' : ''}`}>
 <div style={{ height: "1px", width: "1.5rem", backgroundColor: "#9B4D19", marginBottom: "0.75rem" }} />
 <h3 className="font-serif text-warm text-2xl mb-3">{v.name}</h3>
 <p className="font-sans text-muted-brand text-sm leading-relaxed flex-1">{v.desc}</p>
