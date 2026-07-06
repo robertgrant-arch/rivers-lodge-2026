@@ -59,7 +59,7 @@ submit.mutate({ type: "wedding", name: form.name, email: form.email, phone: form
 };
 if (submitted) {
 return (
-<div className="border border-border p-10 bg-surface">
+<div className="space-y-4">
 <h3 className="font-serif text-warm text-2xl mb-4">Inquiry Received</h3>
 <p className="font-sans text-muted-brand text-sm leading-relaxed">Thank you — we've received your wedding inquiry. A member of our team will be in touch within 24 hours.</p>
 </div>
