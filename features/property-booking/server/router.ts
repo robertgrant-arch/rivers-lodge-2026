@@ -1027,6 +1027,7 @@ export const propertyBookingRouter = router({
           const ts = now();
           const result = await db.insert(huntingProperties).values({
             ...input,
+            primaryActivity: input.primaryActivity ?? null,
             secondaryActivities: input.secondaryActivities ?? null,
             acreage: input.acreage ? String(input.acreage) : null,
             gpsLat: input.gpsLat ? String(input.gpsLat) : null,
