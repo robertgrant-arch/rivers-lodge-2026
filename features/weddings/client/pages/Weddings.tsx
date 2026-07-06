@@ -127,14 +127,14 @@ From intimate ceremonies on the River Lawn to grand receptions in the Rivers Bar
 </div>
 </div>
 </section>
-{/* Intro — Estate Hero with overlaid content */}
+{/* Intro — Estate Hero with overlaid content & pull quote */}
 <section className="relative flex items-end overflow-hidden bg-[#2B2823]" style={{ minHeight: "90vh" }}>
 <div className="absolute inset-0 bg-white">
 <div className="absolute inset-0 flex items-center justify-center">
 <span className="eyebrow text-muted-brand">EMPTY #1 — Private Estate Hero</span>
 </div>
 <img src={ESTATE_HERO || undefined} alt="EMPTY #1 — Private Estate Hero" className="absolute inset-0 w-full h-full object-contain block" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
-<div className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(to bottom, oklch(0 0 0/0.30) 0%, oklch(0 0 0/0.55) 60%, oklch(0 0 0/0.82) 100%)" }} />
+<div className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(to bottom, oklch(0 0 0/0.30) 0%, oklch(0 0 0/0.55) 50%, oklch(0 0 0/0.92) 100%)" }} />
 </div>
 <div className="relative z-10 max-w-[1440px] mx-auto px-5 lg:px-14 w-full py-20 lg:py-28">
 <div className="max-w-2xl">
@@ -149,10 +149,7 @@ Not a venue. <br /><em className="italic">A private estate.</em>
 </div>
 </div>
 </div>
-</section>
-{/* Pull Quote */}
-<section className="section bg-surface pt-20 lg:pt-28">
-<div className="max-w-[1440px] mx-auto px-5 lg:px-14">
+<div className="absolute bottom-0 left-0 right-0 z-20 max-w-[1440px] mx-auto px-5 lg:px-14 w-full py-16 lg:py-24">
 <div className="max-w-3xl">
 <blockquote className="pull-quote" style={{ borderLeftColor: "#9B4D19" }}>
 "Every wedding at Rivers Lodge is exclusive. One couple, one weekend, one estate — entirely theirs."
