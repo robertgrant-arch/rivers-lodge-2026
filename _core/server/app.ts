@@ -10,6 +10,7 @@ import { serveStatic, setupVite } from "./vite";
 import { submitLimiter, loginLimiter, acceptInviteLimiter, changePasswordLimiter } from "./rateLimit";
 import { resolvePort } from "./port";
 import { checkDbHealth } from "./db";
+import { runStartupMigration } from "./startup-migration";
 
 async function startServer() {
   const app = express();
@@ -136,6 +137,9 @@ async function startServer() {
   } else {
     serveStatic(app);
   }
+
+  // Run startup migrations before accepting requests
+  await runStartupMigration();
 
   const port = await resolvePort();
 
