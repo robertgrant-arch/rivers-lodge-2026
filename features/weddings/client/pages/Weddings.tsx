@@ -12,7 +12,7 @@ const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | u
 // redeploy: estate hero overlay 2026-07-03
 
 const HERO = "/img/wedding%20hero.JPG";
-const ESTATE_HERO = "";
+const ESTATE_HERO = "/img/weddingsketch-1-.jpg.png";
 
 function useFadeUp(t = 0.12) {
 const ref = useRef<HTMLElement>(null);
