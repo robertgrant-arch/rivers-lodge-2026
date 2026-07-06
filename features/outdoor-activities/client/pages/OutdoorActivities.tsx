@@ -4,7 +4,7 @@ import PublicLayout from "@shared/components/PublicLayout";
 import SEOHead from "@shared/components/SEOHead";
 import Picture from "@shared/components/Picture";
 import { PURSUITS } from "./pursuitData";
-// build: 20260706-0400-placeholder-tiles-fixed
+// build: 20260706-2130-deer-photos-deployed
 
 const ACCENT = "#6B7250";
 
