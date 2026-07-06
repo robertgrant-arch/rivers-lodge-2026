@@ -986,7 +986,7 @@ export const propertyBookingRouter = router({
           primaryActivity: z.enum([
             "deer", "duck", "turkey", "quail", "dove", "hog",
             "bass", "catfish", "crappie", "mixed_hunt", "mixed_fish", "hunt_and_fish",
-          ]),
+          ]).optional(),
           secondaryActivities: z.array(z.string()).optional(),
           activities: z.array(z.enum([
             "deer", "duck", "turkey", "quail", "dove", "hog",

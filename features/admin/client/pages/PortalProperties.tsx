@@ -69,6 +69,17 @@ const BOOKING_MODES = [
   { value: "Overnight", label: "Overnight" },
 ];
 
+// ─── Helper Functions ─────────────────────────────────────────────────────────
+
+const toOptionalNumber = (v: string | number): number | undefined => {
+  if (typeof v === 'number') return v;
+  if (!v || typeof v !== 'string') return undefined;
+  const trimmed = v.trim();
+  if (trimmed === '') return undefined;
+  const num = parseFloat(trimmed);
+  return Number.isNaN(num) ? undefined : num;
+};
+
 // ─── Create Form ──────────────────────────────────────────────────────────────
 
 function CreatePropertyForm({
@@ -201,8 +212,8 @@ function CreatePropertyForm({
       hasWaterAccess: form.hasWaterAccess,
       hasElectricity: form.hasElectricity,
       hasCellService: form.hasCellService,
-      gpsLat: form.gpsLat ? parseFloat(form.gpsLat) : undefined,
-      gpsLng: form.gpsLng ? parseFloat(form.gpsLng) : undefined,
+      gpsLat: toOptionalNumber(form.gpsLat),
+      gpsLng: toOptionalNumber(form.gpsLng),
       locationNotes: form.locationNotes || undefined,
       gateCode: form.gateCode || undefined,
       mapUrl: form.mapUrl || undefined,
