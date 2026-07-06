@@ -152,6 +152,9 @@ async function startServer() {
     serveStatic(app);
   }
 
+  // Run startup migrations before accepting requests
+  await runStartupMigration();
+
   const port = await resolvePort();
 
   server.listen(port, () => {

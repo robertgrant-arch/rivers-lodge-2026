@@ -108,7 +108,7 @@ export const huntingProperties = pgTable("hunting_properties", {
   slug: varchar("slug", { length: 80 }).notNull().unique(),
   shortName: varchar("shortName", { length: 40 }),
   type: huntingPropertyTypeEnum("type").notNull(),
-  primaryActivity: propertyActivityEnum("primaryActivity").notNull(),
+  primaryActivity: propertyActivityEnum("primaryActivity").nullable(),
   secondaryActivities: json("secondaryActivities"),
   description: text("description"),
   shortDescription: varchar("shortDescription", { length: 280 }),

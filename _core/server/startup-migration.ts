@@ -92,6 +92,13 @@ export async function runStartupMigration() {
         `;
         await client.query(activitiesMigration);
 
+        // Make primaryActivity column nullable (idempotent — dropping NOT NULL constraint if it exists)
+        const primaryActivityMigration = `
+          ALTER TABLE hunting_properties
+          ALTER COLUMN "primaryActivity" DROP NOT NULL;
+        `;
+        await client.query(primaryActivityMigration);
+
         console.log("[startup-migration] ✅ schema migration completed successfully");
       } finally {
         client.release();
