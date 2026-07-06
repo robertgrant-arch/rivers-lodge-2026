@@ -1020,77 +1020,89 @@ export const propertyBookingRouter = router({
           sortOrder: z.number().int().default(0),
         }))
         .mutation(async ({ ctx, input }: { ctx: any; input: any }) => {
-          requireAdmin(ctx.user.role);
-          const db = await getDb();
-          if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+          try {
+            requireAdmin(ctx.user.role);
+            const db = await getDb();
+            if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
 
-          const ts = now();
-          const result = await db.insert(huntingProperties).values({
-            ...input,
-            primaryActivity: input.primaryActivity ?? null,
-            secondaryActivities: input.secondaryActivities ?? null,
-            acreage: input.acreage ? String(input.acreage) : null,
-            gpsLat: input.gpsLat ? String(input.gpsLat) : null,
-            gpsLng: input.gpsLng ? String(input.gpsLng) : null,
-            coverImageUrl: input.coverImageUrl ?? null,
-            mapImageUrl: input.mapImageUrl ?? null,
-            mapUrl: input.mapUrl ?? null,
-            gateCode: input.gateCode ?? null,
-            maxDeerHunters: input.maxDeerHunters ?? 0,
-            maxWaterfowlHunters: input.maxWaterfowlHunters ?? null,
-            maxUplandHunters: input.maxUplandHunters ?? 0,
-            maxGuests: input.maxGuests ?? 0,
-            maxTotalPeople: input.maxTotalPeople ?? null,
-            bookingModes: input.bookingModes ?? ["AM", "PM"],
-            overnightEnabled: input.overnightEnabled ?? true,
-            shortName: input.shortName ?? null,
-            shortDescription: input.shortDescription ?? null,
-            description: input.description ?? null,
-            locationNotes: input.locationNotes ?? null,
-            hasHeatedBlind: input.hasHeatedBlind ?? false,
-            hasAtvAccess: input.hasAtvAccess ?? false,
-            hasWaterAccess: input.hasWaterAccess ?? false,
-            hasElectricity: input.hasElectricity ?? false,
-            hasCellService: input.hasCellService ?? true,
-            createdAt: ts,
-            updatedAt: ts,
-          } as any);
+            const ts = now();
+            const result = await db.insert(huntingProperties).values({
+              ...input,
+              primaryActivity: input.primaryActivity ?? null,
+              secondaryActivities: input.secondaryActivities ?? null,
+              acreage: input.acreage ? String(input.acreage) : null,
+              gpsLat: input.gpsLat ? String(input.gpsLat) : null,
+              gpsLng: input.gpsLng ? String(input.gpsLng) : null,
+              coverImageUrl: input.coverImageUrl ?? null,
+              mapImageUrl: input.mapImageUrl ?? null,
+              mapUrl: input.mapUrl ?? null,
+              gateCode: input.gateCode ?? null,
+              maxDeerHunters: input.maxDeerHunters ?? 0,
+              maxWaterfowlHunters: input.maxWaterfowlHunters ?? null,
+              maxUplandHunters: input.maxUplandHunters ?? 0,
+              maxGuests: input.maxGuests ?? 0,
+              maxTotalPeople: input.maxTotalPeople ?? null,
+              bookingModes: input.bookingModes ?? ["AM", "PM"],
+              overnightEnabled: input.overnightEnabled ?? true,
+              shortName: input.shortName ?? null,
+              shortDescription: input.shortDescription ?? null,
+              description: input.description ?? null,
+              locationNotes: input.locationNotes ?? null,
+              hasHeatedBlind: input.hasHeatedBlind ?? false,
+              hasAtvAccess: input.hasAtvAccess ?? false,
+              hasWaterAccess: input.hasWaterAccess ?? false,
+              hasElectricity: input.hasElectricity ?? false,
+              hasCellService: input.hasCellService ?? true,
+              createdAt: ts,
+              updatedAt: ts,
+            } as any);
 
-          // Drizzle node-postgres insert returns the inserted row via $returningId()
-          const propertyId = Number((result as any)[0]?.insertId ?? (result as any).insertId);
+            // Extract inserted ID from Drizzle result
+            const propertyId = (result as any)?.[0]?.id;
+            if (!propertyId) {
+              throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to extract property ID from insert result" });
+            }
 
-          // Save selected activities to join table
-          if (input.activities && input.activities.length > 0) {
-            const activityRows = input.activities.map((activity: string) => ({
+            // Save selected activities to join table
+            if (input.activities && input.activities.length > 0) {
+              const activityRows = input.activities.map((activity: string) => ({
+                propertyId,
+                activity,
+              }));
+              await db.insert(propertyActivities).values(activityRows as any);
+            }
+
+            // Create default booking rules
+            await db.insert(propertyBookingRules).values({
               propertyId,
-              activity,
-            }));
-            await db.insert(propertyActivities).values(activityRows as any);
+              advanceBookingDays: 6,
+              minAdvanceHours: 24,
+              maxConsecutiveDays: 3,
+              maxDaysPerSeason: 10,
+              requiresApproval: false,
+              allowGuests: true,
+              maxGuestsPerBooking: 1,
+              guestCountsAgainstAllotment: true,
+              cancellationHours: 24,
+              lateCancellationFee: "0",
+              harvestReportRequired: true,
+              harvestReportDays: 7,
+              blockBookingsIfReportOverdue: true,
+              openingDaysUseLottery: false,
+              lotteryOpeningDays: 2,
+              overbookingPercent: 0,
+              updatedAt: ts,
+            } as any);
+
+            return { propertyId };
+          } catch (error) {
+            console.error("[admin.properties.create] error:", error);
+            if (error instanceof TRPCError) throw error;
+            throw new TRPCError({
+              code: "INTERNAL_SERVER_ERROR",
+              message: error instanceof Error ? error.message : "Unknown error creating property",
+            });
           }
-
-          // Create default booking rules
-          await db.insert(propertyBookingRules).values({
-            propertyId,
-            advanceBookingDays: 6,
-            minAdvanceHours: 24,
-            maxConsecutiveDays: 3,
-            maxDaysPerSeason: 10,
-            requiresApproval: false,
-            allowGuests: true,
-            maxGuestsPerBooking: 1,
-            guestCountsAgainstAllotment: true,
-            cancellationHours: 24,
-            lateCancellationFee: "0",
-            harvestReportRequired: true,
-            harvestReportDays: 7,
-            blockBookingsIfReportOverdue: true,
-            openingDaysUseLottery: false,
-            lotteryOpeningDays: 2,
-            overbookingPercent: 0,
-            updatedAt: ts,
-          } as any);
-
-          return { propertyId };
         }),
 
       /** Update a property */
