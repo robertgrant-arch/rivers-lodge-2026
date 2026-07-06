@@ -151,11 +151,18 @@ export default function OutdoorActivities() {
                     height={600}
                   />
                 ) : pursuit.slug === "upland-birds" ? (
-                  <div className="aspect-[4/3] overflow-hidden bg-stone-800 flex flex-col items-center justify-center space-y-2">
-                    <p className="text-sm font-light text-amber-900/60 uppercase tracking-wide">Placeholder #{pursuit.placeholderId}</p>
-                    <p className="text-xs font-light text-amber-900/50 uppercase tracking-wider">{pursuit.title}</p>
-                    <p className="text-[10px] text-stone-500 text-center px-4 leading-tight uppercase tracking-wide mt-2">Bill decides<br/>e.g., acres or stat</p>
-                  </div>
+                  <Picture
+                    src="/upland-1-tile.jpg"
+                    alt="Upland Birds"
+                    label={pursuit.title}
+                    className="aspect-[4/3] overflow-hidden"
+                    imgClassName="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                    loading="lazy"
+                    decoding="async"
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                    width={800}
+                    height={600}
+                  />
                 ) : (
                   <Picture
                     src={pursuit.heroImg}

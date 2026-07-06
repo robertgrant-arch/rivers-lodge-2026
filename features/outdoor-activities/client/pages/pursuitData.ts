@@ -77,7 +77,7 @@ export const PURSUITS: Pursuit[] = [
     slug: "upland-birds",
     title: "Upland Birds",
     teaser: "Quail, pheasant, and sporting clays in native Kansas uplands.",
-    heroImg: "/img/3C0A0165.jpg",
+    heroImg: "/upland-1-gallery.jpg",
     heroAlt: "Upland bird hunting at Rivers Lodge",
     description: [
       "Kansas upland hunting at its finest — quail in the native grass corridors, pheasant along the hedgerows, and a private sporting clays course for off-day practice. The estate manages its upland habitat with controlled burns and native grass restoration that produces bird numbers most public ground can only promise.",
@@ -85,7 +85,9 @@ export const PURSUITS: Pursuit[] = [
       "The sporting clays course runs through timber and open field stations, offering shots that replicate upland, waterfowl, and dove scenarios. Instruction from a certified shooting coach is available by request — ideal for guests looking to improve before a hunt or entertaining corporate groups.",
     ],
     galleryImgs: [
-      { src: "/img/3C0A0165.jpg", alt: "Upland habitat at Rivers Lodge" },
+      { src: "/upland-1-gallery.jpg", alt: "Upland birds at Rivers Lodge" },
+      { src: "/upland-2-gallery.jpg", alt: "Upland habitat" },
+      { src: "/upland-3-gallery.jpg", alt: "Upland birds hunting grounds" },
     ],
     season: [
       { label: "Quail",          value: "Nov 15 – Feb 15" },
