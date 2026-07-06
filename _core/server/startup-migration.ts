@@ -62,6 +62,17 @@ export async function runStartupMigration() {
         `;
         await client.query(migration);
 
+        // Backfill new capacity columns from legacy columns (idempotent — only backfills when new value is 0/null)
+        const backfillMigration = `
+          UPDATE hunting_properties
+          SET
+            "maxDeerHunters" = CASE WHEN "maxDeerHunters" = 0 OR "maxDeerHunters" IS NULL THEN COALESCE("maxHunters", 0) ELSE "maxDeerHunters" END,
+            "maxGuests" = CASE WHEN "maxGuests" = 0 OR "maxGuests" IS NULL THEN COALESCE("maxHunters", 0) ELSE "maxGuests" END
+          WHERE ("maxDeerHunters" = 0 OR "maxDeerHunters" IS NULL)
+            AND ("maxHunters" IS NOT NULL AND "maxHunters" > 0);
+        `;
+        await client.query(backfillMigration);
+
         // property_activity enum + property_activities join table (idempotent).
         // Create enum type if missing, then table if missing. Both are safe to re-run.
         const activitiesMigration = `

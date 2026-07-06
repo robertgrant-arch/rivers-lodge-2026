@@ -84,12 +84,10 @@ function CreatePropertyForm({
     name: "",
     slug: "",
     type: "stand" as string,
-    primaryActivity: "deer" as string,
     activities: [] as string[],
     description: "",
     shortDescription: "",
     acreage: "",
-    maxHunters: 2,
     maxDeerHunters: 0,
     maxWaterfowlHunters: "" as any,
     maxUplandHunters: 0,
@@ -187,12 +185,10 @@ function CreatePropertyForm({
       name: form.name,
       slug: form.slug,
       type: form.type,
-      primaryActivity: form.primaryActivity,
       activities: form.activities,
       description: form.description || undefined,
       shortDescription: form.shortDescription || undefined,
       acreage: form.acreage ? parseFloat(form.acreage) : undefined,
-      maxHunters: Number(form.maxHunters),
       maxDeerHunters: Number(form.maxDeerHunters),
       maxWaterfowlHunters: form.maxWaterfowlHunters ? Number(form.maxWaterfowlHunters) : undefined,
       maxUplandHunters: Number(form.maxUplandHunters),
@@ -243,17 +239,6 @@ function CreatePropertyForm({
             </SelectContent>
           </Select>
         </div>
-        <div className="space-y-1.5">
-          <Label className="text-stone-300 text-sm">Primary Activity</Label>
-          <Select value={form.primaryActivity} onValueChange={(v) => set("primaryActivity", v)}>
-            <SelectTrigger className="bg-stone-800 border-stone-700 text-stone-100"><SelectValue /></SelectTrigger>
-            <SelectContent className="bg-stone-800 border-stone-700">
-              {ACTIVITIES.map((a) => (
-                <SelectItem key={a.value} value={a.value} className="text-stone-100">{a.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
       </div>
 
       <div className="border border-stone-700 rounded-lg p-4 space-y-3">
@@ -292,19 +277,11 @@ function CreatePropertyForm({
           className="bg-stone-800 border-stone-700 text-stone-100 resize-none" />
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-1.5">
-          <Label className="text-stone-300 text-sm">Max Hunters</Label>
-          <Input type="number" min={1} max={50} value={form.maxHunters}
-            onChange={(e) => set("maxHunters", e.target.value)}
-            className="bg-stone-800 border-stone-700 text-stone-100" />
-        </div>
-        <div className="space-y-1.5">
-          <Label className="text-stone-300 text-sm">Acreage</Label>
-          <Input type="number" step="0.1" value={form.acreage}
-            onChange={(e) => set("acreage", e.target.value)}
-            placeholder="40.5" className="bg-stone-800 border-stone-700 text-stone-100" />
-        </div>
+      <div className="space-y-1.5">
+        <Label className="text-stone-300 text-sm">Acreage</Label>
+        <Input type="number" step="0.1" value={form.acreage}
+          onChange={(e) => set("acreage", e.target.value)}
+          placeholder="40.5" className="bg-stone-800 border-stone-700 text-stone-100" />
       </div>
 
       <div className="border border-stone-700 rounded-lg p-4 space-y-3">
@@ -505,7 +482,6 @@ function EditPropertyForm({
     shortDescription: initial.shortDescription ?? "",
     description: initial.description ?? "",
     slug: initial.slug ?? "", activities: (Array.isArray(initial.activities) ? initial.activities.map((v: any) => typeof v === 'string' ? v : (v?.value ?? v?.activity ?? '')).filter(Boolean) : []) as string[],
-    maxHunters: initial.maxHunters ?? 2,
     maxDeerHunters: initial.maxDeerHunters ?? 0,
     maxWaterfowlHunters: initial.maxWaterfowlHunters ?? "",
     maxUplandHunters: initial.maxUplandHunters ?? 0,
@@ -597,7 +573,6 @@ function EditPropertyForm({
       shortDescription: form.shortDescription || undefined,
       description: form.description || undefined,
       activities: form.activities,
-      maxHunters: Number(form.maxHunters),
       maxDeerHunters: Number(form.maxDeerHunters),
       maxWaterfowlHunters: form.maxWaterfowlHunters ? Number(form.maxWaterfowlHunters) : undefined,
       maxUplandHunters: Number(form.maxUplandHunters),
@@ -661,18 +636,10 @@ function EditPropertyForm({
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-1.5">
-          <Label className="text-stone-300 text-sm">Max Hunters</Label>
-          <Input type="number" min={1} max={50} value={form.maxHunters}
-            onChange={(e) => set("maxHunters", e.target.value)}
-            className="bg-stone-800 border-stone-700 text-stone-100" />
-        </div>
-        <div className="space-y-1.5">
-          <Label className="text-stone-300 text-sm">Sort Order</Label>
-          <Input type="number" value={form.sortOrder} onChange={(e) => set("sortOrder", e.target.value)}
-            className="bg-stone-800 border-stone-700 text-stone-100" />
-        </div>
+      <div className="space-y-1.5">
+        <Label className="text-stone-300 text-sm">Sort Order</Label>
+        <Input type="number" value={form.sortOrder} onChange={(e) => set("sortOrder", e.target.value)}
+          className="bg-stone-800 border-stone-700 text-stone-100" />
       </div>
 
       <div className="border border-stone-700 rounded-lg p-4 space-y-3">
@@ -840,7 +807,7 @@ function PropertyRow({ property, onEdit }: { property: any; onEdit: () => void }
   const [expanded, setExpanded] = useState(true);
 
   const typeLabel = PROPERTY_TYPES.find((t) => t.value === property.type)?.label ?? property.type;
-  const activityLabels = (() => { const list = Array.isArray(property.activities) && property.activities.length > 0 ? property.activities : (property.primaryActivity ? [property.primaryActivity] : []); const seen = new Set<string>(); const out: string[] = []; for (const v of list) { const val = typeof v === 'string' ? v : (v?.value ?? v?.activity ?? ''); if (!val || seen.has(val)) continue; seen.add(val); out.push(ACTIVITIES.find((a) => a.value === val)?.label ?? val); } return out; })();
+  const activityLabels = (() => { const list = Array.isArray(property.activities) && property.activities.length > 0 ? property.activities : []; const seen = new Set<string>(); const out: string[] = []; for (const v of list) { const val = typeof v === 'string' ? v : (v?.value ?? v?.activity ?? ''); if (!val || seen.has(val)) continue; seen.add(val); out.push(ACTIVITIES.find((a) => a.value === val)?.label ?? val); } return out; })();
 
   const capacityItems = [
     { label: "Deer", value: property.maxDeerHunters },
@@ -851,7 +818,7 @@ function PropertyRow({ property, onEdit }: { property: any; onEdit: () => void }
 
   const capacityDisplay = capacityItems.length > 0
     ? capacityItems.map((item) => `${item.label} ${item.value}`).join(" · ")
-    : `Up to ${property.maxHunters}`;
+    : null;
 
   return (
     <div className="bg-stone-900 border border-stone-700 rounded-lg overflow-hidden">
@@ -871,10 +838,18 @@ function PropertyRow({ property, onEdit }: { property: any; onEdit: () => void }
           </div>
           <div className="flex flex-wrap gap-3 mt-1 text-xs text-stone-400">
             <span className="hidden">{typeLabel}</span>
-            <span>·</span>
-            <span>{activityLabels.length > 0 ? activityLabels.join(", ") : "—"}</span>
-            <span>·</span>
-            <span className="flex items-center gap-1"><Users className="w-3 h-3" />{capacityDisplay}</span>
+            {activityLabels.length > 0 && (
+              <>
+                <span>·</span>
+                <span>{activityLabels.join(", ")}</span>
+              </>
+            )}
+            {capacityDisplay && (
+              <>
+                <span>·</span>
+                <span className="flex items-center gap-1"><Users className="w-3 h-3" />{capacityDisplay}</span>
+              </>
+            )}
             {property.acreage && <><span>·</span><span>{property.acreage} ac</span></>}
           </div>
         </div>
