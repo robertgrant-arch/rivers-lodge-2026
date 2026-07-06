@@ -99,6 +99,18 @@ export async function runStartupMigration() {
         `;
         await client.query(primaryActivityMigration);
 
+        // Clean up orphan test properties from failed create attempts
+        // (one-time cleanup of: Test Alpha, Test Bravo, Test 1 Minimal, 69 highway, Test - delete me, etc.)
+        const cleanupTestProperties = `
+          DELETE FROM hunting_properties
+          WHERE name ILIKE 'test%' OR name ILIKE '%delete%' OR name = '69 highway' OR slug LIKE 'test-%'
+          AND id NOT IN (SELECT DISTINCT propertyId FROM property_bookings);
+        `;
+        const cleanupResult = await client.query(cleanupTestProperties);
+        if ((cleanupResult.rowCount ?? 0) > 0) {
+          console.log(`[startup-migration] 🧹 cleaned up ${cleanupResult.rowCount} orphan test properties`);
+        }
+
         console.log("[startup-migration] ✅ schema migration completed successfully");
       } finally {
         client.release();
