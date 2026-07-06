@@ -437,9 +437,9 @@ export default function MemberPortal() {
         </div>
 
         {/* ── Tabs ──────────────────────────────────────────────────────── */}
-        <div className="border-b border-white/8 bg-[#2B2823] sticky top-0 z-10">
+        <div className="border-b border-white/8 bg-[#2B2823] sticky top-0 z-10 overflow-x-auto scrollbar-none">
           <div className="max-w-[1440px] mx-auto px-6 lg:px-16">
-            <div className="flex gap-0 overflow-x-auto scrollbar-none">
+            <div className="flex gap-0 whitespace-nowrap">
               {tabs.map((t) => (
                 <button
                   key={t.key}
@@ -975,11 +975,7 @@ export default function MemberPortal() {
         </div>
 
         {/* ── Properties Tab ────────────────────────────────────────── */}
-        {tab === "properties" && (
-          <div className="-mx-6 lg:-mx-16">
-            <PropertyBrowser />
-          </div>
-        )}
+        {tab === "properties" && <PropertyBrowser />}
 
         {/* ── Profile Tab ───────────────────────────────────────────── */}
         {tab === "profile" && (
