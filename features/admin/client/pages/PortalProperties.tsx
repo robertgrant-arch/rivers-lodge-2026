@@ -372,12 +372,14 @@ function CreatePropertyForm({
         <div className="space-y-1.5">
           <Label className="text-stone-300 text-xs">GPS Latitude</Label>
           <Input value={form.gpsLat} onChange={(e) => set("gpsLat", e.target.value)}
-            placeholder="32.1234" className="bg-stone-800 border-stone-700 text-stone-100 font-mono text-sm" />
+            placeholder="32.1234" className="bg-stone-800 border-stone-700 text-stone-100 font-mono text-sm"
+            autoComplete="off" />
         </div>
         <div className="space-y-1.5">
           <Label className="text-stone-300 text-xs">GPS Longitude</Label>
           <Input value={form.gpsLng} onChange={(e) => set("gpsLng", e.target.value)}
-            placeholder="-91.5678" className="bg-stone-800 border-stone-700 text-stone-100 font-mono text-sm" />
+            placeholder="-91.5678" className="bg-stone-800 border-stone-700 text-stone-100 font-mono text-sm"
+            autoComplete="off" />
         </div>
       </div>
 
