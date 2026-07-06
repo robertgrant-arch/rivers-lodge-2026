@@ -1063,16 +1063,21 @@ export const propertyBookingRouter = router({
             };
             console.log("[admin.properties.create] prepared insert values");
 
-            const result = await db.insert(huntingProperties).values(insertValues as any);
+            const result = await db.insert(huntingProperties).values(insertValues as any).returning();
             console.log("[admin.properties.create] insert executed, raw result:", JSON.stringify(result, null, 2));
 
             // Extract inserted ID from Drizzle result
-            const propertyId = (result as any)?.[0]?.id;
-            console.log("[admin.properties.create] extracted propertyId:", propertyId, "type:", typeof propertyId);
+            // With .returning(), result is an array of inserted rows
+            const insertedRow = result?.[0];
+            const propertyId = insertedRow?.id;
+            console.log("[admin.properties.create] extracted propertyId:", propertyId, "type:", typeof propertyId, "full row:", JSON.stringify(insertedRow));
 
             if (!propertyId) {
-              console.error("[admin.properties.create] propertyId is falsy:", propertyId);
-              throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to extract property ID from insert result" });
+              console.error("[admin.properties.create] propertyId extraction failed. Result structure:", JSON.stringify(result));
+              throw new TRPCError({
+                code: "INTERNAL_SERVER_ERROR",
+                message: `Failed to extract property ID from insert result: received ${JSON.stringify(result)}`
+              });
             }
 
             // Save selected activities to join table
