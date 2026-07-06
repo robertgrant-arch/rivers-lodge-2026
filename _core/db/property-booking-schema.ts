@@ -108,7 +108,9 @@ export const huntingProperties = pgTable("hunting_properties", {
   slug: varchar("slug", { length: 80 }).notNull().unique(),
   shortName: varchar("shortName", { length: 40 }),
   type: huntingPropertyTypeEnum("type").notNull(),
-  primaryActivity: propertyActivityEnum("primaryActivity").nullable(),
+  // Nullable by default — Drizzle pg columns have no .nullable() method
+  // (calling it crashed the server at module load: "nullable is not a function").
+  primaryActivity: propertyActivityEnum("primaryActivity"),
   secondaryActivities: json("secondaryActivities"),
   description: text("description"),
   shortDescription: varchar("shortDescription", { length: 280 }),
