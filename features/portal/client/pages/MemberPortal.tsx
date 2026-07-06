@@ -972,12 +972,10 @@ export default function MemberPortal() {
             </div>
           )}
 
-        </div>
+          {/* ── PROPERTIES ────────────────────────────────────────────── */}
+          {tab === "properties" && <PropertyBrowser />}
 
-        {/* ── Properties Tab ────────────────────────────────────────── */}
-        {tab === "properties" && <PropertyBrowser />}
-
-        {/* ── Profile Tab ───────────────────────────────────────────── */}
+          {/* ── Profile Tab ───────────────────────────────────────────── */}
         {tab === "profile" && (
           <div className="max-w-2xl">
             <h2 className="font-serif text-3xl text-white mb-2">My Profile</h2>
