@@ -4,6 +4,7 @@ import PublicLayout from "@shared/components/PublicLayout";
 import SEOHead from "@shared/components/SEOHead";
 import Picture from "@shared/components/Picture";
 import { PURSUITS } from "./pursuitData";
+// build: 20260706-0400-placeholder-tiles-fixed
 
 const ACCENT = "#6B7250";
 
