@@ -1467,9 +1467,26 @@ export const propertyBookingRouter = router({
           .where(conditions.length ? and(...conditions) : undefined)
           .orderBy(asc(huntingProperties.sortOrder), asc(huntingProperties.name));
 
+        // Fetch activities for all properties from join table
+        const propIds = props.map((p: any) => p.id);
+        const activitiesData = propIds.length
+          ? await db
+              .select()
+              .from(propertyActivities)
+              .where(sql`${propertyActivities.propertyId} IN (${sql.join(propIds.map((id: any) => sql`${id}`), sql`, `)})`)
+          : [];
+
+        const activitiesMap = new Map<number, string[]>();
+        for (const act of activitiesData) {
+          const arr = activitiesMap.get(act.propertyId) ?? [];
+          arr.push(act.activity);
+          activitiesMap.set(act.propertyId, arr);
+        }
+
         // Normalize response: provide safe defaults for nullable JSON fields
         return props.map((p: any) => ({
           ...p,
+          activities: activitiesMap.get(p.id) ?? [],
           bookingModes: Array.isArray(p.bookingModes) ? p.bookingModes : ["AM", "PM"],
           secondaryActivities: Array.isArray(p.secondaryActivities) ? p.secondaryActivities : null,
           maxWaterfowlHunters: p.maxWaterfowlHunters ?? null,
