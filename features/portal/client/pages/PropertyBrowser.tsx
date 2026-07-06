@@ -4,8 +4,9 @@
  * Browse all hunting properties, filter by activity, view availability
  * calendars, and initiate a self-booking.
  */
+// build: 6244b2c-forced-redeploy-20260706T10PDT
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Link } from "wouter";
 import { trpc } from '@shared/lib/trpc';
 import { Button } from '@shared/ui/button';
@@ -155,6 +156,10 @@ export default function PropertyBrowser() {
   const [activityFilter, setActivityFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
 
+  useEffect(() => {
+    console.log("[PropertyBrowser build 20260706-1000] H1=Properties padding=fixed");
+  }, []);
+
   const { data: properties, isLoading, error } = trpc.propertyBooking.properties.list.useQuery(
     activityFilter === "all" ? {} : { activity: activityFilter },
     { staleTime: 5 * 60 * 1000 },
@@ -178,7 +183,7 @@ export default function PropertyBrowser() {
   }
 
   return (
-    <div className="space-y-6 px-4 py-8 sm:px-6 lg:px-8">
+    <div className="space-y-6 px-4 py-8 sm:px-6 lg:px-8" data-build="20260706-1000">
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold text-white mb-2">Properties</h1>

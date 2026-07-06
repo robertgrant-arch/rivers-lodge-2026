@@ -100,7 +100,7 @@ export const waitlistActivityEnum = pgEnum("waitlist_activity", [
   "bass", "catfish", "crappie", "mixed_hunt", "mixed_fish", "hunt_and_fish",
 ]);
 
-// ─── Hunting Properties ───────────────────────────────────────────────────────
+// ─── Properties ───────────────────────────────────────────────────────
 
 export const huntingProperties = pgTable("hunting_properties", {
   id: integer("id").generatedAlwaysAsIdentity().primaryKey(),
