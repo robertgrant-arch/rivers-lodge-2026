@@ -636,6 +636,25 @@ export default function PropertyDetail() {
             </CardContent>
           </Card>
 
+          {/* Available Activities */}
+          {Array.isArray(property.activities) && property.activities.length > 0 && (
+            <Card className="bg-stone-900 border-stone-700">
+              <CardHeader className="pb-2 pt-4">
+                <CardTitle className="text-sm text-stone-300">Available Activities</CardTitle>
+              </CardHeader>
+              <CardContent className="pt-0 space-y-2">
+                {property.activities.map((activity: string) => {
+                  const activityConfig = ACTIVITY_OPTIONS.find((a) => a.value === activity);
+                  return (
+                    <div key={activity} className="text-sm text-stone-300">
+                      {activityConfig?.label ?? activity}
+                    </div>
+                  );
+                })}
+              </CardContent>
+            </Card>
+          )}
+
           {/* Amenities */}
           {(property.hasHeatedBlind || property.hasAtvAccess || property.hasWaterAccess || property.hasElectricity || property.hasCellService) && (
             <Card className="bg-stone-900 border-stone-700">

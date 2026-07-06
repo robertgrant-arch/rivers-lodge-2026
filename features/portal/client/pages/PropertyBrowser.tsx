@@ -96,12 +96,7 @@ function AvailabilityDot({ propertyId }: { propertyId: number }) {
 // ─── Property Card ────────────────────────────────────────────────────────────
 
 function PropertyCard({ property }: { property: any }) {
-  const primaryActivity = Array.isArray(property.activities) && property.activities.length > 0
-    ? property.activities[0]
-    : null;
-  const activityColor = primaryActivity && ACTIVITY_COLORS[primaryActivity]
-    ? ACTIVITY_COLORS[primaryActivity]
-    : "bg-stone-700/20 text-stone-300 border-stone-600";
+  const activities = Array.isArray(property.activities) ? property.activities : [];
 
   const capacityItems = [
     { label: "Deer", value: property.maxDeerHunters },
@@ -131,13 +126,18 @@ function PropertyCard({ property }: { property: any }) {
               <TreePine className="w-12 h-12 text-stone-600" />
             </div>
           )}
-          {/* Activity badge overlay */}
-          {primaryActivity && (
-            <div className="absolute top-3 left-3">
-              <span className={`text-xs px-2 py-0.5 rounded-full border font-medium ${activityColor}`}>
-                {ACTIVITIES.find((a) => a.value === primaryActivity)?.icon}{" "}
-                {ACTIVITIES.find((a) => a.value === primaryActivity)?.label ?? primaryActivity}
-              </span>
+          {/* Activity badges overlay */}
+          {activities.length > 0 && (
+            <div className="absolute top-3 left-3 flex flex-wrap gap-1">
+              {activities.map((activity) => {
+                const activityColor = ACTIVITY_COLORS[activity] ?? "bg-stone-700/20 text-stone-300 border-stone-600";
+                const activityConfig = ACTIVITIES.find((a) => a.value === activity);
+                return (
+                  <span key={activity} className={`text-xs px-2 py-0.5 rounded-full border font-medium ${activityColor}`}>
+                    {activityConfig?.icon} {activityConfig?.label ?? activity}
+                  </span>
+                );
+              })}
             </div>
           )}
         </div>
@@ -179,9 +179,6 @@ function PropertyCard({ property }: { property: any }) {
             {property.hasElectricity && <Zap className="w-3.5 h-3.5" />}
             {property.hasCellService && <Wifi className="w-3.5 h-3.5" />}
           </div>
-
-          {/* Availability this week */}
-          <AvailabilityDot propertyId={property.id} />
         </CardContent>
       </Card>
     </Link>
