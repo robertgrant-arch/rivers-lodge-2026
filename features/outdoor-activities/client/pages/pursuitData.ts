@@ -18,7 +18,7 @@ export const PURSUITS: Pursuit[] = [
     slug: "whitetail",
     title: "Whitetail Deer",
     teaser: "Trophy-managed whitetail across timber, flood plots, and river bottom.",
-    heroImg: "/img/3C0A0165.jpg",
+    heroImg: "/deer-1-hero.jpg",
     heroAlt: "Whitetail deer habitat at Rivers Lodge",
     description: [
       "The Rivers Lodge manages its whitetail population with strict age and antler restrictions, ensuring that each season produces mature, trophy-class bucks. Thousands of acres of river-bottom timber, managed food plots, and natural funnels create ideal habitat for deer that seldom see hunting pressure.",
@@ -26,8 +26,9 @@ export const PURSUITS: Pursuit[] = [
       "The property holds deer in numbers that surprise first-time visitors. October through late December is the primary season, with the rut typically peaking in early November — one of the most productive windows on the property.",
     ],
     galleryImgs: [
-      { src: "/img/3C0A0165.jpg", alt: "Hunting grounds at Rivers Lodge" },
-      { src: "/img/Ohana%20Aerial.jpg", alt: "Estate aerial — habitat overview" },
+      { src: "/deer-2-gallery.jpg", alt: "Whitetail deer at Rivers Lodge" },
+      { src: "/deer-4-gallery.jpg", alt: "Trophy whitetail habitat" },
+      { src: "/deer-5-gallery.jpg", alt: "Deer landscape at Rivers Lodge" },
     ],
     season: [
       { label: "Archery",      value: "Sep 15 – Nov 15" },
