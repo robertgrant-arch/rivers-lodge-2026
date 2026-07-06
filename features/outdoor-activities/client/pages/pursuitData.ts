@@ -18,9 +18,9 @@ export const PURSUITS: Pursuit[] = [
     heroImg: "/img/3C0A0165.jpg",
     heroAlt: "Whitetail deer habitat at Rivers Lodge",
     description: [
-      "The Rivers Lodge estate manages its whitetail population with strict age and antler restrictions, ensuring that each season produces mature, trophy-class bucks. Thousands of acres of river-bottom timber, managed food plots, and natural funnels create ideal habitat for deer that seldom see hunting pressure.",
+      "The Rivers Lodge manages its whitetail population with strict age and antler restrictions, ensuring that each season produces mature, trophy-class bucks. Thousands of acres of river-bottom timber, managed food plots, and natural funnels create ideal habitat for deer that seldom see hunting pressure.",
       "Elevated tower stands and ground blinds are positioned throughout the property based on prevailing winds and deer movement patterns observed over years of trail camera data. Both guided and member-guided hunts are available, with the guided program providing a dedicated hunt manager, scouting support, and field-to-freezer processing.",
-      "The property holds deer in numbers that surprise first-time visitors. October through late December is the primary season, with the rut typically peaking in early November — one of the most productive windows on the estate.",
+      "The property holds deer in numbers that surprise first-time visitors. October through late December is the primary season, with the rut typically peaking in early November — one of the most productive windows on the property.",
     ],
     galleryImgs: [
       { src: "/img/3C0A0165.jpg", alt: "Hunting grounds at Rivers Lodge" },

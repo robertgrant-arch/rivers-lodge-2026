@@ -87,15 +87,23 @@ export default function OutdoorActivities() {
               className="font-serif font-light text-warm leading-tight mb-8"
               style={{ fontSize: "clamp(1.875rem,3.5vw,3rem)" }}
             >
-              Managed for the long term.<br />
-              <em className="italic">Hunted with restraint.</em>
+              What The Land Holds.
             </h2>
             <div className="space-y-5 font-sans text-muted-brand leading-relaxed" style={{ fontSize: "0.9375rem" }}>
               <p>
-                Rivers Lodge manages its land — and its membership — the same way: intentionally and at low density. The whitetail population is under a strict age-class program. The lake fisheries are catch-and-release for trophy fish. Guided trips are limited so no habitat is over-pressured.
+                Thousands of privately managed acres in the Marais des Cygnes River valley with something for everyone. Whether you enjoy hiking, biking, ATVs, 5-stand shooting, trophy fishing, whitetail deer hunting or waterfowl, there is an outdoor pursuit for everyone — one hour south of Kansas City.
+              </p>
+              <h3
+                className="font-serif font-light text-warm leading-tight mt-8 mb-4"
+                style={{ fontSize: "clamp(1.25rem,2.5vw,1.875rem)" }}
+              >
+                Managed for the long term.
+              </h3>
+              <p>
+                Rivers Lodge manages its land and its membership in the same way — with care and at low density. All of our programs ensure getting the maximum out of the land and making sure that your experience is private and first class.
               </p>
               <p>
-                The result is an outdoor experience that gets better every season, not worse. Members and guests consistently report it as the finest private hunting and fishing access they have found anywhere in the Midwest.
+                As a result our land gets better every year. Members and guests consistently report it as the finest private hunting and fishing access they have found anywhere in the Midwest.
               </p>
             </div>
           </div>
@@ -127,19 +135,26 @@ export default function OutdoorActivities() {
                 href={`/outdoor-activities/${pursuit.slug}`}
                 className="group bg-surface hover:bg-background transition-colors flex flex-col"
               >
-                {/* Image */}
-                <Picture
-                  src={pursuit.heroImg}
-                  alt={pursuit.heroAlt}
-                  label={pursuit.title}
-                  className="aspect-[4/3] overflow-hidden"
-                  imgClassName="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                  loading="lazy"
-                  decoding="async"
-                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                  width={800}
-                  height={600}
-                />
+                {/* Image or Placeholder */}
+                {(pursuit.slug === "whitetail" || pursuit.slug === "upland-birds") ? (
+                  <div className="aspect-[4/3] overflow-hidden bg-stone-800 flex flex-col items-center justify-center">
+                    <p className="text-5xl font-light text-amber-900/60 mb-3">###</p>
+                    <p className="text-[11px] text-stone-500 text-center px-4 leading-tight uppercase tracking-wide">Placeholder<br/>Bill decides<br/>e.g., acres or stat</p>
+                  </div>
+                ) : (
+                  <Picture
+                    src={pursuit.heroImg}
+                    alt={pursuit.heroAlt}
+                    label={pursuit.title}
+                    className="aspect-[4/3] overflow-hidden"
+                    imgClassName="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                    loading="lazy"
+                    decoding="async"
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                    width={800}
+                    height={600}
+                  />
+                )}
 
                 {/* Card body */}
                 <div className="p-7 flex flex-col flex-1">
