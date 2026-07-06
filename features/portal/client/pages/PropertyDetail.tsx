@@ -256,7 +256,11 @@ function BookingDialog({
   const utils = trpc.useUtils();
 
   const [partySize, setPartySize] = useState(1);
-  const [activity, setActivity] = useState(property?.primaryActivity ?? "deer");
+  const [activity, setActivity] = useState(
+    Array.isArray(property?.activities) && property.activities.length > 0
+      ? property.activities[0]
+      : "deer"
+  );
   const [guestNames, setGuestNames] = useState<string[]>([]);
   const [hasMinors, setHasMinors] = useState(false);
   const [huntingLicense, setHuntingLicense] = useState(false);
@@ -352,28 +356,41 @@ function BookingDialog({
 
           {/* Party size */}
           <div className="space-y-1.5">
-            <Label className="text-stone-300 text-sm">
-              Party Size (max {property?.maxHunters ?? 2})
-            </Label>
-            <Select
-              value={String(partySize)}
-              onValueChange={(v) => {
-                const n = parseInt(v);
-                setPartySize(n);
-                setGuestNames(Array(Math.max(0, n - 1)).fill(""));
-              }}
-            >
-              <SelectTrigger className="bg-stone-800 border-stone-700 text-stone-100">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="bg-stone-800 border-stone-700">
-                {Array.from({ length: property?.maxHunters ?? 2 }, (_, i) => i + 1).map((n) => (
-                  <SelectItem key={n} value={String(n)} className="text-stone-100">
-                    {n} {n === 1 ? "person" : "people"}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {(() => {
+              const maxCapacity = Math.max(
+                property?.maxDeerHunters ?? 0,
+                property?.maxWaterfowlHunters ?? 0,
+                property?.maxUplandHunters ?? 0,
+                property?.maxGuests ?? 0,
+                2
+              );
+              return (
+                <>
+                  <Label className="text-stone-300 text-sm">
+                    Party Size (max {maxCapacity})
+                  </Label>
+                  <Select
+                    value={String(partySize)}
+                    onValueChange={(v) => {
+                      const n = parseInt(v);
+                      setPartySize(n);
+                      setGuestNames(Array(Math.max(0, n - 1)).fill(""));
+                    }}
+                  >
+                    <SelectTrigger className="bg-stone-800 border-stone-700 text-stone-100">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-stone-800 border-stone-700">
+                      {Array.from({ length: maxCapacity }, (_, i) => i + 1).map((n) => (
+                        <SelectItem key={n} value={String(n)} className="text-stone-100">
+                          {n} {n === 1 ? "person" : "people"}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </>
+              );
+            })()}
           </div>
 
           {/* Guest names */}
@@ -578,10 +595,32 @@ export default function PropertyDetail() {
           {/* Quick stats */}
           <Card className="bg-stone-900 border-stone-700">
             <CardContent className="pt-4 space-y-3">
-              <div className="flex items-center gap-2 text-sm text-stone-300">
-                <Users className="w-4 h-4 text-stone-500" />
-                Max {property.maxHunters} hunter{property.maxHunters > 1 ? "s" : ""}
-              </div>
+              {(() => {
+                const capacityItems = [
+                  { label: "Deer", value: property.maxDeerHunters },
+                  { label: "Waterfowl", value: property.maxWaterfowlHunters },
+                  { label: "Upland", value: property.maxUplandHunters },
+                  { label: "Guests", value: property.maxGuests },
+                ].filter((item) => item.value > 0);
+
+                return capacityItems.length > 0 ? (
+                  <div className="text-xs text-stone-400 space-y-1">
+                    <div className="font-medium text-stone-300 mb-1">Capacity:</div>
+                    {capacityItems.map((item) => (
+                      <div key={item.label} className="flex justify-between">
+                        <span>{item.label}</span>
+                        <span className="text-stone-200">{item.value}</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : null;
+              })()}
+              {!property.maxDeerHunters && !property.maxWaterfowlHunters && !property.maxUplandHunters && !property.maxGuests && (
+                <div className="flex items-center gap-2 text-sm text-stone-400">
+                  <Users className="w-4 h-4 text-stone-500" />
+                  Capacity not specified
+                </div>
+              )}
               {property.acreage && (
                 <div className="flex items-center gap-2 text-sm text-stone-300">
                   <MapPin className="w-4 h-4 text-stone-500" />

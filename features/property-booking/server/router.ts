@@ -219,7 +219,6 @@ export const propertyBookingRouter = router({
 
         const conditions = [];
         if (!input?.includeInactive) conditions.push(eq(huntingProperties.active, true));
-        if (input?.activity) conditions.push(eq(huntingProperties.primaryActivity, input.activity as any));
         if (input?.type) conditions.push(eq(huntingProperties.type, input.type as any));
 
         const props = await db
@@ -228,24 +227,48 @@ export const propertyBookingRouter = router({
           .where(conditions.length ? and(...conditions) : undefined)
           .orderBy(asc(huntingProperties.sortOrder), asc(huntingProperties.name));
 
-        // Attach cover images
+        // Fetch activities from join table and cover images
         const propIds = props.map((p: any) => p.id);
-        const images = propIds.length
-          ? await db
-              .select()
-              .from(propertyImages)
-              .where(and(
-                sql`${propertyImages.propertyId} IN (${sql.join(propIds.map((id: any) => sql`${id}`), sql`, `)})`,
-                eq(propertyImages.type, "cover"),
-                eq(propertyImages.active, true),
-              ))
-          : [];
+        const [images, activitiesData] = await Promise.all([
+          propIds.length
+            ? db
+                .select()
+                .from(propertyImages)
+                .where(and(
+                  sql`${propertyImages.propertyId} IN (${sql.join(propIds.map((id: any) => sql`${id}`), sql`, `)})`,
+                  eq(propertyImages.type, "cover"),
+                  eq(propertyImages.active, true),
+                ))
+            : [],
+          propIds.length
+            ? db
+                .select()
+                .from(propertyActivities)
+                .where(sql`${propertyActivities.propertyId} IN (${sql.join(propIds.map((id: any) => sql`${id}`), sql`, `)})`)
+            : [],
+        ]);
 
         const imageMap = new Map(images.map((img: any) => [img.propertyId, img.url]));
+        const activitiesMap = new Map<number, string[]>();
+        for (const act of activitiesData) {
+          const arr = activitiesMap.get(act.propertyId) ?? [];
+          arr.push(act.activity);
+          activitiesMap.set(act.propertyId, arr);
+        }
+
+        // Filter by activity if requested (check join table, not primaryActivity)
+        let result = props;
+        if (input?.activity) {
+          result = props.filter((p: any) => {
+            const acts = activitiesMap.get(p.id) ?? [];
+            return acts.includes(input.activity);
+          });
+        }
 
         // Normalize response: provide safe defaults for nullable JSON fields
-        return props.map((p: any) => ({
+        return result.map((p: any) => ({
           ...p,
+          activities: activitiesMap.get(p.id) ?? [],
           coverImageUrl: p.coverImageUrl ?? imageMap.get(p.id) ?? null,
           bookingModes: Array.isArray(p.bookingModes) ? p.bookingModes : ["AM", "PM"],
           secondaryActivities: Array.isArray(p.secondaryActivities) ? p.secondaryActivities : null,
@@ -283,7 +306,7 @@ export const propertyBookingRouter = router({
 
         if (!property) throw new TRPCError({ code: "NOT_FOUND", message: "Property not found." });
 
-        const [rules, seasons, amenities, images] = await Promise.all([
+        const [rules, seasons, amenities, images, activitiesData] = await Promise.all([
           db.select().from(propertyBookingRules).where(eq(propertyBookingRules.propertyId, input.id)).limit(1),
           db.select().from(propertySeasons)
             .where(and(eq(propertySeasons.propertyId, input.id), eq(propertySeasons.active, true)))
@@ -292,11 +315,15 @@ export const propertyBookingRouter = router({
           db.select().from(propertyImages)
             .where(and(eq(propertyImages.propertyId, input.id), eq(propertyImages.active, true)))
             .orderBy(asc(propertyImages.sortOrder)),
+          db.select().from(propertyActivities).where(eq(propertyActivities.propertyId, input.id)),
         ]);
+
+        const activities = activitiesData.map((a: any) => a.activity);
 
         // Normalize response: provide safe defaults for nullable fields
         const normalized = {
           ...property,
+          activities,
           bookingModes: Array.isArray(property.bookingModes) ? property.bookingModes : ["AM", "PM"],
           secondaryActivities: Array.isArray(property.secondaryActivities) ? property.secondaryActivities : null,
           maxWaterfowlHunters: property.maxWaterfowlHunters ?? null,

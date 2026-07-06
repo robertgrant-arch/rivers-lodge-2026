@@ -96,8 +96,23 @@ function AvailabilityDot({ propertyId }: { propertyId: number }) {
 // ─── Property Card ────────────────────────────────────────────────────────────
 
 function PropertyCard({ property }: { property: any }) {
-  const typeLabel = PROPERTY_TYPE_LABELS[property.type] ?? property.type;
-  const activityColor = ACTIVITY_COLORS[property.primaryActivity] ?? "bg-stone-700/20 text-stone-300 border-stone-600";
+  const primaryActivity = Array.isArray(property.activities) && property.activities.length > 0
+    ? property.activities[0]
+    : null;
+  const activityColor = primaryActivity && ACTIVITY_COLORS[primaryActivity]
+    ? ACTIVITY_COLORS[primaryActivity]
+    : "bg-stone-700/20 text-stone-300 border-stone-600";
+
+  const capacityItems = [
+    { label: "Deer", value: property.maxDeerHunters },
+    { label: "Waterfowl", value: property.maxWaterfowlHunters },
+    { label: "Upland", value: property.maxUplandHunters },
+    { label: "Guests", value: property.maxGuests },
+  ].filter((item) => item.value > 0);
+
+  const capacityDisplay = capacityItems.length > 0
+    ? capacityItems.map((item) => `${item.label} ${item.value}`).join(" · ")
+    : null;
 
   return (
     <Link href={`/portal/properties/${property.id}`}>
@@ -117,18 +132,14 @@ function PropertyCard({ property }: { property: any }) {
             </div>
           )}
           {/* Activity badge overlay */}
-          <div className="absolute top-3 left-3">
-            <span className={`text-xs px-2 py-0.5 rounded-full border font-medium ${activityColor}`}>
-              {ACTIVITIES.find((a) => a.value === property.primaryActivity)?.icon}{" "}
-              {ACTIVITIES.find((a) => a.value === property.primaryActivity)?.label ?? property.primaryActivity}
-            </span>
-          </div>
-          {/* Type badge */}
-          <div className="absolute top-3 right-3">
-            <span className="text-xs px-2 py-0.5 rounded-full bg-black/60 text-stone-300 border border-stone-600">
-              {typeLabel}
-            </span>
-          </div>
+          {primaryActivity && (
+            <div className="absolute top-3 left-3">
+              <span className={`text-xs px-2 py-0.5 rounded-full border font-medium ${activityColor}`}>
+                {ACTIVITIES.find((a) => a.value === primaryActivity)?.icon}{" "}
+                {ACTIVITIES.find((a) => a.value === primaryActivity)?.label ?? primaryActivity}
+              </span>
+            </div>
+          )}
         </div>
 
         <CardHeader className="pb-2 pt-4">
@@ -146,10 +157,12 @@ function PropertyCard({ property }: { property: any }) {
         <CardContent className="pt-0 space-y-3">
           {/* Stats row */}
           <div className="flex flex-wrap gap-3 text-xs text-stone-400">
-            <span className="flex items-center gap-1">
-              <Users className="w-3 h-3" />
-              Max {property.maxHunters} hunter{property.maxHunters > 1 ? "s" : ""}
-            </span>
+            {capacityDisplay && (
+              <span className="flex items-center gap-1">
+                <Users className="w-3 h-3" />
+                {capacityDisplay}
+              </span>
+            )}
             {property.acreage && (
               <span className="flex items-center gap-1">
                 <MapPin className="w-3 h-3" />
@@ -199,7 +212,7 @@ export default function PropertyBrowser() {
   }, [properties, searchQuery]);
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6">
+    <div className="px-4 md:px-6 lg:px-8 py-6 max-w-7xl mx-auto space-y-6">
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-stone-100">Hunting Properties</h1>
@@ -216,7 +229,7 @@ export default function PropertyBrowser() {
             <button
               key={act.value}
               onClick={() => setActivityFilter(act.value)}
-              className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+              className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors whitespace-nowrap ${
                 activityFilter === act.value
                   ? "bg-amber-700 border-amber-600 text-white"
                   : "bg-stone-800 border-stone-700 text-stone-300 hover:border-stone-500"
@@ -228,7 +241,7 @@ export default function PropertyBrowser() {
         </div>
 
         {/* Search */}
-        <div className="relative max-w-sm">
+        <div className="relative w-full max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-500" />
           <Input
             placeholder="Search properties…"
@@ -281,9 +294,11 @@ export default function PropertyBrowser() {
 
       {/* Property grid */}
       {!isLoading && filtered.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 auto-rows-max">
           {filtered.map((p: any) => (
-            <PropertyCard key={p.id} property={p} />
+            <div key={p.id} className="min-w-0">
+              <PropertyCard property={p} />
+            </div>
           ))}
         </div>
       )}
