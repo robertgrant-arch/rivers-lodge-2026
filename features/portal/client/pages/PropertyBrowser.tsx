@@ -176,7 +176,7 @@ export default function PropertyBrowser() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-stone-100">Hunting Properties</h1>
+        <h1 className="text-2xl font-bold text-stone-100">Properties</h1>
         <p className="text-stone-400 mt-1 text-sm">
           Browse available properties and book your next outing directly.
         </p>
@@ -190,7 +190,7 @@ export default function PropertyBrowser() {
             <button
               key={act.value}
               onClick={() => setActivityFilter(act.value)}
-              className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors whitespace-nowrap ${
+              className={`px-2.5 sm:px-3 py-1.5 rounded-full text-xs font-medium border transition-colors whitespace-nowrap ${
                 activityFilter === act.value
                   ? "bg-amber-700 border-amber-600 text-white"
                   : "bg-stone-800 border-stone-700 text-stone-300 hover:border-stone-500"
@@ -202,13 +202,13 @@ export default function PropertyBrowser() {
         </div>
 
         {/* Search */}
-        <div className="relative w-full max-w-sm">
+        <div className="relative w-full sm:w-auto">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-500" />
           <Input
             placeholder="Search properties…"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9 bg-stone-800 border-stone-700 text-stone-100 placeholder:text-stone-500"
+            className="w-full sm:max-w-sm pl-9 bg-stone-800 border-stone-700 text-stone-100 placeholder:text-stone-500"
           />
         </div>
       </div>
@@ -255,7 +255,7 @@ export default function PropertyBrowser() {
 
       {/* Property grid */}
       {!isLoading && filtered.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 auto-rows-max">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-4 auto-rows-max">
           {filtered.map((p: any) => (
             <div key={p.id} className="min-w-0">
               <PropertyCard property={p} />
