@@ -57,7 +57,7 @@ export const PURSUITS: Pursuit[] = [
       "Canada geese are resident year-round and migrating snows and blues arrive in November. Guided waterfowl hunts include decoy setup, dog retrieval, and an early-morning breakfast at the lodge after the shoot.",
     ],
     galleryImgs: [
-      { src: "/img/Ohana%20Aerial.jpg", alt: "River corridor — waterfowl habitat" }, { src: "", alt: "EMPTY #2" }, { src: "", alt: "EMPTY #3" }, { src: "", alt: "EMPTY #4" }, { src: "", alt: "EMPTY #5" }, { src: "", alt: "EMPTY #6" }, { src: "", alt: "EMPTY #7" },
+      { src: "/img/waterfow-8-gallery.jpg", alt: "River corridor — waterfowl habitat" }, { src: "/img/waterfowl%2067.jpg", alt: "Waterfowl at Rivers Lodge" }, { src: "/img/waterfowl-1-gallery.jpg", alt: "Waterfowl at Rivers Lodge" }, { src: "/img/waterfowl-3-gallery.jpg", alt: "Waterfowl at Rivers Lodge" }, { src: "/img/waterfowl-7-gallery.jpg", alt: "Waterfowl at Rivers Lodge" }, { src: "/img/waterfowl-10-gallery.jpg", alt: "Waterfowl at Rivers Lodge" }, { src: "/img/waterfowl-11-gallery.jpg", alt: "Waterfowl at Rivers Lodge" },       { src: "/img/waterfowl-12-.jpg", alt: "Waterfowl at Rivers Lodge" },
     ],
     season: [
       { label: "Early Teal",    value: "Sep 1 – Sep 16" },
