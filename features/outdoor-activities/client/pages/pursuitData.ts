@@ -3,6 +3,7 @@ export interface Pursuit {
   title: string;
   teaser: string;
   heroImg: string;
+  tileImg?: string;
   heroAlt: string;
   description: string[];
   galleryImgs: { src: string; alt: string; objectPosition?: string }[];
@@ -108,7 +109,8 @@ export const PURSUITS: Pursuit[] = [
     slug: "turkey",
     title: "Turkey",
     teaser: "Spring and fall turkey in the river-bottom timber corridor.",
-    heroImg: "", /* TODO: upload turkey-hero.jpg */
+    heroImg: "/img/turkey-1-hero.jpg",
+    tileImg: "/img/turkey-1-gallery.jpg",
     heroAlt: "Turkey hunting at Rivers Lodge",
     description: [
       "The river-bottom timber at Rivers Lodge provides some of the best wild turkey habitat in eastern Kansas. Birds roost in the mature timber along the Marais des Cygnes and feed in the adjacent fields and forest edges — a pattern that makes them huntable but never easy.",
@@ -116,7 +118,8 @@ export const PURSUITS: Pursuit[] = [
       "Both run-and-gun calling hunts and blind setups are offered depending on conditions and guest preference. The estate's hunt manager provides real-time scouting intel the morning of the hunt based on trail camera activity from the previous 24 hours.",
     ],
     galleryImgs: [
-      { src: "/img/Ohana%20Aerial.jpg", alt: "Timber corridor — turkey habitat" },
+      { src: "/img/turkey-2-gallery.jpg", alt: "Turkey at Rivers Lodge" },
+      { src: "/img/turkey-3-gallery.jpg", alt: "Turkey at Rivers Lodge" },
     ],
     season: [
       { label: "Spring Season", value: "Apr 1 – May 31" },
