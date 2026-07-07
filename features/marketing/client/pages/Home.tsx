@@ -165,9 +165,9 @@ export default function Home() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
             {/* Image */}
             <Picture
-          src="/img/EMPTY-2.jpg"
-                        alt="Placeholder — Estate photo pending"
-          label="EMPTY #2"
+          src="/img/lodgemain-1-.jpg"
+                        alt="The main lodge at Rivers Lodge & Hunt Club"
+          label="Main lodge"
               className="order-first lg:order-first aspect-[4/3] overflow-hidden w-full"
               width={1200}
               height={900}
@@ -284,9 +284,9 @@ export default function Home() {
               </div>
             </div>
             <Picture
-                        src="/img/EMPTY-3.jpg"
-                        alt="Placeholder — Our Story photo pending"
-                        label="EMPTY #3"
+                        src="/img/rivers-1-rockhome.jpg"
+                        alt="The rock home at Rivers Lodge & Hunt Club"
+                        label="Our story"
               className="order-first lg:order-first aspect-[4/3] overflow-hidden w-full"
               width={1200}
               height={900}
