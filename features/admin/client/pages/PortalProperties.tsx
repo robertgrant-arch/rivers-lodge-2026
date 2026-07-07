@@ -22,7 +22,7 @@ import {
 import { Switch } from '@shared/ui/switch';
 import { Checkbox } from '@shared/ui/checkbox';
 import {
-  TreePine, Plus, Pencil, Loader2, AlertCircle, Users, Eye, EyeOff, Upload, X,
+  TreePine, Plus, Pencil, Loader2, Trash2, AlertCircle, Users, Eye, EyeOff, Upload, X,
   ChevronDown, ChevronUp, Thermometer, Truck, Waves, Zap, Wifi,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -485,12 +485,12 @@ function EditPropertyForm({
   initial,
   onSave,
   onClose,
-  isSaving,
+  isSaving,     onDelete,
 }: {
   initial: any;
   onSave: (data: any) => void;
   onClose: () => void;
-  isSaving: boolean;
+  isSaving: boolean;     onDelete: () => void;
 }) {
   const [form, setForm] = useState({
     name: initial.name ?? "",
@@ -807,10 +807,18 @@ function EditPropertyForm({
       </div>
 
       <DialogFooter className="gap-2 pt-2">
+        <Button
+variant="destructive"
+onClick={() => { if (window.confirm("Delete this property? This cannot be undone.")) { onDelete(); } }}
+disabled={isSaving}
+className="mr-auto bg-red-800 hover:bg-red-700 text-white"
+>
+<Trash2 className="w-4 h-4 mr-2" /> Delete
+</Button>
         <Button variant="ghost" onClick={onClose} disabled={isSaving} className="text-stone-400">Cancel</Button>
         <Button onClick={handleSubmit} disabled={isSaving} className="bg-amber-700 hover:bg-amber-600 text-white">
           {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save Changes"}
-        </Button>
+                        </Button>
       </DialogFooter>
     </div>
   );
@@ -956,6 +964,15 @@ export default function PortalProperties() {
     },
     onError: (err: any) => toast.error(`Failed to update: ${err.message}`),
   });
+  
+  const del = trpc.propertyBooking.admin.properties.delete.useMutation({
+  onSuccess: () => {
+  toast.success("Property deleted.");
+  utils.propertyBooking.adminProperties.list.invalidate();
+  setEditTarget(null);
+  },
+  onError: (err: any) => toast.error(err.message || "Failed to delete property."),
+  });
 
   const filtered = (properties ?? []).filter((p: any) => {
     const matchesSearch = !search || p.name.toLowerCase().includes(search.toLowerCase()) || p.slug.includes(search.toLowerCase());
@@ -1065,6 +1082,7 @@ export default function PortalProperties() {
               onSave={(data) => update.mutate(data)}
               onClose={() => setEditTarget(null)}
               isSaving={update.isPending}
+              onDelete={() => del.mutate({ id: editTarget.id })}
             />
           </DialogContent>
         </Dialog>
