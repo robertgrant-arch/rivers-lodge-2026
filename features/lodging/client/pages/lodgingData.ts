@@ -77,7 +77,7 @@ galleryImgs: [
 { src: "/brand/Riverhouse Suite 1.jpg", alt: "Riverhouse Suites — Photo 1" },
 { src: "/brand/Riverhouse outdoors.jpg", alt: "Riverhouse Suites — Photo 2" },
 { src: "/brand/riverhouse 3 jpg.jpg", alt: "Riverhouse Suites — Photo 3" },
-{ src: "/brand/riverhouse 5.jpg", alt: "Riverhouse Suites — Photo 4" },       { src: "/img/EMPTY-36.jpg", alt: "EMPTY #36 — Riverhouse Suites placeholder" },       { src: "/img/EMPTY-37.jpg", alt: "EMPTY #37 — Riverhouse Suites placeholder" },
+{ src: "/brand/riverhouse 5.jpg", alt: "Riverhouse Suites — Photo 4" },       { src: "/img/riverhouse-7-gallery.jpg", alt: "EMPTY #36 — Riverhouse Suites placeholder" },       { src: "/img/riverhouse-9-gallery.jpg", alt: "EMPTY #37 — Riverhouse Suites placeholder" },
 ],
 },
 {
