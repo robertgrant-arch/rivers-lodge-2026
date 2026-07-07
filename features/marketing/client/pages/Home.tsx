@@ -165,9 +165,9 @@ export default function Home() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
             {/* Image */}
             <Picture
-              src="/img/Ohana%20Aerial.jpg"
-              alt="Aerial view of Rivers Lodge estate on the Marais des Cygnes"
-              label="Estate aerial"
+          src="/img/EMPTY-2.jpg"
+                        alt="Placeholder — Estate photo pending"
+          label="EMPTY #2"
               className="order-first lg:order-first aspect-[4/3] overflow-hidden w-full"
               width={1200}
               height={900}
@@ -284,9 +284,9 @@ export default function Home() {
               </div>
             </div>
             <Picture
-              src="/img/3C0A0165.jpg"
-              alt="Rivers Lodge & Hunt Club estate"
-              label="Estate"
+                        src="/img/EMPTY-3.jpg"
+                        alt="Placeholder — Our Story photo pending"
+                        label="EMPTY #3"
               className="order-first lg:order-first aspect-[4/3] overflow-hidden w-full"
               width={1200}
               height={900}
