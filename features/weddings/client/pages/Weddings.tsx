@@ -27,10 +27,10 @@ return ref;
 }
 
 const venues = [
-{ name: "River Lawn", img: "", desc: "An open lawn between the Lodge and the Marais des Cygnes — the estate's most dramatic outdoor ceremony site. Seats up to 200." },
-{ name: "Rivers Barn", img: "", desc: "6,000 sq ft of open timber-frame space. Accommodates up to 300 guests for ceremonies and receptions. Full catering kitchen." },
-{ name: "Timber Edge", img: "", desc: "A ceremony space framed by old-growth timber on the river corridor. Intimate, shaded, and unlike anything else in the region." },
-{ name: "The Clubhouse", img: "", desc: "A refined indoor gathering space for wedding weekend hosting, cocktail hours, private dinners, and smaller celebrations." },
+  { name: "River Lawn", img: "/img/riverlawn.jpg", desc: "An open lawn between the Lodge and the Marais des Cygnes — the estate's most dramatic outdoor ceremony site. Seats up to 200." },
+  { name: "Rivers Barn", img: "/img/barnwedding.jpg", desc: "6,000 sq ft of open timber-frame space. Accommodates up to 300 guests for ceremonies and receptions. Full catering kitchen." },
+  { name: "Timber Edge", img: "/img/timberedge.jpg", desc: "A ceremony space framed by old-growth timber on the river corridor. Intimate, shaded, and unlike anything else in the region." },
+  { name: "The Clubhouse", img: "/img/clubhousewedding.jpg", desc: "A refined indoor gathering space for wedding weekend hosting, cocktail hours, private dinners, and smaller celebrations." },
 { name: "The Pavilion", img: "", desc: "An open-air setting that adds flexibility for ceremonies, cocktail hours, dinners, or relaxed outdoor receptions." },
 ];
 
