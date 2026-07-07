@@ -165,7 +165,7 @@ export default function Home() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
             {/* Image */}
             <Picture
-          src="/img/lodgemain-1-.jpg"
+          src="https://riverslodgehunt.com/img/lodgemain-1-.jpg"
                         alt="The main lodge at Rivers Lodge & Hunt Club"
           label="Main lodge"
               className="order-first lg:order-first aspect-[4/3] overflow-hidden w-full"
@@ -284,7 +284,7 @@ export default function Home() {
               </div>
             </div>
             <Picture
-                        src="/img/rivers-1-rockhome.jpg"
+                        src="https://riverslodgehunt.com/img/rivers-1-rockhome.jpg"
                         alt="The rock home at Rivers Lodge & Hunt Club"
                         label="Our story"
               className="order-first lg:order-first aspect-[4/3] overflow-hidden w-full"
