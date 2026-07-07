@@ -6,10 +6,10 @@ import Picture from "@shared/components/Picture";
 
 /* ── Hero slideshow ──────────────────────────────────────────────────────── */
 const HERO_SLIDES: { src: string; alt: string; label: string; pos?: string }[] = [
-  { src: "/img/Ohana%20Aerial.jpg", alt: "Rivers Lodge & Hunt Club — aerial view at golden hour", label: "Hero Image 1" },
+    { src: "/img/Ohana%20Aerial.jpg", alt: "Rivers Lodge & Hunt Club — aerial view at golden hour", label: "Hero Image 1", pos: "center 72%" },
   { src: "/img/Clubhouse%20Home.jpg", alt: "Timber Edge Clubhouse bar and lounge interior", label: "Hero Image 2" },
-  { src: "/img/hero%203.jpg", alt: "Rivers Lodge & Hunt Club", label: "Hero Image 3" },
-  { src: "/brand/clubhouse%204.jpg", alt: "Rivers Lodge & Hunt Club", label: "Hero Image 4" },
+    { src: "/img/hero%203.jpg", alt: "Rivers Lodge & Hunt Club", label: "Hero Image 3", pos: "center 68%" },
+    { src: "/brand/clubhouse%204.jpg", alt: "Rivers Lodge & Hunt Club", label: "Hero Image 4", pos: "center 40%" },
   { src: "/brand/clubhouse%20exterior.jpg", alt: "Rivers Lodge & Hunt Club exterior", label: "Hero Image 5" },
   { src: "/img/weddinghero-1-homepage.jpg", alt: "Wedding celebration at Rivers Lodge", label: "Hero Image 6", pos: "center 75%" },
 ];
