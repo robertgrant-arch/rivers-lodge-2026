@@ -5,13 +5,13 @@ import SEOHead from '@shared/components/SEOHead';
 import Picture from "@shared/components/Picture";
 
 /* ── Hero slideshow ──────────────────────────────────────────────────────── */
-const HERO_SLIDES: { src: string; alt: string; label: string }[] = [
-  { src: "/img/Ohana%20Aerial.jpg",    alt: "Rivers Lodge & Hunt Club — aerial view at golden hour", label: "Hero Image 1" },
-  { src: "/img/Clubhouse%20Home.jpg",  alt: "Timber Edge Clubhouse bar and lounge interior",         label: "Hero Image 2" },
-  { src: "/img/hero%203.jpg",          alt: "Rivers Lodge & Hunt Club",                              label: "Hero Image 3" },
-  { src: "/brand/clubhouse%204.jpg",    alt: "Rivers Lodge & Hunt Club",                              label: "Hero Image 4" },
-  { src: "/brand/clubhouse%20exterior.jpg", alt: "Rivers Lodge & Hunt Club exterior",                label: "Hero Image 5" },
-  { src: "/img/weddinghero-1-homepage.jpg", alt: "Wedding celebration at Rivers Lodge",             label: "Hero Image 6" },
+const HERO_SLIDES: { src: string; alt: string; label: string; pos?: string }[] = [
+  { src: "/img/Ohana%20Aerial.jpg", alt: "Rivers Lodge & Hunt Club — aerial view at golden hour", label: "Hero Image 1" },
+  { src: "/img/Clubhouse%20Home.jpg", alt: "Timber Edge Clubhouse bar and lounge interior", label: "Hero Image 2" },
+  { src: "/img/hero%203.jpg", alt: "Rivers Lodge & Hunt Club", label: "Hero Image 3" },
+  { src: "/brand/clubhouse%204.jpg", alt: "Rivers Lodge & Hunt Club", label: "Hero Image 4" },
+  { src: "/brand/clubhouse%20exterior.jpg", alt: "Rivers Lodge & Hunt Club exterior", label: "Hero Image 5" },
+  { src: "/img/weddinghero-1-homepage.jpg", alt: "Wedding celebration at Rivers Lodge", label: "Hero Image 6", pos: "center 75%" },
 ];
 
 function HeroSlideshow() {
@@ -43,7 +43,8 @@ function HeroSlideshow() {
             alt={slide.alt}
             label={slide.label}
             className="absolute inset-0 w-full h-full"
-            imgClassName="absolute inset-0 w-full h-full object-cover object-center"
+                        imgClassName={`absolute inset-0 w-full h-full object-cover ${slide.pos ? "" : "object-center"}`}
+            imgStyle={slide.pos ? { objectPosition: slide.pos } : undefined}
             fetchPriority={i === 0 ? "high" : "low"}
             loading={i === 0 ? "eager" : "lazy"}
             decoding="async"
