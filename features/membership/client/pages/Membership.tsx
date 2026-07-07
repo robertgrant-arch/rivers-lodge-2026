@@ -318,7 +318,7 @@ export default function Membership() {
 
       {/* Active member shortcut banner */}
       {isActiveMember && (
-        <div className="bg-[#2B2823] border-b border-[#57544E] px-5 lg:px-14 py-3 flex items-center justify-between gap-4">
+        <div className="bg-[#2B2823] border-b border-[#57544E] px-5 lg:px-14 pt-24 lg:pt-28 pb-3 flex items-center justify-between gap-4">
           <p className="text-[11px] tracking-[0.14em] uppercase font-sans text-[#9B4D19]">
             You are an active member
           </p>
