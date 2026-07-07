@@ -218,18 +218,12 @@ type LlmProvider = {
 };
 
 /**
- * Choose the LLM backend. Prefer the Forge proxy when it's configured
- * (BUILT_IN_FORGE_API_KEY); otherwise fall back to OpenAI directly
- * (OPENAI_API_KEY). Returns null when neither is set.
+ * Choose the LLM backend. OpenAI wins when OPENAI_API_KEY is set — it's the
+ * key the operator configured deliberately. The Forge proxy key is scaffold
+ * residue that may be stale, so it's only a fallback. Returns null when
+ * neither is set.
  */
 const resolveProvider = (): LlmProvider | null => {
-  if (ENV.forgeApiKey) {
-    const url =
-      ENV.forgeApiUrl && ENV.forgeApiUrl.trim().length > 0
-        ? `${ENV.forgeApiUrl.replace(/\/$/, "")}/v1/chat/completions`
-        : "https://forge.manus.im/v1/chat/completions";
-    return { url, apiKey: ENV.forgeApiKey, model: "gemini-2.5-flash", isOpenAI: false };
-  }
   if (ENV.openaiApiKey) {
     return {
       url: "https://api.openai.com/v1/chat/completions",
@@ -237,6 +231,13 @@ const resolveProvider = (): LlmProvider | null => {
       model: ENV.openaiModel || "gpt-4o-mini",
       isOpenAI: true,
     };
+  }
+  if (ENV.forgeApiKey) {
+    const url =
+      ENV.forgeApiUrl && ENV.forgeApiUrl.trim().length > 0
+        ? `${ENV.forgeApiUrl.replace(/\/$/, "")}/v1/chat/completions`
+        : "https://forge.manus.im/v1/chat/completions";
+    return { url, apiKey: ENV.forgeApiKey, model: "gemini-2.5-flash", isOpenAI: false };
   }
   return null;
 };
