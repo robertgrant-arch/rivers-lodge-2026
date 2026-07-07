@@ -380,17 +380,7 @@ export default function Membership() {
                 <p>We keep the membership intentionally small. The land is never over-pressured, the experience is never crowded, and the community remains one where everyone knows each other. Membership is by invitation.</p>
               </div>
             </div>
-            <Picture
-                        src="/img/EMPTY-4.jpg"
-                        alt="Placeholder — Philosophy photo pending"
-          label="EMPTY #4"
-              className="aspect-[4/3] overflow-hidden"
-              loading="lazy"
-              decoding="async"
-              sizes="(max-width: 1024px) 100vw, 50vw"
-              width={1200}
-              height={900}
-            />
+            <div />
           </div>
         </div>
       </section>
