@@ -301,11 +301,10 @@ export default function Home() {
         <div className="max-w-[1440px] mx-auto px-5 lg:px-14">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
             {/* Image */}
-            <Picture
-              src="/img/3C0A0165.jpg"
+            <img
+              src="/img/membershiphomepage-1-.jpg"
               alt="Upland bird hunting at Rivers Lodge & Hunt Club"
-              label="Membership / outdoors"
-              className="order-first lg:order-first aspect-[4/3] overflow-hidden w-full"
+              className="order-first lg:order-first aspect-[4/3] overflow-hidden w-full object-cover"
               width={1200}
               height={900}
               sizes="(max-width: 1024px) 100vw, 50vw"
