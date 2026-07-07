@@ -4,7 +4,6 @@
  * Seed 12 activities, 3 slot templates, and one demo property.
  */
 
-import { getPortalDb } from "@core/server/db";
 import {
   createActivity,
   createSlotTemplate,
@@ -13,11 +12,10 @@ import {
   setPropertySlots,
   getAllActivities,
   getAllSlotTemplates,
+  getPropertyBySlug,
 } from "@core/server/db";
 
 export async function seedPropertySlotConfig() {
-  const db = getPortalDb();
-
   // ─── Activities ────────────────────────────────────────────────────────────
   const activitySeed = [
     { key: "deer", label: "Deer Hunting", icon: "target", sortOrder: 1 },
@@ -35,15 +33,12 @@ export async function seedPropertySlotConfig() {
   ];
 
   console.log("[Seed] Seeding activities...");
+  const existingActivities = await getAllActivities();
   const activities: any = [];
   for (const actData of activitySeed) {
-    const existing = await db
-      .select()
-      .from(db.query.activities as any)
-      .where((t: any) => t.key === actData.key)
-      .limit(1);
+    const existing = existingActivities.filter((a: any) => a.key === actData.key);
 
-    if (!existing || existing.length === 0) {
+    if (existing.length === 0) {
       const created = await createActivity(actData);
       activities.push(created);
     } else {
@@ -77,15 +72,12 @@ export async function seedPropertySlotConfig() {
   ];
 
   console.log("[Seed] Seeding slot templates...");
+  const existingSlotTemplates = await getAllSlotTemplates();
   const slotTemplates: any = [];
   for (const slotData of slotTemplateSeed) {
-    const existing = await db
-      .select()
-      .from(db.query.slotTemplates as any)
-      .where((t: any) => t.key === slotData.key)
-      .limit(1);
+    const existing = existingSlotTemplates.filter((s: any) => s.key === slotData.key);
 
-    if (!existing || existing.length === 0) {
+    if (existing.length === 0) {
       const created = await createSlotTemplate(slotData);
       slotTemplates.push(created);
     } else {
@@ -121,17 +113,13 @@ export async function seedPropertySlotConfig() {
     sortOrder: 1,
   };
 
-  const existing = await db
-    .select()
-    .from(db.query.properties as any)
-    .where((t: any) => t.slug === demoPropertySeed.slug)
-    .limit(1);
+  const existing = await getPropertyBySlug(demoPropertySeed.slug);
 
   let property: any;
-  if (!existing || existing.length === 0) {
+  if (!existing) {
     property = await createProperty(demoPropertySeed);
   } else {
-    property = existing[0];
+    property = existing;
   }
 
   // Assign activities (deer, turkey)

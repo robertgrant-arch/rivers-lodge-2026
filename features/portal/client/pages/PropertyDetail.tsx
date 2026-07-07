@@ -601,7 +601,7 @@ export default function PropertyDetail() {
                   { label: "Waterfowl", value: property.maxWaterfowlHunters },
                   { label: "Upland", value: property.maxUplandHunters },
                   { label: "Guests", value: property.maxGuests },
-                ].filter((item) => item.value > 0);
+                ].filter((item) => (item.value ?? 0) > 0);
 
                 return capacityItems.length > 0 ? (
                   <div className="text-xs text-stone-400 space-y-1">

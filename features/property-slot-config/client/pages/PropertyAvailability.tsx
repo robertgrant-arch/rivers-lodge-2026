@@ -5,6 +5,7 @@
  * and request bookings.
  */
 
+import { skipToken } from "@tanstack/react-query";
 import { useState } from "react";
 import { trpc } from '@shared/lib/trpc';
 import { Button } from '@shared/ui/button';
@@ -36,8 +37,8 @@ export default function PropertyAvailability() {
   const { data: availability } = trpc.propertySlotConfig.member.availability.useQuery(
     expandedPropertyId
       ? { propertyId: expandedPropertyId, date: selectedDate || new Date().toISOString().split("T")[0] }
-      : null,
-    { enabled: !!expandedPropertyId, staleTime: 30 * 1000 },
+      : skipToken,
+    { staleTime: 30 * 1000 },
   );
 
   return (

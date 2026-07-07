@@ -94,7 +94,7 @@ function PropertyCard({ property }: { property: any }) {
           {/* Activity badges overlay */}
           {activities.length > 0 && (
             <div className="absolute top-3 left-3 flex flex-wrap gap-1">
-              {activities.map((activity) => {
+              {activities.map((activity: string) => {
                 const activityColor = ACTIVITY_COLORS[activity] ?? "bg-stone-700/20 text-stone-300 border-stone-600";
                 const activityConfig = ACTIVITIES.find((a) => a.value === activity);
                 return (

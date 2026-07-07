@@ -269,13 +269,8 @@ const memberPropertiesRouter = router({
       const db = getDb();
       let query = db.select().from(properties).where(eq(properties.active, true)).$dynamic();
 
-      if (input.activityKey) {
-        // Filter by activity — join with propertyActivities
-        query = query.where(
-          // This is a simplified version; in production you'd use a proper join
-          // For now, just load all properties and filter in app layer
-        );
-      }
+      // activityKey filtering happens in the app layer below — the join-based
+      // SQL filter was never implemented and an empty .where() is invalid.
 
       const allProperties = await query.orderBy(properties.sortOrder);
       return allProperties;

@@ -1021,14 +1021,10 @@ export const propertyBookingRouter = router({
         }))
         .mutation(async ({ ctx, input }: { ctx: any; input: any }) => {
           try {
-            console.log("[admin.properties.create] START - input:", JSON.stringify(input, null, 2));
-
             requireAdmin(ctx.user.role);
-            console.log("[admin.properties.create] admin check passed");
 
             const db = await getDb();
             if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
-            console.log("[admin.properties.create] db connection acquired");
 
             const ts = now();
             const insertValues = {
@@ -1061,16 +1057,13 @@ export const propertyBookingRouter = router({
               createdAt: ts,
               updatedAt: ts,
             };
-            console.log("[admin.properties.create] prepared insert values");
 
             const result = await db.insert(huntingProperties).values(insertValues as any).returning();
-            console.log("[admin.properties.create] insert executed, raw result:", JSON.stringify(result, null, 2));
 
             // Extract inserted ID from Drizzle result
             // With .returning(), result is an array of inserted rows
             const insertedRow = result?.[0];
             const propertyId = insertedRow?.id;
-            console.log("[admin.properties.create] extracted propertyId:", propertyId, "type:", typeof propertyId, "full row:", JSON.stringify(insertedRow));
 
             if (!propertyId) {
               console.error("[admin.properties.create] propertyId extraction failed. Result structure:", JSON.stringify(result));
@@ -1082,19 +1075,14 @@ export const propertyBookingRouter = router({
 
             // Save selected activities to join table
             if (input.activities && input.activities.length > 0) {
-              console.log("[admin.properties.create] inserting activities:", input.activities);
               const activityRows = input.activities.map((activity: string) => ({
                 propertyId,
                 activity,
               }));
               await db.insert(propertyActivities).values(activityRows as any);
-              console.log("[admin.properties.create] activities inserted successfully");
-            } else {
-              console.log("[admin.properties.create] no activities to insert");
             }
 
             // Create default booking rules
-            console.log("[admin.properties.create] creating default booking rules for propertyId:", propertyId);
             await db.insert(propertyBookingRules).values({
               propertyId,
               advanceBookingDays: 6,
@@ -1115,9 +1103,6 @@ export const propertyBookingRouter = router({
               overbookingPercent: 0,
               updatedAt: ts,
             } as any);
-            console.log("[admin.properties.create] booking rules created successfully");
-
-            console.log("[admin.properties.create] SUCCESS - returning propertyId:", propertyId);
             return { propertyId };
           } catch (error) {
             console.error("[admin.properties.create] CAUGHT ERROR:");

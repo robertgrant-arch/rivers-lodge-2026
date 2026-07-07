@@ -14,7 +14,6 @@ export async function runStartupMigration() {
 
   try {
     // Dynamically import pg to avoid type resolution issues
-    // @ts-expect-error pg module installed at runtime
     const pgModule = await import("pg");
     const Pool = pgModule.Pool;
 
@@ -153,7 +152,6 @@ export async function checkHuntingPropertiesSchema() {
   ];
 
   try {
-    // @ts-expect-error pg module installed at runtime
     const pgModule = await import("pg");
     const Pool = pgModule.Pool;
 

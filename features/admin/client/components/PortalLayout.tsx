@@ -34,12 +34,10 @@ import {
   ChevronDown,
   ClipboardList,
   Eye,
-  Fish,
   Heart,
   Home,
   LogOut,
   Search,
-  Settings,
   Shield,
   Target,
   TrendingUp,
@@ -50,7 +48,7 @@ import {
   FileText,
   Newspaper,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from "@/_shared/components/DashboardLayoutSkeleton";
 

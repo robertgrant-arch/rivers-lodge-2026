@@ -74,9 +74,9 @@ export async function shouldAutoApproveBiking(req: BookingRequest): Promise<Book
   }
 
   // Determine auto-approve setting (slot override or property default)
-  const shouldAutoApprove = propSlotConfig?.autoApprove !== undefined
-    ? propSlotConfig.autoApprove
-    : prop.autoApprove;
+  const shouldAutoApprove = Boolean(
+    propSlotConfig?.autoApprove !== undefined ? propSlotConfig.autoApprove : prop.autoApprove,
+  );
 
   // Check overnight exclusive conflict
   if (slotTemplate.spansMultipleDays === 1 && prop.overnightExclusive) {
@@ -90,7 +90,7 @@ export async function shouldAutoApproveBiking(req: BookingRequest): Promise<Book
   }
 
   // Check party size vs max capacity
-  const maxParty = propSlotConfig?.maxParty ?? prop.maxHunters;
+  const maxParty = propSlotConfig?.maxParty ?? prop.maxHunters ?? 0;
   if (req.partySize > maxParty) {
     return { autoApproved: false, requiresApproval: true, reason: `Exceeds max party size of ${maxParty}` };
   }

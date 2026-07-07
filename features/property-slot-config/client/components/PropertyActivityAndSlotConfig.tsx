@@ -99,7 +99,7 @@ export function PropertyActivityAndSlotConfig({ propertyId }: { propertyId: numb
   const handleSaveSlots = () => {
     updateSlots.mutate({
       propertyId,
-      slotConfigs,
+      slotConfigs: slotConfigs.map((s) => ({ ...s, notes: s.notes ?? undefined })),
     });
   };
 
