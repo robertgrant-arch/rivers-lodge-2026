@@ -165,7 +165,7 @@ export default function OutdoorActivities() {
                   />
                 ) : (
                   <Picture
-                    src={pursuit.heroImg}
+                    src={pursuit.tileImg ?? pursuit.heroImg}
                     alt={pursuit.heroAlt}
                     label={pursuit.title}
                     className="aspect-[4/3] overflow-hidden"
