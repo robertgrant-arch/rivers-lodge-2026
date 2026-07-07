@@ -2,7 +2,7 @@ import { useRef, useEffect, useState } from "react";
 import { Link } from "wouter";
 import { Turnstile } from "@marsidev/react-turnstile";
 import type { TurnstileInstance } from "@marsidev/react-turnstile";
-import PublicLayout from "@features/public-pages/components/PublicLayout";
+import PublicLayout from "@shared/components/PublicLayout";
 import Picture from "@shared/components/Picture";
 import { trpc } from '@shared/lib/trpc';
 import SEOHead, { structuredData } from '@shared/components/SEOHead';

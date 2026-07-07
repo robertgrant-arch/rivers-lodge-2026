@@ -4,7 +4,7 @@ import PublicLayout from "@shared/components/PublicLayout";
 import SEOHead from "@shared/components/SEOHead";
 import Picture from "@shared/components/Picture";
 import { getVenue } from "./lodgingData";
-import NotFound from "@features/marketing/client/pages/NotFound";
+import NotFound from "@shared/pages/NotFound";
 
 const ACCENT = "#9B4D19";
 

@@ -29,4 +29,4 @@ export {
   type WaiverTemplate,
   portalWaivers,
   type PortalWaiver,
-} from "@features/portal/schema";
+} from "@features/portal/public";

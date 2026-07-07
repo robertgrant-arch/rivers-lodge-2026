@@ -4,7 +4,7 @@ import PublicLayout from "@shared/components/PublicLayout";
 import SEOHead from "@shared/components/SEOHead";
 import Picture from "@shared/components/Picture";
 import { getPursuit } from "./pursuitData";
-import NotFound from "@features/marketing/client/pages/NotFound";
+import NotFound from "@shared/pages/NotFound";
 
 const ACCENT = "#6B7250";
 

@@ -25,14 +25,14 @@ import { users } from "@features/auth/server/public";
 import { members, membershipApplications } from "@features/membership/public";
 import { inquiries } from "@features/inquiries/public";
 import { bookings } from "@features/booking-engine/public";
-import { waivers } from "@features/waivers/schema";
-import { seasonalUpdates } from "@features/updates/schema";
+import { waivers } from "@features/waivers/public";
+import { seasonalUpdates } from "@features/updates/public";
 import {
   cmsTestimonials,
   cmsFaqs,
   cmsAnnouncements,
   cmsMemberContent,
-} from "@features/cms/schema";
+} from "@features/cms/public";
 import { randomBytes, createHash } from "crypto";
 import { invites } from "@features/auth/schema";
 import { sendInviteEmail, sendPasswordResetNotification, sendWaiverEmail } from "@core/server/mailer";

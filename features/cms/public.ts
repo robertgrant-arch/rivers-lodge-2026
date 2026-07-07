@@ -14,3 +14,9 @@ export type {
   CmsMemberContent,
   CmsSingleton,
 } from './types';
+export {
+  cmsTestimonials,
+  cmsFaqs,
+  cmsAnnouncements,
+  cmsMemberContent,
+} from './schema';
