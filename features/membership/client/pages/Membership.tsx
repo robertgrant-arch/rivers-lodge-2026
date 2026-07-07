@@ -381,8 +381,9 @@ export default function Membership() {
               </div>
             </div>
             <Picture
-              src={AERIAL}
-              alt="Aerial view of the estate"
+                        src="/img/EMPTY-4.jpg"
+                        alt="Placeholder — Philosophy photo pending"
+          label="EMPTY #4"
               className="aspect-[4/3] overflow-hidden"
               loading="lazy"
               decoding="async"
