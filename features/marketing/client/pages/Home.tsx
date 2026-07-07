@@ -213,7 +213,7 @@ export default function Home() {
       </div>
       {/* Image — right on desktop */}
       <Picture
-        src="/img/rivershomepage.outdoorpursuits.jpg"
+        src="/img/waterfowldark.jpg"
         alt="Upland bird hunter walking through tall grass at Rivers Lodge"
         label="Upland hunt"
         className="aspect-[4/3] overflow-hidden w-full order-1 lg:order-2"
