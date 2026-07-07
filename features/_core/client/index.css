@@ -634,8 +634,7 @@
 
   /* ── Hero — use 100svh for mobile browser chrome safety ─────────────────── */
   .hero-full {
-    height: 100svh;
-    min-height: 620px;
+  height: 100dvh;    min-height: 620px;
   }
   @supports not (height: 100svh) {
     .hero-full {
