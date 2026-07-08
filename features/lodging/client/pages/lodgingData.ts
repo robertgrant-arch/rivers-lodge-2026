@@ -227,7 +227,7 @@ galleryImgs: [
 slug: "the-barn",
 title: "The Barn",
 teaser: "Rivers Barn — the estate's premier event and reception venue.",
-heroImg: "",
+heroImg: "/img/barn-14-hero.jpg",
 heroAlt: "The Barn — HERO / EMPTY",
 group: "gather",
 capacity: "250 guests",
