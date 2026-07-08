@@ -109,7 +109,7 @@ return (
 {/* Hero */}
 <section className="relative hero-full flex items-end pb-24 overflow-hidden">
 <div className="absolute inset-0">
-<Picture src={HERO} alt="Wedding ceremony at Rivers Lodge & Hunt Club" label="Wedding Hero Image" className="absolute inset-0 w-full h-full" imgClassName="absolute inset-0 w-full h-full object-cover object-top" fetchPriority="high" loading="eager" decoding="async" width={1920} height={1080} sizes="100vw" />
+<Picture src={HERO} alt="Wedding ceremony at Rivers Lodge & Hunt Club" label="Wedding Hero Image" className="absolute inset-0 w-full h-full" imgClassName="absolute inset-0 w-full h-full object-cover object-center" fetchPriority="high" loading="eager" decoding="async" width={1920} height={1080} sizes="100vw" />
 <div className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(to bottom, transparent 0%, oklch(0 0 0/0.10) 40%, oklch(0 0 0/0.78) 100%)" }} />
 </div>
 <div className="relative z-10 max-w-[1440px] mx-auto px-5 lg:px-14 w-full">
