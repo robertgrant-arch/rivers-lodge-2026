@@ -32,17 +32,9 @@ const pursuits = [
   { title: "Small Game",       desc: "Quail, pheasant, and rabbit hunting in the upland fields and native grass areas. Guided hunts available with trained dogs.", img: LODGE },
 ];
 
-const seasons = [
-  { species: "Whitetail Deer", open: "Sept 15",  close: "Jan 15",  notes: "Archery, muzzleloader, rifle" },
-  { species: "Waterfowl",      open: "Oct 1",    close: "Jan 31",  notes: "Duck & goose, split seasons" },
-  { species: "Turkey (Spring)",open: "Apr 1",    close: "May 31",  notes: "Shotgun & archery" },
-  { species: "Turkey (Fall)",  open: "Oct 1",    close: "Nov 30",  notes: "Shotgun & archery" },
-  { species: "Sporting Clays", open: "Year-round", close: "—",     notes: "Members & guests" },
-];
 
 export default function Hunt() {
   const pursuitsRef = useFadeUp();
-  const seasonRef   = useFadeUp();
   const ctaRef      = useFadeUp();
 
   return (
@@ -126,67 +118,6 @@ export default function Hunt() {
         </div>
       </section>
 
-      {/* Season Calendar */}
-      <section ref={seasonRef as React.RefObject<HTMLDivElement>} className="fade-up section bg-background">
-        <div className="max-w-[1440px] mx-auto px-5 lg:px-14">
-          <div className="mb-12">
-            <div style={{ height: "1px", width: "2rem", backgroundColor: "#6B7250", marginBottom: "1.25rem" }} />
-            <p className="eyebrow text-muted-brand mb-4">Season Calendar</p>
-            <h2 className="font-serif font-light text-warm leading-tight" style={{ fontSize: "clamp(1.75rem,3vw,2.5rem)" }}>
-              Kansas hunting seasons.
-            </h2>
-          </div>
-          {/* Month header */}
-          <div className="overflow-x-auto">
-            <div className="min-w-[640px]">
-              <div className="flex mb-2 pl-[180px]">
-                {["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"].map((m) => (
-                  <div key={m} className="flex-1 text-center eyebrow text-muted-brand" style={{ fontSize: "9px" }}>{m}</div>
-                ))}
-              </div>
-              {/* Season bars */}
-              {[
-                { species: "Whitetail Deer",   startMonth: 8.5,  endMonth: 12.5, notes: "Archery, rifle, muzzleloader" },
-                { species: "Waterfowl",         startMonth: 9,    endMonth: 12.9, notes: "Duck & goose, split seasons" },
-                { species: "Turkey (Spring)",   startMonth: 3,    endMonth: 4.9,  notes: "Shotgun & archery" },
-                { species: "Turkey (Fall)",     startMonth: 9,    endMonth: 10.9, notes: "Shotgun & archery" },
-                { species: "Sporting Clays",    startMonth: 0,    endMonth: 11.9, notes: "Members & guests year-round" },
-              ].map((s) => {
-                const left = (s.startMonth / 12) * 100;
-                const width = ((s.endMonth - s.startMonth) / 12) * 100;
-                return (
-                  <div key={s.species} className="flex items-center gap-4 mb-3">
-                    <div className="w-[180px] shrink-0">
-                      <p className="font-sans text-warm text-sm font-medium leading-tight">{s.species}</p>
-                      <p className="font-sans text-muted-brand" style={{ fontSize: "10px" }}>{s.notes}</p>
-                    </div>
-                    <div className="flex-1 relative h-7 bg-white/4 rounded-none">
-                      <div
-                        className="absolute top-0 bottom-0 rounded-none"
-                        style={{
-                          left: `${left}%`,
-                          width: `${width}%`,
-                          background: "rgba(107, 114, 80, 0.75)",
-                          borderLeft: "2px solid #6B7250",
-                        }}
-                      />
-                      {/* Month grid lines */}
-                      {[1,2,3,4,5,6,7,8,9,10,11].map((m) => (
-                        <div
-                          key={m}
-                          className="absolute top-0 bottom-0 w-px"
-                          style={{ left: `${(m/12)*100}%`, background: "#57544E" }}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-          <p className="font-sans text-muted-brand text-xs mt-6">* Seasons subject to Kansas Wildlife &amp; Parks regulations. Verify current seasons before hunting.</p>
-        </div>
-      </section>
 
       {/* CTA */}
       <section ref={ctaRef as React.RefObject<HTMLDivElement>} className="fade-up section bg-surface">

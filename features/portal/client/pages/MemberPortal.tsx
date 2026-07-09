@@ -749,20 +749,17 @@ export default function MemberPortal() {
                 <MiniCalendar blockedDates={blockedDateStrings} />
               </div>
               <div>
-                <h3 className="font-serif text-xl text-white mb-5">Season Dates</h3>
+                <h3 className="font-serif text-xl text-white mb-5">Activity Status</h3>
                 <div className="flex flex-col gap-3">
                   {[
-                    { season: "Whitetail Deer",   dates: "Oct 1 – Dec 31",  open: false },
-                    { season: "Waterfowl",         dates: "Nov 1 – Jan 31",  open: false },
-                    { season: "Turkey",            dates: "Apr 1 – May 31",  open: true  },
-                    { season: "Fishing",           dates: "Year-Round",      open: true  },
-                    { season: "Sporting Clays",    dates: "Year-Round",      open: true  },
+                    { season: "Whitetail Deer",   open: false },
+                    { season: "Waterfowl",         open: false },
+                    { season: "Turkey",            open: true  },
+                    { season: "Fishing",           open: true  },
+                    { season: "Sporting Clays",    open: true  },
                   ].map((s) => (
                     <div key={s.season} className="flex items-center justify-between bg-[#2B2823] border border-white/8 px-4 py-3">
-                      <div>
-                        <div className="text-sm font-sans font-medium text-white">{s.season}</div>
-                        <div className="text-xs font-sans text-white/40">{s.dates}</div>
-                      </div>
+                      <div className="text-sm font-sans font-medium text-white">{s.season}</div>
                       <span className={`text-[9px] tracking-[0.12em] uppercase font-sans px-2 py-0.5 ${
                         s.open ? "text-green-400 bg-green-400/10" : "text-white/30 bg-white/5"
                       }`}>
