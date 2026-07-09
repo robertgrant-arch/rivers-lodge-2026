@@ -245,12 +245,14 @@ function BookingDialog({
   property,
   startDate,
   endDate,
+  slot,
 }: {
   open: boolean;
   onClose: () => void;
   property: any;
   startDate: string;
   endDate: string;
+  slot: "AM" | "PM" | "Overnight";
 }) {
   const [, navigate] = useLocation();
   const utils = trpc.useUtils();
@@ -298,6 +300,7 @@ function BookingDialog({
       return;
     }
 
+    const slotPrefix = `[Slot: ${slot}] `;
     createBooking.mutate({
       propertyId: property.id,
       startDate,
@@ -308,7 +311,7 @@ function BookingDialog({
       hasMinors,
       huntingLicenseConfirmed: huntingLicense,
       fishingLicenseConfirmed: fishingLicense,
-      memberNotes: notes || undefined,
+      memberNotes: notes ? slotPrefix + notes : slotPrefix.trim(),
       idempotencyKey: crypto.randomUUID(),
     });
   };
@@ -333,7 +336,7 @@ function BookingDialog({
             </div>
             <div className="flex justify-between text-sm border-t border-stone-700 pt-1 mt-1">
               <span className="text-stone-400">Duration</span>
-              <span className="font-medium text-amber-400">{totalDays} day{totalDays > 1 ? "s" : ""}</span>
+              <span className="font-medium text-amber-400">{totalDays} day{totalDays > 1 ? "s" : ""} ({slot})</span>
             </div>
           </div>
 
@@ -509,25 +512,41 @@ export default function PropertyDetail() {
   const [selectedStart, setSelectedStart] = useState<string | null>(null);
   const [selectedEnd, setSelectedEnd] = useState<string | null>(null);
   const [bookingOpen, setBookingOpen] = useState(false);
+  const [selectedSlot, setSelectedSlot] = useState<"AM" | "PM" | "Overnight">("AM");
 
   const { data, isLoading, error } = trpc.propertyBooking.properties.detail.useQuery(
     { id: propertyId },
     { enabled: propertyId > 0 },
   );
 
+  const availableModes = useMemo(() => {
+    if (!data) return ["AM", "PM"];
+    const modes = Array.isArray(data.property.bookingModes) && data.property.bookingModes.length > 0
+      ? data.property.bookingModes
+      : ["AM", "PM"];
+    return modes.filter((m: string) => m !== "Overnight" || data.property.overnightEnabled);
+  }, [data]);
+
+  const activeSlot = availableModes.includes(selectedSlot) ? selectedSlot : (availableModes[0] as "AM" | "PM" | "Overnight");
+
   const handleDateSelect = (date: string) => {
-    if (!selectedStart || (selectedStart && selectedEnd)) {
-      // Start new selection
-      setSelectedStart(date);
-      setSelectedEnd(null);
-    } else {
-      // Complete the range
-      if (date < selectedStart) {
-        setSelectedEnd(selectedStart);
+    if (activeSlot === "Overnight") {
+      // Two-click range selection for overnight stays
+      if (!selectedStart || (selectedStart && selectedEnd)) {
         setSelectedStart(date);
+        setSelectedEnd(null);
       } else {
-        setSelectedEnd(date);
+        if (date < selectedStart) {
+          setSelectedEnd(selectedStart);
+          setSelectedStart(date);
+        } else {
+          setSelectedEnd(date);
+        }
       }
+    } else {
+      // Single-click for AM/PM: set both start and end to the same date
+      setSelectedStart(date);
+      setSelectedEnd(date);
     }
   };
 
@@ -763,9 +782,37 @@ export default function PropertyDetail() {
               <Calendar className="w-4 h-4 text-amber-500" />
               Select Dates
             </h2>
+
+            {availableModes.length > 1 && (
+              <div className="mb-4 flex gap-2">
+                {availableModes.map((mode: string) => (
+                  <button
+                    key={mode}
+                    onClick={() => {
+                      setSelectedSlot(mode as "AM" | "PM" | "Overnight");
+                      setSelectedStart(null);
+                      setSelectedEnd(null);
+                    }}
+                    className={`
+                      px-3 py-1 rounded-full text-sm font-medium transition-colors
+                      ${selectedSlot === mode
+                        ? "bg-amber-700 text-white"
+                        : "bg-stone-800 text-stone-300 hover:bg-stone-700"
+                      }
+                    `}
+                  >
+                    {mode}
+                  </button>
+                ))}
+              </div>
+            )}
+
             <p className="text-xs text-stone-400 mb-3">
-              Click a start date, then click an end date to select your stay.
-              {selectedStart && !selectedEnd && (
+              {activeSlot === "Overnight"
+                ? "Click a start date, then click an end date to select your stay."
+                : `Click a date to select your ${activeSlot} booking.`
+              }
+              {selectedStart && !selectedEnd && activeSlot === "Overnight" && (
                 <span className="text-amber-400 ml-2">Now select your end date.</span>
               )}
             </p>
@@ -791,11 +838,13 @@ export default function PropertyDetail() {
                           <span className="text-stone-500 mx-2">→</span>
                           <span className="font-medium text-stone-100">{formatDate(selectedEnd)}</span>
                         </>
-                      ) : (
+                      ) : activeSlot === "Overnight" ? (
                         <>
                           <span className="font-medium text-stone-100">{formatDate(selectedStart)}</span>
                           <span className="text-stone-400 ml-2">(select end date)</span>
                         </>
+                      ) : (
+                        <span className="font-medium text-stone-100">{formatDate(selectedStart)}</span>
                       )}
                     </p>
                     {canBook && (
@@ -817,7 +866,7 @@ export default function PropertyDetail() {
                         onClick={() => setBookingOpen(true)}
                         className="bg-amber-700 hover:bg-amber-600 text-white"
                       >
-                        Book Now
+                        Book {activeSlot}
                       </Button>
                     )}
                   </div>
@@ -836,6 +885,7 @@ export default function PropertyDetail() {
           property={property}
           startDate={selectedStart!}
           endDate={selectedEnd!}
+          slot={activeSlot}
         />
       )}
     </div>
