@@ -252,7 +252,7 @@ function BookingDialog({
   property: any;
   startDate: string;
   endDate: string;
-  slot: "AM" | "PM" | "Overnight";
+  slot: "AM" | "PM" | "AllDay" | "Overnight";
 }) {
   const [, navigate] = useLocation();
   const utils = trpc.useUtils();
@@ -300,7 +300,8 @@ function BookingDialog({
       return;
     }
 
-    const slotPrefix = `[Slot: ${slot}] `;
+    const slotLabel = slot === "AllDay" ? "All Day" : slot;
+    const slotPrefix = `[Slot: ${slotLabel}] `;
     createBooking.mutate({
       propertyId: property.id,
       startDate,
@@ -336,7 +337,7 @@ function BookingDialog({
             </div>
             <div className="flex justify-between text-sm border-t border-stone-700 pt-1 mt-1">
               <span className="text-stone-400">Duration</span>
-              <span className="font-medium text-amber-400">{totalDays} day{totalDays > 1 ? "s" : ""} ({slot})</span>
+              <span className="font-medium text-amber-400">{totalDays} day{totalDays > 1 ? "s" : ""} ({slot === "AllDay" ? "All Day" : slot})</span>
             </div>
           </div>
 
@@ -512,7 +513,7 @@ export default function PropertyDetail() {
   const [selectedStart, setSelectedStart] = useState<string | null>(null);
   const [selectedEnd, setSelectedEnd] = useState<string | null>(null);
   const [bookingOpen, setBookingOpen] = useState(false);
-  const [selectedSlot, setSelectedSlot] = useState<"AM" | "PM" | "Overnight">("AM");
+  const [selectedSlot, setSelectedSlot] = useState<"AM" | "PM" | "AllDay" | "Overnight">("AM");
 
   const { data, isLoading, error } = trpc.propertyBooking.properties.detail.useQuery(
     { id: propertyId },
@@ -520,14 +521,15 @@ export default function PropertyDetail() {
   );
 
   const availableModes = useMemo(() => {
-    if (!data) return ["AM", "PM"];
-    const modes = Array.isArray(data.property.bookingModes) && data.property.bookingModes.length > 0
-      ? data.property.bookingModes
-      : ["AM", "PM"];
-    return modes.filter((m: string) => m !== "Overnight" || data.property.overnightEnabled);
+    if (!data) return ["AM", "PM", "AllDay"];
+    const modes = ["AM", "PM", "AllDay"];
+    if (data.property.overnightEnabled) {
+      modes.push("Overnight");
+    }
+    return modes;
   }, [data]);
 
-  const activeSlot = availableModes.includes(selectedSlot) ? selectedSlot : (availableModes[0] as "AM" | "PM" | "Overnight");
+  const activeSlot = availableModes.includes(selectedSlot) ? selectedSlot : (availableModes[0] as "AM" | "PM" | "AllDay" | "Overnight");
 
   const handleDateSelect = (date: string) => {
     if (activeSlot === "Overnight") {
@@ -544,7 +546,7 @@ export default function PropertyDetail() {
         }
       }
     } else {
-      // Single-click for AM/PM: set both start and end to the same date
+      // Single-click for AM/PM/AllDay: set both start and end to the same date
       setSelectedStart(date);
       setSelectedEnd(date);
     }
@@ -789,7 +791,7 @@ export default function PropertyDetail() {
                   <button
                     key={mode}
                     onClick={() => {
-                      setSelectedSlot(mode as "AM" | "PM" | "Overnight");
+                      setSelectedSlot(mode as "AM" | "PM" | "AllDay" | "Overnight");
                       setSelectedStart(null);
                       setSelectedEnd(null);
                     }}
@@ -801,7 +803,7 @@ export default function PropertyDetail() {
                       }
                     `}
                   >
-                    {mode}
+                    {mode === "AllDay" ? "All Day" : mode}
                   </button>
                 ))}
               </div>
@@ -810,7 +812,7 @@ export default function PropertyDetail() {
             <p className="text-xs text-stone-400 mb-3">
               {activeSlot === "Overnight"
                 ? "Click a start date, then click an end date to select your stay."
-                : `Click a date to select your ${activeSlot} booking.`
+                : `Click a date to select your ${activeSlot === "AllDay" ? "All Day" : activeSlot} booking.`
               }
               {selectedStart && !selectedEnd && activeSlot === "Overnight" && (
                 <span className="text-amber-400 ml-2">Now select your end date.</span>
@@ -866,7 +868,7 @@ export default function PropertyDetail() {
                         onClick={() => setBookingOpen(true)}
                         className="bg-amber-700 hover:bg-amber-600 text-white"
                       >
-                        Book {activeSlot}
+                        Book {activeSlot === "AllDay" ? "All Day" : activeSlot}
                       </Button>
                     )}
                   </div>
