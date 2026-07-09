@@ -361,20 +361,31 @@ const calendarRouter = router({
         // Normalize all nullable fields: empty strings → null, falsy → null
         const payload = normalizeInsertPayload(input);
 
-        const [result] = await db.insert(portalBlockedDates).values({
+        // Defensive coercion: ensure null fields stay null, never empty string
+        const insert = {
           startDate: input.startDate,
           endDate: input.endDate,
-          title: input.title ?? null,
+          title: input.title?.trim() || null,
           kind: input.kind ?? "blocked",
-          startAt: payload.startAt,
-          endAt: payload.endAt,
+          startAt: payload.startAt === "" ? null : payload.startAt,
+          endAt: payload.endAt === "" ? null : payload.endAt,
           allDay: input.allDay ?? true,
           reason: input.reason ?? "other",
-          reasonNotes: payload.reasonNotes,
+          reasonNotes: payload.reasonNotes === "" ? null : payload.reasonNotes,
           scope: payload.scope,
-          scopeTarget: payload.scopeTarget,
+          scopeTarget: payload.scopeTarget === "" ? null : payload.scopeTarget,
           createdByUserId: ctx.user.id,
-        } as any).returning({ id: portalBlockedDates.id });
+        };
+
+        // Log the insert payload for debugging
+        console.log('[blockDates] Insert payload:', JSON.stringify({
+          ...insert,
+          createdByUserId: '[REDACTED]',
+        }, null, 2));
+
+        const [result] = await db.insert(portalBlockedDates).values(insert as any)
+          .returning({ id: portalBlockedDates.id });
+
         await logAudit({
           actingUserId: ctx.user.id,
           actingUserName: ctx.user.email ?? "Staff",
