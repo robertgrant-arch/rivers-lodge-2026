@@ -5,7 +5,7 @@
  * and the self-booking form.
  */
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { useRoute, Link, useLocation } from "wouter";
 import { trpc } from '@shared/lib/trpc';
 import { Button } from '@shared/ui/button';
@@ -245,14 +245,12 @@ function BookingDialog({
   property,
   startDate,
   endDate,
-  slot,
 }: {
   open: boolean;
   onClose: () => void;
   property: any;
   startDate: string;
   endDate: string;
-  slot: "AM" | "PM" | "Overnight";
 }) {
   const [, navigate] = useLocation();
   const utils = trpc.useUtils();
@@ -300,7 +298,6 @@ function BookingDialog({
       return;
     }
 
-    const slotPrefix = `[Slot: ${slot}] `;
     createBooking.mutate({
       propertyId: property.id,
       startDate,
@@ -311,7 +308,7 @@ function BookingDialog({
       hasMinors,
       huntingLicenseConfirmed: huntingLicense,
       fishingLicenseConfirmed: fishingLicense,
-      memberNotes: notes ? slotPrefix + notes : slotPrefix.trim(),
+      memberNotes: notes || undefined,
       idempotencyKey: crypto.randomUUID(),
     });
   };
@@ -336,7 +333,7 @@ function BookingDialog({
             </div>
             <div className="flex justify-between text-sm border-t border-stone-700 pt-1 mt-1">
               <span className="text-stone-400">Duration</span>
-              <span className="font-medium text-amber-400">{totalDays} day{totalDays > 1 ? "s" : ""} ({slot})</span>
+              <span className="font-medium text-amber-400">{totalDays} day{totalDays > 1 ? "s" : ""}</span>
             </div>
           </div>
 
@@ -512,7 +509,6 @@ export default function PropertyDetail() {
   const [selectedStart, setSelectedStart] = useState<string | null>(null);
   const [selectedEnd, setSelectedEnd] = useState<string | null>(null);
   const [bookingOpen, setBookingOpen] = useState(false);
-  const [selectedSlot, setSelectedSlot] = useState<"AM" | "PM" | "Overnight">("AM");
 
   const { data, isLoading, error } = trpc.propertyBooking.properties.detail.useQuery(
     { id: propertyId },
@@ -520,23 +516,18 @@ export default function PropertyDetail() {
   );
 
   const handleDateSelect = (date: string) => {
-    if (selectedSlot === "Overnight") {
-      // Two-click range selection for overnight stays
-      if (!selectedStart || (selectedStart && selectedEnd)) {
-        setSelectedStart(date);
-        setSelectedEnd(null);
-      } else {
-        if (date < selectedStart) {
-          setSelectedEnd(selectedStart);
-          setSelectedStart(date);
-        } else {
-          setSelectedEnd(date);
-        }
-      }
-    } else {
-      // Single-click for AM/PM: set both start and end to the same date
+    if (!selectedStart || (selectedStart && selectedEnd)) {
+      // Start new selection
       setSelectedStart(date);
-      setSelectedEnd(date);
+      setSelectedEnd(null);
+    } else {
+      // Complete the range
+      if (date < selectedStart) {
+        setSelectedEnd(selectedStart);
+        setSelectedStart(date);
+      } else {
+        setSelectedEnd(date);
+      }
     }
   };
 
@@ -566,19 +557,6 @@ export default function PropertyDetail() {
 
   const { property, rules, seasons, amenities, images } = data;
   const coverImage = property.coverImageUrl ?? images?.[0]?.url;
-
-  const availableModes = useMemo(() => {
-    const modes = Array.isArray(property.bookingModes) && property.bookingModes.length > 0
-      ? property.bookingModes
-      : ["AM", "PM"];
-    return modes.filter((m: string) => m !== "Overnight" || property.overnightEnabled);
-  }, [property]);
-
-  useEffect(() => {
-    if (availableModes.length > 0 && !availableModes.includes(selectedSlot)) {
-      setSelectedSlot(availableModes[0] as "AM" | "PM" | "Overnight");
-    }
-  }, [availableModes, selectedSlot]);
 
   const canBook = selectedStart && selectedEnd;
   const selectedDays = canBook ? daysBetween(selectedStart!, selectedEnd!) : 0;
@@ -774,7 +752,7 @@ export default function PropertyDetail() {
         {/* Right: Calendar + booking */}
         <div className="lg:col-span-2 space-y-4">
           {/* Description */}
-          {property && property.description && (
+          {property.description && (
             <div className="prose prose-sm prose-invert max-w-none">
               <p className="text-stone-300 text-sm leading-relaxed">{property.description}</p>
             </div>
@@ -785,37 +763,9 @@ export default function PropertyDetail() {
               <Calendar className="w-4 h-4 text-amber-500" />
               Select Dates
             </h2>
-
-            {availableModes.length > 1 && (
-              <div className="mb-4 flex gap-2">
-                {availableModes.map((mode: string) => (
-                  <button
-                    key={mode}
-                    onClick={() => {
-                      setSelectedSlot(mode as "AM" | "PM" | "Overnight");
-                      setSelectedStart(null);
-                      setSelectedEnd(null);
-                    }}
-                    className={`
-                      px-3 py-1 rounded-full text-sm font-medium transition-colors
-                      ${selectedSlot === mode
-                        ? "bg-amber-700 text-white"
-                        : "bg-stone-800 text-stone-300 hover:bg-stone-700"
-                      }
-                    `}
-                  >
-                    {mode}
-                  </button>
-                ))}
-              </div>
-            )}
-
             <p className="text-xs text-stone-400 mb-3">
-              {selectedSlot === "Overnight"
-                ? "Click a start date, then click an end date to select your stay."
-                : `Click a date to select your ${selectedSlot} booking.`
-              }
-              {selectedStart && !selectedEnd && selectedSlot === "Overnight" && (
+              Click a start date, then click an end date to select your stay.
+              {selectedStart && !selectedEnd && (
                 <span className="text-amber-400 ml-2">Now select your end date.</span>
               )}
             </p>
@@ -867,7 +817,7 @@ export default function PropertyDetail() {
                         onClick={() => setBookingOpen(true)}
                         className="bg-amber-700 hover:bg-amber-600 text-white"
                       >
-                        Book {selectedSlot}
+                        Book Now
                       </Button>
                     )}
                   </div>
@@ -886,7 +836,6 @@ export default function PropertyDetail() {
           property={property}
           startDate={selectedStart!}
           endDate={selectedEnd!}
-          slot={selectedSlot}
         />
       )}
     </div>
