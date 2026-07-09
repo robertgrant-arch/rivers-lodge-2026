@@ -262,10 +262,42 @@ const calendarRouter = router({
           )),
       ]);
       return {
-        weddings: weddings.map(w => ({ ...w, _type: "wedding" as const })),
-        corporate: corporate.map(c => ({ ...c, _type: "corporate" as const })),
-        huntFish: huntFish.map(h => ({ ...h, _type: "hunt_fish" as const })),
-        blocked: blocked.map(b => ({ ...b, _type: "blocked" as const })),
+        weddings: weddings.map(w => ({
+          ...w,
+          _type: "wedding" as const,
+          title: w.coupleName || null,
+          kind: "wedding" as const,
+          startAt: null,
+          endAt: null,
+          allDay: true,
+        })),
+        corporate: corporate.map(c => ({
+          ...c,
+          _type: "corporate" as const,
+          title: c.companyName || null,
+          kind: "corporate" as const,
+          startAt: null,
+          endAt: null,
+          allDay: true,
+        })),
+        huntFish: huntFish.map(h => ({
+          ...h,
+          _type: "hunt_fish" as const,
+          title: h.species || null,
+          kind: "hunt_fish" as const,
+          startAt: null,
+          endAt: null,
+          allDay: true,
+        })),
+        blocked: blocked.map(b => ({
+          ...b,
+          _type: "blocked" as const,
+          title: b.title || null,
+          kind: b.kind || "blocked" as const,
+          startAt: b.startAt,
+          endAt: b.endAt,
+          allDay: b.allDay ?? true,
+        })),
       };
     }),
 
@@ -273,6 +305,11 @@ const calendarRouter = router({
     .input(z.object({
       startDate: z.string(),
       endDate: z.string(),
+      title: z.string().min(1).optional(),
+      kind: z.enum(["wedding", "corporate", "hunt_fish", "blocked"]).optional(),
+      startAt: z.string().datetime().optional(),
+      endAt: z.string().datetime().optional(),
+      allDay: z.boolean().optional(),
       reason: z.enum(["maintenance", "private_use", "seasonal_closure", "buffer", "other"]).optional(),
       reasonNotes: z.string().optional(),
       scope: z.enum(["entire_property", "specific_venue", "specific_lodging"]).optional(),
@@ -283,6 +320,11 @@ const calendarRouter = router({
       const [result] = await db.insert(portalBlockedDates).values({
         startDate: input.startDate,
         endDate: input.endDate,
+        title: input.title ?? null,
+        kind: input.kind ?? "blocked",
+        startAt: input.startAt ? new Date(input.startAt) : null,
+        endAt: input.endAt ? new Date(input.endAt) : null,
+        allDay: input.allDay ?? true,
         reason: input.reason ?? "other",
         reasonNotes: input.reasonNotes ?? null,
         scope: input.scope ?? "entire_property",
@@ -295,7 +337,7 @@ const calendarRouter = router({
         actionType: "create",
         entityType: "PortalBlockedDate",
         entityId: String(result.id),
-        notes: `Blocked ${input.startDate} to ${input.endDate}`,
+        notes: `Blocked ${input.startDate} to ${input.endDate}${input.title ? `: ${input.title}` : ""}`,
       });
       return { success: true, id: result.id };
     }),
