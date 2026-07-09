@@ -318,6 +318,13 @@ const calendarRouter = router({
     .mutation(async ({ input, ctx }) => {
       try {
         const db = getDb();
+
+        // Normalize scopeTarget: convert empty strings to null, and always null when scope is entire_property
+        const scope = input.scope ?? "entire_property";
+        const scopeTarget = scope === "entire_property" || !input.scopeTarget?.trim()
+          ? null
+          : input.scopeTarget.trim();
+
         const [result] = await db.insert(portalBlockedDates).values({
           startDate: input.startDate,
           endDate: input.endDate,
@@ -328,8 +335,8 @@ const calendarRouter = router({
           allDay: input.allDay ?? true,
           reason: input.reason ?? "other",
           reasonNotes: input.reasonNotes ?? null,
-          scope: input.scope ?? "entire_property",
-          scopeTarget: input.scopeTarget ?? null,
+          scope,
+          scopeTarget,
           createdByUserId: ctx.user.id,
         } as any).returning({ id: portalBlockedDates.id });
         await logAudit({

@@ -181,6 +181,7 @@ function CreateEventModal({ open, defaultDate, onClose, onSuccess }: CreateModal
       allDay,
       reason,
       reasonNotes: notes ? `${title} — ${notes}` : title,
+      // scope and scopeTarget intentionally omitted — server defaults to entire_property with null scopeTarget
     });
   }
 
