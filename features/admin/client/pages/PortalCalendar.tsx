@@ -163,11 +163,10 @@ function CreateEventModal({ open, defaultDate, onClose, onSuccess }: CreateModal
     };
     const kind = kindMap[type] || 'blocked';
 
-    // Build ISO datetime strings — explicitly null when allDay or not provided
-    const startAt = allDay ? null : `${startDate}T${startTime}:00Z`;
-    const endAt = allDay ? null : `${endDate}T${endTime}:00Z`;
-
-    // Only send reasonNotes if non-empty; otherwise send null to prevent database rejecting empty string
+    // Explicitly send null (not undefined) for empty/conditional fields
+    // undefined values get serialized as empty strings by tRPC, causing DB constraint violations
+    const startAt = allDay || !startTime ? null : `${startDate}T${startTime}:00Z`;
+    const endAt = allDay || !endTime ? null : `${endDate}T${endTime}:00Z`;
     const reasonNotes = notes?.trim() ? `${title} — ${notes.trim()}` : null;
 
     blockMutation.mutate({
@@ -180,7 +179,6 @@ function CreateEventModal({ open, defaultDate, onClose, onSuccess }: CreateModal
       allDay,
       reason,
       reasonNotes,
-      // scope and scopeTarget intentionally omitted — server defaults them correctly
     });
   }
 
