@@ -122,9 +122,23 @@ async function startServer() {
 
   // Health check — always 200 so Render never rolls back due to a transient DB
   // issue. DB status is reported in the body for observability only.
+  let buildVersion = { commit: 'unknown', builtAt: new Date().toISOString(), node: process.version };
+  try {
+    const { VERSION } = await import('../generated/version.js');
+    buildVersion = VERSION;
+  } catch {
+    // Version file not generated (e.g., in development mode)
+  }
+
   app.get("/api/health", async (_req, res) => {
     const dbOk = await checkDbHealth().catch(() => false);
-    res.json({ ok: true, db: dbOk ? "up" : "degraded" });
+    res.json({
+      ok: true,
+      commit: buildVersion.commit,
+      builtAt: buildVersion.builtAt,
+      node: buildVersion.node,
+      db: dbOk ? "up" : "degraded",
+    });
   });
 
   // Schema health check — diagnoses missing columns on hunting_properties
