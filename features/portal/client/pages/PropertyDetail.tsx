@@ -791,11 +791,13 @@ export default function PropertyDetail() {
                           <span className="text-stone-500 mx-2">→</span>
                           <span className="font-medium text-stone-100">{formatDate(selectedEnd)}</span>
                         </>
-                      ) : (
+                      ) : activeSlot === "Overnight" ? (
                         <>
                           <span className="font-medium text-stone-100">{formatDate(selectedStart)}</span>
                           <span className="text-stone-400 ml-2">(select end date)</span>
                         </>
+                      ) : (
+                        <span className="font-medium text-stone-100">{formatDate(selectedStart)}</span>
                       )}
                     </p>
                     {canBook && (
