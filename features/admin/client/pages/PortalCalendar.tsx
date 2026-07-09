@@ -18,6 +18,7 @@ import {
 import { Textarea } from '@shared/ui/textarea';
 import { trpc } from '@shared/lib/trpc';
 import { useState, useMemo } from 'react';
+import { toast } from 'sonner';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -107,6 +108,7 @@ function CreateEventModal({ open, defaultDate, onClose, onSuccess }: CreateModal
 
   const blockMutation = trpc.portal.calendar.blockDates.useMutation({
     onSuccess: () => {
+      toast.success('Event saved successfully');
       onSuccess();
       onClose();
       setTitle('');
@@ -118,6 +120,11 @@ function CreateEventModal({ open, defaultDate, onClose, onSuccess }: CreateModal
       setAllDay(true);
       setNotes('');
       setError('');
+    },
+    onError: (err) => {
+      const message = err.message || 'Failed to save event';
+      setError(message);
+      toast.error(`Save failed: ${message}`);
     },
   });
 
@@ -325,9 +332,14 @@ function EventDetailModal({ event, onClose, onUnblocked }: DetailModalProps) {
 
   const unblockMutation = trpc.portal.calendar.unblockDates.useMutation({
     onSuccess: () => {
+      toast.success('Event removed successfully');
       onUnblocked();
       onClose();
       setConfirming(false);
+    },
+    onError: (err) => {
+      const message = err.message || 'Failed to remove event';
+      toast.error(`Remove failed: ${message}`);
     },
   });
 
