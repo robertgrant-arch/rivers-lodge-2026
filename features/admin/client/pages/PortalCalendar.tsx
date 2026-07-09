@@ -257,7 +257,7 @@ function EventDetailModal({ event, onClose, onUnblocked }: DetailModalProps) {
             </span>
           </div>
           <DialogTitle className="font-sans text-base font-medium text-[#E0D3BD]">
-            {event.title}
+            {event.title || cfg.label}
           </DialogTitle>
         </DialogHeader>
 

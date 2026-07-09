@@ -47,6 +47,9 @@ export const portalBlockedReasonEnum = pgEnum("portal_blocked_reason", [
 export const portalBlockedScopeEnum = pgEnum("portal_blocked_scope", [
   "entire_property", "specific_venue", "specific_lodging",
 ]);
+export const portalEventKindEnum = pgEnum("portal_event_kind", [
+  "wedding", "corporate", "hunt_fish", "blocked",
+]);
 export const portalBookingTypeEnum = pgEnum("portal_booking_type", [
   "wedding", "corporate", "member_booking", "hunt_fish",
 ]);
@@ -225,6 +228,11 @@ export const portalBlockedDates = pgTable("portal_blocked_dates", {
   id: integer("id").generatedAlwaysAsIdentity().primaryKey(),
   startDate: date("startDate").notNull(),
   endDate: date("endDate").notNull(),
+  title: varchar("title", { length: 255 }),
+  kind: portalEventKindEnum("kind").default("blocked"),
+  startAt: timestamp("startAt"),
+  endAt: timestamp("endAt"),
+  allDay: boolean("allDay").default(true),
   reason: portalBlockedReasonEnum("reason").default("other"),
   reasonNotes: text("reasonNotes"),
   scope: portalBlockedScopeEnum("scope").default("entire_property"),
