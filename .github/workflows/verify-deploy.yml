@@ -1,0 +1,57 @@
+name: Verify Deploy
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  verify:
+    name: Verify Production Deployment
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Wait for deployment and verify commit
+        env:
+          EXPECTED_COMMIT: ${{ github.sha }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          HEALTH_URL="https://riverslodgehunt.com/api/health"
+          MAX_WAIT_MINUTES=10
+          POLL_INTERVAL=30
+          ELAPSED=0
+
+          echo "Polling $HEALTH_URL for up to $MAX_WAIT_MINUTES minutes..."
+          echo "Expected commit: $EXPECTED_COMMIT"
+
+          while [ $ELAPSED -lt $((MAX_WAIT_MINUTES * 60)) ]; do
+            RESPONSE=$(curl -s "$HEALTH_URL" 2>/dev/null || echo '{}')
+            DEPLOYED_COMMIT=$(echo "$RESPONSE" | jq -r '.commit // empty' 2>/dev/null)
+
+            if [ "$DEPLOYED_COMMIT" = "$EXPECTED_COMMIT" ]; then
+              echo "✓ Deployment verified: $DEPLOYED_COMMIT"
+              # Comment on commit
+              gh api repos/${{ github.repository }}/commits/${{ github.sha }}/comments \
+                -f body="✓ Deploy verified to riverslodgehunt.com (commit: ${DEPLOYED_COMMIT:0:7})" || true
+              exit 0
+            fi
+
+            echo "Waiting... (elapsed: $((ELAPSED / 60))m, deployed: ${DEPLOYED_COMMIT:0:7})"
+            sleep $POLL_INTERVAL
+            ELAPSED=$((ELAPSED + POLL_INTERVAL))
+          done
+
+          # Timeout — open an issue
+          echo "✗ Deploy verification timeout after $MAX_WAIT_MINUTES minutes"
+          ISSUE_BODY="Deploy verification timeout for commit $EXPECTED_COMMIT
+
+Check Render logs: https://dashboard.render.com/services/srv-d85rdondl75s7396bsjg
+
+Last health check response: $RESPONSE"
+
+          gh issue create \
+            --title "Deploy verification timeout: $EXPECTED_COMMIT" \
+            --body "$ISSUE_BODY" \
+            --label "ops,deploy" || true
+
+          exit 1
