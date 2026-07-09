@@ -336,7 +336,13 @@ const calendarRouter = router({
       };
 
       const duration = Date.now() - startTime;
-      console.log(`[calendar.events] Query completed in ${duration}ms (date range: ${input.startDate} to ${input.endDate})`);
+      console.log(`[calendar.events] Query completed in ${duration}ms (date range: ${input.startDate} to ${input.endDate})`, {
+        weddings: weddings.length,
+        corporate: corporate.length,
+        huntFish: huntFish.length,
+        blocked: blocked.length,
+        blockedTitles: blocked.map(b => b.title).slice(0, 5),
+      });
       return result;
     }),
 
@@ -384,7 +390,19 @@ const calendarRouter = router({
         }, null, 2));
 
         const [result] = await db.insert(portalBlockedDates).values(insert as any)
-          .returning({ id: portalBlockedDates.id });
+          .returning({
+            id: portalBlockedDates.id,
+            startDate: portalBlockedDates.startDate,
+            endDate: portalBlockedDates.endDate,
+            title: portalBlockedDates.title,
+          });
+
+        console.log('[blockDates] Insert succeeded:', JSON.stringify({
+          insertedId: result.id,
+          startDate: result.startDate,
+          endDate: result.endDate,
+          title: result.title,
+        }));
 
         await logAudit({
           actingUserId: ctx.user.id,
@@ -392,11 +410,13 @@ const calendarRouter = router({
           actionType: "create",
           entityType: "PortalBlockedDate",
           entityId: String(result.id),
-          notes: `Blocked ${input.startDate} to ${input.endDate}${input.title ? `: ${input.title}` : ""}`,
+          notes: `Blocked ${insert.startDate} to ${insert.endDate}${insert.title ? `: ${insert.title}` : ""}`,
         });
+
+        console.log('[blockDates] Returning success to client:', { success: true, id: result.id });
         return { success: true, id: result.id };
       } catch (err) {
-        console.error('[blockDates] Failed to insert:', err);
+        console.error('[blockDates] Failed to insert:', err instanceof Error ? err.message : String(err));
         throw new Error(`Failed to save event: ${err instanceof Error ? err.message : 'Unknown error'}`);
       }
     }),

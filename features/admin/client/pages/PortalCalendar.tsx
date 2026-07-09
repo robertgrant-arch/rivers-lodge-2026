@@ -107,9 +107,12 @@ function CreateEventModal({ open, defaultDate, onClose, onSuccess }: CreateModal
   const [error, setError] = useState('');
 
   const blockMutation = trpc.portal.calendar.blockDates.useMutation({
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log('[PortalCalendar] blockDates mutation succeeded:', data);
       toast.success('Event saved successfully');
+      // Refetch calendar data to show the newly created event
       onSuccess();
+      // Clear form and close modal
       onClose();
       setTitle('');
       setType('member_event');
@@ -123,6 +126,7 @@ function CreateEventModal({ open, defaultDate, onClose, onSuccess }: CreateModal
     },
     onError: (err) => {
       const message = err.message || 'Failed to save event';
+      console.error('[PortalCalendar] blockDates mutation failed:', message);
       setError(message);
       toast.error(`Save failed: ${message}`);
     },
