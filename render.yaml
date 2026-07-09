@@ -5,6 +5,7 @@ services:
     region: oregon
     plan: starter
     branch: main
+    autoDeployTrigger: commit
     preDeployCommand: node scripts/run-migrations.mjs
     buildCommand: pnpm install --frozen-lockfile && pnpm build
     startCommand: pnpm start
