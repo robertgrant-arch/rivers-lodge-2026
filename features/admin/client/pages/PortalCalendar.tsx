@@ -163,13 +163,12 @@ function CreateEventModal({ open, defaultDate, onClose, onSuccess }: CreateModal
     };
     const kind = kindMap[type] || 'blocked';
 
-    // Build ISO datetime strings
-    const startAt = allDay
-      ? undefined
-      : `${startDate}T${startTime}:00Z`;
-    const endAt = allDay
-      ? undefined
-      : `${endDate}T${endTime}:00Z`;
+    // Build ISO datetime strings — explicitly null when allDay or not provided
+    const startAt = allDay ? null : `${startDate}T${startTime}:00Z`;
+    const endAt = allDay ? null : `${endDate}T${endTime}:00Z`;
+
+    // Only send reasonNotes if non-empty; otherwise send null to prevent database rejecting empty string
+    const reasonNotes = notes?.trim() ? `${title} — ${notes.trim()}` : null;
 
     blockMutation.mutate({
       startDate,
@@ -180,7 +179,8 @@ function CreateEventModal({ open, defaultDate, onClose, onSuccess }: CreateModal
       endAt,
       allDay,
       reason,
-      reasonNotes: notes ? `${title} — ${notes}` : title,
+      reasonNotes,
+      // scope and scopeTarget intentionally omitted — server defaults them correctly
     });
   }
 
@@ -438,7 +438,7 @@ export default function PortalCalendar() {
 
   const { data, refetch, isLoading } = trpc.portal.calendar.events.useQuery(
     { startDate, endDate },
-    {},
+    { staleTime: 30_000 }, // Keep data fresh for 30 seconds, prevent aggressive refetch on window focus
   );
 
   // Normalise API data into flat CalEvent[]

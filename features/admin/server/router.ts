@@ -228,6 +228,38 @@ const dashboardRouter = router({
   }),
 });
 
+// ─── Payload Normalizers ──────────────────────────────────────────────────────
+
+/**
+ * Normalize blockDates insert payload to prevent database constraint violations.
+ * Converts empty strings and falsy values to null for datetime and optional string fields.
+ */
+function normalizeInsertPayload(input: {
+  startAt?: string | null;
+  endAt?: string | null;
+  allDay?: boolean;
+  reasonNotes?: string | null;
+  scope?: string;
+  scopeTarget?: string | null;
+}) {
+  const scope = input.scope ?? "entire_property";
+
+  return {
+    // DateTime fields: empty string → null, and always null if allDay is true
+    startAt: input.allDay || !input.startAt ? null : input.startAt,
+    endAt: input.allDay || !input.endAt ? null : input.endAt,
+
+    // Reason notes: empty string → null
+    reasonNotes: !input.reasonNotes?.trim() ? null : input.reasonNotes.trim(),
+
+    // Scope and scopeTarget: empty string → null, always null when scope is entire_property
+    scope,
+    scopeTarget: scope === "entire_property" || !input.scopeTarget?.trim()
+      ? null
+      : input.scopeTarget.trim(),
+  };
+}
+
 // ─── Calendar Router ──────────────────────────────────────────────────────────
 const calendarRouter = router({
   events: portalProcedure
@@ -238,6 +270,8 @@ const calendarRouter = router({
     }))
     .query(async ({ input }) => {
       const db = getDb();
+      const startTime = Date.now();
+
       // All four ranges are independent — fetch concurrently.
       const [weddings, corporate, huntFish, blocked] = await Promise.all([
         db.select().from(weddingBookings)
@@ -261,7 +295,8 @@ const calendarRouter = router({
             sql`${portalBlockedDates.endDate} >= ${input.startDate}`
           )),
       ]);
-      return {
+
+      const result = {
         weddings: weddings.map(w => ({
           ...w,
           _type: "wedding" as const,
@@ -299,6 +334,10 @@ const calendarRouter = router({
           allDay: b.allDay ?? true,
         })),
       };
+
+      const duration = Date.now() - startTime;
+      console.log(`[calendar.events] Query completed in ${duration}ms (date range: ${input.startDate} to ${input.endDate})`);
+      return result;
     }),
 
   blockDates: portalProcedure
@@ -307,29 +346,33 @@ const calendarRouter = router({
       endDate: z.string(),
       title: z.string().min(1).optional(),
       kind: z.enum(["wedding", "corporate", "hunt_fish", "blocked"]).optional(),
-      startAt: z.string().datetime().optional(),
-      endAt: z.string().datetime().optional(),
+      startAt: z.string().datetime().nullable().optional(),
+      endAt: z.string().datetime().nullable().optional(),
       allDay: z.boolean().optional(),
       reason: z.enum(["maintenance", "private_use", "seasonal_closure", "buffer", "other"]).optional(),
-      reasonNotes: z.string().optional(),
+      reasonNotes: z.string().nullable().optional(),
       scope: z.enum(["entire_property", "specific_venue", "specific_lodging"]).optional(),
-      scopeTarget: z.string().optional(),
+      scopeTarget: z.string().nullable().optional(),
     }))
     .mutation(async ({ input, ctx }) => {
       try {
         const db = getDb();
+
+        // Normalize all nullable fields: empty strings → null, falsy → null
+        const payload = normalizeInsertPayload(input);
+
         const [result] = await db.insert(portalBlockedDates).values({
           startDate: input.startDate,
           endDate: input.endDate,
           title: input.title ?? null,
           kind: input.kind ?? "blocked",
-          startAt: input.startAt ? new Date(input.startAt) : null,
-          endAt: input.endAt ? new Date(input.endAt) : null,
+          startAt: payload.startAt,
+          endAt: payload.endAt,
           allDay: input.allDay ?? true,
           reason: input.reason ?? "other",
-          reasonNotes: input.reasonNotes ?? null,
-          scope: input.scope ?? "entire_property",
-          scopeTarget: input.scopeTarget ?? null,
+          reasonNotes: payload.reasonNotes,
+          scope: payload.scope,
+          scopeTarget: payload.scopeTarget,
           createdByUserId: ctx.user.id,
         } as any).returning({ id: portalBlockedDates.id });
         await logAudit({
