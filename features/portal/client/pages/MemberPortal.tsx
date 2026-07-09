@@ -238,7 +238,15 @@ export default function MemberPortal() {
   const [selectedRequest, setSelectedRequest] = useState<RequestItem | null>(null);
 
   const memberStatus   = trpc.membership.myStatus.useQuery(undefined, { enabled: isAuthenticated });
-  const blockedDates   = trpc.booking.bookings.blockedDates.useQuery();
+
+  // Get current year range for calendar events query
+  const today = new Date();
+  const year = today.getFullYear();
+  const calendarEvents = trpc.portal.calendar.events.useQuery({
+    startDate: `${year}-01-01`,
+    endDate: `${year}-12-31`,
+  });
+
   const updates        = trpc.updates.list.useQuery();
   const cmsMemberContent = trpc.cms.getMemberContent.useQuery(undefined, { enabled: isAuthenticated });
   const cmsAnnouncements = trpc.cms.getAnnouncements.useQuery({ audience: "members" });
@@ -324,10 +332,49 @@ export default function MemberPortal() {
     );
   }
 
-  const blockedDateStrings = (blockedDates.data ?? []).map((d: { date: Date | string }) => {
-    const date = new Date(d.date);
-    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
-  });
+  // Aggregate all event types from calendar.events into a set of unavailable dates
+  const blockedDateStrings: string[] = (() => {
+    const events = calendarEvents.data;
+    if (!events) return [];
+
+    const dates = new Set<string>();
+
+    // Add weddings
+    events.weddings?.forEach((w: any) => {
+      const date = new Date(w.weddingDate);
+      const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+      dates.add(dateStr);
+    });
+
+    // Add corporate events (range from arrival to departure)
+    events.corporate?.forEach((c: any) => {
+      const start = new Date(c.arrivalDate);
+      const end = new Date(c.departureDate);
+      for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+        const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+        dates.add(dateStr);
+      }
+    });
+
+    // Add hunt/fish bookings
+    events.huntFish?.forEach((h: any) => {
+      const date = new Date(h.bookingDate);
+      const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+      dates.add(dateStr);
+    });
+
+    // Add manually blocked dates (range from start to end)
+    events.blocked?.forEach((b: any) => {
+      const start = new Date(b.startDate);
+      const end = new Date(b.endDate);
+      for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+        const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+        dates.add(dateStr);
+      }
+    });
+
+    return Array.from(dates);
+  })();
 
   const tabs: { key: Tab; label: string; badge?: number }[] = [
     { key: "dashboard",   label: "Dashboard" },
