@@ -99,7 +99,11 @@ function CreateEventModal({ open, defaultDate, onClose, onSuccess }: CreateModal
   const [type, setType] = useState('member_event');
   const [startDate, setStartDate] = useState(defaultDate ?? '');
   const [endDate, setEndDate] = useState(defaultDate ?? '');
+  const [startTime, setStartTime] = useState('09:00');
+  const [endTime, setEndTime] = useState('17:00');
+  const [allDay, setAllDay] = useState(true);
   const [notes, setNotes] = useState('');
+  const [error, setError] = useState('');
 
   const blockMutation = trpc.portal.calendar.blockDates.useMutation({
     onSuccess: () => {
@@ -109,17 +113,65 @@ function CreateEventModal({ open, defaultDate, onClose, onSuccess }: CreateModal
       setType('member_event');
       setStartDate('');
       setEndDate('');
+      setStartTime('09:00');
+      setEndTime('17:00');
+      setAllDay(true);
       setNotes('');
+      setError('');
     },
   });
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    setError('');
+
+    // Validate title
+    if (!title.trim()) {
+      setError('Title is required');
+      return;
+    }
+
+    // Validate dates
+    if (!startDate || !endDate) {
+      setError('Start and end dates are required');
+      return;
+    }
+
+    // Validate end date >= start date
+    if (endDate < startDate) {
+      setError('End date must be on or after start date');
+      return;
+    }
+
     const validReasons = ["maintenance", "private_use", "seasonal_closure", "buffer", "other"] as const;
     const reason = (validReasons as readonly string[]).includes(type) ? type as typeof validReasons[number] : "other";
+
+    // Map type to kind enum
+    const kindMap: Record<string, 'wedding' | 'corporate' | 'hunt_fish' | 'blocked'> = {
+      'member_event': 'blocked',
+      'meeting': 'blocked',
+      'maintenance': 'blocked',
+      'private_hold': 'blocked',
+      'other': 'blocked',
+    };
+    const kind = kindMap[type] || 'blocked';
+
+    // Build ISO datetime strings
+    const startAt = allDay
+      ? undefined
+      : `${startDate}T${startTime}:00Z`;
+    const endAt = allDay
+      ? undefined
+      : `${endDate}T${endTime}:00Z`;
+
     blockMutation.mutate({
       startDate,
       endDate,
+      title: title.trim(),
+      kind,
+      startAt,
+      endAt,
+      allDay,
       reason,
       reasonNotes: notes ? `${title} — ${notes}` : title,
     });
@@ -135,12 +187,17 @@ function CreateEventModal({ open, defaultDate, onClose, onSuccess }: CreateModal
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-5 pt-2">
+          {error && (
+            <div className="text-xs text-red-400 bg-red-900/20 border border-red-800 px-3 py-2 rounded-none">
+              {error}
+            </div>
+          )}
+
           <div className="space-y-1.5">
-            <Label className="font-sans text-xs tracking-[0.1em] uppercase text-[#BABAAE]">Title</Label>
+            <Label className="font-sans text-xs tracking-[0.1em] uppercase text-[#BABAAE]">Title *</Label>
             <Input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              required
               placeholder="Event or hold name"
               className="bg-[#2B2823] border-[#57544E] text-[#E0D3BD] placeholder:text-[#57544E] rounded-none focus-visible:ring-[#9B4D19] focus-visible:ring-1 focus-visible:border-[#9B4D19]"
             />
@@ -164,26 +221,60 @@ function CreateEventModal({ open, defaultDate, onClose, onSuccess }: CreateModal
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label className="font-sans text-xs tracking-[0.1em] uppercase text-[#BABAAE]">Start Date</Label>
+              <Label className="font-sans text-xs tracking-[0.1em] uppercase text-[#BABAAE]">Start Date *</Label>
               <Input
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
-                required
                 className="bg-[#2B2823] border-[#57544E] text-[#E0D3BD] rounded-none focus-visible:ring-[#9B4D19] focus-visible:ring-1 focus-visible:border-[#9B4D19] [color-scheme:dark]"
               />
             </div>
             <div className="space-y-1.5">
-              <Label className="font-sans text-xs tracking-[0.1em] uppercase text-[#BABAAE]">End Date</Label>
+              <Label className="font-sans text-xs tracking-[0.1em] uppercase text-[#BABAAE]">End Date *</Label>
               <Input
                 type="date"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
-                required
                 className="bg-[#2B2823] border-[#57544E] text-[#E0D3BD] rounded-none focus-visible:ring-[#9B4D19] focus-visible:ring-1 focus-visible:border-[#9B4D19] [color-scheme:dark]"
               />
             </div>
           </div>
+
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="allday"
+              checked={allDay}
+              onChange={(e) => setAllDay(e.target.checked)}
+              className="w-4 h-4 rounded border-[#57544E] bg-[#2B2823]"
+            />
+            <Label htmlFor="allday" className="font-sans text-xs tracking-[0.1em] uppercase text-[#BABAAE] cursor-pointer">
+              All day
+            </Label>
+          </div>
+
+          {!allDay && (
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="font-sans text-xs tracking-[0.1em] uppercase text-[#BABAAE]">Start Time</Label>
+                <Input
+                  type="time"
+                  value={startTime}
+                  onChange={(e) => setStartTime(e.target.value)}
+                  className="bg-[#2B2823] border-[#57544E] text-[#E0D3BD] rounded-none focus-visible:ring-[#9B4D19] focus-visible:ring-1 focus-visible:border-[#9B4D19]"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="font-sans text-xs tracking-[0.1em] uppercase text-[#BABAAE]">End Time</Label>
+                <Input
+                  type="time"
+                  value={endTime}
+                  onChange={(e) => setEndTime(e.target.value)}
+                  className="bg-[#2B2823] border-[#57544E] text-[#E0D3BD] rounded-none focus-visible:ring-[#9B4D19] focus-visible:ring-1 focus-visible:border-[#9B4D19]"
+                />
+              </div>
+            </div>
+          )}
 
           <div className="space-y-1.5">
             <Label className="font-sans text-xs tracking-[0.1em] uppercase text-[#BABAAE]">Notes</Label>
