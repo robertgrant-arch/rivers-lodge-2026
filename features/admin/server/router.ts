@@ -316,30 +316,35 @@ const calendarRouter = router({
       scopeTarget: z.string().optional(),
     }))
     .mutation(async ({ input, ctx }) => {
-      const db = getDb();
-      const [result] = await db.insert(portalBlockedDates).values({
-        startDate: input.startDate,
-        endDate: input.endDate,
-        title: input.title ?? null,
-        kind: input.kind ?? "blocked",
-        startAt: input.startAt ? new Date(input.startAt) : null,
-        endAt: input.endAt ? new Date(input.endAt) : null,
-        allDay: input.allDay ?? true,
-        reason: input.reason ?? "other",
-        reasonNotes: input.reasonNotes ?? null,
-        scope: input.scope ?? "entire_property",
-        scopeTarget: input.scopeTarget ?? null,
-        createdByUserId: ctx.user.id,
-      } as any).returning({ id: portalBlockedDates.id });
-      await logAudit({
-        actingUserId: ctx.user.id,
-        actingUserName: ctx.user.email ?? "Staff",
-        actionType: "create",
-        entityType: "PortalBlockedDate",
-        entityId: String(result.id),
-        notes: `Blocked ${input.startDate} to ${input.endDate}${input.title ? `: ${input.title}` : ""}`,
-      });
-      return { success: true, id: result.id };
+      try {
+        const db = getDb();
+        const [result] = await db.insert(portalBlockedDates).values({
+          startDate: input.startDate,
+          endDate: input.endDate,
+          title: input.title ?? null,
+          kind: input.kind ?? "blocked",
+          startAt: input.startAt ? new Date(input.startAt) : null,
+          endAt: input.endAt ? new Date(input.endAt) : null,
+          allDay: input.allDay ?? true,
+          reason: input.reason ?? "other",
+          reasonNotes: input.reasonNotes ?? null,
+          scope: input.scope ?? "entire_property",
+          scopeTarget: input.scopeTarget ?? null,
+          createdByUserId: ctx.user.id,
+        } as any).returning({ id: portalBlockedDates.id });
+        await logAudit({
+          actingUserId: ctx.user.id,
+          actingUserName: ctx.user.email ?? "Staff",
+          actionType: "create",
+          entityType: "PortalBlockedDate",
+          entityId: String(result.id),
+          notes: `Blocked ${input.startDate} to ${input.endDate}${input.title ? `: ${input.title}` : ""}`,
+        });
+        return { success: true, id: result.id };
+      } catch (err) {
+        console.error('[blockDates] Failed to insert:', err);
+        throw new Error(`Failed to save event: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      }
     }),
 
   unblockDates: portalProcedure
