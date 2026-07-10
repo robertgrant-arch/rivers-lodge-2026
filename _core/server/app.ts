@@ -12,6 +12,14 @@ import { resolvePort } from "./port";
 import { checkDbHealth } from "./db";
 import { runStartupMigration, checkHuntingPropertiesSchema } from "./startup-migration";
 
+let deployedCommit = "unknown";
+try {
+  const { VERSION } = await import("../generated/version.js");
+  deployedCommit = VERSION.commit;
+} catch {
+  // VERSION file may not exist in development
+}
+
 async function startServer() {
   // ── Startup schema migration ────────────────────────────────────────────────────
   // Runs before tRPC server starts, ensures hunting_properties has all required columns
@@ -124,7 +132,7 @@ async function startServer() {
   // issue. DB status is reported in the body for observability only.
   app.get("/api/health", async (_req, res) => {
     const dbOk = await checkDbHealth().catch(() => false);
-    res.json({ ok: true, db: dbOk ? "up" : "degraded" });
+    res.json({ ok: true, db: dbOk ? "up" : "degraded", commit: deployedCommit });
   });
 
   // Schema health check — diagnoses missing columns on hunting_properties
