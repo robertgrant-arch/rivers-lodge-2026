@@ -417,7 +417,7 @@ const calendarRouter = router({
         return { success: true, id: result.id };
       } catch (err) {
         console.error('[blockDates] Failed to insert:', err instanceof Error ? err.message : String(err));
-        throw new Error(`Failed to save event: ${err instanceof Error ? err.message : 'Unknown error'}`);
+        { const pgErr = err as any; const detail = pgErr?.detail ? ` | detail: ${pgErr.detail}` : ''; const code = pgErr?.code ? ` | code: ${pgErr.code}` : ''; const constraint = pgErr?.constraint ? ` | constraint: ${pgErr.constraint}` : ''; const column = pgErr?.column ? ` | column: ${pgErr.column}` : ''; const table = pgErr?.table ? ` | table: ${pgErr.table}` : ''; const hint = pgErr?.hint ? ` | hint: ${pgErr.hint}` : ''; const baseMsg = err instanceof Error ? err.message : 'Unknown error'; throw new Error(`Failed to save event: ${baseMsg}${code}${detail}${constraint}${column}${table}${hint}`); }
       }
     }),
 
