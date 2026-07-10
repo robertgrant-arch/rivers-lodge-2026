@@ -60,11 +60,7 @@ jobs:
 
           gh issue create \
             --title "Deploy verification timeout: $EXPECTED_COMMIT" \
-            --body "Deploy verification timeout for commit $EXPECTED_COMMIT
-
-Check Render logs: https://dashboard.render.com/services/srv-d85rdondl75s7396bsjg
-
-Last health check response: $RESPONSE" \
+            --body "Deploy verification timeout for commit $EXPECTED_COMMIT. Check Render logs: https://dashboard.render.com/services/srv-d85rdondl75s7396bsjg . Last health check response: $RESPONSE" \
             --label "ops" \
             --label "deploy" || true
           exit 1
