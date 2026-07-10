@@ -31,86 +31,106 @@ export const inquiriesRouter = router({
       })
     )
     .mutation(async ({ input }) => {
-      await verifyCaptcha(input.captchaToken);
-      await dal.createInquiry(input);
+      try {
+        await verifyCaptcha(input.captchaToken);
+        await dal.createInquiry(input);
 
-      // Map inquiry type to booking system business line
-      const businessLineMap: Record<string, string> = {
-        wedding:    "wedding",
-        corporate:  "corporate",
-        tour:       "other",
-        general:    "other",
-        membership: "other",
-        lodging:    "other",
-        event:      "corporate",
-      };
-      const businessLine = businessLineMap[input.type] ?? "other";
+        // Map inquiry type to booking system business line
+        const businessLineMap: Record<string, string> = {
+          wedding:    "wedding",
+          corporate:  "corporate",
+          tour:       "other",
+          general:    "other",
+          membership: "other",
+          lodging:    "other",
+          event:      "corporate",
+        };
+        const businessLine = businessLineMap[input.type] ?? "other";
 
-      const database = await getDb();
-      if (!database) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+        const database = await getDb();
+        if (!database) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
 
-      // ── Transactional writes ─────────────────────────────────────────────
-      // Both inserts must succeed or neither persists.  Without a transaction,
-      // a failure on the reservationRequests insert would leave an orphan leads
-      // row with no matching request, corrupting the sales pipeline.
-      const { leadId, reservationRequestId } = await database.transaction(async (tx) => {
-        // 1. Create a Lead in the sales pipeline.
-        const [leadResult] = await tx.insert(leads).values({
-          source: "website_form",
-          businessLine: businessLine as "wedding" | "corporate" | "member_stay" | "hunt" | "fish" | "hunt_and_fish" | "membership" | "other",
-          contactName: input.name,
-          contactEmail: input.email,
-          contactPhone: input.phone ?? undefined,
-          estimatedGuestCount: input.guestCount ?? undefined,
-          notes: input.message ?? undefined,
-          status: "new",
-        }).returning({ id: leads.id });
-        const leadId = leadResult.id;
-
-        // 2. For wedding / corporate inquiries with a date, also create a
-        //    ReservationRequest so staff can track it through the booking flow.
-        let reservationRequestId: number | undefined;
-        if ((input.type === "wedding" || input.type === "corporate") && input.eventDate) {
-          const startDate = new Date(input.eventDate);
-          const endDate = new Date(
-            startDate.getTime() +
-              (input.type === "wedding" ? 2 : 3) * 24 * 60 * 60 * 1000,
-          );
-          const toDateStr = (d: Date) => d.toISOString().split("T")[0];
-          const [rrResult] = await tx.insert(reservationRequests).values({
-            source: "public_form",
-            businessLine: businessLine as "wedding" | "corporate" | "member_stay" | "hunt" | "fish" | "hunt_and_fish" | "other",
+        // ── Transactional writes ─────────────────────────────────────────────
+        // Both inserts must succeed or neither persists.  Without a transaction,
+        // a failure on the reservationRequests insert would leave an orphan leads
+        // row with no matching request, corrupting the sales pipeline.
+        const { leadId, reservationRequestId } = await database.transaction(async (tx) => {
+          // 1. Create a Lead in the sales pipeline.
+          const [leadResult] = await tx.insert(leads).values({
+            source: "website_form",
+            businessLine: businessLine as "wedding" | "corporate" | "member_stay" | "hunt" | "fish" | "hunt_and_fish" | "membership" | "other",
             contactName: input.name,
             contactEmail: input.email,
             contactPhone: input.phone ?? undefined,
-            requestedStart: toDateStr(startDate),
-            requestedEnd: toDateStr(endDate),
-            guestCount: input.guestCount ?? undefined,
-            specialRequests: input.message ?? undefined,
-            eventType: input.type,
+            estimatedGuestCount: input.guestCount ?? undefined,
+            notes: input.message ?? undefined,
             status: "new",
-          }).returning({ id: reservationRequests.id });
-          reservationRequestId = rrResult.id;
+          }).returning({ id: leads.id });
+          const leadId = leadResult.id;
+
+          // 2. For wedding / corporate inquiries with a date, also create a
+          //    ReservationRequest so staff can track it through the booking flow.
+          let reservationRequestId: number | undefined;
+          if ((input.type === "wedding" || input.type === "corporate") && input.eventDate) {
+            const startDate = new Date(input.eventDate);
+            const endDate = new Date(
+              startDate.getTime() +
+                (input.type === "wedding" ? 2 : 3) * 24 * 60 * 60 * 1000,
+            );
+            const toDateStr = (d: Date) => d.toISOString().split("T")[0];
+            const [rrResult] = await tx.insert(reservationRequests).values({
+              source: "public_form",
+              businessLine: businessLine as "wedding" | "corporate" | "member_stay" | "hunt" | "fish" | "hunt_and_fish" | "other",
+              contactName: input.name,
+              contactEmail: input.email,
+              contactPhone: input.phone ?? undefined,
+              requestedStart: toDateStr(startDate),
+              requestedEnd: toDateStr(endDate),
+              guestCount: input.guestCount ?? undefined,
+              specialRequests: input.message ?? undefined,
+              eventType: input.type,
+              status: "new",
+            }).returning({ id: reservationRequests.id });
+            reservationRequestId = rrResult.id;
+          }
+
+          return { leadId, reservationRequestId };
+        });
+
+        // ── Notification (best-effort) ────────────────────────────────────────
+        // The data is already committed above.  A notification failure (network
+        // timeout, misconfigured webhook, etc.) must NOT roll back the lead or
+        // unblock the user — they already submitted successfully.  We log and
+        // continue so ops can investigate without requiring the visitor to retry.
+        try {
+          await notifyOwner({
+            title: `New ${input.type} inquiry from ${input.name}`,
+            content: `Email: ${input.email}\nPhone: ${input.phone ?? "—"}\nDate: ${input.eventDate ?? "—"}\nGuests: ${input.guestCount ?? "—"}\n\n${input.message ?? ""}\n\nLead created in sales pipeline.`,
+          });
+        } catch (err) {
+          console.error("[inquiries.submit] notifyOwner failed (non-fatal):", err);
         }
 
-        return { leadId, reservationRequestId };
-      });
-
-      // ── Notification (best-effort) ────────────────────────────────────────
-      // The data is already committed above.  A notification failure (network
-      // timeout, misconfigured webhook, etc.) must NOT roll back the lead or
-      // unblock the user — they already submitted successfully.  We log and
-      // continue so ops can investigate without requiring the visitor to retry.
-      try {
-        await notifyOwner({
-          title: `New ${input.type} inquiry from ${input.name}`,
-          content: `Email: ${input.email}\nPhone: ${input.phone ?? "—"}\nDate: ${input.eventDate ?? "—"}\nGuests: ${input.guestCount ?? "—"}\n\n${input.message ?? ""}\n\nLead created in sales pipeline.`,
-        });
+        return { success: true, leadId, reservationRequestId };
       } catch (err) {
-        console.error("[inquiries.submit] notifyOwner failed (non-fatal):", err);
-      }
+        const pgErr = err as any;
+        const code = pgErr?.code ?? pgErr?.data?.code;
+        const constraint = pgErr?.constraint;
+        const message = pgErr?.message ?? String(pgErr);
+        console.error("[inquiries.submit] mutation failed:", {
+          code,
+          constraint,
+          message,
+          cause: pgErr?.cause,
+          fullError: pgErr,
+        });
 
-      return { success: true, leadId, reservationRequestId };
+        // Re-throw as TRPCError with user-facing message
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: message || "Failed to submit inquiry — please try again or contact info@riverslodge.com",
+        });
+      }
     }),
 
   list: adminProcedure
