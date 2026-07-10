@@ -264,6 +264,29 @@ function WeddingDetail({ id }: { id: number }) {
   );
 }
 
+// Map lead status to pipeline status
+function mapLeadStatusToPipeline(status: string | null | undefined): string {
+  if (!status) return "inquiry";
+  const statusMap: Record<string, string> = {
+    new: "inquiry",
+    contacted: "contacted",
+    qualified: "site_visit",
+    proposal_sent: "proposal_sent",
+    contract_out: "contract_out",
+    converted: "confirmed",
+    won: "confirmed",
+  };
+  return statusMap[status] ?? "inquiry";
+}
+
+// Extract source from notes/message
+function extractSource(message: string | null | undefined): string {
+  if (!message) return "Website";
+  const match = message.match(/Source:\s*([^\n]+)/i);
+  if (match) return match[1].trim();
+  return "Website";
+}
+
 // ─── List View ────────────────────────────────────────────────────────────────
 export default function PortalWeddings() {
   const params = useParams<{ id?: string }>();
@@ -275,24 +298,48 @@ export default function PortalWeddings() {
   const [createForm, setCreateForm] = useState({ coupleName: "", contactEmail: "", contactPhone: "", weddingDate: "", source: "website" as const, notes: "" });
   const utils = trpc.useUtils();
 
-  const listQuery = trpc.portal.weddings.list.useInfiniteQuery(
-    { status: statusFilter === "all" ? undefined : statusFilter, search: search || undefined, limit: 25 },
-    { getNextPageParam: (lastPage) => lastPage.nextCursor }
-  );
+  // Fetch all wedding leads from the sales pipeline
+  const leadsQuery = trpc.booking.leads.list.useQuery({
+    businessLine: "wedding",
+    status: statusFilter === "all" ? undefined : statusFilter,
+    search: search || undefined,
+  }, {
+    staleTime: 30_000,
+  });
 
   const createMutation = trpc.portal.weddings.create.useMutation({
     onSuccess: (data) => {
       setShowCreate(false);
       setCreateForm({ coupleName: "", contactEmail: "", contactPhone: "", weddingDate: "", source: "website", notes: "" });
+      utils.booking.leads.list.invalidate();
       utils.portal.weddings.list.invalidate();
       toast.success("Wedding booking created");
     },
     onError: (e) => toast.error(e.message),
   });
 
-  const bookings = listQuery.data?.pages.flatMap(p => p.items) ?? [];
+  const leads = leadsQuery.data ?? [];
 
-  // Pipeline counts
+  // Map leads to booking format for display
+  const bookings = leads.map(l => ({
+    id: l.id,
+    coupleName: l.contactName,
+    contactEmail: l.contactEmail,
+    contactPhone: l.contactPhone,
+    weddingDate: l.requestedStartDate,
+    status: mapLeadStatusToPipeline(l.status),
+    guestCountEstimate: l.estimatedGuestCount ?? null,
+    guestCountFinal: null,
+    contractValue: null,
+    source: extractSource(l.notes),
+  }));
+
+  // Filter by status if not "all"
+  const filteredBookings = statusFilter === "all"
+    ? bookings
+    : bookings.filter(b => b.status === statusFilter);
+
+  // Pipeline counts - show all 6 statuses
   const pipelineCounts = STATUSES.slice(0, 6).map(s => ({
     ...s,
     count: bookings.filter(b => b.status === s.value).length,
@@ -356,21 +403,21 @@ export default function PortalWeddings() {
                 </tr>
               </thead>
               <tbody>
-                {listQuery.isLoading ? (
+                {leadsQuery.isLoading ? (
                   [1,2,3,4,5].map(i => (
                     <tr key={i} className="border-b border-border">
                       <td colSpan={6} className="px-4 py-3"><Skeleton className="h-5 w-full" /></td>
                     </tr>
                   ))
-                ) : bookings.length === 0 ? (
+                ) : filteredBookings.length === 0 ? (
                   <tr><td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">No weddings found</td></tr>
                 ) : (
-                  bookings.map(b => (
+                  filteredBookings.map(b => (
                     <tr key={b.id} className="border-b border-border hover:bg-muted/30 transition-colors cursor-pointer">
                       <td className="px-4 py-3">
-                        <Link href={`/ops/weddings/${b.id}`} className="font-medium text-foreground hover:text-primary">
+                        <div className="font-medium text-foreground">
                           {b.coupleName}
-                        </Link>
+                        </div>
                         <p className="text-xs text-muted-foreground">{b.contactEmail}</p>
                       </td>
                       <td className="px-4 py-3 text-muted-foreground">{formatDate(b.weddingDate)}</td>
@@ -386,12 +433,6 @@ export default function PortalWeddings() {
           </div>
         </CardContent>
       </Card>
-      {listQuery.hasNextPage && (
-        <button onClick={() => listQuery.fetchNextPage()} disabled={listQuery.isFetchingNextPage}
-          className="mt-6 w-full py-2.5 border border-border text-[10px] tracking-[0.14em] uppercase font-sans text-muted-foreground hover:text-foreground transition-colors disabled:opacity-40">
-          {listQuery.isFetchingNextPage ? "Loading…" : "Load more"}
-        </button>
-      )}
 
       {/* Create Dialog */}
       <Dialog open={showCreate} onOpenChange={setShowCreate}>
