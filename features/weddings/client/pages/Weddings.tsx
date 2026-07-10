@@ -67,21 +67,21 @@ return (
 }
 return (
 <form onSubmit={handleSubmit} className="space-y-6 max-w-xl">
-<div>
-<label htmlFor="w-name" className="block eyebrow text-muted-brand mb-2">Full Name *</label>
-<input id="w-name" type="text" value={form.name} onChange={(e) => set("name", e.target.value)} placeholder="Your full name" className="form-field w-full" required aria-required="true" autoComplete="name" />
+<div className="mt-5">
+<label htmlFor="w-name" className="block text-white/70 tracking-wider text-xs mb-2">Full Name *</label>
+<input id="w-name" type="text" value={form.name} onChange={(e) => set("name", e.target.value)} placeholder="Your full name" className="w-full rounded-md bg-white/[0.05] border border-white/10 px-4 py-3 text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-[#9B4D19]/60 focus:border-[#9B4D19] transition" required aria-required="true" autoComplete="name" />
 </div>
-<div>
-<label htmlFor="w-email" className="block eyebrow text-muted-brand mb-2">Email Address *</label>
-<input id="w-email" type="email" value={form.email} onChange={(e) => set("email", e.target.value)} placeholder="you@example.com" className="form-field w-full" required aria-required="true" autoComplete="email" />
+<div className="mt-5">
+<label htmlFor="w-email" className="block text-white/70 tracking-wider text-xs mb-2">Email Address *</label>
+<input id="w-email" type="email" value={form.email} onChange={(e) => set("email", e.target.value)} placeholder="you@example.com" className="w-full rounded-md bg-white/[0.05] border border-white/10 px-4 py-3 text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-[#9B4D19]/60 focus:border-[#9B4D19] transition" required aria-required="true" autoComplete="email" />
 </div>
-<div>
-<label htmlFor="w-phone" className="block eyebrow text-muted-brand mb-2">Phone Number *</label>
-<input id="w-phone" type="tel" value={form.phone} onChange={(e) => set("phone", e.target.value)} placeholder="(555) 555-5555" className="form-field w-full" required aria-required="true" autoComplete="tel" />
+<div className="mt-5">
+<label htmlFor="w-phone" className="block text-white/70 tracking-wider text-xs mb-2">Phone Number *</label>
+<input id="w-phone" type="tel" value={form.phone} onChange={(e) => set("phone", e.target.value)} placeholder="(555) 555-5555" className="w-full rounded-md bg-white/[0.05] border border-white/10 px-4 py-3 text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-[#9B4D19]/60 focus:border-[#9B4D19] transition" required aria-required="true" autoComplete="tel" />
 </div>
-<div>
-<label htmlFor="w-message" className="block eyebrow text-muted-brand mb-2">Tell Us About Your Wedding</label>
-<textarea id="w-message" rows={4} value={form.message} onChange={(e) => set("message", e.target.value)} placeholder="Share your wedding date, guest count, or anything else you'd like us to know." className="form-field w-full resize-none" />
+<div className="mt-5">
+<label htmlFor="w-message" className="block text-white/70 tracking-wider text-xs mb-2">Tell Us About Your Wedding</label>
+<textarea id="w-message" value={form.message} onChange={(e) => set("message", e.target.value)} placeholder="Share your wedding date, guest count, or anything else you'd like us to know." className="w-full rounded-md bg-white/[0.05] border border-white/10 px-4 py-3 text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-[#9B4D19]/60 focus:border-[#9B4D19] transition min-h-[140px] resize-y" />
 </div>
 {TURNSTILE_SITE_KEY && (
 <div>
@@ -91,8 +91,8 @@ return (
 {submit.isError && (
 <p className="text-sm font-sans text-red-600" role="alert">Something went wrong. Please try again or email us at <a href="mailto:info@riverslodge.com" className="underline">info@riverslodge.com</a>.</p>
 )}
-<button type="submit" disabled={!canSubmit} className="btn-outline disabled:opacity-40 disabled:cursor-not-allowed" style={{ borderColor: ACCENT, color: ACCENT }}>
-{submit.isPending ? "Sending…" : "Submit Wedding Inquiry"}
+<button type="submit" disabled={!canSubmit} className="inline-flex items-center justify-center rounded-md bg-[#9B4D19] hover:bg-[#B4591E] disabled:opacity-50 disabled:cursor-not-allowed text-white uppercase tracking-widest text-sm px-8 py-3 transition">
+{submit.isPending ? "Sending…" : "SUBMIT WEDDING INQUIRY"}
 </button>
 </form>
 );
