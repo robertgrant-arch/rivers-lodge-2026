@@ -458,7 +458,7 @@ export default function PortalCalendar() {
       result.push({ id: e.id, title: e.title ?? 'Hunt/Fish', startDate: e.startDate, endDate: e.endDate ?? e.startDate, kind: 'hunt_fish', notes: e.notes }),
     );
     (data.blocked ?? []).forEach((e: any) =>
-      result.push({ id: e.id, title: e.reason ?? e.reasonNotes ?? 'Hold', startDate: e.startDate, endDate: e.endDate ?? e.startDate, kind: 'blocked', notes: e.reasonNotes }),
+      result.push({ id: e.id, title: e.title ?? e.reasonNotes ?? (e.reason && e.reason !== 'other' ? e.reason : 'Hold'), startDate: e.startDate, endDate: e.endDate ?? e.startDate, kind: 'blocked', notes: e.reasonNotes }),
     );
 
     return result;
