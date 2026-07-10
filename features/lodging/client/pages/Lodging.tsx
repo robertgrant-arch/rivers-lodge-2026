@@ -93,7 +93,7 @@ export default function Lodging() {
             className={i % 2 === 0 ? "bg-background" : "bg-[#363330]"}
           >
             {/* Full-bleed compact hero */}
-            <div className="relative min-h-[70vh] flex items-end overflow-hidden">
+            <div className="relative w-full aspect-[3/2] lg:aspect-[16/10] flex items-end overflow-hidden">
               {prop.heroImg ? ( <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${prop.heroImg})` }} aria-hidden="true" /> ) : ( <div className="absolute inset-0 bg-[#2B2823] flex items-center justify-center" aria-hidden="true"><span className="text-[11px] tracking-[0.12em] uppercase font-sans text-[#6E655C]">{prop.heroAlt}</span></div> )}
               <div
                 className="absolute inset-0 pointer-events-none"
@@ -206,7 +206,7 @@ export default function Lodging() {
             className={i % 2 === 0 ? "bg-[#2B2823]" : "bg-[#363330]"}
           >
             {/* Full-bleed compact hero */}
-            <div className="relative min-h-[70vh] flex items-end overflow-hidden">
+            <div className="relative w-full aspect-[3/2] lg:aspect-[16/10] flex items-end overflow-hidden">
               {venue.heroImg ? ( <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${venue.heroImg})` }} aria-hidden="true" /> ) : ( <div className="absolute inset-0 bg-[#1E1C19] flex items-center justify-center" aria-hidden="true"><span className="text-[11px] tracking-[0.12em] uppercase font-sans text-[#6E655C]">{venue.heroAlt}</span></div> )}
               <div
                 className="absolute inset-0 pointer-events-none"
