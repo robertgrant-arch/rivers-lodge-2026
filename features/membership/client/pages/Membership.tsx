@@ -159,86 +159,82 @@ function MembershipInquiryForm({ initialTier }: { initialTier: MembershipTier | 
 
   return (
     <form onSubmit={handleSubmit} noValidate className="max-w-2xl space-y-5" aria-label="Membership inquiry form">
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-        <div>
-          <label htmlFor="m-name" className="block text-[9px] tracking-[0.14em] uppercase font-sans text-muted-brand mb-2">
-            Full Name <span style={{ color: ACCENT }} aria-hidden="true">*</span>
-            <span className="sr-only">(required)</span>
-          </label>
-          <input
-            id="m-name"
-            type="text"
-            value={form.name}
-            onChange={(e) => set("name", e.target.value)}
-            placeholder="Your full name"
-            className="form-field w-full"
-            required
-            aria-required="true"
-            autoComplete="name"
-          />
-        </div>
-
-        <div>
-          <label htmlFor="m-email" className="block text-[9px] tracking-[0.14em] uppercase font-sans text-muted-brand mb-2">
-            Email Address <span style={{ color: ACCENT }} aria-hidden="true">*</span>
-            <span className="sr-only">(required)</span>
-          </label>
-          <input
-            id="m-email"
-            type="email"
-            value={form.email}
-            onChange={(e) => set("email", e.target.value)}
-            placeholder="you@example.com"
-            className="form-field w-full"
-            required
-            aria-required="true"
-            autoComplete="email"
-          />
-        </div>
+      <div className="mt-5">
+        <label htmlFor="m-name" className="block text-white/70 tracking-wider text-xs mb-2">
+          Full Name <span style={{ color: ACCENT }} aria-hidden="true">*</span>
+          <span className="sr-only">(required)</span>
+        </label>
+        <input
+          id="m-name"
+          type="text"
+          value={form.name}
+          onChange={(e) => set("name", e.target.value)}
+          placeholder="Your full name"
+          className="w-full rounded-md bg-white/[0.04] border border-white/10 px-4 py-3 text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-[#9B4D19]/60 focus:border-[#9B4D19] transition"
+          required
+          aria-required="true"
+          autoComplete="name"
+        />
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-        <div>
-          <label htmlFor="m-phone" className="block text-[9px] tracking-[0.14em] uppercase font-sans text-muted-brand mb-2">
-            Phone Number <span style={{ color: ACCENT }} aria-hidden="true">*</span>
-            <span className="sr-only">(required)</span>
-          </label>
-          <input
-            id="m-phone"
-            type="tel"
-            value={form.phone}
-            onChange={(e) => set("phone", e.target.value)}
-            placeholder="(555) 555-5555"
-            className="form-field w-full"
-            required
-            aria-required="true"
-            autoComplete="tel"
-          />
-        </div>
-
-        <div>
-          <label htmlFor="m-interest" className="block text-[9px] tracking-[0.14em] uppercase font-sans text-muted-brand mb-2">
-            Membership Interest <span style={{ color: ACCENT }} aria-hidden="true">*</span>
-            <span className="sr-only">(required)</span>
-          </label>
-          <select
-            id="m-interest"
-            value={form.membershipInterest}
-            onChange={(e) => set("membershipInterest", e.target.value)}
-            className="form-field w-full"
-            required
-            aria-required="true"
-          >
-            <option value="" disabled>Select a tier…</option>
-            <option value="Individual">Individual</option>
-            <option value="Corporate">Corporate</option>
-            <option value="Not Sure Yet">Not Sure Yet</option>
-          </select>
-        </div>
+      <div className="mt-5">
+        <label htmlFor="m-email" className="block text-white/70 tracking-wider text-xs mb-2">
+          Email Address <span style={{ color: ACCENT }} aria-hidden="true">*</span>
+          <span className="sr-only">(required)</span>
+        </label>
+        <input
+          id="m-email"
+          type="email"
+          value={form.email}
+          onChange={(e) => set("email", e.target.value)}
+          placeholder="you@example.com"
+          className="w-full rounded-md bg-white/[0.04] border border-white/10 px-4 py-3 text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-[#9B4D19]/60 focus:border-[#9B4D19] transition"
+          required
+          aria-required="true"
+          autoComplete="email"
+        />
       </div>
 
-      <div>
-        <label htmlFor="m-message" className="block text-[9px] tracking-[0.14em] uppercase font-sans text-muted-brand mb-2">
+      <div className="mt-5">
+        <label htmlFor="m-phone" className="block text-white/70 tracking-wider text-xs mb-2">
+          Phone Number <span style={{ color: ACCENT }} aria-hidden="true">*</span>
+          <span className="sr-only">(required)</span>
+        </label>
+        <input
+          id="m-phone"
+          type="tel"
+          value={form.phone}
+          onChange={(e) => set("phone", e.target.value)}
+          placeholder="(555) 555-5555"
+          className="w-full rounded-md bg-white/[0.04] border border-white/10 px-4 py-3 text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-[#9B4D19]/60 focus:border-[#9B4D19] transition"
+          required
+          aria-required="true"
+          autoComplete="tel"
+        />
+      </div>
+
+      <div className="mt-5">
+        <label htmlFor="m-interest" className="block text-white/70 tracking-wider text-xs mb-2">
+          Membership Interest <span style={{ color: ACCENT }} aria-hidden="true">*</span>
+          <span className="sr-only">(required)</span>
+        </label>
+        <select
+          id="m-interest"
+          value={form.membershipInterest}
+          onChange={(e) => set("membershipInterest", e.target.value)}
+          className="w-full rounded-md bg-white/[0.04] border border-white/10 px-4 py-3 text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-[#9B4D19]/60 focus:border-[#9B4D19] transition"
+          required
+          aria-required="true"
+        >
+          <option value="" disabled>Select a tier…</option>
+          <option value="Individual">Individual</option>
+          <option value="Corporate">Corporate</option>
+          <option value="Not Sure Yet">Not Sure Yet</option>
+        </select>
+      </div>
+
+      <div className="mt-5">
+        <label htmlFor="m-message" className="block text-white/70 tracking-wider text-xs mb-2">
           Tell Us About Your Interest <span style={{ color: ACCENT }} aria-hidden="true">*</span>
           <span className="sr-only">(required)</span>
         </label>
@@ -248,21 +244,21 @@ function MembershipInquiryForm({ initialTier }: { initialTier: MembershipTier | 
           value={form.message}
           onChange={(e) => set("message", e.target.value)}
           placeholder="Tell us a bit about your interest in hunting, fishing, lodging access, or the property."
-          className="form-field w-full resize-none"
+          className="w-full rounded-md bg-white/[0.04] border border-white/10 px-4 py-3 text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-[#9B4D19]/60 focus:border-[#9B4D19] transition resize-y"
           required
           aria-required="true"
         />
       </div>
 
       {TURNSTILE_SITE_KEY && (
-        <div>
+        <div className="mt-4">
           <Turnstile
             ref={turnstileRef}
             siteKey={TURNSTILE_SITE_KEY}
             onSuccess={setCaptchaToken}
             onExpire={() => setCaptchaToken("")}
             onError={() => setCaptchaToken("")}
-            options={{ theme: "light", size: "normal" }}
+            options={{ theme: "dark" }}
           />
         </div>
       )}
@@ -277,10 +273,9 @@ function MembershipInquiryForm({ initialTier }: { initialTier: MembershipTier | 
       <button
         type="submit"
         disabled={!canSubmit}
-        className="btn-outline disabled:opacity-40 disabled:cursor-not-allowed"
-        style={{ borderColor: ACCENT, color: ACCENT }}
+        className="inline-flex items-center justify-center rounded-md bg-[#9B4D19] hover:bg-[#B4591E] disabled:opacity-50 disabled:cursor-not-allowed text-white uppercase tracking-widest text-sm px-8 py-3 transition"
       >
-        {submit.isPending ? "Sending…" : "Submit Membership Inquiry"}
+        {submit.isPending ? "Sending…" : "SUBMIT MEMBERSHIP INQUIRY"}
       </button>
     </form>
   );
