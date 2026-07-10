@@ -417,7 +417,7 @@ const calendarRouter = router({
         return { success: true, id: result.id };
       } catch (err) {
         console.error('[blockDates] Failed to insert:', err instanceof Error ? err.message : String(err));
-        { const rootErr: any = (err as any)?.cause ?? err; const pgErr = rootErr as any; const detail = pgErr?.detail ? ` | detail: ${pgErr.detail}` : ''; const code = pgErr?.code ? ` | code: ${pgErr.code}` : ''; const constraint = pgErr?.constraint ? ` | constraint: ${pgErr.constraint}` : ''; const column = pgErr?.column ? ` | column: ${pgErr.column}` : ''; const table = pgErr?.table ? ` | table: ${pgErr.table}` : ''; const hint = pgErr?.hint ? ` | hint: ${pgErr.hint}` : '';  throw new Error(`Failed to save event: ${baseMsg}${code}${detail}${constraint}${column}${table}${hint}`); }
+        { const rootErr: any = (err as any)?.cause ?? err; const pgErr = rootErr as any; const detail = pgErr?.detail ? ` | detail: ${pgErr.detail}` : ''; const code = pgErr?.code ? ` | code: ${pgErr.code}` : ''; const constraint = pgErr?.constraint ? ` | constraint: ${pgErr.constraint}` : ''; const column = pgErr?.column ? ` | column: ${pgErr.column}` : ''; const table = pgErr?.table ? ` | table: ${pgErr.table}` : ''; const hint = pgErr?.hint ? ` | hint: ${pgErr.hint}` : '';  throw new Error(`Failed to save event: ${baseMsg}${code}${detail}${(rootErr && (rootErr as any).message && (rootErr as any).message !== (err instanceof Error ? err.message : '')) ? ` | pgMessage: ${(rootErr as any).message}` : ''}${constraint}${column}${table}${hint}`); }
       }
     }),
 
