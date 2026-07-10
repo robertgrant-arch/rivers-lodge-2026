@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useAuth } from '@features/auth/public';
+import { useLocation } from "wouter";
 import { trpc } from '@shared/lib/trpc';
 import { toast } from "sonner";
 import PublicLayout from "@/components/PublicLayout";
@@ -7,9 +8,22 @@ import PublicLayout from "@/components/PublicLayout";
 type AdminTab = "overview" | "bookings" | "inquiries" | "members" | "applications" | "waivers" | "updates" | "messages" | "cms";
 type CmsSubTab = "testimonials" | "faqs" | "announcements" | "member-content";
 
+function extractInquiryType(message: string): "wedding" | "corporate" | "huntfish" | "other" {
+  const msg = message.toLowerCase();
+  if (msg.includes("inquiry type: wedding")) return "wedding";
+  if (msg.includes("inquiry type: corporate")) return "corporate";
+  if (msg.includes("inquiry type: hunt") || msg.includes("inquiry type: fish")) return "huntfish";
+  return "other";
+}
+
 export default function AdminDashboard() {
   const { user, isAuthenticated, loading } = useAuth();
+  const [, setLocation] = useLocation();
   const [tab, setTab] = useState<AdminTab>("overview");
+
+  // Inquiry type filter from URL
+  const urlParams = new URLSearchParams(window.location.search);
+  const inquiryTypeFilter = (urlParams.get("type") as "wedding" | "corporate" | "huntfish" | "other" | null) ?? "all";
 
   const isAdmin = isAuthenticated && user?.role === "admin";
 
@@ -126,11 +140,27 @@ export default function AdminDashboard() {
 
   // ─── Derived data (from the single summary query) ─────────────────────────
   const bookingsData      = summary.data?.bookings      ?? [];
-  const inquiriesData     = summary.data?.inquiries     ?? [];
+  const allInquiriesData  = summary.data?.inquiries     ?? [];
   const membersData       = summary.data?.members       ?? [];
   const applicationsData  = summary.data?.applications  ?? [];
   const waiversData       = summary.data?.waivers       ?? [];
   const updatesData       = summary.data?.updates       ?? [];
+
+  // Count inquiries by type
+  const inquiryTypeCounts = useMemo(() => {
+    const counts = { all: allInquiriesData.length, wedding: 0, corporate: 0, huntfish: 0, other: 0 };
+    allInquiriesData.forEach((inq) => {
+      const type = extractInquiryType(inq.message ?? "");
+      counts[type]++;
+    });
+    return counts;
+  }, [allInquiriesData]);
+
+  // Filter inquiries by selected type
+  const inquiriesData = useMemo(() => {
+    if (inquiryTypeFilter === "all") return allInquiriesData;
+    return allInquiriesData.filter((inq) => extractInquiryType(inq.message ?? "") === inquiryTypeFilter);
+  }, [allInquiriesData, inquiryTypeFilter]);
 
   const totalRevenue = bookingsData.reduce((sum, b) => {
     const val = parseFloat(b.totalRevenue ?? "0");
@@ -138,7 +168,7 @@ export default function AdminDashboard() {
   }, 0);
 
   const confirmedBookings = bookingsData.filter(b => b.status === "confirmed").length;
-  const newInquiries      = inquiriesData.filter(i => i.status === "new").length;
+  const newInquiries      = allInquiriesData.filter(i => i.status === "new").length;
   const pendingApps       = applicationsData.filter(a => a.status === "pending").length;
 
   // CMS collections (from the lazy-loaded cmsTab query)
@@ -292,7 +322,39 @@ export default function AdminDashboard() {
           {/* Inquiries */}
           {tab === "inquiries" && (
             <div>
-              <h2 className="font-serif text-2xl text-foreground mb-6">Inquiries</h2>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="font-serif text-2xl text-foreground">Inquiries</h2>
+              </div>
+
+              {/* Filter tabs */}
+              <div className="flex flex-wrap gap-2 mb-6">
+                {[
+                  { key: "all", label: "ALL", count: inquiryTypeCounts.all },
+                  { key: "wedding", label: "WEDDINGS", count: inquiryTypeCounts.wedding },
+                  { key: "corporate", label: "CORPORATE", count: inquiryTypeCounts.corporate },
+                  { key: "huntfish", label: "HUNT/FISH", count: inquiryTypeCounts.huntfish },
+                  { key: "other", label: "OTHER", count: inquiryTypeCounts.other },
+                ].map((filterTab) => (
+                  <button
+                    key={filterTab.key}
+                    onClick={() => {
+                      if (filterTab.key === "all") {
+                        setLocation(window.location.pathname);
+                      } else {
+                        setLocation(`${window.location.pathname}?type=${filterTab.key}`);
+                      }
+                    }}
+                    className={`px-4 py-2 rounded-full text-[10px] tracking-[0.14em] uppercase font-sans font-medium transition-colors ${
+                      inquiryTypeFilter === filterTab.key
+                        ? "bg-[#9B4D19] text-white border border-[#9B4D19]"
+                        : "border border-border text-muted-foreground hover:text-foreground hover:border-foreground"
+                    }`}
+                  >
+                    {filterTab.label} <span className="text-[9px] ml-1.5 opacity-75">({filterTab.count})</span>
+                  </button>
+                ))}
+              </div>
+
               <div className="flex flex-col gap-4">
                 {inquiriesData.map((inq) => (
                   <div key={inq.id} className="bg-card border border-border p-5">
@@ -315,7 +377,7 @@ export default function AdminDashboard() {
                     <p className="text-[9px] font-sans text-muted-foreground mt-3">{new Date(inq.createdAt).toLocaleString()}</p>
                   </div>
                 ))}
-                {inquiriesData.length === 0 && <p className="text-sm font-sans text-muted-foreground py-8 text-center">No inquiries yet.</p>}
+                {inquiriesData.length === 0 && <p className="text-sm font-sans text-muted-foreground py-8 text-center">No {inquiryTypeFilter !== "all" ? `${inquiryTypeFilter} ` : ""}inquiries.</p>}
               </div>
             </div>
           )}
