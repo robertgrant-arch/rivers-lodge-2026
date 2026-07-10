@@ -3,6 +3,7 @@ name: Verify Deploy
 on:
   push:
     branches: [main]
+  workflow_dispatch:
 
 jobs:
   verify:
@@ -10,6 +11,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Trigger Render deploy (belt-and-suspenders)
+        run: |
+          if [ -z "${{ secrets.RENDER_DEPLOY_HOOK_URL }}" ]; then
+            echo "⚠ RENDER_DEPLOY_HOOK_URL not configured as GitHub secret"
+            echo "   Configure at: https://github.com/robertgrant-arch/rivers-lodge-2026/settings/secrets/actions"
+          else
+            echo "Triggering Render deploy via webhook..."
+            curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}" \
+              -H "Content-Type: application/json" \
+              -d '{"gitCommitSha": "${{ github.sha }}", "gitBranch": "main"}' \
+              -w "\nHTTP Status: %{http_code}\n" || true
+            echo "Deploy webhook triggered"
+          fi
 
       - name: Wait for deployment and verify commit
         env:
@@ -43,15 +58,15 @@ jobs:
 
           # Timeout — open an issue
           echo "✗ Deploy verification timeout after $MAX_WAIT_MINUTES minutes"
-          ISSUE_BODY="Deploy verification timeout for commit $EXPECTED_COMMIT
-
-Check Render logs: https://dashboard.render.com/services/srv-d85rdondl75s7396bsjg
-
-Last health check response: $RESPONSE"
 
           gh issue create \
             --title "Deploy verification timeout: $EXPECTED_COMMIT" \
-            --body "$ISSUE_BODY" \
-            --label "ops,deploy" || true
+            --body "Deploy verification timeout for commit $EXPECTED_COMMIT
+
+Check Render logs: https://dashboard.render.com/services/srv-d85rdondl75s7396bsjg
+
+Last health check response: $RESPONSE" \
+            --label "ops" \
+            --label "deploy" || true
 
           exit 1
