@@ -35,19 +35,11 @@ interface TurnstileResponse {
  * @throws TRPCError INTERNAL_SERVER_ERROR — when the Cloudflare API call itself fails.
  */
 export async function verifyCaptcha(token: string): Promise<void> {
-  const secret = process.env.TURNSTILE_SECRET ?? "";
+  const secret = process.env.TURNSTILE_SECRET;
 
   if (!secret) {
-    if (ENV.isProduction) {
-      // Should have been caught at boot — guard anyway.
-      throw new TRPCError({
-        code: "INTERNAL_SERVER_ERROR",
-        message: "TURNSTILE_SECRET is not configured.",
-      });
-    }
-    // Development bypass: allow empty tokens so local dev works without credentials.
     console.warn(
-      "[captcha] TURNSTILE_SECRET is not set — skipping Turnstile verification in development.",
+      "[captcha] TURNSTILE_SECRET not configured — skipping verification (dev/preview mode)",
     );
     return;
   }
