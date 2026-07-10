@@ -44,7 +44,11 @@ const [form, setForm] = useState({ name: "", email: "", phone: "", message: "" }
 const set = (field: string, value: string) => setForm((f) => ({ ...f, [field]: value }));
 const submit = trpc.inquiries.submit.useMutation({
 onSuccess: () => setSubmitted(true),
-onError: () => { turnstileRef.current?.reset(); setCaptchaToken(""); },
+onError: (err) => {
+  turnstileRef.current?.reset();
+  setCaptchaToken("");
+  console.error("[WeddingInquiryForm] Submission error:", err);
+},
 });
 const canSubmit = !!form.name && !!form.email && !!form.phone && !submit.isPending && (!TURNSTILE_SITE_KEY || !!captchaToken);
 const handleSubmit = (e: React.FormEvent) => {
@@ -89,7 +93,9 @@ return (
 </div>
 )}
 {submit.isError && (
-<p className="text-sm font-sans text-red-600" role="alert">Something went wrong. Please try again or email us at <a href="mailto:info@riverslodge.com" className="underline">info@riverslodge.com</a>.</p>
+<p className="text-sm font-sans text-red-600" role="alert">
+  {submit.error?.message || "Something went wrong. Please try again or email us at info@riverslodge.com"}
+</p>
 )}
 <button type="submit" disabled={!canSubmit} className="inline-flex items-center justify-center rounded-md bg-[#9B4D19] hover:bg-[#B4591E] disabled:opacity-50 disabled:cursor-not-allowed text-white uppercase tracking-widest text-sm px-8 py-3 transition">
 {submit.isPending ? "Sending…" : "SUBMIT WEDDING INQUIRY"}
