@@ -84,9 +84,9 @@ export async function runStartupMigration() {
           END $$;
 
           CREATE TABLE IF NOT EXISTS property_activities (
-            "propertyId" integer NOT NULL REFERENCES hunting_properties(id) ON DELETE CASCADE,
+            property_id integer NOT NULL REFERENCES hunting_properties(id) ON DELETE CASCADE,
             "activity" property_activity NOT NULL,
-            PRIMARY KEY ("propertyId", "activity")
+            PRIMARY KEY (property_id, "activity")
           );
         `;
         await client.query(activitiesMigration);
@@ -103,7 +103,7 @@ export async function runStartupMigration() {
         const cleanupTestProperties = `
           DELETE FROM hunting_properties
           WHERE name ILIKE 'test%' OR name ILIKE '%delete%' OR name = '69 highway' OR slug LIKE 'test-%'
-          AND id NOT IN (SELECT DISTINCT propertyId FROM property_bookings);
+          AND id NOT IN (SELECT DISTINCT property_id FROM property_bookings);
         `;
         const cleanupResult = await client.query(cleanupTestProperties);
         if ((cleanupResult.rowCount ?? 0) > 0) {

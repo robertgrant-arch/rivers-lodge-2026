@@ -1,4 +1,4 @@
-import { rateLimit } from "express-rate-limit";
+import { rateLimit, ipKeyGenerator } from "express-rate-limit";
 
 /**
  * submitLimiter — public form submissions
@@ -34,7 +34,7 @@ export const loginLimiter = rateLimit({
   message: { error: "Too many login attempts — please wait 15 minutes and try again." },
   keyGenerator: (req) => {
     // Key on IP + email body so per-account brute force is also limited
-    const ip = req.ip ?? "unknown";
+    const ip = ipKeyGenerator(req);
     try {
       const body = req.body;
       // tRPC batch: body is array; single call: object
