@@ -11,11 +11,13 @@ import { submitLimiter, loginLimiter, acceptInviteLimiter, changePasswordLimiter
 import { resolvePort } from "./port";
 import { checkDbHealth } from "./db";
 import { runStartupMigration, checkHuntingPropertiesSchema } from "./startup-migration";
+import { applySqlMigrations } from "./apply-sql-migrations";
 
 async function startServer() {
   // ── Startup schema migration ────────────────────────────────────────────────────
   // Runs before tRPC server starts, ensures hunting_properties has all required columns
   await runStartupMigration();
+  await applySqlMigrations();
 
   const app = express();
   const server = createServer(app);
