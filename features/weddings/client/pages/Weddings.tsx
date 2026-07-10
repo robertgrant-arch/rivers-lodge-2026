@@ -73,23 +73,30 @@ return (
 <form onSubmit={handleSubmit} className="space-y-6 max-w-xl">
 <div className="mt-5">
 <label htmlFor="w-name" className="block text-white/70 tracking-wider text-xs mb-2">Full Name *</label>
-<input id="w-name" type="text" value={form.name} onChange={(e) => set("name", e.target.value)} placeholder="Your full name" className="w-full rounded-md bg-white/[0.05] border border-white/10 px-4 py-3 text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-[#9B4D19]/60 focus:border-[#9B4D19] transition" required aria-required="true" autoComplete="name" />
+<input id="w-name" type="text" value={form.name} onChange={(e) => set("name", e.target.value)} placeholder="Your full name" className="w-full rounded-md bg-white/[0.04] border border-white/10 px-4 py-3 text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-[#9B4D19]/60 focus:border-[#9B4D19] transition" required aria-required="true" autoComplete="name" />
 </div>
 <div className="mt-5">
 <label htmlFor="w-email" className="block text-white/70 tracking-wider text-xs mb-2">Email Address *</label>
-<input id="w-email" type="email" value={form.email} onChange={(e) => set("email", e.target.value)} placeholder="you@example.com" className="w-full rounded-md bg-white/[0.05] border border-white/10 px-4 py-3 text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-[#9B4D19]/60 focus:border-[#9B4D19] transition" required aria-required="true" autoComplete="email" />
+<input id="w-email" type="email" value={form.email} onChange={(e) => set("email", e.target.value)} placeholder="you@example.com" className="w-full rounded-md bg-white/[0.04] border border-white/10 px-4 py-3 text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-[#9B4D19]/60 focus:border-[#9B4D19] transition" required aria-required="true" autoComplete="email" />
 </div>
 <div className="mt-5">
 <label htmlFor="w-phone" className="block text-white/70 tracking-wider text-xs mb-2">Phone Number *</label>
-<input id="w-phone" type="tel" value={form.phone} onChange={(e) => set("phone", e.target.value)} placeholder="(555) 555-5555" className="w-full rounded-md bg-white/[0.05] border border-white/10 px-4 py-3 text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-[#9B4D19]/60 focus:border-[#9B4D19] transition" required aria-required="true" autoComplete="tel" />
+<input id="w-phone" type="tel" value={form.phone} onChange={(e) => set("phone", e.target.value)} placeholder="(555) 555-5555" className="w-full rounded-md bg-white/[0.04] border border-white/10 px-4 py-3 text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-[#9B4D19]/60 focus:border-[#9B4D19] transition" required aria-required="true" autoComplete="tel" />
 </div>
 <div className="mt-5">
 <label htmlFor="w-message" className="block text-white/70 tracking-wider text-xs mb-2">Tell Us About Your Wedding</label>
-<textarea id="w-message" value={form.message} onChange={(e) => set("message", e.target.value)} placeholder="Share your wedding date, guest count, or anything else you'd like us to know." className="w-full rounded-md bg-white/[0.05] border border-white/10 px-4 py-3 text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-[#9B4D19]/60 focus:border-[#9B4D19] transition min-h-[140px] resize-y" />
+<textarea id="w-message" value={form.message} onChange={(e) => set("message", e.target.value)} placeholder="Share your wedding date, guest count, or anything else you'd like us to know." className="w-full rounded-md bg-white/[0.04] border border-white/10 px-4 py-3 text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-[#9B4D19]/60 focus:border-[#9B4D19] transition min-h-[140px] resize-y" />
 </div>
 {TURNSTILE_SITE_KEY && (
-<div>
-<Turnstile ref={turnstileRef} siteKey={TURNSTILE_SITE_KEY} onSuccess={setCaptchaToken} onExpire={() => setCaptchaToken("")} onError={() => setCaptchaToken("")} options={{ theme: "light", size: "normal" }} />
+<div className="mt-4">
+<Turnstile
+  ref={turnstileRef}
+  siteKey={TURNSTILE_SITE_KEY}
+  onSuccess={(token) => setCaptchaToken(token)}
+  onError={() => setCaptchaToken("")}
+  onExpire={() => setCaptchaToken("")}
+  options={{ theme: "dark" }}
+/>
 </div>
 )}
 {submit.isError && (
