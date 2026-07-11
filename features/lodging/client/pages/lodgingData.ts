@@ -49,7 +49,7 @@ galleryImgs: [
 { src: "/img/lodge-6-gallery.jpg", alt: "The Lodge — Photo 4" },
 { src: "/img/lodge-8-gallery.jpg", alt: "The Lodge — Photo 5" },
 { src: "/img/main%20lodge%20inside.jpg", alt: "The Lodge — Photo 6" },
-{ src: "", alt: "The Lodge — 6" },
+{ src: "/img/lodge-11-gallery.jpg", alt: "Lodge interior" },
 ],
 },
 {
@@ -108,7 +108,7 @@ galleryImgs: [
 { src: "/img/annex-3-gallery.jpg", alt: "The Annex — Photo 4" },
 { src: "/img/annex-4-gallery.jpg", alt: "The Annex — Photo 5" },
 { src: "/img/annex-7-gallery.jpg", alt: "The Annex — Photo 6" },
-{ src: "", alt: "The Annex — EMPTY #7" },
+{ src: "/img/annex-12-gallery.jpg", alt: "Annex interior" },
 ],
 },
 {
@@ -280,7 +280,7 @@ galleryImgs: [
 { src: "/img/greendrake-4-gallery.jpg", alt: "The Green Drake — interior detail" },
 { src: "/img/greendrake-5-gallery%20(1).jpg", alt: "The Green Drake — evening view" },
 { src: "/img/greendrake.gallery.jpg", alt: "The Green Drake — saloon" },
-{ src: "", alt: "The Green Drake — EMPTY #34" },
+{ src: "/img/greendrake-14-gallery.jpg", alt: "Green Drake interior" },
 ],
 },
 {
@@ -302,7 +302,7 @@ features: [
 "Private use by arrangement",
 ],
 galleryImgs: [
-{ src: "", alt: "The Clubhouse — EMPTY #35" },
+{ src: "/img/clubhouse-br-gallery.jpg", alt: "Clubhouse bedroom" },
 { src: "/img/clubhouse-5-gallery.jpg", alt: "The Clubhouse — Photo 36" },
 { src: "/img/clubhouse-4-gallery.jpg", alt: "The Clubhouse — Photo 37" },
 { src: "/img/clubhouse-2-gallery.jpg", alt: "The Clubhouse — Photo 38" },
