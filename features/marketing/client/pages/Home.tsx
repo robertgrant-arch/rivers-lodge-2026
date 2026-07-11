@@ -297,6 +297,8 @@ export default function Home() {
         </div>
       </section>
 
+      <div className="h-px bg-white/15" style={{ margin: "2rem 0" }} />
+
       {/* ── 05. Teaser: Membership ───────────────────────────────────────── */}
       <section className="section bg-muted/20 border-t border-white/5">
         <div className="max-w-[1440px] mx-auto px-5 lg:px-14">
