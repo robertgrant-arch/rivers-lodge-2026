@@ -27,6 +27,7 @@ const eventsDropdown = [
 const lodgingDropdown = [
   { label: "Lodging", href: "/lodging#lodging", desc: "Five buildings — sleep your entire party on-site" },
   { label: "Venues",  href: "/venues",          desc: "Ceremony & reception spaces for up to 300 guests" },
+  { label: "Gallery", href: "/gallery",         desc: "Photography from the estate and past events" },
 ];
 
 const membershipDropdown = [
