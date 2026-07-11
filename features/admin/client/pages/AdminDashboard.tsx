@@ -52,6 +52,30 @@ export default function AdminDashboard() {
     staleTime: 30_000,
   });
 
+  // ─── Derived data (calculated early to ensure hooks are called before auth guard) ─────
+  const bookingsData      = summary.data?.bookings      ?? [];
+  const allInquiriesData  = summary.data?.inquiries     ?? [];
+  const membersData       = summary.data?.members       ?? [];
+  const applicationsData  = summary.data?.applications  ?? [];
+  const waiversData       = summary.data?.waivers       ?? [];
+  const updatesData       = summary.data?.updates       ?? [];
+
+  // Count inquiries by type
+  const inquiryTypeCounts = useMemo(() => {
+    const counts = { all: allInquiriesData.length, wedding: 0, corporate: 0, huntfish: 0, other: 0 };
+    allInquiriesData.forEach((inq) => {
+      const type = extractInquiryType(inq.message ?? "");
+      counts[type]++;
+    });
+    return counts;
+  }, [allInquiriesData]);
+
+  // Filter inquiries by selected type
+  const inquiriesData = useMemo(() => {
+    if (inquiryTypeFilter === "all") return allInquiriesData;
+    return allInquiriesData.filter((inq) => extractInquiryType(inq.message ?? "") === inquiryTypeFilter);
+  }, [allInquiriesData, inquiryTypeFilter]);
+
   // ─── Mutations ────────────────────────────────────────────────────────────
   const archiveMsg = trpc.messages.archive.useMutation({
     onSuccess: () => { allMessages.refetch(); toast.success("Message archived"); },
@@ -138,29 +162,6 @@ export default function AdminDashboard() {
     );
   }
 
-  // ─── Derived data (from the single summary query) ─────────────────────────
-  const bookingsData      = summary.data?.bookings      ?? [];
-  const allInquiriesData  = summary.data?.inquiries     ?? [];
-  const membersData       = summary.data?.members       ?? [];
-  const applicationsData  = summary.data?.applications  ?? [];
-  const waiversData       = summary.data?.waivers       ?? [];
-  const updatesData       = summary.data?.updates       ?? [];
-
-  // Count inquiries by type
-  const inquiryTypeCounts = useMemo(() => {
-    const counts = { all: allInquiriesData.length, wedding: 0, corporate: 0, huntfish: 0, other: 0 };
-    allInquiriesData.forEach((inq) => {
-      const type = extractInquiryType(inq.message ?? "");
-      counts[type]++;
-    });
-    return counts;
-  }, [allInquiriesData]);
-
-  // Filter inquiries by selected type
-  const inquiriesData = useMemo(() => {
-    if (inquiryTypeFilter === "all") return allInquiriesData;
-    return allInquiriesData.filter((inq) => extractInquiryType(inq.message ?? "") === inquiryTypeFilter);
-  }, [allInquiriesData, inquiryTypeFilter]);
 
   const totalRevenue = bookingsData.reduce((sum, b) => {
     const val = parseFloat(b.totalRevenue ?? "0");
