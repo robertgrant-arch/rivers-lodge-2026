@@ -126,7 +126,7 @@ return (
 Your wedding weekend. <br /><em className="italic font-light">Entirely private.</em>
 </h1>
 <p className="font-sans text-white/65 max-w-lg leading-relaxed mb-10" style={{ fontSize: "0.9375rem" }}>
-From intimate ceremonies on the River Lawn to grand receptions in the Rivers Barn — every wedding at the Lodge is exclusively yours. No other groups, no shared access.
+From intimate ceremonies to grand receptions- every wedding at the Lodge is exclusively yours. No other groups, no shared access.
 </p>
 <div className="flex flex-col sm:flex-row gap-4">
 <a href="#inquire" className="btn-primary" style={{ backgroundColor: ACCENT, borderColor: ACCENT, color: "#2B2823" }}>Begin Wedding Inquiry</a>
@@ -162,7 +162,7 @@ Not a venue. <br /><em className="italic">A private estate.</em>
 </h2>
 <div className="space-y-5 font-sans text-white/70 leading-relaxed" style={{ fontSize: "0.9375rem" }}>
 <p>When you book a wedding at Rivers Lodge, you book the entire estate. Your guests are the only guests. The ceremony lawns, Rivers Barn, Timber Edge, and your reserved lodging are all exclusively yours for the weekend.</p>
-<p>We work with a limited number of couples each year to ensure every wedding receives the full attention of our team. The result is a weekend that feels less like an event and more like a private gathering on land that belongs to you — at least for those three days.</p>
+<p>We work with a limited number of couples each year to ensure every wedding receives the full attention of our team. We will never have multiple weddings going on at one time and the result is a weekend event that feels more like entire weekend private gathering versus just a wedding.</p>
 </div>
 </div>
 </div>

@@ -36,7 +36,7 @@ const benefits = [
   { title: "Guided Hunting",         desc: "Guided whitetail, waterfowl, turkey, and upland hunts with dedicated hunt managers and full field support." },
   { title: "DIY Hunting Access",     desc: "Self-guided access to the property's timber, food plots, river bottom, and blinds on your own schedule." },
   { title: "Guided Fishing",         desc: "Guided trips on the Marais des Cygnes, private lakes, and river sloughs for bass, catfish, crappie, and bluegill." },
-  { title: "DIY Fishing Access",     desc: "Unrestricted member access to all water on the property — fish when you want, how you want." },
+  { title: "DIY Fishing Access",     desc: "Unrestricted DIY fishing access on select properties." },
   { title: "Lodging Priority",       desc: "Priority booking on The Lodge, Riverhouse Suites, The Annex, and all other estate accommodations." },
   { title: "Land Access & Updates",  desc: "Year-round land access and seasonal stewardship updates — stay connected to the property between visits." },
   { title: "Guest Privileges",       desc: "Bring guests onto the property for hunting, fishing, sporting days, and member events." },
@@ -351,7 +351,7 @@ export default function Membership() {
             <br /><em className="italic font-light">belong.</em>
           </h1>
           <p className="font-sans text-white/65 max-w-lg leading-relaxed mb-10" style={{ fontSize: "0.9375rem" }}>
-            Private membership on thousands of acres of Kansas and Missouri land. A limited number of memberships are available each season.
+            A private club built on creating quality experiences for members and their families
           </p>
           <a href="#apply" className="btn-outline" style={{ borderColor: ACCENT, color: ACCENT }}>
             Apply for Membership
@@ -371,7 +371,7 @@ export default function Membership() {
                 <br /><em className="italic">and the way it's used.</em>
               </h2>
               <div className="space-y-5 font-sans text-muted-brand leading-relaxed" style={{ fontSize: "0.9375rem" }}>
-                <p>Rivers Lodge membership is built around the land — Hunting, Fishing, private events, and a community of people who take long-term stewardship seriously. Members get unrestricted access to thousands of acres of managed Kansas and Missouri property, priority lodging, and an exclusive calendar of concerts, chef tours, estate parties, and seasonal gatherings.</p>
+                <p>Rivers Lodge membership is built around the land — Hunting, Fishing, private events, and a community of people who take long-term stewardship seriously. Members get access to thousands of acres of managed Kansas and Missouri property, priority lodging, and an exclusive calendar of concerts, chef tours, estate parties, and seasonal gatherings.</p>
                 <p>We keep the membership intentionally small. The land is never over-pressured, the experience is never crowded, and the community remains one where everyone knows each other. Membership is by invitation.</p>
               </div>
             </div>

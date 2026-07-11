@@ -241,7 +241,7 @@ export default function Home() {
                 From ceremonies to corporate retreats — entirely yours.
               </h2>
               <p className="font-sans text-muted-brand leading-relaxed mb-10" style={{ fontSize: "0.9375rem" }}>
-                From intimate ceremonies on the River Lawn to grand receptions in the Rivers Barn, every gathering at the Lodge is yours alone. No overlapping events, no shared grounds — the estate clears for your group from arrival to departure.
+                When you book Rivers for any event the property is exclusively yours. You will have the full attention of our staff and our team will make your event exactly what you want. All of our events are curated specifically for your group. No overlapping events, no shared grounds.
               </p>
               <Link href="/lodging" className="btn-ghost" style={{ borderColor: "#9B4D19", color: "#9B4D19" }}>Plan Your Stay</Link>
             </div>

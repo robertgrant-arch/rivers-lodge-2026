@@ -94,18 +94,6 @@ export default function OutdoorActivities() {
               <p>
                 Thousands of privately managed acres in the Marais des Cygnes River valley with something for everyone. Whether you enjoy hiking, biking, ATVs, 5-stand shooting, trophy fishing, whitetail deer hunting or waterfowl, there is an outdoor pursuit for everyone — one hour south of Kansas City.
               </p>
-              <h3
-                className="font-serif font-light text-warm leading-tight mt-8 mb-4"
-                style={{ fontSize: "clamp(1.25rem,2.5vw,1.875rem)" }}
-              >
-                Managed for the long term.
-              </h3>
-              <p>
-                Rivers Lodge manages its land and its membership in the same way — with care and at low density. All of our programs ensure getting the maximum out of the land and making sure that your experience is private and first class.
-              </p>
-              <p>
-                As a result our land gets better every year. Members and guests consistently report it as the finest private hunting and fishing access they have found anywhere in the Midwest.
-              </p>
             </div>
           </div>
         </div>
