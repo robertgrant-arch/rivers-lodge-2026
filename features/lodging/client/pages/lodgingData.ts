@@ -49,6 +49,7 @@ galleryImgs: [
 { src: "/img/lodge-6-gallery.jpg", alt: "The Lodge — Photo 4" },
 { src: "/img/lodge-8-gallery.jpg", alt: "The Lodge — Photo 5" },
 { src: "/img/main%20lodge%20inside.jpg", alt: "The Lodge — Photo 6" },
+{ src: "", alt: "The Lodge — 6" },
 ],
 },
 {

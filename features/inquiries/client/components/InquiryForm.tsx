@@ -3,12 +3,11 @@ import { useLocation } from "wouter";
 import { Turnstile } from "@marsidev/react-turnstile";
 import type { TurnstileInstance } from "@marsidev/react-turnstile";
 import { trpc } from '@shared/lib/trpc';
-import AvailabilityCalendar from "../../../booking-engine/client/components/AvailabilityCalendar";
 
 // Read at module init — env var is baked in at build time by Vite.
 const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined;
 
-type InquiryType = "wedding" | "corporate" | "membership" | "lodging" | "tour" | "event" | "general";
+type InquiryType = "wedding" | "corporate" | "membership" | "lodging" | "tour" | "event" | "hunting" | "general";
 
 interface Props {
   defaultType?: InquiryType;
@@ -21,7 +20,7 @@ interface Props {
   className?: string;
 }
 
-const STEPS = ["Your Inquiry", "Event Details", "Contact Info"];
+const STEPS = ["Your Inquiry", "Contact Info"];
 
 const TYPE_LABELS: Record<InquiryType, string> = {
   wedding: "Wedding",
@@ -30,6 +29,7 @@ const TYPE_LABELS: Record<InquiryType, string> = {
   lodging: "Lodging",
   tour: "Property Tour",
   event: "Private Event",
+  hunting: "Hunting / Fishing",
   general: "General Inquiry",
 };
 
@@ -77,8 +77,7 @@ export default function InquiryForm({ defaultType = "general", track, allowedTyp
 
   const canAdvance = () => {
     if (step === 0) return !!form.type;
-    if (step === 1) return true; // date and guest count optional
-    if (step === 2) return !!form.name && !!form.email;
+    if (step === 1) return !!form.name && !!form.email;
     return false;
   };
 
@@ -196,75 +195,13 @@ export default function InquiryForm({ defaultType = "general", track, allowedTyp
         </fieldset>
       )}
 
-      {/* Step 1 — Event details */}
+      {/* Step 1 — Contact info */}
       {step === 1 && (
         <div className="space-y-6">
-          <p className="text-white/50 font-sans text-sm">Tell us about your event or stay.</p>
-
-          {/* Availability calendar for date-sensitive inquiries */}
-          {["wedding", "corporate", "lodging", "event", "tour"].includes(form.type) && (
-            <div>
-              <label className="block text-[9px] tracking-[0.14em] uppercase font-sans text-white/40 mb-3" htmlFor="eventDate">
-                Preferred Date
-              </label>
-              <AvailabilityCalendar
-                selectedDate={form.eventDate}
-                onDateSelect={(d) => set("eventDate", d)}
-                showLegend={true}
-              />
-              {form.eventDate && (
-                <p className="mt-2 text-xs font-sans text-white/40" aria-live="polite">
-                  Selected:{" "}
-                  {new Date(form.eventDate + "T12:00:00").toLocaleDateString("en-US", {
-                    weekday: "long",
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
-                  })}
-                </p>
-              )}
-            </div>
-          )}
-
-          <div>
-            <label className="block text-[9px] tracking-[0.14em] uppercase font-sans text-white/40 mb-2" htmlFor="guestCount">
-              Number of Guests
-            </label>
-            <input
-              id="guestCount"
-              type="number"
-              min="1"
-              max="500"
-              value={form.guestCount}
-              onChange={(e) => set("guestCount", e.target.value)}
-              placeholder="Approximate guest count"
-              className="form-field w-full"
-            />
-          </div>
-
-          <div>
-            <label className="block text-[9px] tracking-[0.14em] uppercase font-sans text-white/40 mb-2" htmlFor="message">
-              Tell Us More
-            </label>
-            <textarea
-              id="message"
-              rows={4}
-              value={form.message}
-              onChange={(e) => set("message", e.target.value)}
-              placeholder="Share any details about your vision, specific needs, or questions…"
-              className="form-field w-full resize-none"
-            />
-          </div>
-        </div>
-      )}
-
-      {/* Step 2 — Contact info */}
-      {step === 2 && (
-        <div className="space-y-5">
           <p className="text-white/50 font-sans text-sm">How should we reach you?</p>
 
-          <div>
-            <label className="block text-[9px] tracking-[0.14em] uppercase font-sans text-white/40 mb-2" htmlFor="fullName">
+          <div className="mt-5">
+            <label htmlFor="fullName" className="block text-white/70 tracking-wider text-xs mb-2">
               Full Name <span style={{ color: accentColor }} aria-hidden="true">*</span>
               <span className="sr-only">(required)</span>
             </label>
@@ -274,14 +211,15 @@ export default function InquiryForm({ defaultType = "general", track, allowedTyp
               value={form.name}
               onChange={(e) => set("name", e.target.value)}
               placeholder="Your name"
-              className="form-field w-full"
+              className="w-full rounded-md bg-white/[0.04] border border-white/10 px-4 py-3 text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-[#9B4D19]/60 focus:border-[#9B4D19] transition"
               required
               aria-required="true"
+              autoComplete="name"
             />
           </div>
 
-          <div>
-            <label className="block text-[9px] tracking-[0.14em] uppercase font-sans text-white/40 mb-2" htmlFor="emailAddress">
+          <div className="mt-5">
+            <label htmlFor="emailAddress" className="block text-white/70 tracking-wider text-xs mb-2">
               Email Address <span style={{ color: accentColor }} aria-hidden="true">*</span>
               <span className="sr-only">(required)</span>
             </label>
@@ -291,14 +229,15 @@ export default function InquiryForm({ defaultType = "general", track, allowedTyp
               value={form.email}
               onChange={(e) => set("email", e.target.value)}
               placeholder="your@email.com"
-              className="form-field w-full"
+              className="w-full rounded-md bg-white/[0.04] border border-white/10 px-4 py-3 text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-[#9B4D19]/60 focus:border-[#9B4D19] transition"
               required
               aria-required="true"
+              autoComplete="email"
             />
           </div>
 
-          <div>
-            <label className="block text-[9px] tracking-[0.14em] uppercase font-sans text-white/40 mb-2" htmlFor="phoneNumber">
+          <div className="mt-5">
+            <label htmlFor="phoneNumber" className="block text-white/70 tracking-wider text-xs mb-2">
               Phone Number <span className="normal-case opacity-60">(optional)</span>
             </label>
             <input
@@ -307,32 +246,19 @@ export default function InquiryForm({ defaultType = "general", track, allowedTyp
               value={form.phone}
               onChange={(e) => set("phone", e.target.value)}
               placeholder="Optional"
-              className="form-field w-full"
+              className="w-full rounded-md bg-white/[0.04] border border-white/10 px-4 py-3 text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-[#9B4D19]/60 focus:border-[#9B4D19] transition"
+              autoComplete="tel"
             />
           </div>
 
           {/* Summary */}
-          <div className="mt-4 p-4 border border-white/8 bg-white/2" role="region" aria-label="Inquiry summary">
+          <div className="mt-6 p-4 border border-white/8 bg-white/2" role="region" aria-label="Inquiry summary">
             <p className="text-[9px] tracking-[0.12em] uppercase font-sans text-white/30 mb-3">Inquiry Summary</p>
             <div className="space-y-1.5 text-xs font-sans text-white/50">
               <div className="flex justify-between">
                 <span>Type</span>
                 <span className="text-white/70">{TYPE_LABELS[form.type]}</span>
               </div>
-              {form.eventDate && (
-                <div className="flex justify-between">
-                  <span>Preferred Date</span>
-                  <span className="text-white/70">
-                    {new Date(form.eventDate + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-                  </span>
-                </div>
-              )}
-              {form.guestCount && (
-                <div className="flex justify-between">
-                  <span>Guests</span>
-                  <span className="text-white/70">{form.guestCount}</span>
-                </div>
-              )}
             </div>
           </div>
         </div>
@@ -342,7 +268,7 @@ export default function InquiryForm({ defaultType = "general", track, allowedTyp
           In development (no VITE_TURNSTILE_SITE_KEY), the widget is omitted and the server
           bypasses verification automatically so local dev keeps working. */}
       {step === STEPS.length - 1 && TURNSTILE_SITE_KEY && (
-        <div className="mt-6">
+        <div className="mt-8">
           <Turnstile
             ref={turnstileRef}
             siteKey={TURNSTILE_SITE_KEY}
