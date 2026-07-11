@@ -1,5 +1,5 @@
 import { useRef, useEffect, useState } from "react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { Turnstile } from "@marsidev/react-turnstile";
 import type { TurnstileInstance } from "@marsidev/react-turnstile";
 import PublicLayout from "@shared/components/PublicLayout";
@@ -37,13 +37,16 @@ const venues = [
 const ACCENT = "#9B4D19";
 
 function WeddingInquiryForm() {
+const [, navigate] = useLocation();
 const turnstileRef = useRef<TurnstileInstance>(null);
 const [captchaToken, setCaptchaToken] = useState("");
-const [submitted, setSubmitted] = useState(false);
 const [form, setForm] = useState({ name: "", email: "", phone: "", message: "" });
 const set = (field: string, value: string) => setForm((f) => ({ ...f, [field]: value }));
 const submit = trpc.inquiries.submit.useMutation({
-onSuccess: () => setSubmitted(true),
+onSuccess: () => {
+  const encodedName = encodeURIComponent(form.name);
+  navigate(`/inquiry-confirmed?type=wedding&name=${encodedName}`);
+},
 onError: (err) => {
   turnstileRef.current?.reset();
   setCaptchaToken("");
@@ -61,14 +64,6 @@ form.message ? `\n${form.message}` : "",
 ].filter(Boolean).join("\n");
 submit.mutate({ type: "wedding", name: form.name, email: form.email, phone: form.phone || undefined, message: fullMessage, captchaToken });
 };
-if (submitted) {
-return (
-<div className="space-y-4">
-<h3 className="font-serif text-warm text-2xl mb-4">Inquiry Received</h3>
-<p className="font-sans text-muted-brand text-sm leading-relaxed">Thank you — we've received your wedding inquiry. A member of our team will be in touch within 24 hours.</p>
-</div>
-);
-}
 return (
 <form onSubmit={handleSubmit} className="space-y-6 max-w-xl">
 <div className="mt-5">
