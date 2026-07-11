@@ -298,7 +298,7 @@ export default function Home() {
       </section>
 
       {/* ── 05. Teaser: Membership ───────────────────────────────────────── */}
-      <section ref={memberRef} className="fade-up section bg-muted/20 border-t border-white/5">
+      <section className="section bg-muted/20 border-t border-white/5">
         <div className="max-w-[1440px] mx-auto px-5 lg:px-14">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
             {/* Image */}
