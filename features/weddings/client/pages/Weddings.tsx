@@ -6,7 +6,6 @@ import PublicLayout from "@shared/components/PublicLayout";
 import Picture from "@shared/components/Picture";
 import { trpc } from '@shared/lib/trpc';
 import SEOHead, { structuredData } from '@shared/components/SEOHead';
-import StickyInquiryCTA from "@/components/StickyInquiryCTA";
 
 const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined;
 // redeploy: estate hero overlay 2026-07-03
@@ -245,7 +244,6 @@ We work with a limited number of couples each year. Share the basics and we'll r
 </div>
 </section>
 </div>
-<StickyInquiryCTA href="#inquire" label="Begin Wedding Inquiry" accentColor={ACCENT} />
 </PublicLayout>
 );
 }

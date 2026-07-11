@@ -2,7 +2,6 @@ import { useRef, useEffect } from "react";
 import { Link } from "wouter";
 import PublicLayout from "../../../_shared/components/PublicLayout";
 import SEOHead from '@shared/components/SEOHead';
-import StickyInquiryCTA from "@/components/StickyInquiryCTA";
 import Picture from "@shared/components/Picture";
 
 
@@ -210,10 +209,6 @@ export default function Corporate() {
       </section>
 
       </div>
-      <StickyInquiryCTA
-        href="/contact?type=corporate"
-        label="Begin Corporate Inquiry"
-      />
     </PublicLayout>
   );
 }
