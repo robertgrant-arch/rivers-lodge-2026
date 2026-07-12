@@ -699,18 +699,6 @@ export default function MemberPortal() {
             </div>
           )}
 
-<<<<<<< Updated upstream
-          {/* ── CALENDAR ──────────────────────────────────────────────── */}
-          {tab === "calendar" && (
-            <div>
-              <h2 className="font-serif text-3xl text-white mb-2">Your Calendar</h2>
-              <p className="text-sm font-sans text-white/40 mb-8">View your bookings and property availability.</p>
-              <CalendarTabs />
-            </div>
-          )}
-
-=======
->>>>>>> Stashed changes
           {/* ── REQUEST A STAY ────────────────────────────────────────── */}
           {tab === "request" && (
             <div className="max-w-2xl mx-auto">
