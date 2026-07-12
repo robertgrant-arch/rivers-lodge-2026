@@ -10,33 +10,36 @@
 
 **Owner has approved the following constraints and requirements:**
 
-1. **Usage Period Boundary:** 8/1 → 7/31 (not calendar year). Each Social member's usage tracking is keyed by period_start_date (always August 1 of the given year). Example: a member's 2026 period runs 8/1/2026 → 7/31/2027.
+1. **Usage Period Boundary:** 8/1 → 7/31 (not calendar year). Social parent organizations set their own period_start_date (e.g., contract start or fiscal year). The annual period for each org runs from period_start_date → period_start_date + 1 year.
 
-2. **Cross-Period Bookings:** When a Social member books a stay that spans the period boundary (e.g., 7/30 → 8/2), the ENTIRE booking counts against the period where the start date falls. No splitting across periods.
+2. **Cross-Period Bookings:** When a Social member books a stay that spans the period boundary (e.g., org period ends 7/31 and member books 7/30 → 8/2), the ENTIRE booking counts against the period where the start date falls. No splitting across periods.
 
-3. **Admin Cap Override:** Admins may adjust the 40-property-day cap per Social member (grant credit, comp, reset). Every adjustment must be logged in audit trail with: admin user ID, timestamp, reason, and delta (old → new count).
+3. **Social Tier Structure:** Social members are grouped under a **Social Parent Organization**. Each org has a shared annual_booking_allowance (e.g., 40 property-days) that ALL members under that org share from a single pool. Individual Social members do NOT have per-member caps; they draw from their org's allowance.
 
-4. **Pricing Visibility:** Event and property pricing are visible to all membership tiers. Do NOT gate pricing by tier. (All members will eventually see only members-only bookings, so transparency is acceptable.)
+4. **Admin Cap Override:** Admins may adjust the annual_booking_allowance for a Social Parent Organization at any time (grant additional days, reset usage, comp). Every adjustment must be logged in audit trail with: admin user ID, timestamp, reason, and delta (old → new allowance).
 
-5. **Tier Downgrade Handling:** Skip automatic downgrade logic. Owner will handle manually if needed. This is out of scope for Phase 1.
+5. **Pricing Visibility:** Event and property pricing are visible to all membership tiers. Do NOT gate pricing by tier. (All members will eventually see only members-only bookings, so transparency is acceptable.)
 
-6. **Event Booking Limits:** No caps by tier. All members with event access can book unlimited events. (Silver = events-only; Designated/Social = events + property with property cap.)
+6. **Tier Downgrade Handling:** Skip automatic downgrade logic. Owner will handle manually if needed. This is out of scope for Phase 1.
 
-7. **Membership Type at Account Creation:** Every member MUST have a membership_type assigned at account creation. There is no UNASSIGNED or default state. Signup/invite flows require membership_type as a mandatory field. Remove all references to UNASSIGNED tier.
+7. **Event Booking Limits:** No caps by tier. All members with event access can book unlimited events. (Silver = events-only; Designated/Social = events + property with property cap.)
 
-8. **Admin Reporting:** Required. Admin needs member roster, bookings, revenue, and usage reports segmented by tier, with CSV export capability.
+8. **Membership Type at Account Creation:** Every member MUST have a membership_type assigned at account creation. There is no UNASSIGNED or default state. Signup/invite flows require membership_type as a mandatory field. For Social members: must also select/create a Social Parent Organization. Remove all references to UNASSIGNED tier.
+
+9. **Admin Reporting:** Required. Admin needs member roster, bookings, revenue, and usage reports segmented by tier. Additionally: organization-level usage report showing per-org allowance, YTD usage, remaining balance, and breakdown by member within org. All with CSV export capability.
 
 ---
 
 ## 1. Executive Summary
 
-This document outlines the architecture for a **three-tier membership system** (Designated, Silver, Social) with role-based access control across both the Member Portal and Operations Portal. The system enforces tier-specific capabilities at the data layer (server-side RBAC), backend endpoint guards, and client-side UI conditional rendering.
+This document outlines the architecture for a **three-tier membership system** (Designated, Silver, Social) with role-based access control across both the Member Portal and Operations Portal. Social members are organized under **Social Parent Organizations**, each with a shared annual property-day allowance. The system enforces tier-specific capabilities at the data layer (server-side RBAC), backend endpoint guards, and client-side UI conditional rendering.
 
 **Key Objectives:**
 - Tier-specific portal access and booking rights
 - Admin ability to assign, change, and audit tier assignments
-- Enforcement of Social tier's 40 property-day annual cap with usage tracking
-- Full audit trail for membership changes and usage adjustments
+- Social tier organized under parent organizations with shared property-day allowance per org
+- Enforcement of org-level annual booking caps with shared pool across all Social members in an org
+- Full audit trail for membership changes, tier assignments, and usage adjustments
 
 **Phased Rollout:** 3 phases spanning schema, admin UI, member-facing views, and enforcement.
 
@@ -54,42 +57,67 @@ enum("membership_type", ["DESIGNATED", "SILVER", "SOCIAL"])
 type MembershipType = "DESIGNATED" | "SILVER" | "SOCIAL";
 ```
 
-### 2.2 Member Table Changes
+### 2.2 Social Parent Organization Table (New)
 
-**New column:**
+Represents a corporate or organizational entity that purchases a Social membership tier. All Social members under an org share the org's annual property-day allowance.
+
+```typescript
+export const socialParentOrganization = pgTable("social_parent_organization", {
+  id: serial("id").primaryKey(),
+  name: varchar("name").notNull(), // e.g., "Five Elms Capital"
+  annualBookingAllowance: integer("annual_booking_allowance").notNull(), // e.g., 40 property-days
+  periodStartDate: date("period_start_date").notNull(), // e.g., 2026-09-01; the annual period runs from this date +1 year
+  notes: text("notes"), // admin-only description (e.g., "5-seat license, contract through 2027")
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+```
+
+- Each org has ONE allowance that is shared across ALL Social members under that org.
+- period_start_date is set once at creation and defines the org's annual period boundary (e.g., if 2026-09-01, period runs 9/1/2026 → 8/31/2027).
+- Admin can adjust annualBookingAllowance at any time (logged in audit trail).
+
+### 2.3 Member Table Changes
+
+**New columns:**
 ```typescript
 membershipType: MembershipType  // REQUIRED — no default, no null
+socialParentOrganizationId: integer("social_parent_organization_id")  // FK, REQUIRED for Social members only, NULL for Designated/Silver
 ```
 
 - Every member MUST have a membership_type at account creation.
+- If membershipType = "SOCIAL", socialParentOrganizationId is required and not null.
+- If membershipType = "DESIGNATED" or "SILVER", socialParentOrganizationId is null.
 - Signup/invite flows enforce this as a mandatory field.
-- This field is mutable by admins (see audit log in 2.3).
+- membershipType is mutable by admins (see audit log in 2.4).
 
-### 2.3 Usage Tracking Table: `membership_usage`
+### 2.4 Usage Tracking Table: `social_organization_usage`
 
-Tracks property-day usage for Social tier members within their annual period (8/1 → 7/31).
+Tracks cumulative property-day usage for a Social Parent Organization within its annual period. ONE row per org per annual period. All Social members under that org draw from this shared pool.
 
 ```typescript
 // Drizzle schema
-export const membershipUsage = pgTable("membership_usage", {
+export const socialOrganizationUsage = pgTable("social_organization_usage", {
   id: serial("id").primaryKey(),
-  memberId: integer("member_id").notNull().references(() => members.id, { onDelete: "cascade" }),
-  periodStartDate: date("period_start_date").notNull(), // e.g., 2026-08-01
-  propertyDaysUsed: integer("property_days_used").notNull().default(0), // cumulative count
+  socialParentOrganizationId: integer("social_parent_organization_id").notNull()
+    .references(() => socialParentOrganization.id, { onDelete: "cascade" }),
+  periodStartDate: date("period_start_date").notNull(), // e.g., 2026-09-01; matches org's period boundary
+  propertyDaysUsed: integer("property_days_used").notNull().default(0), // cumulative count across all members in org
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => ({
-  uniq: uniqueIndex("membership_usage_member_period").on(table.memberId, table.periodStartDate),
+  uniq: uniqueIndex("social_org_usage_period").on(table.socialParentOrganizationId, table.periodStartDate),
 }));
 ```
 
-- One row per Social member per 8/1 → 7/31 usage period.
-- `periodStartDate` is always August 1 (e.g., 2026-08-01 represents the period 8/1/2026 → 7/31/2027).
-- `propertyDaysUsed` is cumulative; incremented on each booking confirmation.
-- When a Social member books a stay that spans the period boundary (e.g., 7/30 → 8/2), the entire stay counts against the period containing the start date (7/30 = before 8/1, so counts against prior period).
+- One row per Social Parent Organization per annual period.
+- `periodStartDate` matches the org's period_start_date (e.g., org created with period_start_date=2026-09-01, so all usage rows for that org use 2026-09-01 as the key, representing the period 9/1/2026 → 8/31/2027).
+- `propertyDaysUsed` is cumulative across ALL Social members under this org; incremented on each booking confirmation.
+- Any Social member's booking decrements the org's shared pool (not an individual per-member counter).
 - Scope: Property-day bookings only (not event bookings, not lodge-only stays, not guided experiences).
+- When a Social member books a stay that spans the period boundary, the entire stay counts against the period containing the start date.
 
-### 2.4 Audit Log Table: `membership_audit`
+### 2.5 Audit Log Table: `membership_audit`
 
 Tracks all tier changes and usage adjustments for compliance and troubleshooting.
 
@@ -127,12 +155,23 @@ export const membershipAudit = pgTable("membership_audit", {
 
 ### 3.2 New Endpoints (Admin/Operations Portal)
 
+#### Member Management
 | Endpoint | Method | Purpose |
 |---|---|---|
 | PATCH `/api/admin/members/:id/tier` | PATCH | Change member tier; log audit |
-| GET `/api/admin/members/:id/usage` | GET | Get Social member usage for current & prior years |
-| PATCH `/api/admin/members/:id/usage/adjust` | PATCH | Manually adjust Social member usage (grant credit, reset, etc.) |
 | GET `/api/admin/audit/:memberId` | GET | Fetch audit log for a member |
+
+#### Social Parent Organization Management
+| Endpoint | Method | Purpose |
+|---|---|---|
+| GET `/api/admin/social-orgs` | GET | List all Social Parent Organizations |
+| POST `/api/admin/social-orgs` | POST | Create new Social Parent Organization |
+| GET `/api/admin/social-orgs/:id` | GET | Get org details (name, allowance, period, usage, members) |
+| PATCH `/api/admin/social-orgs/:id` | PATCH | Update org (name, notes, period_start_date) |
+| PATCH `/api/admin/social-orgs/:id/allowance` | PATCH | Adjust org's annual_booking_allowance; log audit with delta |
+| GET `/api/admin/social-orgs/:id/members` | GET | List all Social members under this org |
+| GET `/api/admin/social-orgs/:id/usage` | GET | Get current-period usage stats for org (property-days used, remaining, per-member breakdown) |
+| GET `/api/admin/social-orgs/:id/usage-history` | GET | Get all bookings made by members under this org (per-member, per-booking detail) |
 
 ### 3.3 Endpoint Implementation Details
 
@@ -169,16 +208,18 @@ export async function createPropertyBooking(req) {
   const { propertyId, checkIn, checkOut } = req.body;
   const propertyDays = computePropertyDays(checkIn, checkOut);
   
-  // For Social tier, enforce 40-day cap
+  // For Social tier, enforce org-level cap
   if (member.membershipType === "SOCIAL") {
     const checkInDate = new Date(checkIn);
-    const periodStartDate = getPeriodStartDate(checkInDate);
-    const usage = await getMembershipUsage(member.id, periodStartDate);
+    const org = await getSocialParentOrganization(member.socialParentOrganizationId);
+    const periodStartDate = getPeriodStartDate(checkInDate, org.periodStartDate); // org's period boundary
+    
+    const usage = await getSocialOrgUsage(org.id, periodStartDate);
     const proposed = (usage?.propertyDaysUsed ?? 0) + propertyDays;
     
-    if (proposed > 40) {
+    if (proposed > org.annualBookingAllowance) {
       throw new TierLimitError(
-        `Booking would exceed 40-property-day limit for your period (${periodStartDate} → 7/31). You have ${40 - usage.propertyDaysUsed} days remaining.`
+        `Booking would exceed ${org.name}'s property-day allowance (${org.annualBookingAllowance} total). Your organization has ${org.annualBookingAllowance - usage.propertyDaysUsed} days remaining this period.`
       );
     }
   }
@@ -192,27 +233,34 @@ export async function createPropertyBooking(req) {
     status: "CONFIRMED",
   });
   
-  // Increment usage counter for Social
+  // Increment usage counter for Social org
   if (member.membershipType === "SOCIAL") {
     const checkInDate = new Date(checkIn);
-    const periodStartDate = getPeriodStartDate(checkInDate);
-    const oldCount = (await getMembershipUsage(member.id, periodStartDate))?.propertyDaysUsed ?? 0;
+    const org = await getSocialParentOrganization(member.socialParentOrganizationId);
+    const periodStartDate = getPeriodStartDate(checkInDate, org.periodStartDate);
+    
+    const oldCount = (await getSocialOrgUsage(org.id, periodStartDate))?.propertyDaysUsed ?? 0;
     const newCount = oldCount + propertyDays;
     
-    await incrementMembershipUsage(member.id, periodStartDate, propertyDays);
+    await incrementSocialOrgUsage(org.id, periodStartDate, propertyDays);
     await logAudit(
       member.id, 
-      "USAGE_ADJUSTED", 
+      "ORG_USAGE_ADJUSTED", 
       String(oldCount), 
       String(newCount), 
-      `Booking ${booking.id} confirmed: +${propertyDays} property-days`, 
+      `Booking ${booking.id} confirmed: +${propertyDays} property-days for ${org.name}`, 
       "system"
     );
   }
   
-  const remainingBalance = member.membershipType === "SOCIAL" 
-    ? 40 - await getMembershipUsageCount(member.id, getPeriodStartDate(new Date(checkIn)))
-    : null;
+  let remainingBalance = null;
+  if (member.membershipType === "SOCIAL") {
+    const checkInDate = new Date(checkIn);
+    const org = await getSocialParentOrganization(member.socialParentOrganizationId);
+    const periodStartDate = getPeriodStartDate(checkInDate, org.periodStartDate);
+    const usageCount = await getSocialOrgUsageCount(org.id, periodStartDate);
+    remainingBalance = org.annualBookingAllowance - usageCount;
+  }
   
   return { booking, remainingBalance };
 }
@@ -347,45 +395,62 @@ export async function withUsageCheck(
     const user = requireAuth(req);
     const member = requireMembershipTier(user, ["DESIGNATED", "SOCIAL"]);
     
-    // Only Social members get the cap check
+    // Only Social members get the cap check (org-level, not individual)
     if (member.membershipType === "SOCIAL") {
       const { checkIn, checkOut } = req.body;
       const propertyDays = computePropertyDays(checkIn, checkOut);
-      
-      // Determine which period this booking falls into
-      // Period is 8/1 → 7/31; if checkIn is 8/1 or later, use current year's period (8/1)
-      // If checkIn is before 8/1, use prior year's period (prior 8/1)
       const checkInDate = new Date(checkIn);
-      const periodStartDate = getPeriodStartDate(checkInDate); // returns "2026-08-01" or "2027-08-01", etc.
       
-      const usage = await getMembershipUsage(member.id, periodStartDate);
+      const org = await getSocialParentOrganization(member.socialParentOrganizationId);
+      const periodStartDate = getPeriodStartDate(checkInDate, org.periodStartDate);
+      
+      const usage = await getSocialOrgUsage(org.id, periodStartDate);
       const proposed = (usage?.propertyDaysUsed ?? 0) + propertyDays;
       
-      if (proposed > 40) {
+      if (proposed > org.annualBookingAllowance) {
         return res.status(400).json({
-          error: "USAGE_LIMIT_EXCEEDED",
-          message: `This booking would exceed your 40-property-day annual limit (period: ${periodStartDate} → next 7/31).`,
-          remainingDays: 40 - usage.propertyDaysUsed,
+          error: "ORG_USAGE_LIMIT_EXCEEDED",
+          message: `This booking would exceed ${org.name}'s property-day allowance (${org.annualBookingAllowance} total).`,
+          orgAllowance: org.annualBookingAllowance,
+          orgUsed: usage.propertyDaysUsed,
+          remainingDays: org.annualBookingAllowance - usage.propertyDaysUsed,
           requestedDays: propertyDays,
+          period: `${periodStartDate} → ${addYears(periodStartDate, 1)}`,
         });
       }
       
       // Attach usage info to req for handler to use
-      req.memberUsage = { periodStartDate, propertyDays, remaining: 40 - proposed };
+      req.orgUsage = { 
+        periodStartDate, 
+        propertyDays, 
+        remaining: org.annualBookingAllowance - proposed,
+        orgName: org.name,
+        orgAllowance: org.annualBookingAllowance,
+      };
     }
     
     return handler(req, res, next);
   };
 }
 
-// Helper: given a date, return the period_start_date (always 8/1)
-function getPeriodStartDate(date: Date): string {
-  const year = date.getFullYear();
-  const month = date.getMonth() + 1; // 0-indexed
-  // If date is 8/1 or later, period started Aug 1 of this year
-  // If date is before 8/1, period started Aug 1 of prior year
-  const periodYear = month >= 8 ? year : year - 1;
-  return `${periodYear}-08-01`;
+// Helper: given a date and an org's period_start_date, return the period start date
+// Example: org's period_start_date is 2026-09-01; if booking date is 2026-10-15, return 2026-09-01
+// If booking date is 2026-08-15 (before period start), return 2025-09-01 (prior period)
+function getPeriodStartDate(bookingDate: Date, orgPeriodStartDate: Date): string {
+  const orgMonth = orgPeriodStartDate.getMonth(); // 0-indexed
+  const orgDay = orgPeriodStartDate.getDate();
+  const bookingMonth = bookingDate.getMonth();
+  const bookingDay = bookingDate.getDate();
+  const bookingYear = bookingDate.getFullYear();
+  
+  // Check if booking date is on or after the org's period start in the year
+  const isOnOrAfterPeriodStart = 
+    bookingMonth > orgMonth || 
+    (bookingMonth === orgMonth && bookingDay >= orgDay);
+  
+  const periodYear = isOnOrAfterPeriodStart ? bookingYear : bookingYear - 1;
+  const periodDate = new Date(periodYear, orgMonth, orgDay);
+  return formatDateAsISO(periodDate); // "2026-09-01"
 }
 ```
 
@@ -678,7 +743,181 @@ export function SocialMemberUsageSection({ memberId, member }) {
 }
 ```
 
-### 6.3 Audit Log View
+### 6.3 Social Parent Organization Management
+
+**New section in Operations Portal: `/ops/social-orgs`**
+
+Lists all Social Parent Organizations with ability to create, edit, and manage allowances.
+
+```typescript
+export function SocialOrgsList() {
+  const [orgs, setOrgs] = useState([]);
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  
+  useEffect(() => {
+    fetch(`/api/admin/social-orgs`)
+      .then(r => r.json())
+      .then(data => setOrgs(data));
+  }, []);
+  
+  const handleCreateOrg = async (formData) => {
+    const res = await fetch(`/api/admin/social-orgs`, {
+      method: "POST",
+      body: JSON.stringify(formData), // { name, annualBookingAllowance, periodStartDate, notes }
+    });
+    if (res.ok) {
+      const newOrg = await res.json();
+      setOrgs([...orgs, newOrg]);
+      setShowCreateForm(false);
+    }
+  };
+  
+  return (
+    <section>
+      <h2>Social Parent Organizations</h2>
+      <button onClick={() => setShowCreateForm(!showCreateForm)}>+ New Organization</button>
+      
+      {showCreateForm && (
+        <SocialOrgForm onSubmit={handleCreateOrg} onCancel={() => setShowCreateForm(false)} />
+      )}
+      
+      <table>
+        <thead>
+          <tr>
+            <th>Organization Name</th>
+            <th>Annual Allowance</th>
+            <th>Period Start Date</th>
+            <th>YTD Used / Remaining</th>
+            <th># of Members</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {orgs.map(org => (
+            <tr key={org.id}>
+              <td>{org.name}</td>
+              <td>{org.annualBookingAllowance} property-days</td>
+              <td>{org.periodStartDate}</td>
+              <td>{org.propertyDaysUsed} / {org.annualBookingAllowance - org.propertyDaysUsed}</td>
+              <td>{org.memberCount}</td>
+              <td>
+                <Link href={`/ops/social-orgs/${org.id}`}>View Details</Link>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </section>
+  );
+}
+```
+
+**Organization Details Page: `/ops/social-orgs/:id`**
+
+```typescript
+export function SocialOrgDetails({ orgId }) {
+  const [org, setOrg] = useState(null);
+  const [members, setMembers] = useState([]);
+  const [usageHistory, setUsageHistory] = useState([]);
+  const [adjusting, setAdjusting] = useState(false);
+  
+  useEffect(() => {
+    Promise.all([
+      fetch(`/api/admin/social-orgs/${orgId}`).then(r => r.json()),
+      fetch(`/api/admin/social-orgs/${orgId}/members`).then(r => r.json()),
+      fetch(`/api/admin/social-orgs/${orgId}/usage-history`).then(r => r.json()),
+    ]).then(([org, members, history]) => {
+      setOrg(org);
+      setMembers(members);
+      setUsageHistory(history);
+    });
+  }, [orgId]);
+  
+  const handleAdjustAllowance = async () => {
+    const newAllowance = prompt(`Current allowance: ${org.annualBookingAllowance}. Enter new allowance:`);
+    if (!newAllowance) return;
+    
+    const reason = prompt("Reason for adjustment:");
+    const delta = parseInt(newAllowance) - org.annualBookingAllowance;
+    
+    setAdjusting(true);
+    const res = await fetch(`/api/admin/social-orgs/${orgId}/allowance`, {
+      method: "PATCH",
+      body: JSON.stringify({ newAllowance: parseInt(newAllowance), reason }),
+    });
+    
+    if (res.ok) {
+      const updated = await res.json();
+      setOrg(updated.org);
+      showNotification(`Allowance adjusted: ${org.annualBookingAllowance} → ${updated.org.annualBookingAllowance} (${delta > 0 ? "+" : ""}${delta})`);
+    }
+    setAdjusting(false);
+  };
+  
+  if (!org) return <div>Loading...</div>;
+  
+  return (
+    <section>
+      <h2>{org.name}</h2>
+      <div className="org-info">
+        <p><strong>Annual Allowance:</strong> {org.annualBookingAllowance} property-days <button onClick={handleAdjustAllowance} disabled={adjusting}>Adjust</button></p>
+        <p><strong>Period:</strong> {org.periodStartDate} → {addYears(org.periodStartDate, 1)}</p>
+        <p><strong>YTD Usage:</strong> {org.propertyDaysUsed} / {org.annualBookingAllowance} ({100 * org.propertyDaysUsed / org.annualBookingAllowance}%)</p>
+        <p><strong>Remaining:</strong> {org.annualBookingAllowance - org.propertyDaysUsed} property-days</p>
+        <p><strong>Notes:</strong> {org.notes || "(none)"}</p>
+      </div>
+      
+      <h3>Members ({members.length})</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Member Name</th>
+            <th>Email</th>
+            <th>YTD Bookings</th>
+          </tr>
+        </thead>
+        <tbody>
+          {members.map(m => (
+            <tr key={m.id}>
+              <td>{m.name}</td>
+              <td>{m.email}</td>
+              <td>{m.ytdPropertyDays} property-days</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      
+      <h3>Usage History (All Bookings)</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Member</th>
+            <th>Property</th>
+            <th>Check-In</th>
+            <th>Check-Out</th>
+            <th>Property-Days</th>
+            <th>Booked At</th>
+          </tr>
+        </thead>
+        <tbody>
+          {usageHistory.map(booking => (
+            <tr key={booking.id}>
+              <td>{booking.memberName}</td>
+              <td>{booking.propertyName}</td>
+              <td>{booking.checkIn}</td>
+              <td>{booking.checkOut}</td>
+              <td>{booking.propertyDays}</td>
+              <td>{new Date(booking.createdAt).toLocaleString()}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </section>
+  );
+}
+```
+
+### 6.4 Audit Log View
 
 **New page: `/ops/members/:id/audit`**
 
@@ -724,11 +963,11 @@ export function MemberAuditLog({ memberId }) {
 }
 ```
 
-### 6.4 Reporting & Analytics
+### 6.5 Reporting & Analytics
 
 **New reports page: `/ops/reports`**
 
-Admin users need segmented reporting on membership tiers, bookings, revenue, and usage. All reports are filterable by membership_type and exportable to CSV.
+Admin users need segmented reporting on membership tiers, bookings, revenue, and Social organization usage. All reports are filterable by membership_type and exportable to CSV.
 
 #### 6.4.1 Member Roster Report
 
@@ -910,53 +1149,109 @@ export function RevenueReport() {
 }
 ```
 
-#### 6.4.4 Social Tier Usage Report
+#### 6.5.4 Social Organization Usage Report
 
-Detailed usage breakdown for all Social members: property-days used, remaining, admin adjustments.
+Aggregated usage by Social Parent Organization: allowance, YTD usage, remaining, per-member breakdown.
 
 ```typescript
-// Endpoint: GET /api/admin/reports/social-usage?periodStartDate=2026-08-01
-// Returns: array of { memberId, memberName, periodStartDate, propertyDaysUsed, remaining, adjustments: [...] }
+// Endpoint: GET /api/admin/reports/social-org-usage
+// Returns: array of { orgId, orgName, annualAllowance, periodStartDate, propertyDaysUsed, remaining, memberCount, members: [...] }
 
-export function SocialUsageReport() {
-  const [usageData, setUsageData] = useState([]);
-  const [periodStartDate, setPeriodStartDate] = useState("2026-08-01");
+export function SocialOrgUsageReport() {
+  const [orgUsageData, setOrgUsageData] = useState([]);
   
   useEffect(() => {
-    fetch(`/api/admin/reports/social-usage?periodStartDate=${periodStartDate}`)
+    fetch(`/api/admin/reports/social-org-usage`)
       .then(r => r.json())
-      .then(data => setUsageData(data));
-  }, [periodStartDate]);
+      .then(data => setOrgUsageData(data));
+  }, []);
   
   const handleExportCSV = () => {
-    const csv = usageDataToCSV(usageData);
-    downloadCSV(csv, "social-usage-report.csv");
+    const csv = orgUsageToCSV(orgUsageData);
+    downloadCSV(csv, "social-org-usage-report.csv");
   };
   
   return (
     <section>
-      <h2>Social Tier Usage Report</h2>
-      <div className="filters">
-        <label>Period Start Date:</label>
-        <input type="date" value={periodStartDate} onChange={(e) => setPeriodStartDate(e.target.value)} />
-        <button onClick={handleExportCSV}>Export CSV</button>
-      </div>
+      <h2>Social Organization Usage Report</h2>
+      <button onClick={handleExportCSV}>Export CSV</button>
+      <table>
+        <thead>
+          <tr>
+            <th>Organization Name</th>
+            <th>Annual Allowance</th>
+            <th>Used / Allowance</th>
+            <th>Remaining</th>
+            <th>Period Start Date</th>
+            <th># Members</th>
+          </tr>
+        </thead>
+        <tbody>
+          {orgUsageData.map(org => (
+            <tr key={org.orgId}>
+              <td><Link href={`/ops/social-orgs/${org.orgId}`}>{org.orgName}</Link></td>
+              <td>{org.annualAllowance} property-days</td>
+              <td>{org.propertyDaysUsed} / {org.annualAllowance}</td>
+              <td>{org.remaining}</td>
+              <td>{org.periodStartDate}</td>
+              <td>{org.memberCount}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </section>
+  );
+}
+```
+
+#### 6.5.5 Social Members by Organization (Detail Report)
+
+Per-member usage breakdown within each organization.
+
+```typescript
+// Endpoint: GET /api/admin/reports/social-members-by-org/:orgId
+// Returns: array of { memberId, memberName, ytdPropertyDays, bookingCount }
+
+export function SocialMembersByOrgReport({ orgId }) {
+  const [members, setMembers] = useState([]);
+  const [org, setOrg] = useState(null);
+  
+  useEffect(() => {
+    Promise.all([
+      fetch(`/api/admin/reports/social-members-by-org/${orgId}`).then(r => r.json()),
+      fetch(`/api/admin/social-orgs/${orgId}`).then(r => r.json()),
+    ]).then(([members, org]) => {
+      setMembers(members);
+      setOrg(org);
+    });
+  }, [orgId]);
+  
+  const handleExportCSV = () => {
+    const csv = membersToCSV(members);
+    downloadCSV(csv, `social-members-${org.name}.csv`);
+  };
+  
+  if (!org) return <div>Loading...</div>;
+  
+  return (
+    <section>
+      <h2>Social Members: {org.name}</h2>
+      <p>Annual Allowance: {org.annualBookingAllowance} | YTD Used: {org.propertyDaysUsed} | Remaining: {org.annualBookingAllowance - org.propertyDaysUsed}</p>
+      <button onClick={handleExportCSV}>Export CSV</button>
       <table>
         <thead>
           <tr>
             <th>Member Name</th>
-            <th>Used / 40</th>
-            <th>Remaining</th>
-            <th>Admin Adjustments</th>
+            <th>YTD Property-Days</th>
+            <th>Bookings</th>
           </tr>
         </thead>
         <tbody>
-          {usageData.map(u => (
-            <tr key={u.memberId}>
-              <td>{u.memberName}</td>
-              <td>{u.propertyDaysUsed} / 40</td>
-              <td>{u.remaining}</td>
-              <td>{u.adjustments.length > 0 ? u.adjustments.map(a => `${a.delta} (${a.reason})`).join("; ") : "None"}</td>
+          {members.map(m => (
+            <tr key={m.memberId}>
+              <td>{m.memberName}</td>
+              <td>{m.ytdPropertyDays}</td>
+              <td>{m.bookingCount}</td>
             </tr>
           ))}
         </tbody>
@@ -970,15 +1265,24 @@ export function SocialUsageReport() {
 
 ## 7. Migration & Backfill Plan
 
-### 7.1 Initial Data Setup
+### 7.1 Initial Schema Setup
 
 **Current state:** 2 members exist with no tier assignment.
 
+**Phase 1 schema deployment:**
+
+1. Create new table `social_parent_organization` with columns: id, name, annual_booking_allowance, period_start_date, notes, created_at, updated_at.
+2. Create new table `social_organization_usage` with columns: id, social_parent_organization_id (FK), period_start_date, property_days_used, created_at, updated_at.
+3. Add columns to `members` table:
+   - `membershipType` (VARCHAR, NOT NULL, no default) — must be assigned at creation time
+   - `social_parent_organization_id` (INTEGER, FK, nullable) — required for SOCIAL members, null for DESIGNATED/SILVER
+4. Seed initial data: create "Five Elms Capital" as the first Social Parent Organization (owner will provide period_start_date and annual_booking_allowance at go-live).
+
 **After Phase 1 schema deployment:**
 
-1. Run migration to add `membershipType` column to the members table. This column has NO default; it is NOT NULL.
-2. **Manual backfill required:** Owner must assign a tier (DESIGNATED, SILVER, or SOCIAL) to each existing member before Phase 1 goes live. This is done via the admin UI (Member edit form).
-3. Once each member has been assigned a tier, they can log in and access tier-gated features.
+1. **Manual backfill required:** Owner must assign a tier (DESIGNATED, SILVER, or SOCIAL) to each existing member via the admin UI.
+2. For Social members: owner must also select the Social Parent Organization they belong to (or create new org if needed).
+3. Once each member has been assigned a tier + org (if Social), they can log in and access tier-gated features.
 
 **Important:** Do not deploy Phase 1 to production until all existing members have a tier assigned. Attempting to access the portal with no membershipType set will result in an error.
 
@@ -988,8 +1292,9 @@ For all **new** member signups or admin invites after Phase 1 deployment:
 
 - The signup/invite flow MUST collect or specify the membership_type as a required field.
 - Admin invites: a form field "Membership Tier" (required, enum: DESIGNATED | SILVER | SOCIAL).
-- Self-signup flows (if enabled): ideally show a form asking "Choose your membership tier" or route users to tier selection before account creation completes.
-- The member record is not created until membershipType is set.
+- **For SOCIAL members:** show a second field "Select Social Parent Organization" (required, dropdown of existing orgs, with "Create new org" option).
+- Self-signup flows (if enabled): ideally show a form asking "Choose your membership tier" and (if Social) "Which organization?" before account creation completes.
+- The member record is not created until both membershipType AND (if Social) socialParentOrganizationId are set.
 
 ### 7.3 Backfill Script (Manual Bulk Assignment)
 
@@ -997,18 +1302,45 @@ If owner wants to assign tiers to multiple existing members via a script:
 
 ```typescript
 // scripts/bulk-assign-tiers.ts
-// Usage: MEMBER_TIERS_JSON="[{id:1,tier:'DESIGNATED'},{id:2,tier:'SILVER'}]" pnpm run bulk-assign-tiers
+// Usage: MEMBER_TIERS_JSON="[{id:1,tier:'DESIGNATED'},{id:2,tier:'SOCIAL',orgId:1}]" pnpm run bulk-assign-tiers
 
 const assignments = JSON.parse(process.env.MEMBER_TIERS_JSON || "[]");
 
-for (const { id, tier } of assignments) {
+for (const { id, tier, orgId } of assignments) {
   const member = await getMember(id);
   if (!member) continue;
   
-  await updateMember(id, { membershipType: tier });
-  await logAudit(id, "TIER_CHANGED", "(backfill - no prior tier)", tier, "Bulk assignment during Phase 1 setup", "system");
+  const updates: any = { membershipType: tier };
+  if (tier === "SOCIAL" && orgId) {
+    updates.socialParentOrganizationId = orgId;
+  }
+  
+  await updateMember(id, updates);
+  await logAudit(id, "TIER_CHANGED", "(backfill - no prior tier)", tier, 
+    tier === "SOCIAL" ? `Assigned to org ${orgId} during Phase 1 setup` : "Bulk assignment during Phase 1 setup", 
+    "system");
 }
 ```
+
+### 7.4 Seed Data
+
+During Phase 1 deployment, create the first Social Parent Organization:
+
+```typescript
+// seeds/social-orgs.ts
+
+const fiveElms = await createSocialParentOrganization({
+  name: "Five Elms Capital",
+  annualBookingAllowance: 40,  // To be confirmed by owner
+  periodStartDate: "2026-09-01",  // To be confirmed by owner
+  notes: "Founding social member organization",
+});
+```
+
+The owner will confirm:
+- Organization name(s) and count
+- Annual allowance per org
+- Period start date per org
 
 ---
 
@@ -1287,24 +1619,40 @@ describe("Membership Tiers - E2E Happy Paths", () => {
 
 ## 9. Rollout Plan (3 Phases)
 
-### Phase 1: Schema + Admin UI Setup (2 weeks)
+### Phase 1: Schema + Admin UI Setup (2-3 weeks)
 
 **Deliverables:**
+
+*Schema & Seed Data:*
 - ✅ Add `membership_type` enum and column to `members` table (NOT NULL, required)
-- ✅ Create `membership_usage` table with periodStartDate key (8/1 → 7/31)
+- ✅ Create `social_parent_organization` table (id, name, annualBookingAllowance, periodStartDate, notes)
+- ✅ Add `social_parent_organization_id` FK to members (required for Social, null for others)
+- ✅ Create `social_organization_usage` table with (orgId, periodStartDate) key
 - ✅ Create `membership_audit` table for full audit trail
-- ✅ Admin endpoints: PATCH tier, GET/PATCH usage (by period), GET audit log
-- ✅ Reporting endpoints: members, bookings, revenue, social-usage (all with CSV export)
-- ✅ Member edit form with tier dropdown + Social usage section
-- ✅ Audit log view (admin only)
-- ✅ Reporting dashboard (4 report views)
-- ✅ Backfill: existing members manually assigned tiers via admin UI
+- ✅ Seed "Five Elms Capital" Social Parent Organization (owner provides: name, allowance, period)
+
+*Admin Endpoints:*
+- ✅ Member tier management: PATCH tier, GET audit log
+- ✅ Social org CRUD: GET list, POST create, GET details, PATCH update, PATCH allowance adjust
+- ✅ Social org usage: GET usage stats, GET members under org, GET usage history
+- ✅ Reporting endpoints: members, bookings, revenue, social-org-usage, social-members-by-org (all with CSV export)
+
+*Admin UI:*
+- ✅ Member edit form with tier dropdown + org selector (for Social)
+- ✅ Social Parent Organizations management page (list, create, edit)
+- ✅ Social org details page (members, usage, booking history, allowance adjust)
+- ✅ Audit log view (member-level)
+- ✅ Reporting dashboard (5 report views including Social org usage)
+
+*Backfill & Signup:*
+- ✅ Existing members manually assigned tiers + orgs (if Social) via admin UI
 - ✅ New signup/invite flows enforce membershipType as required field
+- ✅ New signup/invite flows enforce org selection for Social members
 - ❌ No member-facing changes yet (no hiding/showing features)
 
-**Testing:** Admin UI manual test, audit log spot-check, reporting export validation
+**Testing:** Admin UI manual test, social org CRUD validation, reporting export validation, seed data verification
 
-**Deployment:** Test on staging; deploy to production. All existing members MUST have a tier assigned before members can log in.
+**Deployment:** Test on staging; deploy to production. All existing members MUST have a tier + org (if Social) assigned before members can log in.
 
 ---
 
@@ -1331,20 +1679,23 @@ describe("Membership Tiers - E2E Happy Paths", () => {
 
 ---
 
-### Phase 3: Social Tier 40-Day Enforcement (1 week)
+### Phase 3: Social Tier Org-Level Allowance Enforcement (1-2 weeks)
 
 **Deliverables:**
-- ✅ POST `/api/bookings/property` guard: check Social tier usage against 8/1-7/31 period
-- ✅ Usage counter increment on booking confirm
-- ✅ Cross-period booking logic: entire booking counts against start-date period
-- ✅ Booking form: show "X remaining days" warning for Social
-- ✅ Reject booking if it would exceed 40-day cap for the period
-- ✅ Admin can manually adjust/grant/comp usage (logged in audit trail)
+- ✅ POST `/api/bookings/property` guard: check Social org's usage against org's annualBookingAllowance per period
+- ✅ Usage counter increment on booking confirm (increments org's shared counter, not individual member)
+- ✅ Cross-period booking logic: entire booking counts against the period containing the start date (using org's periodStartDate)
+- ✅ Booking form: show "X days remaining for [Org Name]" warning for Social
+- ✅ Reject booking if it would exceed org's allowance for the period
+- ✅ Admin can manually adjust/grant/comp org's allowance (logged in audit trail with delta)
+- ✅ Social member can see org's shared pool status (not individual quota)
 
 **Testing:** 
-- Integration tests for booking cap enforcement
-- Integration tests for period boundary handling
-- E2E: Social member books up to 40 days, then rejected on overage
+- Integration tests for org-level cap enforcement
+- Integration tests for period boundary handling (using org's period, not fixed 8/1)
+- Integration tests for multiple Social members under same org drawing from shared pool
+- E2E: Social member1 books 25 days, member2 tries to book 20 days (under same org, cap 40); second booking rejected
+- E2E: Admin adjusts org allowance mid-period, usage counter updates correctly
 
 **Deployment:** Final phase; production rollout once all Phase 2 tests pass.
 
@@ -1364,8 +1715,26 @@ New admin-only endpoints that power the reporting dashboard:
 // GET /api/admin/reports/revenue?tier=DESIGNATED&startDate=...&endDate=...
 // Returns revenue metrics: total, by tier, by booking type
 
-// GET /api/admin/reports/social-usage?periodStartDate=2026-08-01
-// Returns Social member usage: days used, remaining, adjustments by member
+// GET /api/admin/social-orgs
+// Returns array of all Social Parent Organizations with current usage
+
+// GET /api/admin/social-orgs/:id
+// Returns org details: name, allowance, period, YTD usage, member count
+
+// GET /api/admin/social-orgs/:id/members
+// Returns all Social members under this org
+
+// GET /api/admin/social-orgs/:id/usage
+// Returns org's current-period usage stats and per-member breakdown
+
+// GET /api/admin/social-orgs/:id/usage-history
+// Returns all bookings made by members under this org (detailed, paginated)
+
+// GET /api/admin/reports/social-org-usage
+// Returns array of all Social orgs with YTD usage, remaining, member count
+
+// GET /api/admin/reports/social-members-by-org/:orgId
+// Returns per-member usage breakdown within a specific org
 
 // All reports support ?export=csv for direct CSV download
 ```
@@ -1400,24 +1769,52 @@ New admin-only endpoints that power the reporting dashboard:
 ## Appendix: Implementation Checklist
 
 **Phase 1: Schema + Admin UI**
+
+*Schema:*
 - [ ] Schema: MembershipType enum (DESIGNATED, SILVER, SOCIAL)
 - [ ] Schema: membership_type column added to members (NOT NULL, required)
-- [ ] Schema: membership_usage table created with periodStartDate (8/1) key
+- [ ] Schema: social_parent_organization table created (id, name, annualBookingAllowance, periodStartDate, notes, timestamps)
+- [ ] Schema: social_parent_organization_id FK added to members (required for Social, null for others)
+- [ ] Schema: social_organization_usage table created (id, social_parent_organization_id, periodStartDate, propertyDaysUsed, timestamps)
 - [ ] Schema: membership_audit table created with delta tracking
+- [ ] Seed data: create "Five Elms Capital" org (or placeholder, to be filled in)
+
+*Member Management Endpoints:*
 - [ ] Endpoint: PATCH /api/admin/members/:id/tier (with audit log)
-- [ ] Endpoint: GET /api/admin/members/:id/usage (by periodStartDate)
-- [ ] Endpoint: PATCH /api/admin/members/:id/usage/adjust (manual adjustment with audit)
 - [ ] Endpoint: GET /api/admin/audit/:memberId (audit log view)
+
+*Social Org Management Endpoints:*
+- [ ] Endpoint: GET /api/admin/social-orgs (list all orgs with usage)
+- [ ] Endpoint: POST /api/admin/social-orgs (create org)
+- [ ] Endpoint: GET /api/admin/social-orgs/:id (org details)
+- [ ] Endpoint: PATCH /api/admin/social-orgs/:id (update org name, notes, period)
+- [ ] Endpoint: PATCH /api/admin/social-orgs/:id/allowance (adjust allowance, log audit with delta)
+- [ ] Endpoint: GET /api/admin/social-orgs/:id/members (list members under org)
+- [ ] Endpoint: GET /api/admin/social-orgs/:id/usage (org usage stats + per-member breakdown)
+- [ ] Endpoint: GET /api/admin/social-orgs/:id/usage-history (all bookings by members in org)
+
+*Reporting Endpoints:*
 - [ ] Endpoint: GET /api/admin/reports/members (CSV export)
 - [ ] Endpoint: GET /api/admin/reports/bookings (CSV export)
 - [ ] Endpoint: GET /api/admin/reports/revenue (CSV export)
-- [ ] Endpoint: GET /api/admin/reports/social-usage (CSV export)
-- [ ] Admin UI: Member edit form tier dropdown
-- [ ] Admin UI: Social usage display + manual adjust button
+- [ ] Endpoint: GET /api/admin/reports/social-org-usage (CSV export)
+- [ ] Endpoint: GET /api/admin/reports/social-members-by-org/:orgId (CSV export)
+
+*Admin UI:*
+- [ ] Admin UI: Member edit form tier dropdown + org selector (for Social)
 - [ ] Admin UI: Audit log view
-- [ ] Admin UI: Reports dashboard (4 report views)
-- [ ] Backfill: existing members manually assigned tiers via admin UI
+- [ ] Admin UI: Social Parent Organizations list page
+- [ ] Admin UI: Social org create/edit form (name, allowance, period, notes)
+- [ ] Admin UI: Social org details page (members, usage, booking history)
+- [ ] Admin UI: Social org usage adjustment (with audit logging)
+- [ ] Admin UI: Reports dashboard (member roster, bookings, revenue)
+- [ ] Admin UI: Social org usage report
+- [ ] Admin UI: Social members by org detail report
+
+*Backfill & Signup:*
+- [ ] Backfill: existing members manually assigned tiers + orgs (if Social) via admin UI
 - [ ] Member signup/invite flows: membershipType as required field
+- [ ] Member signup/invite flows: for Social, org selector as required field
 
 **Phase 2: Member-Facing UI (Conditional Rendering)**
 - [ ] Guard: requireMembershipTier()
