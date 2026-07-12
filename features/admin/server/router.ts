@@ -1506,7 +1506,7 @@ const membershipPortalRouter = router({
   updateMember: portalProcedure
     .input(z.object({
       id: z.number(),
-      tier: z.enum(["standard", "premier", "founding"]).optional(),
+      tier: z.enum(["Designated", "Silver", "Social"]).optional(),
       active: z.boolean().optional(),
       renewalDate: z.string().optional(),
       notes: z.string().optional(),
@@ -1541,7 +1541,7 @@ const membershipPortalRouter = router({
   createMember: portalProcedure
     .input(z.object({
       userId: z.string(),
-      tier: z.enum(["standard", "premier", "founding"]).default("standard"),
+      tier: z.enum(["Designated", "Silver", "Social"]).default("Designated"),
       memberNumber: z.string().optional(),
       joinDate: z.string().optional(),
       renewalDate: z.string().optional(),

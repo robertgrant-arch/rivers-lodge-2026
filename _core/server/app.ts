@@ -11,13 +11,19 @@ import { submitLimiter, loginLimiter, acceptInviteLimiter, changePasswordLimiter
 import { resolvePort } from "./port";
 import { checkDbHealth } from "./db";
 import { runStartupMigration, checkHuntingPropertiesSchema } from "./startup-migration";
-import { applySqlMigrations } from "./apply-sql-migrations";
+
+let deployedCommit = "unknown";
+try {
+  const { VERSION } = await import("../generated/version.js");
+  deployedCommit = VERSION.commit;
+} catch {
+  // VERSION file may not exist in development
+}
 
 async function startServer() {
   // ── Startup schema migration ────────────────────────────────────────────────────
   // Runs before tRPC server starts, ensures hunting_properties has all required columns
   await runStartupMigration();
-  await applySqlMigrations();
 
   const app = express();
   const server = createServer(app);
@@ -124,23 +130,9 @@ async function startServer() {
 
   // Health check — always 200 so Render never rolls back due to a transient DB
   // issue. DB status is reported in the body for observability only.
-  let buildVersion = { commit: 'unknown', builtAt: new Date().toISOString(), node: process.version };
-  try {
-    const { VERSION } = await import('../generated/version.js');
-    buildVersion = VERSION;
-  } catch {
-    // Version file not generated (e.g., in development mode)
-  }
-
   app.get("/api/health", async (_req, res) => {
     const dbOk = await checkDbHealth().catch(() => false);
-    res.json({
-      ok: true,
-      commit: buildVersion.commit,
-      builtAt: buildVersion.builtAt,
-      node: buildVersion.node,
-      db: dbOk ? "up" : "degraded",
-    });
+    res.json({ ok: true, db: dbOk ? "up" : "degraded", commit: deployedCommit });
   });
 
   // Schema health check — diagnoses missing columns on hunting_properties

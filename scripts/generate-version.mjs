@@ -34,5 +34,5 @@ export const VERSION = {
 } as const;
 `;
   writeFileSync(`${generatedDir}/version.ts`, fallbackContent);
-  console.warn('⚠ Using fallback version.ts');
+  console.log(`⚠ Generated fallback version (git not available)`);
 }

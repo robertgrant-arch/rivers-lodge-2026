@@ -84,9 +84,9 @@ export async function runStartupMigration() {
           END $$;
 
           CREATE TABLE IF NOT EXISTS property_activities (
-            "propertyId" integer NOT NULL REFERENCES hunting_properties(id) ON DELETE CASCADE,
+            property_id integer NOT NULL REFERENCES hunting_properties(id) ON DELETE CASCADE,
             "activity" property_activity NOT NULL,
-            PRIMARY KEY ("propertyId", "activity")
+            PRIMARY KEY (property_id, "activity")
           );
         `;
         await client.query(activitiesMigration);
@@ -98,12 +98,50 @@ export async function runStartupMigration() {
         `;
         await client.query(primaryActivityMigration);
 
+        // Update member_tier enum from (standard, premier, founding) to (Designated, Silver, Social)
+        const memberTierMigration = `
+          DO $$ BEGIN
+            -- Check if members table exists
+            IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'members') THEN
+              -- Check if member_tier enum exists
+              IF EXISTS (SELECT 1 FROM pg_type WHERE typname = 'member_tier') THEN
+                -- Check current enum values
+                IF NOT EXISTS (SELECT 1 FROM pg_enum WHERE enumtypid = 'member_tier'::regtype AND enumlabel = 'Designated') THEN
+                  -- Create new enum type
+                  CREATE TYPE member_tier_new AS ENUM ('Designated', 'Silver', 'Social');
+
+                  -- Migrate existing data with mapping
+                  ALTER TABLE members ADD COLUMN tier_new member_tier_new;
+                  UPDATE members SET tier_new = CASE
+                    WHEN tier::text = 'standard' THEN 'Designated'::member_tier_new
+                    WHEN tier::text = 'premier' THEN 'Silver'::member_tier_new
+                    WHEN tier::text = 'founding' THEN 'Social'::member_tier_new
+                    ELSE 'Designated'::member_tier_new
+                  END;
+
+                  -- Replace old column
+                  ALTER TABLE members DROP COLUMN tier;
+                  ALTER TABLE members RENAME COLUMN tier_new TO tier;
+
+                  -- Drop old enum and rename new one
+                  DROP TYPE member_tier;
+                  ALTER TYPE member_tier_new RENAME TO member_tier;
+                END IF;
+              ELSE
+                -- Create member_tier enum if it doesn't exist
+                CREATE TYPE member_tier AS ENUM ('Designated', 'Silver', 'Social');
+              END IF;
+            END IF;
+          END $$;
+        `;
+        await client.query(memberTierMigration);
+
         // Clean up orphan test properties from failed create attempts
         // (one-time cleanup of: Test Alpha, Test Bravo, Test 1 Minimal, 69 highway, Test - delete me, etc.)
         const cleanupTestProperties = `
           DELETE FROM hunting_properties
           WHERE name ILIKE 'test%' OR name ILIKE '%delete%' OR name = '69 highway' OR slug LIKE 'test-%'
-          AND id NOT IN (SELECT DISTINCT propertyId FROM property_bookings);
+          AND id NOT IN (SELECT DISTINCT property_id FROM property_bookings);
         `;
         const cleanupResult = await client.query(cleanupTestProperties);
         if ((cleanupResult.rowCount ?? 0) > 0) {

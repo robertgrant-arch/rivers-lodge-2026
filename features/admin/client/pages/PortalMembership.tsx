@@ -84,7 +84,7 @@ function AddMemberDialog({ open, onClose }: { open: boolean; onClose: () => void
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [selectedUser, setSelectedUser] = useState<{ id: string; email: string } | null>(null);
-  const [tier, setTier] = useState<"standard" | "premier" | "founding">("standard");
+  const [tier, setTier] = useState<"Designated" | "Silver" | "Social">("Designated");
   const [memberNumber, setMemberNumber] = useState("");
   const [joinDate, setJoinDate] = useState(new Date().toISOString().split("T")[0]);
   const [renewalDate, setRenewalDate] = useState("");
@@ -110,7 +110,7 @@ function AddMemberDialog({ open, onClose }: { open: boolean; onClose: () => void
     setSearchQuery("");
     setDebouncedQuery("");
     setSelectedUser(null);
-    setTier("standard");
+    setTier("Designated");
     setMemberNumber("");
     setNotes("");
     setJoinDate(new Date().toISOString().split("T")[0]);
@@ -209,9 +209,9 @@ function AddMemberDialog({ open, onClose }: { open: boolean; onClose: () => void
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="bg-[#2B2823] border border-[#57544E] rounded-none">
-                <SelectItem value="standard" className="font-sans text-sm text-[#E0D3BD] focus:bg-[#423F3B]">Standard</SelectItem>
-                <SelectItem value="premier" className="font-sans text-sm text-[#E0D3BD] focus:bg-[#423F3B]">Premier</SelectItem>
-                <SelectItem value="founding" className="font-sans text-sm text-[#E0D3BD] focus:bg-[#423F3B]">Founding</SelectItem>
+                <SelectItem value="Designated" className="font-sans text-sm text-[#E0D3BD] focus:bg-[#423F3B]">Designated</SelectItem>
+                <SelectItem value="Silver" className="font-sans text-sm text-[#E0D3BD] focus:bg-[#423F3B]">Silver</SelectItem>
+                <SelectItem value="Social" className="font-sans text-sm text-[#E0D3BD] focus:bg-[#423F3B]">Social</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -362,7 +362,7 @@ function MemberDetailDrawer({
 }) {
   const { member: m, user: u } = row;
   const utils = trpc.useUtils();
-  const [editTier, setEditTier] = useState(m.tier as "standard" | "premier" | "founding");
+  const [editTier, setEditTier] = useState(m.tier as "Designated" | "Silver" | "Social");
   const [editRenewal, setEditRenewal] = useState(m.renewalDate ?? "");
   const [editNotes, setEditNotes] = useState(m.notes ?? "");
   const [deactivateOpen, setDeactivateOpen] = useState(false);
@@ -448,9 +448,9 @@ function MemberDetailDrawer({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-[#2B2823] border border-[#57544E] rounded-none">
-                  <SelectItem value="standard" className="font-sans text-sm text-[#E0D3BD] focus:bg-[#423F3B]">Standard</SelectItem>
-                  <SelectItem value="premier" className="font-sans text-sm text-[#E0D3BD] focus:bg-[#423F3B]">Premier</SelectItem>
-                  <SelectItem value="founding" className="font-sans text-sm text-[#E0D3BD] focus:bg-[#423F3B]">Founding</SelectItem>
+                  <SelectItem value="Designated" className="font-sans text-sm text-[#E0D3BD] focus:bg-[#423F3B]">Designated</SelectItem>
+                  <SelectItem value="Silver" className="font-sans text-sm text-[#E0D3BD] focus:bg-[#423F3B]">Silver</SelectItem>
+                  <SelectItem value="Social" className="font-sans text-sm text-[#E0D3BD] focus:bg-[#423F3B]">Social</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -620,9 +620,9 @@ export default function PortalMembership() {
             {/* Tier chips */}
             <div className="flex gap-2">
               <FilterChip label="All Tiers" selected={tierFilter === undefined} onClick={() => setTierFilter(undefined)} />
-              <FilterChip label="Standard" selected={tierFilter === "standard"} onClick={() => setTierFilter("standard")} />
-              <FilterChip label="Premier" selected={tierFilter === "premier"} onClick={() => setTierFilter("premier")} />
-              <FilterChip label="Founding" selected={tierFilter === "founding"} onClick={() => setTierFilter("founding")} />
+              <FilterChip label="Designated" selected={tierFilter === "Designated"} onClick={() => setTierFilter("Designated")} />
+              <FilterChip label="Silver" selected={tierFilter === "Silver"} onClick={() => setTierFilter("Silver")} />
+              <FilterChip label="Social" selected={tierFilter === "Social"} onClick={() => setTierFilter("Social")} />
             </div>
           </div>
 
