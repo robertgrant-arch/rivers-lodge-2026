@@ -425,3 +425,15 @@ export const portalNotes = pgTable("portal_notes", {
   index("pnote_created_at_idx").on(t.createdAt),
 ]);
 export type PortalNote = typeof portalNotes.$inferSelect;
+
+// ─── Calendar Access Settings ────────────────────────────────────────────────
+
+export const calendarAccessSettings = pgTable("calendar_access_settings", {
+  id: integer("id").generatedAlwaysAsIdentity().primaryKey(),
+  settingKey: varchar("setting_key", { length: 255 }).notNull().unique(),
+  settingValue: text("setting_value").notNull(), // JSON stringified
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().$onUpdate(() => new Date()).notNull(),
+});
+export type CalendarAccessSettings = typeof calendarAccessSettings.$inferSelect;
+export type InsertCalendarAccessSettings = typeof calendarAccessSettings.$inferInsert;

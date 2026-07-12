@@ -12,6 +12,7 @@ export {
   seasonConfigs,
   // Calendar / availability management
   portalBlockedDates,
+  calendarAccessSettings,
   // Staff coordination
   portalStaffAssignments,
   portalDocuments,
@@ -39,6 +40,8 @@ export type {
   InsertSeasonConfig,
   PortalBlockedDate,
   InsertPortalBlockedDate,
+  CalendarAccessSettings,
+  InsertCalendarAccessSettings,
   PortalStaffAssignment,
   PortalDocument,
   WaiverTemplate,
