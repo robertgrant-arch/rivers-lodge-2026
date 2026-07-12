@@ -16,6 +16,7 @@ import { z } from "zod";
 import { eq, desc, and, ne, sql, inArray, like, lt, gt } from "drizzle-orm";
 import { getDb } from "../../_core/server/db";
 import { verifyCaptcha } from "@core/server/captcha";
+import { getUserSkillGroups, hasSkillGroupAccess } from "../lib/skillGroups";
 import {
   resources,
   resourceGroups,
@@ -580,9 +581,6 @@ const bookingsRouter = router({
       const db = await getDb();
       if (!db) return [];
 
-      // Import skill group utilities
-      const { getUserSkillGroups, hasSkillGroupAccess } = await import("../lib/skillGroups");
-
       // Get user's member record
       const memberResult = await db
         .select()
@@ -647,9 +645,6 @@ const bookingsRouter = router({
       const db = await getDb();
       if (!db) return [];
 
-      // Import skill group utilities
-      const { getUserSkillGroups, hasSkillGroupAccess } = await import("../lib/skillGroups");
-
       // Check if user has access to Master Calendar
       const memberResult = await db
         .select()
@@ -691,9 +686,6 @@ const bookingsRouter = router({
     .query(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) return [];
-
-      // Import skill group utilities
-      const { getUserSkillGroups, hasSkillGroupAccess } = await import("../lib/skillGroups");
 
       // Get user's member record
       const memberResult = await db

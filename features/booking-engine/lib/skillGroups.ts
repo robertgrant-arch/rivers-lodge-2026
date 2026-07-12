@@ -48,12 +48,12 @@ export function getUserSkillGroups(
  * User has access if ANY of their skill groups are in the allowed list.
  *
  * @param userSkillGroups - Array of skill groups the user belongs to
- * @param allowedSkillGroups - Array of skill groups that have access
+ * @param allowedSkillGroups - Array of skill groups that have access (can be strings for extensibility)
  * @returns true if user has access, false otherwise
  */
 export function hasSkillGroupAccess(
   userSkillGroups: SkillGroup[],
-  allowedSkillGroups: SkillGroup[]
+  allowedSkillGroups: string[]
 ): boolean {
   return userSkillGroups.some((group) => allowedSkillGroups.includes(group));
 }
