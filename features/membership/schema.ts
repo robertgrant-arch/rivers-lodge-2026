@@ -5,6 +5,7 @@ import {
   integer,
   pgEnum,
   pgTable,
+  primaryKey,
   text,
   timestamp,
   varchar,
@@ -100,6 +101,81 @@ export const resourceAccess = pgTable("resource_access", {
 
 export type ResourceAccess = typeof resourceAccess.$inferSelect;
 export type InsertResourceAccess = typeof resourceAccess.$inferInsert;
+
+// ─── Skill Groups (for activity-based filtering) ────────────────────────────────
+
+export const skillGroups = pgTable("skill_groups", {
+  id: integer("id").generatedAlwaysAsIdentity().primaryKey(),
+  name: varchar("name", { length: 100 }).notNull().unique(),
+  slug: varchar("slug", { length: 100 }).notNull().unique(),
+  description: text("description"),
+  icon: varchar("icon", { length: 50 }),
+  sortOrder: integer("sort_order").notNull().default(0),
+  active: boolean("active").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().$onUpdate(() => new Date()).notNull(),
+}, (t) => [
+  index("skill_groups_slug_idx").on(t.slug),
+  index("skill_groups_active_idx").on(t.active),
+]);
+
+export type SkillGroup = typeof skillGroups.$inferSelect;
+export type InsertSkillGroup = typeof skillGroups.$inferInsert;
+
+// ─── Role × Skill Group Access Matrix ──────────────────────────────────────────
+
+export const roleSkillGroupAccess = pgTable("role_skill_group_access", {
+  id: integer("id").generatedAlwaysAsIdentity().primaryKey(),
+  roleId: integer("role_id").notNull().references(() => roles.id, { onDelete: "cascade" }),
+  skillGroupId: integer("skill_group_id").notNull().references(() => skillGroups.id, { onDelete: "cascade" }),
+  canView: boolean("can_view").notNull().default(false),
+  canBook: boolean("can_book").notNull().default(false),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().$onUpdate(() => new Date()).notNull(),
+}, (t) => [
+  index("rsk_role_idx").on(t.roleId),
+  index("rsk_skill_group_idx").on(t.skillGroupId),
+  primaryKey({ columns: [t.roleId, t.skillGroupId] }),
+]);
+
+export type RoleSkillGroupAccess = typeof roleSkillGroupAccess.$inferSelect;
+export type InsertRoleSkillGroupAccess = typeof roleSkillGroupAccess.$inferInsert;
+
+// ─── Role × Property × Skill Group Access (per-property overrides) ─────────────
+
+export const rolePropertySkillGroupAccess = pgTable("role_property_skill_group_access", {
+  id: integer("id").generatedAlwaysAsIdentity().primaryKey(),
+  roleId: integer("role_id").notNull().references(() => roles.id, { onDelete: "cascade" }),
+  propertyId: integer("property_id").notNull(),
+  skillGroupId: integer("skill_group_id").notNull().references(() => skillGroups.id, { onDelete: "cascade" }),
+  canView: boolean("can_view").notNull().default(false),
+  canBook: boolean("can_book").notNull().default(false),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().$onUpdate(() => new Date()).notNull(),
+}, (t) => [
+  index("rps_role_idx").on(t.roleId),
+  index("rps_property_idx").on(t.propertyId),
+  index("rps_skill_group_idx").on(t.skillGroupId),
+  primaryKey({ columns: [t.roleId, t.propertyId, t.skillGroupId] }),
+]);
+
+export type RolePropertySkillGroupAccess = typeof rolePropertySkillGroupAccess.$inferSelect;
+export type InsertRolePropertySkillGroupAccess = typeof rolePropertySkillGroupAccess.$inferInsert;
+
+// ─── Property × Skill Group Join Table (which skill groups per property) ─────
+
+export const propertySkillGroups = pgTable("property_skill_groups", {
+  propertyId: integer("property_id").notNull(),
+  skillGroupId: integer("skill_group_id").notNull().references(() => skillGroups.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (t) => [
+  index("psg_property_idx").on(t.propertyId),
+  index("psg_skill_group_idx").on(t.skillGroupId),
+  primaryKey({ columns: [t.propertyId, t.skillGroupId] }),
+]);
+
+export type PropertySkillGroup = typeof propertySkillGroups.$inferSelect;
+export type InsertPropertySkillGroup = typeof propertySkillGroups.$inferInsert;
 
 // ─── Members with Social Org FK and Role FK ────────────────────────────────────
 

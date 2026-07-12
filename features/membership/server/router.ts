@@ -279,28 +279,51 @@ export const membershipRouter = router({
       return db.select().from(membershipApplications).orderBy(desc(membershipApplications.createdAt));
     }),
 
-  stats: portalProcedure.query(async () => {
-    const db = getPortalDb();
-    const today = new Date().toISOString().split("T")[0];
-    const [[total], [active], [inactive], [pendingRenewal]] = await Promise.all([
-      db.select({ count: sql<number>`count(*)` }).from(members),
-      db.select({ count: sql<number>`count(*)` }).from(members).where(eq(members.active, true)),
-      db.select({ count: sql<number>`count(*)` }).from(members).where(eq(members.active, false)),
-      db.select({ count: sql<number>`count(*)` }).from(members)
-        .where(and(
-          eq(members.active, true),
-          sql`${members.renewalDate} IS NOT NULL`,
-          sql`${members.renewalDate} <= (${today}::date + INTERVAL '30 days')`,
-        )),
-    ]);
-    return {
-      total: total.count,
-      active: active.count,
-      inactive: inactive.count,
-      pendingRenewal: pendingRenewal.count,
-      expired: inactive.count,
-    };
-  }),
+  stats: portalProcedure
+    .input(z.object({ active: z.boolean().optional(), tier: z.string().optional() }))
+    .query(async ({ input }) => {
+      const db = getPortalDb();
+      const today = new Date().toISOString().split("T")[0];
+
+      // Build base filter conditions from input
+      const baseConditions = [];
+      if (input.active !== undefined) baseConditions.push(eq(members.active, input.active));
+      if (input.tier) baseConditions.push(eq(members.tier, input.tier as any));
+      const baseWhere = baseConditions.length > 0 ? and(...baseConditions) : undefined;
+
+      const [[total], [active], [inactive], [pendingRenewal]] = await Promise.all([
+        // Total matching base filters
+        db.select({ count: sql<number>`count(*)` }).from(members).where(baseWhere),
+        // Active + base filters
+        db.select({ count: sql<number>`count(*)` }).from(members)
+          .where(baseWhere ? and(baseWhere, eq(members.active, true)) : eq(members.active, true)),
+        // Inactive + base filters
+        db.select({ count: sql<number>`count(*)` }).from(members)
+          .where(baseWhere ? and(baseWhere, eq(members.active, false)) : eq(members.active, false)),
+        // Pending renewal + base filters
+        db.select({ count: sql<number>`count(*)` }).from(members)
+          .where(baseWhere
+            ? and(
+                baseWhere,
+                eq(members.active, true),
+                sql`${members.renewalDate} IS NOT NULL`,
+                sql`${members.renewalDate} <= (${today}::date + INTERVAL '30 days')`,
+              )
+            : and(
+                eq(members.active, true),
+                sql`${members.renewalDate} IS NOT NULL`,
+                sql`${members.renewalDate} <= (${today}::date + INTERVAL '30 days')`,
+              )
+          ),
+      ]);
+      return {
+        total: total.count,
+        active: active.count,
+        inactive: inactive.count,
+        pendingRenewal: pendingRenewal.count,
+        expired: inactive.count,
+      };
+    }),
 
   // Filterable member list with joined user data
   members: portalProcedure
