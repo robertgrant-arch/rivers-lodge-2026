@@ -87,6 +87,7 @@ const PortalMemberBookings = lazy(() => import("@features/admin/client/pages/Por
 const PortalCustomers = lazy(() => import("@features/admin/client/pages/PortalCustomers"));
 const PortalEmployees = lazy(() => import("@features/admin/client/pages/PortalEmployees"));
 const PortalMembership = lazy(() => import("@features/admin/client/pages/PortalMembership"));
+const PortalCalendarSettings = lazy(() => import("@features/admin/client/pages/PortalCalendarSettings"));
 const PortalReports = lazy(() => import("@features/admin/client/pages/PortalReports"));
 const PortalBookings = lazy(() => import("@features/admin/client/pages/PortalBookings"));
 const PortalLeads = lazy(() => import("@features/admin/client/pages/PortalLeads"));
@@ -174,6 +175,7 @@ function Router() {
         <Route path="/ops/employees">{() => <PortalLayout><PortalEmployees /></PortalLayout>}</Route>
         <Route path="/ops/users">{() => <PortalLayout><AdminUsers /></PortalLayout>}</Route>
         <Route path="/ops/membership">{() => <PortalLayout><PortalMembership /></PortalLayout>}</Route>
+        <Route path="/ops/calendar-settings">{() => <PortalLayout><PortalCalendarSettings /></PortalLayout>}</Route>
         <Route path="/ops/reports">{() => <PortalLayout><PortalReports /></PortalLayout>}</Route>
         <Route path="/ops/bookings/:id">{() => <PortalLayout><PortalBookings /></PortalLayout>}</Route>
         <Route path="/ops/bookings">{() => <PortalLayout><PortalBookings /></PortalLayout>}</Route>
