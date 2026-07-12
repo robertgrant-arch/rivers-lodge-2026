@@ -70,6 +70,8 @@ const MyBookings = lazy(() => import("@features/portal/client/pages/MyBookings")
 const PropertyBrowser = lazy(() => import("@features/portal/client/pages/PropertyBrowser"));
 const PropertyDetail = lazy(() => import("@features/portal/client/pages/PropertyDetail"));
 const PortalAvailability = lazy(() => import("@features/portal/client/pages/PortalAvailability"));
+const CalendarMine = lazy(() => import("@features/portal/client/pages/CalendarMine"));
+const CalendarMaster = lazy(() => import("@features/portal/client/pages/CalendarMaster"));
 
 // Auth pages
 const SignIn = lazy(() => import("@features/auth/client/pages/SignIn"));
@@ -153,6 +155,8 @@ function Router() {
 
         {/* Gated */}
         <Route path="/portal" component={MemberPortal} />
+        <Route path="/portal/calendar/mine" component={CalendarMine} />
+        <Route path="/portal/calendar/master" component={CalendarMaster} />
         <Route path="/portal/properties" component={PropertyBrowser} />
         <Route path="/portal/properties/:id" component={PropertyDetail} />
         <Route path="/portal/my-bookings" component={MyBookings} />

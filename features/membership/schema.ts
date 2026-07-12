@@ -8,7 +8,7 @@ import {
   text,
   timestamp,
   varchar,
-  foreignKey,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
 
 export const applicationStatusEnum = pgEnum("application_status", ["pending", "approved", "declined"]);
@@ -69,7 +69,39 @@ export const socialOrganizationUsage = pgTable("social_organization_usage", {
 export type SocialOrganizationUsage = typeof socialOrganizationUsage.$inferSelect;
 export type InsertSocialOrganizationUsage = typeof socialOrganizationUsage.$inferInsert;
 
-// ─── Members with Social Org FK ────────────────────────────────────────────────
+// ─── Role-Based Access Control ────────────────────────────────────────────────
+
+export const roles = pgTable("roles", {
+  id: integer("id").generatedAlwaysAsIdentity().primaryKey(),
+  key: varchar("key", { length: 100 }).notNull().unique(),
+  label: varchar("label", { length: 100 }).notNull(),
+  sortOrder: integer("sort_order").notNull().default(0),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (t) => [
+  index("role_key_idx").on(t.key),
+]);
+
+export type Role = typeof roles.$inferSelect;
+export type InsertRole = typeof roles.$inferInsert;
+
+export const resourceAccess = pgTable("resource_access", {
+  id: integer("id").generatedAlwaysAsIdentity().primaryKey(),
+  resourceType: varchar("resource_type", { length: 100 }).notNull(),
+  resourceId: text("resource_id").notNull(),
+  roleId: integer("role_id").notNull().references(() => roles.id, { onDelete: "cascade" }),
+  canViewAndBook: boolean("can_view_and_book").notNull().default(false),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().$onUpdate(() => new Date()).notNull(),
+}, (t) => [
+  uniqueIndex("resource_access_unique_idx").on(t.resourceType, t.resourceId, t.roleId),
+  index("resource_access_role_idx").on(t.roleId),
+  index("resource_access_resource_idx").on(t.resourceType, t.resourceId),
+]);
+
+export type ResourceAccess = typeof resourceAccess.$inferSelect;
+export type InsertResourceAccess = typeof resourceAccess.$inferInsert;
+
+// ─── Members with Social Org FK and Role FK ────────────────────────────────────
 
 export const members = pgTable("members", {
   id: integer("id").generatedAlwaysAsIdentity().primaryKey(),
@@ -80,6 +112,7 @@ export const members = pgTable("members", {
     () => socialParentOrganizations.id,
     { onDelete: "set null" }
   ),
+  roleId: integer("role_id").references(() => roles.id, { onDelete: "set null" }),
   joinDate: date("joinDate"),
   renewalDate: date("renewalDate"),
   active: boolean("active").notNull().default(true),
@@ -91,6 +124,7 @@ export const members = pgTable("members", {
   index("mem_active_idx").on(t.active),
   index("mem_tier_idx").on(t.tier),
   index("mem_org_idx").on(t.socialParentOrganizationId),
+  index("mem_role_idx").on(t.roleId),
   index("mem_created_at_idx").on(t.createdAt),
 ]);
 
