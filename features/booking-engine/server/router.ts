@@ -29,6 +29,9 @@ import {
   bookingStateTransitions,
 } from '@core/db/booking-schema';
 import { bookings, users, blockedDates } from '@core/db/schema';
+import { propertyBookings, huntingProperties } from '@core/db/property-booking-schema';
+import { calendarAccessSettings } from '@features/admin/schema';
+import { members } from '@features/membership/schema';
 import { gte, lte } from "drizzle-orm";
 import {
   checkAvailability,
@@ -567,6 +570,126 @@ const bookingsRouter = router({
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
       await db.delete(bookings).where(eq(bookings.id, input.id));
       return { success: true };
+    }),
+
+  // ─── Calendar Endpoints ────────────────────────────────────────────────────
+
+  myBookings: protectedProcedure
+    .query(async ({ ctx }) => {
+      const db = await getDb();
+      if (!db) return [];
+
+      // Return only bookings for the current authenticated user
+      return db
+        .select()
+        .from(propertyBookings)
+        .where(eq(propertyBookings.userId, ctx.user.id))
+        .orderBy(propertyBookings.startDate);
+    }),
+
+  masterCalendarView: protectedProcedure
+    .query(async ({ ctx }) => {
+      const db = await getDb();
+      if (!db) return [];
+
+      // Check if user has access to Master Calendar
+      const memberResult = await db
+        .select()
+        .from(members)
+        .where(eq(members.userId, ctx.user.id));
+
+      const member = memberResult[0];
+      if (!member) throw new TRPCError({ code: "UNAUTHORIZED", message: "Not a member" });
+
+      // Get user's skill group (tier + staff role from context)
+      const userTier = member.tier;
+      const userRole = ctx.user.role as string;
+
+      // Get Master Calendar access settings
+      const settingsResult = await db
+        .select()
+        .from(calendarAccessSettings)
+        .where(eq(calendarAccessSettings.settingKey, "master_calendar_access"));
+
+      let accessSettings = {
+        Designated: true,
+        Silver: false,
+        Social: false,
+        Admin: true,
+        Employee: true,
+      };
+
+      if (settingsResult[0]) {
+        accessSettings = JSON.parse(settingsResult[0].settingValue);
+      }
+
+      // Check if user's tier or role has access
+      const hasAccess =
+        (accessSettings[userTier as keyof typeof accessSettings] === true) ||
+        (userRole === "admin" && accessSettings.Admin === true) ||
+        (userRole === "employee" && accessSettings.Employee === true);
+
+      if (!hasAccess) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Master Calendar access denied" });
+      }
+
+      // Return all property bookings
+      return db
+        .select()
+        .from(propertyBookings)
+        .orderBy(propertyBookings.startDate);
+    }),
+
+  propertyCalendarView: protectedProcedure
+    .input(z.object({ propertyId: z.number() }))
+    .query(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) return [];
+
+      // Get user's member record and skill group
+      const memberResult = await db
+        .select()
+        .from(members)
+        .where(eq(members.userId, ctx.user.id));
+
+      const member = memberResult[0];
+      if (!member) throw new TRPCError({ code: "UNAUTHORIZED", message: "Not a member" });
+
+      const userTier = member.tier;
+      const userRole = ctx.user.role as string;
+
+      // Get property calendar access settings
+      const settingsResult = await db
+        .select()
+        .from(calendarAccessSettings)
+        .where(eq(calendarAccessSettings.settingKey, "property_calendar_access"));
+
+      let propertyAccess: Record<string, Record<string, boolean>> = {};
+      if (settingsResult[0]) {
+        propertyAccess = JSON.parse(settingsResult[0].settingValue);
+      }
+
+      const propAccessRules = propertyAccess[String(input.propertyId)] || {};
+
+      // Check access: default to false for members, true for staff
+      const hasAccess =
+        (propAccessRules[userTier as keyof typeof propAccessRules] === true) ||
+        (userRole === "admin") ||
+        (userRole === "employee" && propAccessRules.Employee === true);
+
+      if (!hasAccess) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: `Calendar access denied for property ${input.propertyId}`,
+        });
+      }
+
+      // Return bookings for this property
+      return db
+        .select()
+        .from(propertyBookings)
+        .where(eq(propertyBookings.propertyId, input.propertyId))
+        .orderBy(propertyBookings.startDate);
     }),
 
   blockedDates: protectedProcedure

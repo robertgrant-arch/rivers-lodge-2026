@@ -38,6 +38,8 @@ export type {
   InsertHarvestRecord,
   SeasonConfig,
   InsertSeasonConfig,
+  CalendarAccessSettings,
+  InsertCalendarAccessSettings,
   PortalStaffAssignment,
   PortalDocument,
   WaiverTemplate,

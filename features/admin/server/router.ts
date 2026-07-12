@@ -10,6 +10,7 @@ import {
   harvestRecords,
   seasonConfigs,
   portalBlockedDates,
+  calendarAccessSettings,
   portalStaffAssignments,
   portalDocuments,
   waiverTemplates,
@@ -1907,10 +1908,115 @@ const usersAdminRouter = router({
     }),
 });
 
+// ─── Calendar Settings Router ─────────────────────────────────────────────────
+
+type MasterCalendarAccessSettings = {
+  Designated: boolean;
+  Silver: boolean;
+  Social: boolean;
+  Admin: boolean;
+  Employee: boolean;
+};
+
+type PropertyCalendarAccessSettings = Record<string, Record<string, boolean>>;
+
+const calendarSettingsRouter = router({
+  getMasterCalendarAccess: ownerProcedure.query(async () => {
+    const db = getDb();
+    const result = await db
+      .select()
+      .from(calendarAccessSettings)
+      .where(eq(calendarAccessSettings.settingKey, "master_calendar_access"));
+
+    if (!result[0]) {
+      return {
+        Designated: true,
+        Silver: false,
+        Social: false,
+        Admin: true,
+        Employee: true,
+      } as MasterCalendarAccessSettings;
+    }
+
+    return JSON.parse(result[0].settingValue) as MasterCalendarAccessSettings;
+  }),
+
+  updateMasterCalendarAccess: ownerProcedure
+    .input(z.record(z.string(), z.boolean()))
+    .mutation(async ({ input, ctx }) => {
+      const db = getDb();
+
+      await db
+        .insert(calendarAccessSettings)
+        .values({
+          settingKey: "master_calendar_access",
+          settingValue: JSON.stringify(input),
+        })
+        .onConflictDoUpdate({
+          target: calendarAccessSettings.settingKey,
+          set: { settingValue: JSON.stringify(input) },
+        });
+
+      await logAudit({
+        actingUserId: ctx.user.id,
+        actingUserName: ctx.user.email ?? "Admin",
+        actionType: "update",
+        entityType: "CalendarAccessSettings",
+        fieldChanged: "master_calendar_access",
+        newValue: JSON.stringify(input),
+      });
+
+      return { success: true };
+    }),
+
+  getPropertyCalendarAccess: ownerProcedure.query(async () => {
+    const db = getDb();
+    const result = await db
+      .select()
+      .from(calendarAccessSettings)
+      .where(eq(calendarAccessSettings.settingKey, "property_calendar_access"));
+
+    if (!result[0]) {
+      return {} as PropertyCalendarAccessSettings;
+    }
+
+    return JSON.parse(result[0].settingValue) as PropertyCalendarAccessSettings;
+  }),
+
+  updatePropertyCalendarAccess: ownerProcedure
+    .input(z.record(z.string(), z.record(z.string(), z.boolean())))
+    .mutation(async ({ input, ctx }) => {
+      const db = getDb();
+
+      await db
+        .insert(calendarAccessSettings)
+        .values({
+          settingKey: "property_calendar_access",
+          settingValue: JSON.stringify(input),
+        })
+        .onConflictDoUpdate({
+          target: calendarAccessSettings.settingKey,
+          set: { settingValue: JSON.stringify(input) },
+        });
+
+      await logAudit({
+        actingUserId: ctx.user.id,
+        actingUserName: ctx.user.email ?? "Admin",
+        actionType: "update",
+        entityType: "CalendarAccessSettings",
+        fieldChanged: "property_calendar_access",
+        newValue: JSON.stringify(input),
+      });
+
+      return { success: true };
+    }),
+});
+
 // ─── Admin App Router ─────────────────────────────────────────────────────────
 export const adminRouter = router({
   dashboard: dashboardRouter,
   calendar: calendarRouter,
+  calendarSettings: calendarSettingsRouter,
   weddings: weddingsPortalRouter,
   corporate: corporatePortalRouter,
   huntFish: huntFishPortalRouter,
