@@ -162,7 +162,7 @@ Not a venue. <br /><em className="italic">A private estate.</em>
 </h2>
 <div className="space-y-5 font-sans text-white/70 leading-relaxed" style={{ fontSize: "0.9375rem" }}>
 <p>When you book a wedding at Rivers Lodge, you book the entire estate. Your guests are the only guests. The ceremony lawns, Rivers Barn, Timber Edge, and your reserved lodging are all exclusively yours for the weekend.</p>
-<p>We work with a limited number of couples each year to ensure every wedding receives the full attention of our team. We will never have multiple weddings going on at one time and the result is a weekend event that feels more like entire weekend private gathering versus just a wedding.</p>
+<p>We work with a limited number of couples each year to ensure every wedding receives the full attention of our team. We will never have multiple weddings going on at one time and the result is a totally private all weekend celebration with friends and family.</p>
 </div>
 </div>
 </div>
