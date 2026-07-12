@@ -19,6 +19,7 @@ import { Textarea } from '@shared/ui/textarea';
 import { trpc } from '@shared/lib/trpc';
 import { useState, useMemo } from 'react';
 import { toast } from 'sonner';
+import AccessControlPanel from '@features/portal/client/components/AccessControlPanel';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -512,12 +513,17 @@ export default function PortalCalendar() {
           <p className="font-sans text-[10px] tracking-[0.16em] uppercase text-[#BABAAE] mb-1">Operations</p>
           <h1 className="font-sans text-2xl font-medium tracking-tight text-[#E0D3BD]">Calendar</h1>
         </div>
-        <Button
-          onClick={() => { setCreateDefaultDate(undefined); setCreateOpen(true); }}
-          className="bg-[#9B4D19] hover:bg-[#7a3c14] text-[#E0D3BD] rounded-none font-sans text-xs tracking-[0.1em] uppercase px-5 py-2 h-auto"
-        >
-          + New Event
-        </Button>
+        <div className="flex items-start gap-4">
+          <div className="w-64">
+            <AccessControlPanel resourceType="master_calendar" resourceId="master" />
+          </div>
+          <Button
+            onClick={() => { setCreateDefaultDate(undefined); setCreateOpen(true); }}
+            className="bg-[#9B4D19] hover:bg-[#7a3c14] text-[#E0D3BD] rounded-none font-sans text-xs tracking-[0.1em] uppercase px-5 py-2 h-auto"
+          >
+            + New Event
+          </Button>
+        </div>
       </div>
 
       {/* Filter chips */}

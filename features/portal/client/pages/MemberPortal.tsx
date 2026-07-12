@@ -7,9 +7,9 @@ import PublicLayout from "@/components/PublicLayout";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@shared/ui/dialog';
 import { Eye, X } from "lucide-react";
 import PropertyBrowser from "@features/portal/client/pages/PropertyBrowser";
-import { CalendarTabs } from "@features/portal/client/components/CalendarTabs";
+import type { Role } from "@features/membership/public";
 
-type Tab = "dashboard" | "bookings" | "calendar" | "request" | "updates" | "messages" | "profile" | "properties";
+type Tab = "dashboard" | "bookings" | "request" | "updates" | "messages" | "profile" | "properties";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -277,7 +277,6 @@ export default function MemberPortal() {
     { key: "dashboard",   label: "Dashboard" },
     { key: "properties",  label: "Properties" },
     { key: "bookings",    label: "My Stays", badge: (myRequests.data ?? []).filter(r => r.status === "new" || r.status === "contacted").length || undefined },
-    { key: "calendar",    label: "Calendar" },
     { key: "request",     label: "Request a Stay" },
     { key: "updates",     label: "Seasonal Updates" },
     { key: "messages",    label: "Concierge", badge: (myMessages.data ?? []).length || undefined },
@@ -293,8 +292,12 @@ export default function MemberPortal() {
   const pendingRequests = (myRequests.data ?? []).filter(r => !["converted","rejected","lost"].includes(r.status));
   const announcements = cmsAnnouncements.data ?? [];
 
-  // Detect admin preview mode via ?preview=1 query param
-  const isPreviewMode = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("preview") === "1";
+  // Detect admin preview mode via ?preview=1 query param and roleId
+  const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : new URLSearchParams();
+  const isPreviewMode = searchParams.get("preview") === "1";
+  const previewRoleId = searchParams.get("roleId");
+  const rolesQuery = trpc.admin.accessControl.listRoles.useQuery(undefined, { enabled: isPreviewMode });
+  const previewRoleName = rolesQuery.data?.find((r: Role) => String(r.id) === previewRoleId)?.label ?? "Unknown";
 
   return (
     <PublicLayout>
@@ -303,7 +306,7 @@ export default function MemberPortal() {
         <div className="fixed top-0 left-0 right-0 z-[200] bg-amber-600 text-white text-sm font-medium flex items-center justify-between px-4 py-2 shadow-lg">
           <div className="flex items-center gap-2">
             <Eye className="w-4 h-4 flex-shrink-0" />
-            <span>Admin Preview Mode — you are viewing the Member Portal as a Founding Member.</span>
+            <span>Admin Preview Mode — you are viewing the Member Portal as a {previewRoleName}.</span>
           </div>
           <a
             href="/ops"
@@ -477,8 +480,21 @@ export default function MemberPortal() {
                 </a>
               </div>
 
-              {/* Property Booking quick links */}
+              {/* Calendar & Property quick links */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <Link href="/portal/calendar/mine">
+                  <div className="flex items-center gap-4 bg-[#2B2823] border border-white/8 hover:border-[var(--gold)]/40 p-5 text-left transition-colors group cursor-pointer">
+                    <div className="w-10 h-10 flex items-center justify-center border border-white/10 group-hover:border-[var(--gold)]/40 transition-colors flex-shrink-0">
+                      <svg className="w-4 h-4 text-white/50 group-hover:text-[var(--gold)] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="text-sm font-sans text-white font-medium">My Calendar</p>
+                      <p className="text-xs font-sans text-white/40 mt-0.5">View your personal bookings</p>
+                    </div>
+                  </div>
+                </Link>
                 <Link href="/portal/properties">
                   <div className="flex items-center gap-4 bg-[#2B2823] border border-[var(--gold)]/30 hover:border-[var(--gold)]/60 p-5 text-left transition-colors group cursor-pointer">
                     <div className="w-10 h-10 flex items-center justify-center border border-[var(--gold)]/30 group-hover:border-[var(--gold)]/60 transition-colors flex-shrink-0">
@@ -493,6 +509,10 @@ export default function MemberPortal() {
                     </div>
                   </div>
                 </Link>
+              </div>
+
+              {/* My Bookings link */}
+              <div>
                 <Link href="/portal/my-bookings">
                   <div className="flex items-center gap-4 bg-[#2B2823] border border-white/8 hover:border-[var(--gold)]/40 p-5 text-left transition-colors group cursor-pointer">
                     <div className="w-10 h-10 flex items-center justify-center border border-white/10 group-hover:border-[var(--gold)]/40 transition-colors flex-shrink-0">
@@ -681,15 +701,6 @@ export default function MemberPortal() {
                   })}
                 </div>
               )}
-            </div>
-          )}
-
-          {/* ── CALENDAR ──────────────────────────────────────────────── */}
-          {tab === "calendar" && (
-            <div>
-              <h2 className="font-serif text-3xl text-white mb-2">Your Calendar</h2>
-              <p className="text-sm font-sans text-white/40 mb-8">View your bookings and property availability.</p>
-              <CalendarTabs />
             </div>
           )}
 

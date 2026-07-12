@@ -50,6 +50,11 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@shared/ui/popover';
 import { DashboardLayoutSkeleton } from "@/_shared/components/DashboardLayoutSkeleton";
 
 const ADMIN_ROLE = "admin";
@@ -117,12 +122,26 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
   const { loading, user, logout } = useAuth();
   const [location] = useLocation();
   const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewPopoverOpen, setPreviewPopoverOpen] = useState(false);
+  const [previewRoleId, setPreviewRoleId] = useState<string>("");
   const ensureMember = trpc.membership.ensureMemberForPreview.useMutation();
+  const rolesQuery = trpc.admin.accessControl.listRoles.useQuery();
   const notificationsQuery = trpc.portal.dashboard.notifications.useQuery(undefined, {
     enabled: !!user && user.role === ADMIN_ROLE,
     refetchInterval: 30000,
   });
   const unreadCount = notificationsQuery.data?.length ?? 0;
+
+  const handlePreviewAsRole = async () => {
+    if (!previewRoleId) return;
+    setPreviewLoading(true);
+    try {
+      await ensureMember.mutateAsync();
+      window.location.href = `/portal?preview=1&roleId=${previewRoleId}`;
+    } catch {
+      setPreviewLoading(false);
+    }
+  };
 
   if (loading) return <DashboardLayoutSkeleton />;
 
@@ -282,24 +301,43 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
             <div className="flex-1" />
             {/* Preview as Member — owner/admin only */}
             {user?.role === "admin" && (
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-1.5 text-xs h-8 border-[#57544E] text-[#BABAAE] hover:border-[#9B4D19] hover:text-[#E0D3BD] rounded-none font-sans tracking-[0.06em] uppercase"
-                disabled={previewLoading}
-                onClick={async () => {
-                  setPreviewLoading(true);
-                  try {
-                    await ensureMember.mutateAsync();
-                    window.location.href = "/portal?preview=1";
-                  } catch {
-                    setPreviewLoading(false);
-                  }
-                }}
-              >
-                <Eye className="w-3.5 h-3.5" />
-                {previewLoading ? "Setting up…" : "Preview as Member"}
-              </Button>
+              <Popover open={previewPopoverOpen} onOpenChange={setPreviewPopoverOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5 text-xs h-8 border-[#57544E] text-[#BABAAE] hover:border-[#9B4D19] hover:text-[#E0D3BD] rounded-none font-sans tracking-[0.06em] uppercase"
+                    disabled={previewLoading}
+                  >
+                    <Eye className="w-3.5 h-3.5" />
+                    {previewLoading ? "Setting up…" : "Preview as Role"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-48 p-3 bg-[#363330] border border-[#57544E] rounded-none">
+                  <div className="space-y-2">
+                    <p className="text-xs font-sans tracking-[0.1em] uppercase text-[#BABAAE]">Select Role</p>
+                    <select
+                      value={previewRoleId}
+                      onChange={(e) => setPreviewRoleId(e.target.value)}
+                      className="w-full px-3 py-2 bg-[#2B2823] border border-[#57544E] text-[#E0D3BD] font-sans text-sm rounded-none focus:outline-none focus:ring-1 focus:ring-[#9B4D19]"
+                    >
+                      <option value="">Choose a role...</option>
+                      {(rolesQuery.data ?? []).map((role) => (
+                        <option key={role.id} value={role.id}>
+                          {role.label}
+                        </option>
+                      ))}
+                    </select>
+                    <Button
+                      onClick={handlePreviewAsRole}
+                      disabled={!previewRoleId || previewLoading}
+                      className="w-full bg-[#9B4D19] hover:bg-[#7a3c14] text-[#E0D3BD] font-sans text-xs tracking-[0.1em] uppercase rounded-none h-8"
+                    >
+                      {previewLoading ? "Starting…" : "Preview"}
+                    </Button>
+                  </div>
+                </PopoverContent>
+              </Popover>
             )}
             <Link href="/ops/notifications" className="relative">
               <Button variant="ghost" size="icon" className="relative">
