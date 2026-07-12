@@ -2,6 +2,7 @@ import { useState } from "react";
 import { trpc } from "@shared/lib/trpc";
 import { ChevronDown } from "lucide-react";
 import { toast } from "sonner";
+import type { Role, ResourceAccess } from "@features/membership/public";
 
 interface AccessControlPanelProps {
   resourceType: "master_calendar" | "property";
@@ -38,7 +39,7 @@ export default function AccessControlPanel({ resourceType, resourceId }: AccessC
 
   const roles = rolesQuery.data ?? [];
   const currentAccess = accessQuery.data ?? [];
-  const accessMap = new Map(currentAccess.map((a) => [a.roleId, a.canViewAndBook]));
+  const accessMap = new Map<number, boolean>(currentAccess.map((a: ResourceAccess) => [a.roleId, a.canViewAndBook]));
 
   const title =
     resourceType === "master_calendar"
@@ -64,7 +65,7 @@ export default function AccessControlPanel({ resourceType, resourceId }: AccessC
           {roles.length === 0 ? (
             <p className="text-xs text-white/40">No roles available</p>
           ) : (
-            roles.map((role) => {
+            roles.map((role: Role) => {
               const hasAccess = accessMap.get(role.id) ?? false;
               return (
                 <label

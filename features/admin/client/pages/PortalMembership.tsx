@@ -10,6 +10,7 @@ import { Textarea } from "@shared/ui/textarea";
 import { trpc } from "@shared/lib/trpc";
 import { Plus, Search, User, ChevronRight, X } from "lucide-react";
 import { toast } from "sonner";
+import type { Role } from "@features/membership/public";
 
 function formatDate(d: string | Date | null | undefined) {
   if (!d) return "—";
@@ -232,7 +233,7 @@ function AddMemberDialog({ open, onClose }: { open: boolean; onClose: () => void
                 <SelectValue placeholder="Select a role..." />
               </SelectTrigger>
               <SelectContent className="bg-[#2B2823] border border-[#57544E] rounded-none">
-                {(rolesQuery.data ?? []).map((role) => (
+                {(rolesQuery.data ?? []).map((role: Role) => (
                   <SelectItem key={role.id} value={String(role.id)} className="font-sans text-sm text-[#E0D3BD] focus:bg-[#423F3B]">
                     {role.label}
                   </SelectItem>
@@ -367,6 +368,7 @@ type MemberRow = {
     userId: string;
     memberNumber: string | null;
     tier: string;
+    roleId: number | null;
     joinDate: string | null;
     renewalDate: string | null;
     active: boolean;
@@ -495,7 +497,7 @@ function MemberDetailDrawer({
                   <SelectValue placeholder="Select role..." />
                 </SelectTrigger>
                 <SelectContent className="bg-[#2B2823] border border-[#57544E] rounded-none">
-                  {(rolesQuery.data ?? []).map((role) => (
+                  {(rolesQuery.data ?? []).map((role: Role) => (
                     <SelectItem key={role.id} value={String(role.id)} className="font-sans text-sm text-[#E0D3BD] focus:bg-[#423F3B]">
                       {role.label}
                     </SelectItem>

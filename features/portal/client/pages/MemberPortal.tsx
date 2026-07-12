@@ -7,6 +7,7 @@ import PublicLayout from "@/components/PublicLayout";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@shared/ui/dialog';
 import { Eye, X } from "lucide-react";
 import PropertyBrowser from "@features/portal/client/pages/PropertyBrowser";
+import type { Role } from "@features/membership/public";
 
 type Tab = "dashboard" | "bookings" | "request" | "updates" | "messages" | "profile" | "properties";
 
@@ -296,7 +297,7 @@ export default function MemberPortal() {
   const isPreviewMode = searchParams.get("preview") === "1";
   const previewRoleId = searchParams.get("roleId");
   const rolesQuery = trpc.admin.accessControl.listRoles.useQuery(undefined, { enabled: isPreviewMode });
-  const previewRoleName = rolesQuery.data?.find(r => String(r.id) === previewRoleId)?.label ?? "Unknown";
+  const previewRoleName = rolesQuery.data?.find((r: Role) => String(r.id) === previewRoleId)?.label ?? "Unknown";
 
   return (
     <PublicLayout>
