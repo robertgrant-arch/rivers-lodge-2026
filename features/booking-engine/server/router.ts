@@ -574,6 +574,61 @@ const bookingsRouter = router({
 
   // ─── Calendar Endpoints ────────────────────────────────────────────────────
 
+  // Get list of properties the user can view calendars for based on skill groups
+  accessibleProperties: protectedProcedure
+    .query(async ({ ctx }) => {
+      const db = await getDb();
+      if (!db) return [];
+
+      // Import skill group utilities
+      const { getUserSkillGroups, hasSkillGroupAccess } = await import("../lib/skillGroups");
+
+      // Get user's member record
+      const memberResult = await db
+        .select()
+        .from(members)
+        .where(eq(members.userId, ctx.user.id));
+
+      const member = memberResult[0];
+      if (!member) throw new TRPCError({ code: "UNAUTHORIZED", message: "Not a member" });
+
+      // Get user's skill groups
+      const userSkillGroups = getUserSkillGroups(member.tier, ctx.user.role);
+
+      // Get property calendar access settings
+      const settingsResult = await db
+        .select()
+        .from(calendarAccessSettings)
+        .where(eq(calendarAccessSettings.settingKey, "property_calendar_skill_groups"));
+
+      let propertyAccessBySkillGroup: Record<string, string[]> = {};
+      if (settingsResult[0]) {
+        propertyAccessBySkillGroup = JSON.parse(settingsResult[0].settingValue);
+      }
+
+      // Filter properties: only return those where user's skill groups have access
+      const accessiblePropertyIds: number[] = [];
+      Object.entries(propertyAccessBySkillGroup).forEach(([propIdStr, allowedGroups]) => {
+        if (hasSkillGroupAccess(userSkillGroups, allowedGroups)) {
+          const propId = parseInt(propIdStr, 10);
+          if (!isNaN(propId)) {
+            accessiblePropertyIds.push(propId);
+          }
+        }
+      });
+
+      // Return minimal property info: id and name
+      // If no properties are configured in access settings, return empty array (nothing is visible)
+      if (accessiblePropertyIds.length === 0) {
+        return [];
+      }
+
+      return [
+        { id: 1, name: "Grand Lodge" },
+        { id: 2, name: "River House" },
+      ].filter((p) => accessiblePropertyIds.includes(p.id));
+    }),
+
   myBookings: protectedProcedure
     .query(async ({ ctx }) => {
       const db = await getDb();
