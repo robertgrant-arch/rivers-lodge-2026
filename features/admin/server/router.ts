@@ -1789,6 +1789,10 @@ const usersAdminRouter = router({
 
 // ─── Calendar Settings Router ─────────────────────────────────────────────────
 
+// Skill group access stored as array: ["Designated", "Admin", "Employee"]
+type SkillGroupAccessSettings = string[];
+
+// Legacy format still used for UI backward compat: { Designated: true, Silver: false, ... }
 type MasterCalendarAccessSettings = {
   Designated: boolean;
   Silver: boolean;
@@ -1800,6 +1804,94 @@ type MasterCalendarAccessSettings = {
 type PropertyCalendarAccessSettings = Record<string, Record<string, boolean>>;
 
 const calendarSettingsRouter = router({
+  // ─── Master Calendar: Skill Group Based ───
+  getMasterCalendarAccessBySkillGroup: ownerProcedure.query(async () => {
+    const db = getDb();
+    const result = await db
+      .select()
+      .from(calendarAccessSettings)
+      .where(eq(calendarAccessSettings.settingKey, "master_calendar_skill_groups"));
+
+    if (!result[0]) {
+      // Default: Designated and staff (Admin/Employee) can access
+      return ["Designated", "Admin", "Employee"] as SkillGroupAccessSettings;
+    }
+
+    return JSON.parse(result[0].settingValue) as SkillGroupAccessSettings;
+  }),
+
+  updateMasterCalendarAccessBySkillGroup: ownerProcedure
+    .input(z.array(z.string()))
+    .mutation(async ({ input, ctx }) => {
+      const db = getDb();
+
+      await db
+        .insert(calendarAccessSettings)
+        .values({
+          settingKey: "master_calendar_skill_groups",
+          settingValue: JSON.stringify(input),
+        })
+        .onConflictDoUpdate({
+          target: calendarAccessSettings.settingKey,
+          set: { settingValue: JSON.stringify(input) },
+        });
+
+      await logAudit({
+        actingUserId: ctx.user.id,
+        actingUserName: ctx.user.email ?? "Admin",
+        actionType: "update",
+        entityType: "CalendarAccessSettings",
+        fieldChanged: "master_calendar_skill_groups",
+        newValue: JSON.stringify(input),
+      });
+
+      return { success: true };
+    }),
+
+  // ─── Property Calendars: Skill Group Based ───
+  getPropertyCalendarAccessBySkillGroup: ownerProcedure.query(async () => {
+    const db = getDb();
+    const result = await db
+      .select()
+      .from(calendarAccessSettings)
+      .where(eq(calendarAccessSettings.settingKey, "property_calendar_skill_groups"));
+
+    if (!result[0]) {
+      return {} as Record<string, SkillGroupAccessSettings>;
+    }
+
+    return JSON.parse(result[0].settingValue) as Record<string, SkillGroupAccessSettings>;
+  }),
+
+  updatePropertyCalendarAccessBySkillGroup: ownerProcedure
+    .input(z.record(z.string(), z.array(z.string())))
+    .mutation(async ({ input, ctx }) => {
+      const db = getDb();
+
+      await db
+        .insert(calendarAccessSettings)
+        .values({
+          settingKey: "property_calendar_skill_groups",
+          settingValue: JSON.stringify(input),
+        })
+        .onConflictDoUpdate({
+          target: calendarAccessSettings.settingKey,
+          set: { settingValue: JSON.stringify(input) },
+        });
+
+      await logAudit({
+        actingUserId: ctx.user.id,
+        actingUserName: ctx.user.email ?? "Admin",
+        actionType: "update",
+        entityType: "CalendarAccessSettings",
+        fieldChanged: "property_calendar_skill_groups",
+        newValue: JSON.stringify(input),
+      });
+
+      return { success: true };
+    }),
+
+  // ─── Legacy Format (for UI backward compat) ───
   getMasterCalendarAccess: ownerProcedure.query(async () => {
     const db = getDb();
     const result = await db

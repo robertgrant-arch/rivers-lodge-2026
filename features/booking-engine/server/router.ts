@@ -592,6 +592,9 @@ const bookingsRouter = router({
       const db = await getDb();
       if (!db) return [];
 
+      // Import skill group utilities
+      const { getUserSkillGroups, hasSkillGroupAccess } = await import("../lib/skillGroups");
+
       // Check if user has access to Master Calendar
       const memberResult = await db
         .select()
@@ -601,35 +604,23 @@ const bookingsRouter = router({
       const member = memberResult[0];
       if (!member) throw new TRPCError({ code: "UNAUTHORIZED", message: "Not a member" });
 
-      // Get user's skill group (tier + staff role from context)
-      const userTier = member.tier;
-      const userRole = ctx.user.role as string;
+      // Get user's skill groups
+      const userSkillGroups = getUserSkillGroups(member.tier, ctx.user.role);
 
-      // Get Master Calendar access settings
+      // Get Master Calendar access settings (new skill-group-based format)
       const settingsResult = await db
         .select()
         .from(calendarAccessSettings)
-        .where(eq(calendarAccessSettings.settingKey, "master_calendar_access"));
+        .where(eq(calendarAccessSettings.settingKey, "master_calendar_skill_groups"));
 
-      let accessSettings = {
-        Designated: true,
-        Silver: false,
-        Social: false,
-        Admin: true,
-        Employee: true,
-      };
+      let allowedSkillGroups: string[] = ["Designated", "Admin", "Employee"]; // Default
 
       if (settingsResult[0]) {
-        accessSettings = JSON.parse(settingsResult[0].settingValue);
+        allowedSkillGroups = JSON.parse(settingsResult[0].settingValue);
       }
 
-      // Check if user's tier or role has access
-      const hasAccess =
-        (accessSettings[userTier as keyof typeof accessSettings] === true) ||
-        (userRole === "admin" && accessSettings.Admin === true) ||
-        (userRole === "employee" && accessSettings.Employee === true);
-
-      if (!hasAccess) {
+      // Check if user's skill groups grant access
+      if (!hasSkillGroupAccess(userSkillGroups, allowedSkillGroups)) {
         throw new TRPCError({ code: "FORBIDDEN", message: "Master Calendar access denied" });
       }
 
@@ -646,7 +637,10 @@ const bookingsRouter = router({
       const db = await getDb();
       if (!db) return [];
 
-      // Get user's member record and skill group
+      // Import skill group utilities
+      const { getUserSkillGroups, hasSkillGroupAccess } = await import("../lib/skillGroups");
+
+      // Get user's member record
       const memberResult = await db
         .select()
         .from(members)
@@ -655,29 +649,24 @@ const bookingsRouter = router({
       const member = memberResult[0];
       if (!member) throw new TRPCError({ code: "UNAUTHORIZED", message: "Not a member" });
 
-      const userTier = member.tier;
-      const userRole = ctx.user.role as string;
+      // Get user's skill groups
+      const userSkillGroups = getUserSkillGroups(member.tier, ctx.user.role);
 
-      // Get property calendar access settings
+      // Get property calendar access settings (new skill-group-based format)
       const settingsResult = await db
         .select()
         .from(calendarAccessSettings)
-        .where(eq(calendarAccessSettings.settingKey, "property_calendar_access"));
+        .where(eq(calendarAccessSettings.settingKey, "property_calendar_skill_groups"));
 
-      let propertyAccess: Record<string, Record<string, boolean>> = {};
+      let propertyAccessBySkillGroup: Record<string, string[]> = {};
       if (settingsResult[0]) {
-        propertyAccess = JSON.parse(settingsResult[0].settingValue);
+        propertyAccessBySkillGroup = JSON.parse(settingsResult[0].settingValue);
       }
 
-      const propAccessRules = propertyAccess[String(input.propertyId)] || {};
+      const allowedSkillGroupsForProperty = propertyAccessBySkillGroup[String(input.propertyId)] || [];
 
-      // Check access: default to false for members, true for staff
-      const hasAccess =
-        (propAccessRules[userTier as keyof typeof propAccessRules] === true) ||
-        (userRole === "admin") ||
-        (userRole === "employee" && propAccessRules.Employee === true);
-
-      if (!hasAccess) {
+      // Check if user's skill groups grant access to this property
+      if (!hasSkillGroupAccess(userSkillGroups, allowedSkillGroupsForProperty)) {
         throw new TRPCError({
           code: "FORBIDDEN",
           message: `Calendar access denied for property ${input.propertyId}`,
