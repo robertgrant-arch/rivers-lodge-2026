@@ -9,10 +9,11 @@ import {
   text,
   timestamp,
   varchar,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
 
 export const applicationStatusEnum = pgEnum("application_status", ["pending", "approved", "declined"]);
-export const memberTierEnum = pgEnum("member_tier", ["standard", "premier", "founding"]);
+export const memberTierEnum = pgEnum("member_tier", ["Designated", "Silver", "Social"]);
 
 export const membershipApplications = pgTable("membership_applications", {
   id: integer("id").generatedAlwaysAsIdentity().primaryKey(),
@@ -34,28 +35,42 @@ export const membershipApplications = pgTable("membership_applications", {
 export type MembershipApplication = typeof membershipApplications.$inferSelect;
 export type InsertMembershipApplication = typeof membershipApplications.$inferInsert;
 
-export const members = pgTable("members", {
+// ─── Social Parent Organizations ──────────────────────────────────────────────
+
+export const socialParentOrganizations = pgTable("social_parent_organization", {
   id: integer("id").generatedAlwaysAsIdentity().primaryKey(),
-  userId: varchar("userId", { length: 36 }).notNull(),
-  memberNumber: varchar("memberNumber", { length: 50 }),
-  roleId: integer("role_id").references(() => roles.id, { onDelete: "set null" }),
-  tier: memberTierEnum("tier").notNull().default("standard"),
-  joinDate: date("joinDate"),
-  renewalDate: date("renewalDate"),
-  active: boolean("active").notNull().default(true),
+  name: varchar("name", { length: 255 }).notNull(),
+  annualBookingAllowance: integer("annual_booking_allowance").notNull(),
+  periodStartDate: date("period_start_date").notNull(),
   notes: text("notes"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().$onUpdate(() => new Date()).notNull(),
+});
+
+export type SocialParentOrganization = typeof socialParentOrganizations.$inferSelect;
+export type InsertSocialParentOrganization = typeof socialParentOrganizations.$inferInsert;
+
+// ─── Social Organization Usage Tracking ────────────────────────────────────────
+
+export const socialOrganizationUsage = pgTable("social_organization_usage", {
+  id: integer("id").generatedAlwaysAsIdentity().primaryKey(),
+  socialParentOrganizationId: integer("social_parent_organization_id").notNull().references(
+    () => socialParentOrganizations.id,
+    { onDelete: "cascade" }
+  ),
+  periodStartDate: date("period_start_date").notNull(),
+  propertyDaysUsed: integer("property_days_used").notNull().default(0),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().$onUpdate(() => new Date()).notNull(),
 }, (t) => [
-  index("mem_user_idx").on(t.userId),
-  index("mem_active_idx").on(t.active),
-  index("mem_tier_idx").on(t.tier),
-  index("mem_created_at_idx").on(t.createdAt),
-  index("mem_role_idx").on(t.roleId),
+  index("sou_org_idx").on(t.socialParentOrganizationId),
+  index("sou_period_idx").on(t.periodStartDate),
 ]);
 
-export type Member = typeof members.$inferSelect;
-export type InsertMember = typeof members.$inferInsert;
+export type SocialOrganizationUsage = typeof socialOrganizationUsage.$inferSelect;
+export type InsertSocialOrganizationUsage = typeof socialOrganizationUsage.$inferInsert;
+
+// ─── Role-Based Access Control ────────────────────────────────────────────────
 
 export const roles = pgTable("roles", {
   id: integer("id").generatedAlwaysAsIdentity().primaryKey(),
@@ -79,13 +94,15 @@ export const resourceAccess = pgTable("resource_access", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().$onUpdate(() => new Date()).notNull(),
 }, (t) => [
+  uniqueIndex("resource_access_unique_idx").on(t.resourceType, t.resourceId, t.roleId),
   index("resource_access_role_idx").on(t.roleId),
   index("resource_access_resource_idx").on(t.resourceType, t.resourceId),
-  primaryKey({ columns: [t.resourceType, t.resourceId, t.roleId] }),
 ]);
 
 export type ResourceAccess = typeof resourceAccess.$inferSelect;
 export type InsertResourceAccess = typeof resourceAccess.$inferInsert;
+
+// ─── Skill Groups (for activity-based filtering) ────────────────────────────────
 
 export const skillGroups = pgTable("skill_groups", {
   id: integer("id").generatedAlwaysAsIdentity().primaryKey(),
@@ -105,6 +122,8 @@ export const skillGroups = pgTable("skill_groups", {
 export type SkillGroup = typeof skillGroups.$inferSelect;
 export type InsertSkillGroup = typeof skillGroups.$inferInsert;
 
+// ─── Role × Skill Group Access Matrix ──────────────────────────────────────────
+
 export const roleSkillGroupAccess = pgTable("role_skill_group_access", {
   id: integer("id").generatedAlwaysAsIdentity().primaryKey(),
   roleId: integer("role_id").notNull().references(() => roles.id, { onDelete: "cascade" }),
@@ -121,6 +140,8 @@ export const roleSkillGroupAccess = pgTable("role_skill_group_access", {
 
 export type RoleSkillGroupAccess = typeof roleSkillGroupAccess.$inferSelect;
 export type InsertRoleSkillGroupAccess = typeof roleSkillGroupAccess.$inferInsert;
+
+// ─── Role × Property × Skill Group Access (per-property overrides) ─────────────
 
 export const rolePropertySkillGroupAccess = pgTable("role_property_skill_group_access", {
   id: integer("id").generatedAlwaysAsIdentity().primaryKey(),
@@ -141,6 +162,8 @@ export const rolePropertySkillGroupAccess = pgTable("role_property_skill_group_a
 export type RolePropertySkillGroupAccess = typeof rolePropertySkillGroupAccess.$inferSelect;
 export type InsertRolePropertySkillGroupAccess = typeof rolePropertySkillGroupAccess.$inferInsert;
 
+// ─── Property × Skill Group Join Table (which skill groups per property) ─────
+
 export const propertySkillGroups = pgTable("property_skill_groups", {
   propertyId: integer("property_id").notNull(),
   skillGroupId: integer("skill_group_id").notNull().references(() => skillGroups.id, { onDelete: "cascade" }),
@@ -153,3 +176,33 @@ export const propertySkillGroups = pgTable("property_skill_groups", {
 
 export type PropertySkillGroup = typeof propertySkillGroups.$inferSelect;
 export type InsertPropertySkillGroup = typeof propertySkillGroups.$inferInsert;
+
+// ─── Members with Social Org FK and Role FK ────────────────────────────────────
+
+export const members = pgTable("members", {
+  id: integer("id").generatedAlwaysAsIdentity().primaryKey(),
+  userId: varchar("userId", { length: 36 }).notNull(),
+  memberNumber: varchar("memberNumber", { length: 50 }),
+  tier: memberTierEnum("tier").notNull().default("Designated"),
+  socialParentOrganizationId: integer("social_parent_organization_id").references(
+    () => socialParentOrganizations.id,
+    { onDelete: "set null" }
+  ),
+  roleId: integer("role_id").references(() => roles.id, { onDelete: "set null" }),
+  joinDate: date("joinDate"),
+  renewalDate: date("renewalDate"),
+  active: boolean("active").notNull().default(true),
+  notes: text("notes"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().$onUpdate(() => new Date()).notNull(),
+}, (t) => [
+  index("mem_user_idx").on(t.userId),
+  index("mem_active_idx").on(t.active),
+  index("mem_tier_idx").on(t.tier),
+  index("mem_org_idx").on(t.socialParentOrganizationId),
+  index("mem_role_idx").on(t.roleId),
+  index("mem_created_at_idx").on(t.createdAt),
+]);
+
+export type Member = typeof members.$inferSelect;
+export type InsertMember = typeof members.$inferInsert;
