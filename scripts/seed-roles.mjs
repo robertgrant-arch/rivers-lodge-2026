@@ -101,6 +101,10 @@ async function seedRoles() {
 
     console.log('[seed-roles] master_calendar access initialized');
 
+    // Seed property access — for now, since we don't have a properties table queried here,
+    // we'll just ensure the master_calendar is seeded. Properties will be seeded separately
+    // or via a follow-up script when properties exist.
+
     console.log('[seed-roles] ✅ completed successfully');
   } catch (error) {
     console.error('[seed-roles] ❌ failed:', error.message);

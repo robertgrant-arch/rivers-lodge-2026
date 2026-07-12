@@ -1508,6 +1508,7 @@ const membershipPortalRouter = router({
     .input(z.object({
       id: z.number(),
       tier: z.enum(["Designated", "Silver", "Social"]).optional(),
+      roleId: z.number().optional(),
       active: z.boolean().optional(),
       renewalDate: z.string().optional(),
       notes: z.string().optional(),
@@ -1543,6 +1544,7 @@ const membershipPortalRouter = router({
     .input(z.object({
       userId: z.string(),
       tier: z.enum(["Designated", "Silver", "Social"]).default("Designated"),
+      roleId: z.number(),
       memberNumber: z.string().optional(),
       joinDate: z.string().optional(),
       renewalDate: z.string().optional(),
@@ -1561,6 +1563,7 @@ const membershipPortalRouter = router({
       const [newMember] = await db.insert(members).values({
         userId: input.userId,
         tier: input.tier,
+        roleId: input.roleId,
         memberNumber,
         active: true,
         joinDate: input.joinDate ?? new Date().toISOString().split("T")[0],

@@ -85,10 +85,13 @@ function AddMemberDialog({ open, onClose }: { open: boolean; onClose: () => void
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [selectedUser, setSelectedUser] = useState<{ id: string; email: string } | null>(null);
   const [tier, setTier] = useState<"Designated" | "Silver" | "Social">("Designated");
+  const [roleId, setRoleId] = useState<string>("");
   const [memberNumber, setMemberNumber] = useState("");
   const [joinDate, setJoinDate] = useState(new Date().toISOString().split("T")[0]);
   const [renewalDate, setRenewalDate] = useState("");
   const [notes, setNotes] = useState("");
+
+  const rolesQuery = trpc.admin.accessControl.listRoles.useQuery();
 
   const searchResults = trpc.portal.membership.searchUsers.useQuery(
     { query: debouncedQuery },
@@ -111,6 +114,7 @@ function AddMemberDialog({ open, onClose }: { open: boolean; onClose: () => void
     setDebouncedQuery("");
     setSelectedUser(null);
     setTier("Designated");
+    setRoleId("");
     setMemberNumber("");
     setNotes("");
     setJoinDate(new Date().toISOString().split("T")[0]);
@@ -125,9 +129,11 @@ function AddMemberDialog({ open, onClose }: { open: boolean; onClose: () => void
 
   const handleSubmit = () => {
     if (!selectedUser) { toast.error("Please select a user first"); return; }
+    if (!roleId) { toast.error("Please select a role"); return; }
     createMutation.mutate({
       userId: selectedUser.id,
       tier,
+      roleId: parseInt(roleId),
       memberNumber: memberNumber || undefined,
       joinDate: joinDate || undefined,
       renewalDate: renewalDate || undefined,
@@ -212,6 +218,25 @@ function AddMemberDialog({ open, onClose }: { open: boolean; onClose: () => void
                 <SelectItem value="Designated" className="font-sans text-sm text-[#E0D3BD] focus:bg-[#423F3B]">Designated</SelectItem>
                 <SelectItem value="Silver" className="font-sans text-sm text-[#E0D3BD] focus:bg-[#423F3B]">Silver</SelectItem>
                 <SelectItem value="Social" className="font-sans text-sm text-[#E0D3BD] focus:bg-[#423F3B]">Social</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Role */}
+          <div className="space-y-2">
+            <Label className={labelCls}>
+              Access Role <span className="text-[#9B4D19]">*</span>
+            </Label>
+            <Select value={roleId} onValueChange={setRoleId}>
+              <SelectTrigger className={inputCls}>
+                <SelectValue placeholder="Select a role..." />
+              </SelectTrigger>
+              <SelectContent className="bg-[#2B2823] border border-[#57544E] rounded-none">
+                {(rolesQuery.data ?? []).map((role) => (
+                  <SelectItem key={role.id} value={String(role.id)} className="font-sans text-sm text-[#E0D3BD] focus:bg-[#423F3B]">
+                    {role.label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -363,9 +388,12 @@ function MemberDetailDrawer({
   const { member: m, user: u } = row;
   const utils = trpc.useUtils();
   const [editTier, setEditTier] = useState(m.tier as "Designated" | "Silver" | "Social");
+  const [editRoleId, setEditRoleId] = useState<string>(m.roleId ? String(m.roleId) : "");
   const [editRenewal, setEditRenewal] = useState(m.renewalDate ?? "");
   const [editNotes, setEditNotes] = useState(m.notes ?? "");
   const [deactivateOpen, setDeactivateOpen] = useState(false);
+
+  const rolesQuery = trpc.admin.accessControl.listRoles.useQuery();
 
   const updateMutation = trpc.portal.membership.updateMember.useMutation({
     onSuccess: () => {
@@ -378,9 +406,14 @@ function MemberDetailDrawer({
   });
 
   const handleSave = () => {
+    if (!editRoleId) {
+      toast.error("Please select a role");
+      return;
+    }
     updateMutation.mutate({
       id: m.id,
       tier: editTier,
+      roleId: parseInt(editRoleId),
       renewalDate: editRenewal || undefined,
       notes: editNotes || undefined,
     });
@@ -451,6 +484,22 @@ function MemberDetailDrawer({
                   <SelectItem value="Designated" className="font-sans text-sm text-[#E0D3BD] focus:bg-[#423F3B]">Designated</SelectItem>
                   <SelectItem value="Silver" className="font-sans text-sm text-[#E0D3BD] focus:bg-[#423F3B]">Silver</SelectItem>
                   <SelectItem value="Social" className="font-sans text-sm text-[#E0D3BD] focus:bg-[#423F3B]">Social</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className={labelCls}>Access Role <span className="text-[#9B4D19]">*</span></label>
+              <Select value={editRoleId} onValueChange={setEditRoleId}>
+                <SelectTrigger className="bg-[#2B2823] border border-[#57544E] text-[#E0D3BD] font-sans text-sm rounded-none focus:ring-[#9B4D19]">
+                  <SelectValue placeholder="Select role..." />
+                </SelectTrigger>
+                <SelectContent className="bg-[#2B2823] border border-[#57544E] rounded-none">
+                  {(rolesQuery.data ?? []).map((role) => (
+                    <SelectItem key={role.id} value={String(role.id)} className="font-sans text-sm text-[#E0D3BD] focus:bg-[#423F3B]">
+                      {role.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -672,10 +721,21 @@ export default function PortalMembership() {
                       return (
                         <tr
                           key={m.id}
-                          className="border-b border-[#57544E] hover:bg-[#423F3B]/50 cursor-pointer transition-colors"
+                          className={`border-b border-[#57544E] hover:bg-[#423F3B]/50 cursor-pointer transition-colors ${
+                            !m.roleId ? "bg-[#423F3B]/20" : ""
+                          }`}
                           onClick={() => setSelectedRow(row as MemberRow)}
                         >
-                          <td className={`${tdCls} text-[#E0D3BD]`}>{u?.email ?? "—"}</td>
+                          <td className={`${tdCls} text-[#E0D3BD]`}>
+                            <div className="flex items-center gap-2">
+                              <span>{u?.email ?? "—"}</span>
+                              {!m.roleId && (
+                                <span className="text-[8px] tracking-[0.12em] uppercase px-1.5 py-0.5 bg-orange-500/20 text-orange-400 rounded font-sans">
+                                  Needs Role
+                                </span>
+                              )}
+                            </div>
+                          </td>
                           <td className={`${tdCls} font-mono text-xs`}>{m.memberNumber ?? "—"}</td>
                           <td className={tdCls}>
                             <span className="font-sans text-xs capitalize text-[#E0D3BD]">{m.tier}</span>

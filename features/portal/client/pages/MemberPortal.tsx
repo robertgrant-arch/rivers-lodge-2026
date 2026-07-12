@@ -291,8 +291,12 @@ export default function MemberPortal() {
   const pendingRequests = (myRequests.data ?? []).filter(r => !["converted","rejected","lost"].includes(r.status));
   const announcements = cmsAnnouncements.data ?? [];
 
-  // Detect admin preview mode via ?preview=1 query param
-  const isPreviewMode = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("preview") === "1";
+  // Detect admin preview mode via ?preview=1 query param and roleId
+  const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : new URLSearchParams();
+  const isPreviewMode = searchParams.get("preview") === "1";
+  const previewRoleId = searchParams.get("roleId");
+  const rolesQuery = trpc.admin.accessControl.listRoles.useQuery(undefined, { enabled: isPreviewMode });
+  const previewRoleName = rolesQuery.data?.find(r => String(r.id) === previewRoleId)?.label ?? "Unknown";
 
   return (
     <PublicLayout>
@@ -301,7 +305,7 @@ export default function MemberPortal() {
         <div className="fixed top-0 left-0 right-0 z-[200] bg-amber-600 text-white text-sm font-medium flex items-center justify-between px-4 py-2 shadow-lg">
           <div className="flex items-center gap-2">
             <Eye className="w-4 h-4 flex-shrink-0" />
-            <span>Admin Preview Mode — you are viewing the Member Portal as a Founding Member.</span>
+            <span>Admin Preview Mode — you are viewing the Member Portal as a {previewRoleName}.</span>
           </div>
           <a
             href="/ops"
