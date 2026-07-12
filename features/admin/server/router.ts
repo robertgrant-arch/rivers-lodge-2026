@@ -1934,11 +1934,14 @@ const calendarSettingsRouter = router({
       .where(eq(calendarAccessSettings.settingKey, "master_calendar_skill_groups"));
 
     if (!result[0]) {
-      // Default: Designated and staff (Admin/Employee) can access
+      // LOCKED DESIGN: Designated, Admin, Employee only. Silver and Social NEVER have access.
       return ["Designated", "Admin", "Employee"] as SkillGroupAccessSettings;
     }
 
-    return JSON.parse(result[0].settingValue) as SkillGroupAccessSettings;
+    // Enforce lock: filter out any Silver/Social even if stored
+    const stored = JSON.parse(result[0].settingValue) as string[];
+    const filtered = stored.filter((sg) => sg !== "Silver" && sg !== "Social");
+    return filtered as SkillGroupAccessSettings;
   }),
 
   updateMasterCalendarAccessBySkillGroup: ownerProcedure
@@ -1946,15 +1949,18 @@ const calendarSettingsRouter = router({
     .mutation(async ({ input, ctx }) => {
       const db = getDb();
 
+      // LOCKED DESIGN: Silver and Social can NEVER access Master Calendar
+      const filtered = input.filter((sg) => sg !== "Silver" && sg !== "Social");
+
       await db
         .insert(calendarAccessSettings)
         .values({
           settingKey: "master_calendar_skill_groups",
-          settingValue: JSON.stringify(input),
+          settingValue: JSON.stringify(filtered),
         })
         .onConflictDoUpdate({
           target: calendarAccessSettings.settingKey,
-          set: { settingValue: JSON.stringify(input) },
+          set: { settingValue: JSON.stringify(filtered) },
         });
 
       await logAudit({

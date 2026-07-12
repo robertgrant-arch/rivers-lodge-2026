@@ -8,6 +8,7 @@ import {
   text,
   timestamp,
   varchar,
+  foreignKey,
 } from "drizzle-orm/pg-core";
 
 export const applicationStatusEnum = pgEnum("application_status", ["pending", "approved", "declined"]);
@@ -33,11 +34,52 @@ export const membershipApplications = pgTable("membership_applications", {
 export type MembershipApplication = typeof membershipApplications.$inferSelect;
 export type InsertMembershipApplication = typeof membershipApplications.$inferInsert;
 
+// ─── Social Parent Organizations ──────────────────────────────────────────────
+
+export const socialParentOrganizations = pgTable("social_parent_organization", {
+  id: integer("id").generatedAlwaysAsIdentity().primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  annualBookingAllowance: integer("annual_booking_allowance").notNull(),
+  periodStartDate: date("period_start_date").notNull(),
+  notes: text("notes"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().$onUpdate(() => new Date()).notNull(),
+});
+
+export type SocialParentOrganization = typeof socialParentOrganizations.$inferSelect;
+export type InsertSocialParentOrganization = typeof socialParentOrganizations.$inferInsert;
+
+// ─── Social Organization Usage Tracking ────────────────────────────────────────
+
+export const socialOrganizationUsage = pgTable("social_organization_usage", {
+  id: integer("id").generatedAlwaysAsIdentity().primaryKey(),
+  socialParentOrganizationId: integer("social_parent_organization_id").notNull().references(
+    () => socialParentOrganizations.id,
+    { onDelete: "cascade" }
+  ),
+  periodStartDate: date("period_start_date").notNull(),
+  propertyDaysUsed: integer("property_days_used").notNull().default(0),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().$onUpdate(() => new Date()).notNull(),
+}, (t) => [
+  index("sou_org_idx").on(t.socialParentOrganizationId),
+  index("sou_period_idx").on(t.periodStartDate),
+]);
+
+export type SocialOrganizationUsage = typeof socialOrganizationUsage.$inferSelect;
+export type InsertSocialOrganizationUsage = typeof socialOrganizationUsage.$inferInsert;
+
+// ─── Members with Social Org FK ────────────────────────────────────────────────
+
 export const members = pgTable("members", {
   id: integer("id").generatedAlwaysAsIdentity().primaryKey(),
   userId: varchar("userId", { length: 36 }).notNull(),
   memberNumber: varchar("memberNumber", { length: 50 }),
   tier: memberTierEnum("tier").notNull().default("Designated"),
+  socialParentOrganizationId: integer("social_parent_organization_id").references(
+    () => socialParentOrganizations.id,
+    { onDelete: "set null" }
+  ),
   joinDate: date("joinDate"),
   renewalDate: date("renewalDate"),
   active: boolean("active").notNull().default(true),
@@ -48,6 +90,7 @@ export const members = pgTable("members", {
   index("mem_user_idx").on(t.userId),
   index("mem_active_idx").on(t.active),
   index("mem_tier_idx").on(t.tier),
+  index("mem_org_idx").on(t.socialParentOrganizationId),
   index("mem_created_at_idx").on(t.createdAt),
 ]);
 

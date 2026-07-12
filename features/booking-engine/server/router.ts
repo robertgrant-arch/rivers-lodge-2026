@@ -720,7 +720,29 @@ const bookingsRouter = router({
         });
       }
 
-      // Return bookings for this property
+      // LOCKED DESIGN: Social members see org-scoped bookings only (members from same org)
+      // Non-Social see all bookings for the property
+      if (member.tier === "Social" && member.socialParentOrganizationId) {
+        // For Social: only show bookings from members in same org
+        const orgMembers = await db
+          .select({ userId: members.userId })
+          .from(members)
+          .where(eq(members.socialParentOrganizationId, member.socialParentOrganizationId));
+        const orgMemberIds = orgMembers.map((m) => m.userId);
+
+        return db
+          .select()
+          .from(propertyBookings)
+          .where(
+            and(
+              eq(propertyBookings.propertyId, input.propertyId),
+              inArray(propertyBookings.userId, orgMemberIds)
+            )
+          )
+          .orderBy(propertyBookings.startDate);
+      }
+
+      // Non-Social: see all bookings for this property
       return db
         .select()
         .from(propertyBookings)
