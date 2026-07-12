@@ -9,7 +9,7 @@ export default function AboutProperty() {
     <PublicLayout>
       <SEOHead
         title="The Property"
-        description="The Rivers Lodge estate — thousands of acres on the Marais des Cygnes in La Cygne, Kansas."
+        description="The Rivers Lodge — thousands of acres on the Marais des Cygnes in La Cygne, Kansas."
         url="/about/property"
       />
       <div style={{ "--track-accent": ACCENT } as React.CSSProperties}>

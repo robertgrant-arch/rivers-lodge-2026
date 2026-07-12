@@ -32,12 +32,12 @@ function useFadeUp(t = 0.12) {
 }
 
 const benefits = [
-  { title: "Private Events",         desc: "Exclusive member events throughout the year — concerts, chef tours, estate parties, and seasonal gatherings." },
+  { title: "Private Events",         desc: "Exclusive member events throughout the year — concerts, chef tours, lodge parties, and seasonal gatherings." },
   { title: "Guided Hunting",         desc: "Guided whitetail, waterfowl, turkey, and upland hunts with dedicated hunt managers and full field support." },
   { title: "DIY Hunting Access",     desc: "Self-guided access to the property's timber, food plots, river bottom, and blinds on your own schedule." },
   { title: "Guided Fishing",         desc: "Guided trips on the Marais des Cygnes, private lakes, and river sloughs for bass, catfish, crappie, and bluegill." },
   { title: "DIY Fishing Access",     desc: "Unrestricted DIY fishing access on select properties." },
-  { title: "Lodging Priority",       desc: "Priority booking on The Lodge, Riverhouse Suites, The Annex, and all other estate accommodations." },
+  { title: "Lodging Priority",       desc: "Priority booking on The Lodge, Riverhouse Suites, The Annex, and all other lodge accommodations." },
   { title: "Land Access & Updates",  desc: "Year-round land access and seasonal stewardship updates — stay connected to the property between visits." },
   { title: "Guest Privileges",       desc: "Bring guests onto the property for hunting, fishing, sporting days, and member events." },
 ];
@@ -45,7 +45,7 @@ const benefits = [
 const tiers = [
   {
     name: "Individual" as MembershipTier,
-    desc: "One designated member with full access to hunting, fishing, private events, and estate amenities.",
+    desc: "One designated member with full access to hunting, fishing, private events, and lodge amenities.",
     features: [
       "Private events — concerts, chef tours, parties",
       "Guided and DIY Hunting access",
@@ -57,7 +57,7 @@ const tiers = [
   },
   {
     name: "Corporate" as MembershipTier,
-    desc: "Three designated members — ideal for companies who want to entertain clients and reward teams on the estate.",
+    desc: "Three designated members — ideal for companies who want to entertain clients and reward teams on the Lodge.",
     features: [
       "Three designated members",
       "Private events — concerts, chef tours, parties",

@@ -27,7 +27,7 @@ const eventTypes = [
   {
     label: "Corporate Outings",
     href: "/corporate",
-    desc: "Executive retreats, client entertainment, and leadership off-sites on a private estate.",
+    desc: "Executive retreats, client entertainment, and leadership off-sites on a private Lodge.",
     image: GROUNDS,
   },
   {
@@ -51,7 +51,7 @@ export default function WeddingsLanding() {
     <PublicLayout>
       <SEOHead
   title="Weddings & Events"
-  description="Plan your wedding or private event at The Rivers Lodge — a stunning private estate in Kansas with ceremony lawns, barn, and clubhouse for up to 250 guests."
+  description="Plan your wedding or private event at The Rivers Lodge — a stunning private Lodge in Kansas with ceremony lawns, barn, and clubhouse for up to 250 guests."
   url="/events"
   structuredData={structuredData.weddingVenue()}
 />
@@ -84,7 +84,7 @@ export default function WeddingsLanding() {
               Where every celebration<br />is exclusively yours.
             </h1>
             <p className="text-[#E0D3BD/75] font-sans text-base max-w-lg mb-10 leading-relaxed">
-              The Rivers Lodge &amp; Hunt Club is a private estate. When you book, every space on the property is reserved for your celebration alone — from arrival to the last goodbye.
+              The Rivers Lodge &amp; Hunt Club is a private Lodge. When you book, every space on the property is reserved for your celebration alone — from arrival to the last goodbye.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               <Link href="/weddings" className="btn-primary">
@@ -108,13 +108,13 @@ export default function WeddingsLanding() {
                   className="font-serif text-[#E0D3BD] leading-tight mb-6"
                   style={{ fontSize: "clamp(1.75rem,3.5vw,2.75rem)" }}
                 >
-                  An estate devoted to one couple at a time.
+                  A Lodge devoted to one couple at a time.
                 </h2>
                 <p className="text-[#BABAAE] font-sans text-base leading-relaxed mb-6">
-                  The Rivers Lodge offers a complete destination wedding experience across 300 acres of Kansas landscape — river, woodland, and open sky. Your guests arrive to a private estate prepared entirely for them, with no one else in sight.
+                  The Rivers Lodge offers a complete destination wedding experience across 300 acres of Kansas landscape — river, woodland, and open sky. Your guests arrive to a private Lodge prepared entirely for them, with no one else in sight.
                 </p>
                 <p className="text-[#BABAAE] font-sans text-base leading-relaxed mb-8">
-                  The estate accommodates your entire wedding party on-site. Ceremony on the River Lawn. Reception in the Rivers Barn. After-party at the Clubhouse. Breakfast the next morning at The Lodge.
+                  The Lodge accommodates your entire wedding party on-site. Ceremony on the River Lawn. Reception in the Rivers Barn. After-party at the Clubhouse. Breakfast the next morning at The Lodge.
                 </p>
                 <Link href="/weddings" className="link-arrow">
                   Explore the Experience
@@ -187,7 +187,7 @@ export default function WeddingsLanding() {
                 className="font-serif text-[#E0D3BD] leading-tight max-w-lg"
                 style={{ fontSize: "clamp(1.75rem,3vw,2.5rem)" }}
               >
-                Three ceremony &amp; reception spaces. One private estate.
+                Three ceremony &amp; reception spaces. One private Lodge.
               </h2>
             </div>
             <div className="scroll-strip pb-4">
@@ -284,11 +284,11 @@ export default function WeddingsLanding() {
               <div className="absolute left-1/2 top-0 bottom-0 w-px bg-white/8 hidden lg:block" />
               <div className="flex flex-col gap-0">
                 {[
-                  { step: "01", title: "Reach Out", desc: "Submit an inquiry or call us directly. We'll confirm availability for your preferred dates and schedule a private estate tour.", side: "left" },
-                  { step: "02", title: "Estate Tour", desc: "Walk the grounds, see the spaces, and meet our team. Most couples book within days of their first visit.", side: "right" },
+                  { step: "01", title: "Reach Out", desc: "Submit an inquiry or call us directly. We'll confirm availability for your preferred dates and schedule a private Lodge tour.", side: "left" },
+                  { step: "02", title: "Lodge Tour", desc: "Walk the grounds, see the spaces, and meet our team. Most couples book within days of their first visit.", side: "right" },
                   { step: "03", title: "Design Your Weekend", desc: "We work with you to design every detail — venue layout, lodging assignments, vendor coordination, and the weekend-long flow.", side: "left" },
                   { step: "04", title: "Confirm & Secure", desc: "A signed agreement and deposit secures your date. We limit the number of weddings per year to ensure every event receives our full focus.", side: "right" },
-                  { step: "05", title: "Your Perfect Day", desc: "Arrive to a fully prepared estate. Our on-site team handles setup, coordination, and every detail so you can be fully present.", side: "left" },
+                  { step: "05", title: "Your Perfect Day", desc: "Arrive to a fully prepared Lodge. Our on-site team handles setup, coordination, and every detail so you can be fully present.", side: "left" },
                 ].map((item, i) => (
                   <div key={item.step} className={`relative grid grid-cols-1 lg:grid-cols-2 gap-0 ${
                     i % 2 === 0 ? "" : "lg:direction-rtl"
@@ -330,7 +330,7 @@ export default function WeddingsLanding() {
                 items={[
                   {
                     question: "How many weddings do you host per year?",
-                    answer: "We host a very limited number of weddings each year to ensure every couple receives our full attention and the estate is presented at its finest. This exclusivity is central to the Rivers Lodge experience."
+                    answer: "We host a very limited number of weddings each year to ensure every couple receives our full attention and the Lodge is presented at its finest. This exclusivity is central to the Rivers Lodge experience."
                   },
                   {
                     question: "What is the guest capacity?",

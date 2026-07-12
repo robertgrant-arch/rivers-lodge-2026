@@ -9,7 +9,7 @@ export default function About() {
     <PublicLayout>
       <SEOHead
         title="Our Story"
-        description="Learn about The Rivers Lodge & Hunt Club — a private estate on the Marais des Cygnes in La Cygne, Kansas."
+        description="Learn about The Rivers Lodge & Hunt Club — a private Lodge on the Marais des Cygnes in La Cygne, Kansas."
         url="/about"
       />
       <div style={{ "--track-accent": ACCENT } as React.CSSProperties}>

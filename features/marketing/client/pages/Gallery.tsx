@@ -155,7 +155,7 @@ export default function Gallery() {
     <PublicLayout>
       <SEOHead
   title="Gallery"
-  description="Photo gallery of The Rivers Lodge & Hunt Club — estate grounds, venue spaces, weddings, hunting, fishing, and luxury lodging."
+  description="Photo gallery of The Rivers Lodge & Hunt Club — Lodge grounds, venue spaces, weddings, hunting, fishing, and luxury lodging."
   url="/gallery"
 />
       {/* ── Hero header ─────────────────────────────────────────────── */}
@@ -164,7 +164,7 @@ export default function Gallery() {
           <div className="gold-rule mb-6" />
           <p className="eyebrow text-white/40 mb-4">Gallery</p>
           <h1 className="font-serif text-5xl md:text-6xl lg:text-7xl text-white leading-[1.05] mb-10">
-            The estate in images.
+            The Lodge in images.
           </h1>
 
           {/* Filter tabs */}

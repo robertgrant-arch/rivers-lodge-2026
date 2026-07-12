@@ -19,7 +19,7 @@ function getTrackFromPath(path: string): Track {
 }
 
 const eventsDropdown = [
-  { label: "Weddings",         href: "/weddings",        desc: "Ceremonies & receptions on the estate" },
+  { label: "Weddings",         href: "/weddings",        desc: "Ceremonies & receptions on the Lodge" },
   { label: "Corporate Events", href: "/corporate-events", desc: "Retreats, outings & client entertainment" },
   { label: "Food & Wine",      href: "/food-and-wine",   desc: "Chef-driven, land-to-table dining" },
 ];
@@ -27,7 +27,7 @@ const eventsDropdown = [
 const lodgingDropdown = [
   { label: "Lodging", href: "/lodging#lodging", desc: "Five buildings — sleep your entire party on-site" },
   { label: "Venues",  href: "/venues",          desc: "Ceremony & reception spaces for up to 300 guests" },
-  { label: "Gallery", href: "/gallery",         desc: "Photography from the estate and past events" },
+  { label: "Gallery", href: "/gallery",         desc: "Photography from the Lodge and past events" },
 ];
 
 const membershipDropdown = [

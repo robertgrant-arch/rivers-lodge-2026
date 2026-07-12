@@ -23,7 +23,7 @@ function useFadeUp(t = 0.12) {
 }
 
 const fisheries = [
-  { name: "Marais des Cygnes River", desc: "The main river channel runs through the heart of the estate. Largemouth bass, channel catfish, and flathead catfish are the primary species. The river is wide, slow, and productive year-round.", img: RIVER },
+  { name: "Marais des Cygnes River", desc: "The main river channel runs through the heart of the Lodge. Largemouth bass, channel catfish, and flathead catfish are the primary species. The river is wide, slow, and productive year-round.", img: RIVER },
   { name: "North Lake",              desc: "A 12-acre private lake stocked with largemouth bass and crappie. Bank fishing and kayak access available to members.", img: AERIAL },
   { name: "South Pond",              desc: "A 4-acre pond managed for trophy bass. Catch-and-release encouraged. Fly fishing and light tackle ideal.", img: FIELD },
   { name: "River Sloughs",           desc: "Backwater sloughs off the main river channel. Excellent crappie and bluegill fishing in spring and early summer.", img: HERO },
@@ -65,7 +65,7 @@ export default function Fish() {
             <br /><em className="italic font-light">One river.</em>
           </h1>
           <p className="font-sans text-white/65 max-w-lg leading-relaxed mb-10" style={{ fontSize: "0.9375rem" }}>
-            The Marais des Cygnes, two private lakes, and a network of river sloughs — all within the estate boundary, available exclusively to members.
+            The Marais des Cygnes, two private lakes, and a network of river sloughs — all within the Lodge boundary, available exclusively to members.
           </p>
           <div className="flex flex-col sm:flex-row gap-4">
             <Link href="/membership" className="btn-outline" style={{ borderColor: "#6B7250", color: "#6B7250" }}>

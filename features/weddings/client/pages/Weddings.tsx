@@ -26,7 +26,7 @@ return ref;
 }
 
 const venues = [
-  { name: "River Lawn", img: "/img/riverlawn.jpg", desc: "An open lawn between the Lodge and the Marais des Cygnes — the estate's most dramatic outdoor ceremony site. Seats up to 200." },
+  { name: "River Lawn", img: "/img/riverlawn.jpg", desc: "An open lawn between the Lodge and the Marais des Cygnes — the Lodge's most dramatic outdoor ceremony site. Seats up to 200." },
   { name: "Rivers Barn", img: "/img/barnwedding.jpg", desc: "6,000 sq ft of open timber-frame space. Accommodates up to 300 guests for ceremonies and receptions. Full catering kitchen." },
   { name: "Timber Edge", img: "/img/timberedge.jpg", desc: "A ceremony space framed by old-growth timber on the river corridor. Intimate, shaded, and unlike anything else in the region." },
   { name: "The Clubhouse", img: "/img/clubhousewedding.jpg", desc: "A refined indoor gathering space for wedding weekend hosting, cocktail hours, private dinners, and smaller celebrations." },
@@ -111,7 +111,7 @@ const venuesRef = useFadeUp();
 const ctaRef = useFadeUp();
 return (
 <PublicLayout>
-<SEOHead title="Weddings" description="Intimate, cinematic weddings on a private Kansas estate. Ceremony lawns, the Rivers Barn, and the Timber Edge Clubhouse — all exclusively yours." url="/weddings" structuredData={structuredData.weddingVenue()} />
+<SEOHead title="Weddings" description="Intimate, cinematic weddings on a private Kansas Lodge. Ceremony lawns, the Rivers Barn, and the Timber Edge Clubhouse — all exclusively yours." url="/weddings" structuredData={structuredData.weddingVenue()} />
 <div style={{ "--track-accent": "#9B4D19" } as React.CSSProperties}>
 {/* Hero */}
 <section className="relative hero-full flex items-end pb-24 overflow-hidden">
@@ -139,7 +139,7 @@ From intimate ceremonies to grand receptions- every wedding at the Lodge is excl
 <div className="max-w-[1440px] mx-auto px-5 lg:px-14">
 <div className="max-w-3xl">
 <blockquote className="pull-quote" style={{ borderLeftColor: "#9B4D19" }}>
-"Every wedding at Rivers Lodge is exclusive. One couple, one weekend, one estate — entirely theirs."
+"Every wedding at Rivers Lodge is exclusive. One couple, one weekend, one Lodge — entirely theirs."
 </blockquote>
 </div>
 </div>
@@ -158,10 +158,10 @@ From intimate ceremonies to grand receptions- every wedding at the Lodge is excl
 <div style={{ height: "1px", width: "2rem", backgroundColor: "#9B4D19", marginBottom: "1.25rem" }} />
 <p className="eyebrow text-white/50 mb-4">The Experience</p>
 <h2 className="font-serif font-light text-white leading-tight mb-8" style={{ fontSize: "clamp(1.875rem,3.5vw,3rem)" }}>
-Not a venue. <br /><em className="italic">A private estate.</em>
+Not a venue. <br /><em className="italic">A private Lodge.</em>
 </h2>
 <div className="space-y-5 font-sans text-white/70 leading-relaxed" style={{ fontSize: "0.9375rem" }}>
-<p>When you book a wedding at Rivers Lodge, you book the entire estate. Your guests are the only guests. The ceremony lawns, Rivers Barn, Timber Edge, and your reserved lodging are all exclusively yours for the weekend.</p>
+<p>When you book a wedding at Rivers Lodge, you book the entire Lodge. Your guests are the only guests. The ceremony lawns, Rivers Barn, Timber Edge, and your reserved lodging are all exclusively yours for the weekend.</p>
 <p>We work with a limited number of couples each year to ensure every wedding receives the full attention of our team. We will never have multiple weddings going on at one time and the result is a totally private all weekend celebration with friends and family.</p>
 </div>
 </div>

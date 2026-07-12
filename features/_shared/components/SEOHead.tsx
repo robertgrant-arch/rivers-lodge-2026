@@ -11,7 +11,7 @@ interface SEOHeadProps {
 
 const SITE_NAME = "The Rivers Lodge & Hunt Club";
 const DEFAULT_DESCRIPTION =
-  "A private estate in La Cygne, Kansas — offering world-class weddings & events and an exclusive sporting membership with hunting, fishing, and luxury lodging.";
+  "A private Lodge in La Cygne, Kansas — offering world-class weddings & events and an exclusive sporting membership with hunting, fishing, and luxury lodging.";
 const DEFAULT_IMAGE = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663319810046/jPtEuiXynfNedkpV.jpg";
 const BASE_URL = "https://theriverslodge.com";
 
@@ -125,7 +125,7 @@ export const structuredData = {
     "@type": "EventVenue",
     name: `${SITE_NAME} — Weddings & Events`,
     description:
-      "A private estate wedding venue in La Cygne, Kansas offering ceremony and reception spaces for up to 250 guests, including the Rivers Barn, Timber Edge Clubhouse, and riverside ceremony lawn.",
+      "A private Lodge wedding venue in La Cygne, Kansas offering ceremony and reception spaces for up to 250 guests, including the Rivers Barn, Timber Edge Clubhouse, and riverside ceremony lawn.",
     url: `${BASE_URL}/weddings`,
     address: {
       "@type": "PostalAddress",

@@ -7,7 +7,7 @@ export default function MembershipEvents() {
     <PublicLayout>
       <SEOHead
         title="Member Events"
-        description="Upcoming member events at Rivers Lodge & Hunt Club — exclusive dinners, estate shoots, member nights, and seasonal gatherings."
+        description="Upcoming member events at Rivers Lodge & Hunt Club — exclusive dinners, lodge shoots, member nights, and seasonal gatherings."
         url="/membership/events"
       />
       <section className="pt-32 pb-16 md:pt-44 md:pb-24 bg-background">
@@ -21,7 +21,7 @@ export default function MembershipEvents() {
             Member Events
           </h1>
           <p className="font-sans text-muted-brand leading-relaxed mb-10 max-w-xl" style={{ fontSize: "0.9375rem" }}>
-            Members receive exclusive access to estate dinners, seasonal shoots, scouting nights, and annual gatherings on the property. A full calendar of upcoming events is available in the member portal once your membership is active.
+            Members receive exclusive access to lodge dinners, seasonal shoots, scouting nights, and annual gatherings on the property. A full calendar of upcoming events is available in the member portal once your membership is active.
           </p>
           <div className="flex flex-col sm:flex-row gap-4">
             <Link href="/membership" className="btn-ghost">Explore Membership</Link>

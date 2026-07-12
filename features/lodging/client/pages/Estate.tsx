@@ -44,7 +44,7 @@ const estateFacts = [
 
 const spaces = [
   { name: "The Lodge",          desc: "Main residence sleeping up to 20 guests across 8 bedrooms. Full kitchen, great room, and wraparound porch overlooking the river valley.", img: LODGE_EXT },
-  { name: "Rivers Barn",        desc: "The estate's signature event venue. 6,000 sq ft of open timber-frame space accommodating up to 300 guests.", img: BARN },
+  { name: "Rivers Barn",        desc: "The Lodge's signature event venue. 6,000 sq ft of open timber-frame space accommodating up to 300 guests.", img: BARN },
   { name: "The Marais des Cygnes", desc: "The river that gives the property its character — wide, clear, and full of bass and catfish. The River Lawn runs along its bank.", img: RIVER },
   { name: "Clubhouse",          desc: "Full bar, dining room, and meeting space available to members and event guests.", img: CLUBHOUSE },
   { name: "Riverhouse Suites",  desc: "Four boutique suites positioned directly on the river bank with private porches and unobstructed water views.", img: INTERIOR },
@@ -81,7 +81,7 @@ export default function Estate() {
             <br /><em className="italic font-light">One river.</em>
           </h1>
           <p className="font-sans text-white/65 max-w-md leading-relaxed" style={{ fontSize: "0.9375rem" }}>
-            A private estate on the Marais des Cygnes — an hour south of Kansas City, a world apart from everything else.
+            A private Lodge on the Marais des Cygnes — an hour south of Kansas City, a world apart from everything else.
           </p>
         </div>
       </section>
@@ -112,7 +112,7 @@ export default function Estate() {
                 <br /><em className="italic">Tended with care.</em>
               </h2>
               <div className="space-y-5 font-sans text-muted-brand leading-relaxed" style={{ fontSize: "0.9375rem" }}>
-                <p>Rivers Lodge is a working private estate — not a resort, not a venue catalog. The land has been managed with a specific vision: the water holds fish, the fields hold game, and the spaces hold the kind of gatherings that people talk about for the rest of their lives.</p>
+                <p>Rivers Lodge is a working private Lodge — not a resort, not a venue catalog. The land has been managed with a specific vision: the water holds fish, the fields hold game, and the spaces hold the kind of gatherings that people talk about for the rest of their lives.</p>
                 <p>The estate sits on the Marais des Cygnes — a river that has shaped this part of Kansas for centuries. Five buildings, 16-plus bedrooms, and a staff that knows the property intimately.</p>
                 <p>Whether you're here for a wedding weekend, a corporate retreat, or the opening weekend of whitetail season — Rivers Lodge is the kind of place you come back to.</p>
               </div>

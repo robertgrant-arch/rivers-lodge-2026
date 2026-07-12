@@ -17,7 +17,7 @@ const FALLBACK_VENUES = [
     name: "Clubhouse",
     type: "Indoor / Outdoor",
     capacity: { ceremony: null, reception: null },
-    desc: "The Clubhouse is an additional space on the estate often used as a rehearsal dinner space, cocktail hour space, or intimate wedding ceremony location. Its warm, character-filled interior makes it the natural gathering point before and after the main event.",
+    desc: "The Clubhouse is an additional space on the Lodge often used as a rehearsal dinner space, cocktail hour space, or intimate wedding ceremony location. Its warm, character-filled interior makes it the natural gathering point before and after the main event.",
     details: ["Rehearsal dinner space", "Cocktail hour space", "Intimate ceremony option", "Warm interior character", "Adjacent to Rivers Barn", "Full bar"],
   },
   {
@@ -60,7 +60,7 @@ export default function Venues() {
     <PublicLayout>
       <SEOHead
         title="Venue Spaces"
-        description="Rivers Barn, the Clubhouse, and The Green Drake — three distinct event spaces on the Rivers Lodge estate in La Cygne, Kansas."
+        description="Rivers Barn, the Clubhouse, and The Green Drake — three distinct event spaces on the Rivers Lodge in La Cygne, Kansas."
         url="/venues"
       />
 
@@ -73,7 +73,7 @@ export default function Venues() {
             Spaces that shape<br /><span className="italic font-light">the day.</span>
           </h1>
           <p className="text-base font-sans text-muted-foreground max-w-xl leading-relaxed">
-            Three distinct spaces across the estate — each with its own character, each suited to a different moment in your weekend.
+            Three distinct spaces across the Lodge — each with its own character, each suited to a different moment in your weekend.
           </p>
         </div>
       </section>

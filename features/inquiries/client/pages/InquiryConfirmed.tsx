@@ -19,7 +19,7 @@ export default function InquiryConfirmed() {
       nextSteps: [
         "Our weddings team will review your inquiry within 24 hours.",
         "You'll receive a personalized response with available dates and a venue overview.",
-        "We'll schedule a private estate tour at your convenience.",
+        "We'll schedule a private Lodge tour at your convenience.",
         "Your dedicated coordinator will guide you through every detail from there.",
       ],
       contact: "events@riverslodge.com",
@@ -51,7 +51,7 @@ export default function InquiryConfirmed() {
       nextSteps: [
         "Our membership director will review your inquiry personally.",
         "You'll receive a response within 48 hours with membership details.",
-        "We'll arrange a private estate introduction at your convenience.",
+        "We'll arrange a private Lodge introduction at your convenience.",
         "Membership is extended by invitation — we look forward to learning more about you.",
       ],
       contact: "membership@riverslodge.com",
@@ -68,7 +68,7 @@ export default function InquiryConfirmed() {
     },
     tour: {
       label: "Tour Request",
-      track: "The Estate",
+      track: "The Lodge",
       nextSteps: [
         "We'll confirm your tour request within 24 hours.",
         "A member of our team will reach out to schedule your visit.",
@@ -78,7 +78,7 @@ export default function InquiryConfirmed() {
     },
     general: {
       label: "General Inquiry",
-      track: "The Estate",
+      track: "The Lodge",
       nextSteps: [
         "We've received your message and will respond within 24 hours.",
         "For urgent matters, you can reach us directly by phone.",
@@ -171,7 +171,7 @@ export default function InquiryConfirmed() {
           <div className="max-w-xl mx-auto text-center">
             <div className="h-px w-10 mx-auto mb-8" style={{ backgroundColor: GOLD }} />
             <h2 className="font-serif text-[#E0D3BD] text-2xl md:text-3xl mb-4">
-              While you wait, explore the estate.
+              While you wait, explore the Lodge.
             </h2>
             <p className="font-sans text-[#BABAAE] text-sm leading-relaxed mb-8">
               Discover the spaces, accommodations, and experiences that make Rivers Lodge & Hunt Club unlike any other destination in the region.
@@ -184,7 +184,7 @@ export default function InquiryConfirmed() {
                 </>
               ) : (
                 <>
-                  <Link href="/estate" className="btn-primary">The Estate</Link>
+                  <Link href="/estate" className="btn-primary">The Lodge</Link>
                   <Link href="/gallery" className="btn-ghost">View Gallery</Link>
                 </>
               )}

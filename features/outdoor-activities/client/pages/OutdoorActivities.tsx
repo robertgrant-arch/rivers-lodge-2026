@@ -201,7 +201,7 @@ export default function OutdoorActivities() {
                 <em className="italic">everything.</em>
               </h2>
               <p className="font-sans text-muted-brand leading-relaxed mb-10" style={{ fontSize: "0.9375rem" }}>
-                Members receive unlimited access to all hunting and fishing on the estate, priority lodging booking, guest privileges, and an invitation to annual member events. Day trips and guided packages are available for non-members by arrangement.
+                Members receive unlimited access to all hunting and fishing on the Lodge, priority lodging booking, guest privileges, and an invitation to annual member events. Day trips and guided packages are available for non-members by arrangement.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
                 <Link href="/membership" className="btn-ghost" style={{ borderColor: ACCENT, color: ACCENT }}>

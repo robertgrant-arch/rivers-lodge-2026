@@ -21,7 +21,7 @@ export default function PublicFooter() {
               </div>
             </div>
             <p className="text-[12px] font-sans leading-relaxed opacity-70 max-w-[280px] mb-6">
-              A private estate on the Marais des Cygnes. Exclusive membership, destination weddings, and the finest private hunting and fishing in the Midwest.
+              A private Lodge on the Marais des Cygnes. Exclusive membership, destination weddings, and the finest private hunting and fishing in the Midwest.
             </p>
             <address className="not-italic text-[11px] font-sans leading-relaxed opacity-50 mb-6">
               18103 E 2300 Ln<br />

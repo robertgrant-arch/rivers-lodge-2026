@@ -127,7 +127,7 @@ export default function Home() {
     <PublicLayout>
       <SEOHead
         title="Rivers Lodge & Hunt Club"
-        description="Rivers Lodge & Hunt Club — a private estate on the Marais des Cygnes in La Cygne, Kansas. Destination weddings, private events, hunting, fishing, and membership."
+        description="Rivers Lodge & Hunt Club — a private Lodge on the Marais des Cygnes in La Cygne, Kansas. Destination weddings, private events, hunting, fishing, and membership."
         url="/"
         image="/img/Ohana%20Aerial.jpg"
       />
@@ -177,7 +177,7 @@ export default function Home() {
             {/* Text */}
             <div>
               <div className="gold-rule mb-5" />
-              <p className="eyebrow text-muted-brand mb-4">The Estate</p>
+              <p className="eyebrow text-muted-brand mb-4">The Lodge</p>
               <h2
                 className="font-serif font-light text-warm leading-tight mb-6"
                 style={{ fontSize: "clamp(1.875rem,3.5vw,3rem)" }}
@@ -185,7 +185,7 @@ export default function Home() {
                 Thousands of acres. One event at a time.
               </h2>
               <p className="font-sans text-muted-brand leading-relaxed mb-10" style={{ fontSize: "0.9375rem" }}>
-                The Rivers Lodge is a land portfolio — available exclusively, to one group or member at a time. Whether you arrive for a wedding weekend, a booked hunt, a corporate event, or a member Do-It-Yourself hunt, you will be alone and the property is entirely yours.
+                The Rivers Lodge is a land portfolio — available exclusively, to one group or member at a time. Whether you arrive for a wedding weekend, a booked hunt, a corporate event, or a member Do-It-Yourself hunt, you will be alone and the Lodge is entirely yours.
               </p>
               <Link href="/about/property" className="btn-ghost">Discover the Property</Link>
             </div>
@@ -323,7 +323,7 @@ export default function Home() {
                 A private club shaped by land and season.
               </h2>
               <p className="font-sans text-muted-brand leading-relaxed mb-10" style={{ fontSize: "0.9375rem" }}>
-                Managed hunting and fishing across thousands of private acres, alongside guest chef dinners, private concerts, game dinners, and seasonal celebrations. An intentional membership — small by design — with access to the full estate and the community around it.
+                Managed hunting and fishing across thousands of private acres, alongside guest chef dinners, private concerts, game dinners, and seasonal celebrations. An intentional membership — small by design — with access to the full Lodge and the community around it.
               </p>
               <Link href="/membership" className="btn-ghost" style={{ borderColor: "#6B7250", color: "#6B7250" }}>Explore Membership</Link>
             </div>

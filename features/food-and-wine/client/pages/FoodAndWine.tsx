@@ -46,7 +46,7 @@ export default function FoodAndWine() {
     <PublicLayout>
       <SEOHead
         title="Food & Wine"
-        description="Chef-driven, land-to-table dining at The Rivers Lodge & Hunt Club — locally sourced pork, beef, and venison from the estate's own fields and garden."
+        description="Chef-driven, land-to-table dining at The Rivers Lodge & Hunt Club — locally sourced pork, beef, and venison from the Lodge's own fields and garden."
         url="/food-and-wine"
       />
       <div style={{ "--track-accent": ACCENT } as React.CSSProperties}>
@@ -72,7 +72,7 @@ export default function FoodAndWine() {
             <br /><em className="italic font-light">To your table.</em>
           </h1>
           <p className="font-sans text-white/65 max-w-lg leading-relaxed mb-10" style={{ fontSize: "0.9375rem" }}>
-            A chef-driven culinary program rooted in the estate's own fields — seasonally led, locally sourced, and unlike anything else in the region.
+            A chef-driven culinary program rooted in the Lodge's own fields — seasonally led, locally sourced, and unlike anything else in the region.
           </p>
           <Link
             href="/contact?type=dining"
@@ -205,7 +205,7 @@ export default function FoodAndWine() {
                 {[
                   "Locally sourced pork",
                   "Locally sourced beef",
-                  "Venison from the estate",
+                  "Venison from the Lodge",
                   "On-property garden produce",
                 ].map((item) => (
                   <li key={item} className="flex items-start gap-3 font-sans text-sm text-muted-brand">

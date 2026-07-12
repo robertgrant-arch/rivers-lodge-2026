@@ -35,7 +35,7 @@ const CATEGORIES = [
   {
     label: "Corporate Events",
     href: "/corporate",
-    desc: "Executive retreats, client entertainment, and leadership off-sites on a private estate. Groups from 10 to 250, fully accommodated.",
+    desc: "Executive retreats, client entertainment, and leadership off-sites on a private Lodge. Groups from 10 to 250, fully accommodated.",
     img: "/img/Clubhouse%20Hero.jpg",
     imgAlt: "Clubhouse and gathering spaces at Rivers Lodge",
     eyebrow: "Corporate",
@@ -51,7 +51,7 @@ const CATEGORIES = [
   {
     label: "Food & Wine",
     href: "/food-and-wine",
-    desc: "Chef-driven, land-to-table dining. Private dinners, tasting events, and custom menus built around the estate and the season.",
+    desc: "Chef-driven, land-to-table dining. Private dinners, tasting events, and custom menus built around the Lodge and the season.",
     img: "/img/ChefSwethaSelect30617-1200w.avif",
     imgAlt: "Chef-driven dining at Rivers Lodge",
     eyebrow: "Culinary",
@@ -66,7 +66,7 @@ export default function WeddingsEvents() {
     <PublicLayout>
       <SEOHead
         title="Weddings & Events"
-        description="Weddings, corporate events, outdoor pursuits, and culinary experiences on a private estate along the Marais des Cygnes in La Cygne, Kansas."
+        description="Weddings, corporate events, outdoor pursuits, and culinary experiences on a private Lodge along the Marais des Cygnes in La Cygne, Kansas."
         url="/weddings-events"
       />
 

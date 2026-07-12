@@ -287,7 +287,7 @@ export default function MembershipLanding() {
                 items={[
                   {
                     question: "How does membership work?",
-                    answer: "Rivers Lodge membership provides exclusive access to the estate for hunting, fishing, and recreational stays throughout the year. Members enjoy priority booking, curated seasonal experiences, and access to all estate amenities including The Lodge, Riverhouse Suites, and Ohana House."
+                    answer: "Rivers Lodge membership provides exclusive access to the Lodge for hunting, fishing, and recreational stays throughout the year. Members enjoy priority booking, curated seasonal experiences, and access to all lodge amenities including The Lodge, Riverhouse Suites, and Ohana House."
                   },
                   {
                     question: "Is membership by invitation only?",
@@ -311,7 +311,7 @@ export default function MembershipLanding() {
                   },
                   {
                     question: "What is included in the membership fee?",
-                    answer: "Membership fees cover access to all estate grounds, guided hunts (within your membership tier), fishing access, and use of all recreational amenities. Lodging, meals, and additional guided experiences are available at member rates."
+                    answer: "Membership fees cover access to all lodge grounds, guided hunts (within your membership tier), fishing access, and use of all recreational amenities. Lodging, meals, and additional guided experiences are available at member rates."
                   },
                 ]}
               />
