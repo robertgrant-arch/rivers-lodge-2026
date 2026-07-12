@@ -126,6 +126,31 @@ Render auto-deploys on any push to `main`.
 - Never invent copy, prices, or details not provided by the client.
 - Never change the logo.
 
+### Post-Deployment Verification Checklist (Membership RBAC)
+
+After a membership feature deployment completes on Render, verify these key flows:
+
+**Roles table populated:**
+- [ ] Data browser / SQL query shows roles table has 5 rows: admin, employee, designated, silver, social
+- [ ] Each role has a non-null key and label
+
+**Preview as role selector functional:**
+- [ ] Navigate to `/ops/membership`
+- [ ] Click "Preview as role" dropdown
+- [ ] Dropdown shows all 5 role options (Admin, Employee, Designated, Silver, Social)
+- [ ] Selecting a role changes the visible member data appropriately
+
+**Stats ↔ table count consistency:**
+- [ ] Navigate to `/ops/membership` with no filters applied
+- [ ] Verify summary card shows a count (e.g., "Total: 5") 
+- [ ] Verify member table shows same number of rows
+- [ ] Apply tier filter (e.g., "Silver") → summary card count should match visible table rows
+- [ ] Apply active filter → summary card count should match visible table rows
+- [ ] Clear filters → counts return to full unfiltered total
+
+**Health check (optional):**
+- [ ] If `/api/health/detailed` exists, verify it returns `roles_count: 5` and `skill_groups_seeded: true`
+
 ---
 
 ## Standing session rule
