@@ -136,6 +136,24 @@ export async function runStartupMigration() {
         `;
         await client.query(memberTierMigration);
 
+        // Calendar access settings table for skill-group-based calendar visibility
+        const calendarAccessMigration = `
+          CREATE TABLE IF NOT EXISTS calendar_access_settings (
+            id SERIAL PRIMARY KEY,
+            setting_key VARCHAR(255) UNIQUE NOT NULL,
+            setting_value JSONB NOT NULL,
+            created_at TIMESTAMP DEFAULT NOW(),
+            updated_at TIMESTAMP DEFAULT NOW()
+          );
+
+          INSERT INTO calendar_access_settings (setting_key, setting_value)
+          VALUES
+            ('master_calendar_access', '{"Designated": true, "Silver": false, "Social": false, "Admin": true, "Employee": true}'::JSONB),
+            ('property_calendar_access', '{}'::JSONB)
+          ON CONFLICT (setting_key) DO NOTHING;
+        `;
+        await client.query(calendarAccessMigration);
+
         // Clean up orphan test properties from failed create attempts
         // (one-time cleanup of: Test Alpha, Test Bravo, Test 1 Minimal, 69 highway, Test - delete me, etc.)
         const cleanupTestProperties = `
