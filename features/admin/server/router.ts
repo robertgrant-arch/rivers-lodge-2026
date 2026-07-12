@@ -23,7 +23,7 @@ import {
 } from "../schema";
 // Cross-feature table refs — imported only via public.ts barrels
 import { users } from "@features/auth/server/public";
-import { members, membershipApplications } from "@features/membership/public";
+import { members, membershipApplications, roles, resourceAccess } from "@features/membership/public";
 import { inquiries } from "@features/inquiries/public";
 import { bookings } from "@features/booking-engine/public";
 import { waivers } from "@features/waivers/public";
