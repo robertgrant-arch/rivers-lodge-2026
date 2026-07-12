@@ -11,7 +11,7 @@ import {
 } from "drizzle-orm/pg-core";
 
 export const applicationStatusEnum = pgEnum("application_status", ["pending", "approved", "declined"]);
-export const memberTierEnum = pgEnum("member_tier", ["standard", "premier", "founding"]);
+export const memberTierEnum = pgEnum("member_tier", ["Designated", "Silver", "Social"]);
 
 export const membershipApplications = pgTable("membership_applications", {
   id: integer("id").generatedAlwaysAsIdentity().primaryKey(),
@@ -37,7 +37,7 @@ export const members = pgTable("members", {
   id: integer("id").generatedAlwaysAsIdentity().primaryKey(),
   userId: varchar("userId", { length: 36 }).notNull(),
   memberNumber: varchar("memberNumber", { length: 50 }),
-  tier: memberTierEnum("tier").notNull().default("standard"),
+  tier: memberTierEnum("tier").notNull().default("Designated"),
   joinDate: date("joinDate"),
   renewalDate: date("renewalDate"),
   active: boolean("active").notNull().default(true),
