@@ -2,7 +2,29 @@
 
 **Status:** Planning Phase (no implementation code written)  
 **Date:** July 2026  
-**Target Rollout:** Phase 1 Q3 2026 (pending owner tier assignments)
+**Target Rollout:** Phase 1 Q3 2026
+
+---
+
+## 0. DECISIONS (Locked)
+
+**Owner has approved the following constraints and requirements:**
+
+1. **Usage Period Boundary:** 8/1 → 7/31 (not calendar year). Each Social member's usage tracking is keyed by period_start_date (always August 1 of the given year). Example: a member's 2026 period runs 8/1/2026 → 7/31/2027.
+
+2. **Cross-Period Bookings:** When a Social member books a stay that spans the period boundary (e.g., 7/30 → 8/2), the ENTIRE booking counts against the period where the start date falls. No splitting across periods.
+
+3. **Admin Cap Override:** Admins may adjust the 40-property-day cap per Social member (grant credit, comp, reset). Every adjustment must be logged in audit trail with: admin user ID, timestamp, reason, and delta (old → new count).
+
+4. **Pricing Visibility:** Event and property pricing are visible to all membership tiers. Do NOT gate pricing by tier. (All members will eventually see only members-only bookings, so transparency is acceptable.)
+
+5. **Tier Downgrade Handling:** Skip automatic downgrade logic. Owner will handle manually if needed. This is out of scope for Phase 1.
+
+6. **Event Booking Limits:** No caps by tier. All members with event access can book unlimited events. (Silver = events-only; Designated/Social = events + property with property cap.)
+
+7. **Membership Type at Account Creation:** Every member MUST have a membership_type assigned at account creation. There is no UNASSIGNED or default state. Signup/invite flows require membership_type as a mandatory field. Remove all references to UNASSIGNED tier.
+
+8. **Admin Reporting:** Required. Admin needs member roster, bookings, revenue, and usage reports segmented by tier, with CSV export capability.
 
 ---
 
@@ -26,42 +48,45 @@ This document outlines the architecture for a **three-tier membership system** (
 
 ```typescript
 // PostgreSQL enum
-enum("membership_type", ["DESIGNATED", "SILVER", "SOCIAL", "UNASSIGNED"])
+enum("membership_type", ["DESIGNATED", "SILVER", "SOCIAL"])
 
 // TypeScript type
-type MembershipType = "DESIGNATED" | "SILVER" | "SOCIAL" | "UNASSIGNED";
+type MembershipType = "DESIGNATED" | "SILVER" | "SOCIAL";
 ```
 
 ### 2.2 Member Table Changes
 
 **New column:**
 ```typescript
-membershipType: MembershipType = "UNASSIGNED"
+membershipType: MembershipType  // REQUIRED — no default, no null
 ```
 
-- Existing members default to `UNASSIGNED` until owner reviews and assigns.
+- Every member MUST have a membership_type at account creation.
+- Signup/invite flows enforce this as a mandatory field.
 - This field is mutable by admins (see audit log in 2.3).
 
 ### 2.3 Usage Tracking Table: `membership_usage`
 
-Tracks annual property-day usage for Social tier members only.
+Tracks property-day usage for Social tier members within their annual period (8/1 → 7/31).
 
 ```typescript
 // Drizzle schema
 export const membershipUsage = pgTable("membership_usage", {
   id: serial("id").primaryKey(),
   memberId: integer("member_id").notNull().references(() => members.id, { onDelete: "cascade" }),
-  year: integer("year").notNull(), // e.g., 2026
+  periodStartDate: date("period_start_date").notNull(), // e.g., 2026-08-01
   propertyDaysUsed: integer("property_days_used").notNull().default(0), // cumulative count
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => ({
-  uniq: uniqueIndex("membership_usage_member_year").on(table.memberId, table.year),
+  uniq: uniqueIndex("membership_usage_member_period").on(table.memberId, table.periodStartDate),
 }));
 ```
 
-- One row per Social member per calendar year.
+- One row per Social member per 8/1 → 7/31 usage period.
+- `periodStartDate` is always August 1 (e.g., 2026-08-01 represents the period 8/1/2026 → 7/31/2027).
 - `propertyDaysUsed` is cumulative; incremented on each booking confirmation.
+- When a Social member books a stay that spans the period boundary (e.g., 7/30 → 8/2), the entire stay counts against the period containing the start date (7/30 = before 8/1, so counts against prior period).
 - Scope: Property-day bookings only (not event bookings, not lodge-only stays, not guided experiences).
 
 ### 2.4 Audit Log Table: `membership_audit`
@@ -146,13 +171,14 @@ export async function createPropertyBooking(req) {
   
   // For Social tier, enforce 40-day cap
   if (member.membershipType === "SOCIAL") {
-    const currentYear = new Date().getFullYear();
-    const usage = await getMembershipUsage(member.id, currentYear);
+    const checkInDate = new Date(checkIn);
+    const periodStartDate = getPeriodStartDate(checkInDate);
+    const usage = await getMembershipUsage(member.id, periodStartDate);
     const proposed = (usage?.propertyDaysUsed ?? 0) + propertyDays;
     
     if (proposed > 40) {
       throw new TierLimitError(
-        `Booking would exceed 40-property-day annual limit. You have ${40 - usage.propertyDaysUsed} days remaining this year.`
+        `Booking would exceed 40-property-day limit for your period (${periodStartDate} → 7/31). You have ${40 - usage.propertyDaysUsed} days remaining.`
       );
     }
   }
@@ -168,11 +194,27 @@ export async function createPropertyBooking(req) {
   
   // Increment usage counter for Social
   if (member.membershipType === "SOCIAL") {
-    await incrementMembershipUsage(member.id, currentYear, propertyDays);
-    await logAudit(member.id, "USAGE_ADJUSTED", ..., `Booking confirmed: +${propertyDays} days`);
+    const checkInDate = new Date(checkIn);
+    const periodStartDate = getPeriodStartDate(checkInDate);
+    const oldCount = (await getMembershipUsage(member.id, periodStartDate))?.propertyDaysUsed ?? 0;
+    const newCount = oldCount + propertyDays;
+    
+    await incrementMembershipUsage(member.id, periodStartDate, propertyDays);
+    await logAudit(
+      member.id, 
+      "USAGE_ADJUSTED", 
+      String(oldCount), 
+      String(newCount), 
+      `Booking ${booking.id} confirmed: +${propertyDays} property-days`, 
+      "system"
+    );
   }
   
-  return { booking, remainingBalance: member.membershipType === "SOCIAL" ? 40 - newUsageCount : null };
+  const remainingBalance = member.membershipType === "SOCIAL" 
+    ? 40 - await getMembershipUsageCount(member.id, getPeriodStartDate(new Date(checkIn)))
+    : null;
+  
+  return { booking, remainingBalance };
 }
 ```
 
@@ -209,32 +251,36 @@ export async function updateMemberTier(req) {
 
 **Guard:** `requireAdmin()` → `requireAdminRole('manager' | 'superadmin')`
 
+Admin can manually adjust the property-day usage counter for a Social member. All adjustments (positive or negative) are logged in the audit trail with the admin's user ID, timestamp, and reason.
+
 ```typescript
 export async function adjustMemberUsage(req) {
   const admin = requireAdminRole(req, ["manager", "superadmin"]);
   const { memberId } = req.params;
-  const { year, adjustment, reason } = req.body;
+  const { periodStartDate, adjustment, reason } = req.body;
   // adjustment can be positive (grant) or negative (deduct)
+  // periodStartDate is the 8/1 of the period, e.g., "2026-08-01"
   
   const member = await getMember(memberId);
   if (member.membershipType !== "SOCIAL") {
     throw new Error("Usage adjustment only applies to SOCIAL members");
   }
   
-  const usage = await getMembershipUsage(memberId, year);
-  const newCount = Math.max(0, (usage?.propertyDaysUsed ?? 0) + adjustment);
+  const usage = await getMembershipUsage(memberId, periodStartDate);
+  const oldCount = usage?.propertyDaysUsed ?? 0;
+  const newCount = Math.max(0, oldCount + adjustment);
   
-  await updateMembershipUsage(memberId, year, newCount);
+  await updateMembershipUsage(memberId, periodStartDate, newCount);
   await logAudit(
     memberId, 
     "USAGE_ADJUSTED", 
-    usage?.propertyDaysUsed ?? 0, 
-    newCount, 
+    String(oldCount), 
+    String(newCount), 
     reason, 
     admin.id
   );
   
-  return { success: true, year, newCount };
+  return { success: true, periodStartDate, oldCount, newCount };
 }
 ```
 
@@ -274,7 +320,6 @@ export function requireMembershipTier(
 
 - Applied at the route handler level or as middleware.
 - Prevents Silver from ever seeing property lists.
-- Prevents unassigned members from accessing any tier-specific features.
 
 #### `requireAdminRole(req, allowedRoles)` → Admin
 
@@ -306,25 +351,41 @@ export async function withUsageCheck(
     if (member.membershipType === "SOCIAL") {
       const { checkIn, checkOut } = req.body;
       const propertyDays = computePropertyDays(checkIn, checkOut);
-      const currentYear = new Date().getFullYear();
-      const usage = await getMembershipUsage(member.id, currentYear);
+      
+      // Determine which period this booking falls into
+      // Period is 8/1 → 7/31; if checkIn is 8/1 or later, use current year's period (8/1)
+      // If checkIn is before 8/1, use prior year's period (prior 8/1)
+      const checkInDate = new Date(checkIn);
+      const periodStartDate = getPeriodStartDate(checkInDate); // returns "2026-08-01" or "2027-08-01", etc.
+      
+      const usage = await getMembershipUsage(member.id, periodStartDate);
       const proposed = (usage?.propertyDaysUsed ?? 0) + propertyDays;
       
       if (proposed > 40) {
         return res.status(400).json({
           error: "USAGE_LIMIT_EXCEEDED",
-          message: `This booking would exceed your 40-property-day annual limit.`,
+          message: `This booking would exceed your 40-property-day annual limit (period: ${periodStartDate} → next 7/31).`,
           remainingDays: 40 - usage.propertyDaysUsed,
           requestedDays: propertyDays,
         });
       }
       
       // Attach usage info to req for handler to use
-      req.memberUsage = { currentYear, propertyDays, remaining: 40 - proposed };
+      req.memberUsage = { periodStartDate, propertyDays, remaining: 40 - proposed };
     }
     
     return handler(req, res, next);
   };
+}
+
+// Helper: given a date, return the period_start_date (always 8/1)
+function getPeriodStartDate(date: Date): string {
+  const year = date.getFullYear();
+  const month = date.getMonth() + 1; // 0-indexed
+  // If date is 8/1 or later, period started Aug 1 of this year
+  // If date is before 8/1, period started Aug 1 of prior year
+  const periodYear = month >= 8 ? year : year - 1;
+  return `${periodYear}-08-01`;
 }
 ```
 
@@ -663,6 +724,248 @@ export function MemberAuditLog({ memberId }) {
 }
 ```
 
+### 6.4 Reporting & Analytics
+
+**New reports page: `/ops/reports`**
+
+Admin users need segmented reporting on membership tiers, bookings, revenue, and usage. All reports are filterable by membership_type and exportable to CSV.
+
+#### 6.4.1 Member Roster Report
+
+Lists all members with filters and export.
+
+```typescript
+export function MemberRosterReport() {
+  const [members, setMembers] = useState([]);
+  const [filterTier, setFilterTier] = useState("ALL");
+  
+  useEffect(() => {
+    const tier = filterTier === "ALL" ? undefined : filterTier;
+    fetch(`/api/admin/reports/members?tier=${tier}`)
+      .then(r => r.json())
+      .then(data => setMembers(data));
+  }, [filterTier]);
+  
+  const handleExportCSV = () => {
+    const csv = membersToCSV(members);
+    downloadCSV(csv, "member-roster.csv");
+  };
+  
+  return (
+    <section>
+      <h2>Member Roster</h2>
+      <div className="filters">
+        <select value={filterTier} onChange={(e) => setFilterTier(e.target.value)}>
+          <option value="ALL">All Tiers</option>
+          <option value="DESIGNATED">Designated</option>
+          <option value="SILVER">Silver</option>
+          <option value="SOCIAL">Social</option>
+        </select>
+        <button onClick={handleExportCSV}>Export CSV</button>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Member ID</th>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Membership Type</th>
+            <th>Joined</th>
+          </tr>
+        </thead>
+        <tbody>
+          {members.map(m => (
+            <tr key={m.id}>
+              <td>{m.id}</td>
+              <td>{m.name}</td>
+              <td>{m.email}</td>
+              <td>{m.membershipType}</td>
+              <td>{new Date(m.createdAt).toLocaleDateString()}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </section>
+  );
+}
+```
+
+#### 6.4.2 Bookings Report
+
+Lists all property and event bookings, filterable by tier and date range.
+
+```typescript
+// Endpoint: GET /api/admin/reports/bookings?tier=DESIGNATED&startDate=2026-01-01&endDate=2026-12-31
+// Returns: array of { memberId, memberName, tier, propertyId, propertyName, checkIn, checkOut, propertyDays, bookingStatus, createdAt }
+
+export function BookingsReport() {
+  const [bookings, setBookings] = useState([]);
+  const [filterTier, setFilterTier] = useState("ALL");
+  const [startDate, setStartDate] = useState("2026-01-01");
+  const [endDate, setEndDate] = useState("2026-12-31");
+  
+  useEffect(() => {
+    const tier = filterTier === "ALL" ? undefined : filterTier;
+    fetch(`/api/admin/reports/bookings?tier=${tier}&startDate=${startDate}&endDate=${endDate}`)
+      .then(r => r.json())
+      .then(data => setBookings(data));
+  }, [filterTier, startDate, endDate]);
+  
+  const handleExportCSV = () => {
+    const csv = bookingsToCSV(bookings);
+    downloadCSV(csv, "bookings-report.csv");
+  };
+  
+  return (
+    <section>
+      <h2>Bookings Report</h2>
+      <div className="filters">
+        <select value={filterTier} onChange={(e) => setFilterTier(e.target.value)}>
+          <option value="ALL">All Tiers</option>
+          <option value="DESIGNATED">Designated</option>
+          <option value="SILVER">Silver</option>
+          <option value="SOCIAL">Social</option>
+        </select>
+        <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+        <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+        <button onClick={handleExportCSV}>Export CSV</button>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Member Name</th>
+            <th>Tier</th>
+            <th>Property / Event</th>
+            <th>Check-In</th>
+            <th>Check-Out</th>
+            <th>Days</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {bookings.map(b => (
+            <tr key={b.id}>
+              <td>{b.memberName}</td>
+              <td>{b.tier}</td>
+              <td>{b.propertyName || b.eventName}</td>
+              <td>{b.checkIn}</td>
+              <td>{b.checkOut}</td>
+              <td>{b.propertyDays}</td>
+              <td>{b.status}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </section>
+  );
+}
+```
+
+#### 6.4.3 Revenue Report
+
+Revenue aggregated by tier (total bookings value, average per booking, etc.).
+
+```typescript
+// Endpoint: GET /api/admin/reports/revenue?tier=DESIGNATED&startDate=2026-01-01&endDate=2026-12-31
+// Returns: { tier, totalRevenue, bookingCount, avgPerBooking, breakdown: [...] }
+
+export function RevenueReport() {
+  const [revenue, setRevenue] = useState(null);
+  const [filterTier, setFilterTier] = useState("ALL");
+  
+  useEffect(() => {
+    const tier = filterTier === "ALL" ? undefined : filterTier;
+    fetch(`/api/admin/reports/revenue?tier=${tier}`)
+      .then(r => r.json())
+      .then(data => setRevenue(data));
+  }, [filterTier]);
+  
+  const handleExportCSV = () => {
+    const csv = revenueToCSV(revenue);
+    downloadCSV(csv, "revenue-report.csv");
+  };
+  
+  return (
+    <section>
+      <h2>Revenue Report</h2>
+      <div className="filters">
+        <select value={filterTier} onChange={(e) => setFilterTier(e.target.value)}>
+          <option value="ALL">All Tiers</option>
+          <option value="DESIGNATED">Designated</option>
+          <option value="SILVER">Silver</option>
+          <option value="SOCIAL">Social</option>
+        </select>
+        <button onClick={handleExportCSV}>Export CSV</button>
+      </div>
+      {revenue && (
+        <div>
+          <h3>{revenue.tier || "All Tiers"}</h3>
+          <p>Total Revenue: ${revenue.totalRevenue.toFixed(2)}</p>
+          <p>Bookings: {revenue.bookingCount}</p>
+          <p>Avg per Booking: ${revenue.avgPerBooking.toFixed(2)}</p>
+        </div>
+      )}
+    </section>
+  );
+}
+```
+
+#### 6.4.4 Social Tier Usage Report
+
+Detailed usage breakdown for all Social members: property-days used, remaining, admin adjustments.
+
+```typescript
+// Endpoint: GET /api/admin/reports/social-usage?periodStartDate=2026-08-01
+// Returns: array of { memberId, memberName, periodStartDate, propertyDaysUsed, remaining, adjustments: [...] }
+
+export function SocialUsageReport() {
+  const [usageData, setUsageData] = useState([]);
+  const [periodStartDate, setPeriodStartDate] = useState("2026-08-01");
+  
+  useEffect(() => {
+    fetch(`/api/admin/reports/social-usage?periodStartDate=${periodStartDate}`)
+      .then(r => r.json())
+      .then(data => setUsageData(data));
+  }, [periodStartDate]);
+  
+  const handleExportCSV = () => {
+    const csv = usageDataToCSV(usageData);
+    downloadCSV(csv, "social-usage-report.csv");
+  };
+  
+  return (
+    <section>
+      <h2>Social Tier Usage Report</h2>
+      <div className="filters">
+        <label>Period Start Date:</label>
+        <input type="date" value={periodStartDate} onChange={(e) => setPeriodStartDate(e.target.value)} />
+        <button onClick={handleExportCSV}>Export CSV</button>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Member Name</th>
+            <th>Used / 40</th>
+            <th>Remaining</th>
+            <th>Admin Adjustments</th>
+          </tr>
+        </thead>
+        <tbody>
+          {usageData.map(u => (
+            <tr key={u.memberId}>
+              <td>{u.memberName}</td>
+              <td>{u.propertyDaysUsed} / 40</td>
+              <td>{u.remaining}</td>
+              <td>{u.adjustments.length > 0 ? u.adjustments.map(a => `${a.delta} (${a.reason})`).join("; ") : "None"}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </section>
+  );
+}
+```
+
 ---
 
 ## 7. Migration & Backfill Plan
@@ -673,12 +976,24 @@ export function MemberAuditLog({ memberId }) {
 
 **After Phase 1 schema deployment:**
 
-1. Run migration to add `membershipType` column with default `"UNASSIGNED"`.
-2. Both existing members now have `membershipType = "UNASSIGNED"`.
-3. Owner reviews each member individually and assigns via admin UI.
-4. Once assigned, member can access tier-gated features.
+1. Run migration to add `membershipType` column to the members table. This column has NO default; it is NOT NULL.
+2. **Manual backfill required:** Owner must assign a tier (DESIGNATED, SILVER, or SOCIAL) to each existing member before Phase 1 goes live. This is done via the admin UI (Member edit form).
+3. Once each member has been assigned a tier, they can log in and access tier-gated features.
 
-### 7.2 Backfill Script (if owner provides bulk tier assignments)
+**Important:** Do not deploy Phase 1 to production until all existing members have a tier assigned. Attempting to access the portal with no membershipType set will result in an error.
+
+### 7.2 New Member Creation Flow
+
+For all **new** member signups or admin invites after Phase 1 deployment:
+
+- The signup/invite flow MUST collect or specify the membership_type as a required field.
+- Admin invites: a form field "Membership Tier" (required, enum: DESIGNATED | SILVER | SOCIAL).
+- Self-signup flows (if enabled): ideally show a form asking "Choose your membership tier" or route users to tier selection before account creation completes.
+- The member record is not created until membershipType is set.
+
+### 7.3 Backfill Script (Manual Bulk Assignment)
+
+If owner wants to assign tiers to multiple existing members via a script:
 
 ```typescript
 // scripts/bulk-assign-tiers.ts
@@ -688,8 +1003,10 @@ const assignments = JSON.parse(process.env.MEMBER_TIERS_JSON || "[]");
 
 for (const { id, tier } of assignments) {
   const member = await getMember(id);
+  if (!member) continue;
+  
   await updateMember(id, { membershipType: tier });
-  await logAudit(id, "TIER_CHANGED", "UNASSIGNED", tier, "Bulk backfill", "system");
+  await logAudit(id, "TIER_CHANGED", "(backfill - no prior tier)", tier, "Bulk assignment during Phase 1 setup", "system");
 }
 ```
 
@@ -973,19 +1290,21 @@ describe("Membership Tiers - E2E Happy Paths", () => {
 ### Phase 1: Schema + Admin UI Setup (2 weeks)
 
 **Deliverables:**
-- ✅ Add `membership_type` enum and column to `members` table
-- ✅ Create `membership_usage` table for Social tier tracking
-- ✅ Create `membership_audit` table
-- ✅ Admin endpoints: PATCH tier, GET/PATCH usage, GET audit log
-- ✅ Member edit form with tier dropdown + usage section (admin only)
+- ✅ Add `membership_type` enum and column to `members` table (NOT NULL, required)
+- ✅ Create `membership_usage` table with periodStartDate key (8/1 → 7/31)
+- ✅ Create `membership_audit` table for full audit trail
+- ✅ Admin endpoints: PATCH tier, GET/PATCH usage (by period), GET audit log
+- ✅ Reporting endpoints: members, bookings, revenue, social-usage (all with CSV export)
+- ✅ Member edit form with tier dropdown + Social usage section
 - ✅ Audit log view (admin only)
-- ✅ Backfill: both existing members set to `UNASSIGNED`
-- ✅ Owner reviews and assigns tiers via admin UI
+- ✅ Reporting dashboard (4 report views)
+- ✅ Backfill: existing members manually assigned tiers via admin UI
+- ✅ New signup/invite flows enforce membershipType as required field
 - ❌ No member-facing changes yet (no hiding/showing features)
 
-**Testing:** Admin UI manual test, audit log spot-check
+**Testing:** Admin UI manual test, audit log spot-check, reporting export validation
 
-**Deployment:** Test on staging; deploy to production once owner has assigned tiers.
+**Deployment:** Test on staging; deploy to production. All existing members MUST have a tier assigned before members can log in.
 
 ---
 
@@ -996,7 +1315,7 @@ describe("Membership Tiers - E2E Happy Paths", () => {
 - ✅ Conditional dashboard tiles: show/hide based on tier
 - ✅ Calendar view: Designated only
 - ✅ Properties list: Designated & Social only
-- ✅ Events booking: All tiers (visible)
+- ✅ Events booking: All tiers (visible; unlimited)
 - ✅ Usage display: Social only (shows X/40 in nav)
 
 **Endpoint guards (server-side):**
@@ -1008,81 +1327,48 @@ describe("Membership Tiers - E2E Happy Paths", () => {
 - E2E: each tier navigates to expected sections, forbidden sections 404 or redirect
 - Verify Silver cannot see property picker even if they navigate directly
 
-**Deployment:** Roll out to production once Phase 1 admin ops are complete.
+**Deployment:** Roll out to production once Phase 1 is stable.
 
 ---
 
 ### Phase 3: Social Tier 40-Day Enforcement (1 week)
 
 **Deliverables:**
-- ✅ POST `/api/bookings/property` guard: check Social tier usage
+- ✅ POST `/api/bookings/property` guard: check Social tier usage against 8/1-7/31 period
 - ✅ Usage counter increment on booking confirm
+- ✅ Cross-period booking logic: entire booking counts against start-date period
 - ✅ Booking form: show "X remaining days" warning for Social
-- ✅ Reject booking if it would exceed 40 days
-- ✅ Admin can manually adjust/grant/comp usage
-- ✅ Year boundary handling (usage resets Jan 1 by default; OR member anniversary if configured)
+- ✅ Reject booking if it would exceed 40-day cap for the period
+- ✅ Admin can manually adjust/grant/comp usage (logged in audit trail)
 
-**Testing:** Integration tests for booking cap enforcement, year-reset logic
+**Testing:** 
+- Integration tests for booking cap enforcement
+- Integration tests for period boundary handling
+- E2E: Social member books up to 40 days, then rejected on overage
 
 **Deployment:** Final phase; production rollout once all Phase 2 tests pass.
 
 ---
 
-## 10. Open Questions for Owner
+## 10. Reporting Endpoints (Admin API)
 
-Before Phase 1 begins, the owner must decide:
+New admin-only endpoints that power the reporting dashboard:
 
-1. **Annual Reset Boundary**: Should Social member usage reset on:
-   - Jan 1 (calendar year) — simpler, standard
-   - Membership anniversary (member's signup date) — per-member tracking required
-   - Custom date (e.g., Sept 1 for lodge fiscal year)
-   
-   *Recommendation: Jan 1 (calendar year) for simplicity.*
+```typescript
+// GET /api/admin/reports/members?tier=DESIGNATED
+// Returns array of members, filterable by tier
 
-2. **Year Boundary Crossings**: If a Social member books a 10-day property that spans Dec 31 → Jan 1 (5 days in 2026, 5 days in 2027):
-   - Count all 10 days against 2026?
-   - Split across years (5 + 5)?
-   - Count only the check-in year (2026)?
-   
-   *Recommendation: Count against the year of the check-in date.*
+// GET /api/admin/reports/bookings?tier=SOCIAL&startDate=2026-01-01&endDate=2026-12-31
+// Returns array of bookings with property-days, status, member tier
 
-3. **Admin Override Authority**: Can admins (Operations staff) override the 40-day cap for Social members (e.g., "owner wants to grant this member an extra 10 days this year")?
-   - Yes → build admin override flag
-   - No → cap is absolute; admin can only adjust via usage counter
-   
-   *Recommendation: Yes, admins can adjust (via the usage-adjust endpoint); cap remains enforced for regular bookings.*
+// GET /api/admin/reports/revenue?tier=DESIGNATED&startDate=...&endDate=...
+// Returns revenue metrics: total, by tier, by booking type
 
-4. **Silver Tier Event Pricing**: Should Silver members see event pricing before login, or only after they authenticate?
-   - Public pricing → same as Designated/Social
-   - Member-rate pricing only → login required to see price
-   
-   *Recommendation: Member-rate pricing after login (protects confidentiality; non-members see marketing page only).*
+// GET /api/admin/reports/social-usage?periodStartDate=2026-08-01
+// Returns Social member usage: days used, remaining, adjustments by member
 
-5. **Designated ↔ Silver Conversion**: If a Designated member downgrade to Silver, what happens to their existing property bookings?
-   - Honor existing bookings (don't cancel)
-   - Cancel future property bookings
-   - Require admin review before downgrade
-   
-   *Recommendation: Honor existing bookings; cancel future ones; log warning in audit.*
-
-6. **Event Booking Caps**: Are there any event-booking limits by tier (e.g., Social limited to 2 guided events/year)?
-   - Current requirement: NO limits; all tiers can book events freely
-   - Owner preference?
-   
-   *Recommendation: No limits on events; tiers differ only on properties.*
-
-7. **UNASSIGNED Member Access**: During the backfill phase (before owner assigns tiers), should unassigned members:
-   - See a locked portal ("awaiting tier assignment")?
-   - Access as SOCIAL (permissive default)?
-   - Access nothing (deny all)?
-   
-   *Recommendation: Deny all; owner must assign tier before access granted. Prevents confusion.*
-
-8. **Usage Reporting**: Do you want monthly/quarterly usage reports for all Social members (e.g., "Member X has used 22/40 days as of July 31")?
-   - Yes → build a report page in admin dashboard
-   - No → on-demand lookup only (admin views per member)
-   
-   *Recommendation: Yes, add a Social members usage dashboard for admin review.*
+// All reports support ?export=csv for direct CSV download
+```
 
 ---
 
@@ -1113,31 +1399,62 @@ Before Phase 1 begins, the owner must decide:
 
 ## Appendix: Implementation Checklist
 
-- [ ] Schema: MembershipType enum created
-- [ ] Schema: membership_type column added to members
-- [ ] Schema: membership_usage table created
-- [ ] Schema: membership_audit table created
-- [ ] Endpoint: PATCH /api/admin/members/:id/tier
-- [ ] Endpoint: GET /api/admin/members/:id/usage
-- [ ] Endpoint: PATCH /api/admin/members/:id/usage/adjust
-- [ ] Endpoint: GET /api/admin/audit/:memberId
+**Phase 1: Schema + Admin UI**
+- [ ] Schema: MembershipType enum (DESIGNATED, SILVER, SOCIAL)
+- [ ] Schema: membership_type column added to members (NOT NULL, required)
+- [ ] Schema: membership_usage table created with periodStartDate (8/1) key
+- [ ] Schema: membership_audit table created with delta tracking
+- [ ] Endpoint: PATCH /api/admin/members/:id/tier (with audit log)
+- [ ] Endpoint: GET /api/admin/members/:id/usage (by periodStartDate)
+- [ ] Endpoint: PATCH /api/admin/members/:id/usage/adjust (manual adjustment with audit)
+- [ ] Endpoint: GET /api/admin/audit/:memberId (audit log view)
+- [ ] Endpoint: GET /api/admin/reports/members (CSV export)
+- [ ] Endpoint: GET /api/admin/reports/bookings (CSV export)
+- [ ] Endpoint: GET /api/admin/reports/revenue (CSV export)
+- [ ] Endpoint: GET /api/admin/reports/social-usage (CSV export)
+- [ ] Admin UI: Member edit form tier dropdown
+- [ ] Admin UI: Social usage display + manual adjust button
+- [ ] Admin UI: Audit log view
+- [ ] Admin UI: Reports dashboard (4 report views)
+- [ ] Backfill: existing members manually assigned tiers via admin UI
+- [ ] Member signup/invite flows: membershipType as required field
+
+**Phase 2: Member-Facing UI (Conditional Rendering)**
 - [ ] Guard: requireMembershipTier()
 - [ ] Guard: requireAdminRole()
-- [ ] Decorator: withUsageCheck()
-- [ ] GET /api/properties: add tier guard
-- [ ] GET /api/calendar/master: add tier guard
-- [ ] POST /api/bookings/property: add usage check
-- [ ] Admin UI: Member edit form tier dropdown
-- [ ] Admin UI: Social usage display + adjust button
-- [ ] Admin UI: Audit log view
+- [ ] Middleware: withUsageCheck() (with 8/1-7/31 period logic)
+- [ ] GET /api/properties: add tier guard (DESIGNATED, SOCIAL only)
+- [ ] GET /api/calendar/master: add tier guard (DESIGNATED only)
+- [ ] GET /api/events: all tiers can access
 - [ ] Member UI: Conditional nav per tier
 - [ ] Member UI: Conditional dashboard tiles
-- [ ] Member UI: Usage card (Social only)
-- [ ] Member UI: Booking form usage warning
-- [ ] Backfill: both members → UNASSIGNED
-- [ ] Tests: unit tests for guards
-- [ ] Tests: integration tests for booking flows
-- [ ] Tests: E2E happy paths per tier
-- [ ] Documentation: README for admins
-- [ ] Owner input: resolve all 8 open questions
+- [ ] Member UI: Usage card (Social only, shows X/40)
+- [ ] Member UI: Booking form (event-only for Silver; property+event for others)
+
+**Phase 3: Social Tier 40-Day Enforcement**
+- [ ] POST /api/bookings/property: add usage check with periodStartDate logic
+- [ ] POST /api/bookings/property: increment usage counter on confirmation
+- [ ] POST /api/bookings/property: handle cross-period bookings (entire booking against start date period)
+- [ ] Client: Booking form usage warning (remaining days display)
+- [ ] Client: Reject booking UI if cap exceeded
+
+**Testing**
+- [ ] Unit tests: requireMembershipTier() guards
+- [ ] Unit tests: period date calculation (getPeriodStartDate)
+- [ ] Unit tests: usage counter increment logic
+- [ ] Integration tests: each tier's booking flows
+- [ ] Integration tests: cross-period booking counting
+- [ ] Integration tests: admin usage adjust + audit log
+- [ ] Integration tests: reports endpoint filtering & CSV export
+- [ ] E2E: Designated happy path (full access)
+- [ ] E2E: Silver happy path (events-only)
+- [ ] E2E: Social happy path (property booking with cap)
+- [ ] E2E: Social overage rejection
+- [ ] E2E: Admin tier change workflow
+
+**Documentation**
+- [ ] README: admin guide for tier management
+- [ ] README: member guide for Social tier cap
+- [ ] Comment in getPeriodStartDate() on period logic
+- [ ] Comment in withUsageCheck() on 8/1 boundary
 
