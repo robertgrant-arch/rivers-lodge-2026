@@ -3,32 +3,17 @@ import { trpc } from "@shared/lib/trpc";
 import { toast } from "sonner";
 import { Button } from "@shared/ui/button";
 
-type MasterCalendarAccessSettings = {
-  Designated: boolean;
-  Silver: boolean;
-  Social: boolean;
-  Admin: boolean;
-  Employee: boolean;
-};
-
-type PropertyAccessSettings = Record<string, Record<string, boolean>>;
+type SkillGroup = "Designated" | "Silver" | "Social" | "Admin" | "Employee";
 
 export default function PortalCalendarSettings() {
-  const [masterSettings, setMasterSettings] = useState<MasterCalendarAccessSettings>({
-    Designated: true,
-    Silver: false,
-    Social: false,
-    Admin: true,
-    Employee: true,
-  });
-
-  const [propertySettings, setPropertySettings] = useState<PropertyAccessSettings>({});
+  const [masterSkillGroups, setMasterSkillGroups] = useState<SkillGroup[]>(["Designated", "Admin", "Employee"]);
+  const [propertySkillGroups, setPropertySkillGroups] = useState<Record<string, SkillGroup[]>>({});
   const [isSaving, setIsSaving] = useState(false);
 
-  const masterCalendarQuery = trpc.admin.calendarSettings.getMasterCalendarAccess.useQuery();
-  const propertyCalendarQuery = trpc.admin.calendarSettings.getPropertyCalendarAccess.useQuery();
+  const masterCalendarQuery = trpc.admin.calendarSettings.getMasterCalendarAccessBySkillGroup.useQuery();
+  const propertyCalendarQuery = trpc.admin.calendarSettings.getPropertyCalendarAccessBySkillGroup.useQuery();
 
-  const updateMasterMutation = trpc.admin.calendarSettings.updateMasterCalendarAccess.useMutation({
+  const updateMasterMutation = trpc.admin.calendarSettings.updateMasterCalendarAccessBySkillGroup.useMutation({
     onSuccess: () => {
       toast.success("Master Calendar access updated");
       masterCalendarQuery.refetch();
@@ -38,7 +23,7 @@ export default function PortalCalendarSettings() {
     },
   });
 
-  const updatePropertyMutation = trpc.admin.calendarSettings.updatePropertyCalendarAccess.useMutation({
+  const updatePropertyMutation = trpc.admin.calendarSettings.updatePropertyCalendarAccessBySkillGroup.useMutation({
     onSuccess: () => {
       toast.success("Property calendar access updated");
       propertyCalendarQuery.refetch();
@@ -50,32 +35,40 @@ export default function PortalCalendarSettings() {
 
   useEffect(() => {
     if (masterCalendarQuery.data) {
-      setMasterSettings(masterCalendarQuery.data);
+      setMasterSkillGroups(masterCalendarQuery.data);
     }
   }, [masterCalendarQuery.data]);
 
   useEffect(() => {
     if (propertyCalendarQuery.data) {
-      setPropertySettings(propertyCalendarQuery.data);
+      setPropertySkillGroups(propertyCalendarQuery.data);
     }
   }, [propertyCalendarQuery.data]);
 
-  const handleMasterToggle = (key: keyof MasterCalendarAccessSettings) => {
-    const updated = { ...masterSettings, [key]: !masterSettings[key] };
-    setMasterSettings(updated);
+  const handleMasterToggle = (skillGroup: SkillGroup) => {
+    setMasterSkillGroups((prev) =>
+      prev.includes(skillGroup) ? prev.filter((g) => g !== skillGroup) : [...prev, skillGroup]
+    );
   };
 
-  const handlePropertyToggle = (propertyId: string, tier: string) => {
-    const updated = { ...propertySettings };
-    if (!updated[propertyId]) updated[propertyId] = {};
-    updated[propertyId][tier] = !updated[propertyId][tier];
-    setPropertySettings(updated);
+  const handlePropertyToggle = (propertyId: string, skillGroup: SkillGroup) => {
+    setPropertySkillGroups((prev) => {
+      const updated = { ...prev };
+      if (!updated[propertyId]) updated[propertyId] = [];
+      const groups = updated[propertyId];
+      if (groups.includes(skillGroup)) {
+        updated[propertyId] = groups.filter((g) => g !== skillGroup);
+      } else {
+        updated[propertyId] = [...groups, skillGroup];
+      }
+      return updated;
+    });
   };
 
   const saveMasterSettings = async () => {
     setIsSaving(true);
     try {
-      await updateMasterMutation.mutateAsync(masterSettings);
+      await updateMasterMutation.mutateAsync(masterSkillGroups);
     } finally {
       setIsSaving(false);
     }
@@ -84,14 +77,13 @@ export default function PortalCalendarSettings() {
   const savePropertySettings = async () => {
     setIsSaving(true);
     try {
-      await updatePropertyMutation.mutateAsync(propertySettings);
+      await updatePropertyMutation.mutateAsync(propertySkillGroups);
     } finally {
       setIsSaving(false);
     }
   };
 
-  const tiers = ["Designated", "Silver", "Social"];
-  const staffRoles = ["Admin", "Employee"];
+  const allSkillGroups: SkillGroup[] = ["Designated", "Silver", "Social", "Admin", "Employee"];
   const properties = [
     { id: "1", name: "Grand Lodge" },
     { id: "2", name: "River House" },
@@ -101,48 +93,28 @@ export default function PortalCalendarSettings() {
     <div className="space-y-12">
       <div>
         <h1 className="font-serif text-4xl text-white mb-2">Calendar Access Settings</h1>
-        <p className="text-sm font-sans text-white/40">Control which skill groups can view the Master Calendar and individual property calendars.</p>
+        <p className="text-sm font-sans text-white/40">Control which skill groups can view the Master Calendar and individual property calendars. A skill group is a combination of membership tier and optional staff role.</p>
       </div>
 
       {/* Master Calendar Access */}
       <div className="space-y-6">
         <div>
           <h2 className="font-serif text-2xl text-white mb-1">Master Calendar Access</h2>
-          <p className="text-sm font-sans text-white/40 mb-4">Only checked groups can view the estate-wide Master Calendar.</p>
+          <p className="text-sm font-sans text-white/40 mb-4">Only checked skill groups can view the estate-wide Master Calendar. Social is OFF by default.</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Member Tiers */}
-          <div className="space-y-3">
-            <h3 className="text-sm font-sans font-medium text-white/60 tracking-[0.08em] uppercase">Member Tiers</h3>
-            {tiers.map((tier) => (
-              <label key={tier} className="flex items-center gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={masterSettings[tier as keyof MasterCalendarAccessSettings] || false}
-                  onChange={() => handleMasterToggle(tier as keyof MasterCalendarAccessSettings)}
-                  className="w-4 h-4 rounded border border-white/20 bg-transparent checked:bg-[var(--gold)] checked:border-[var(--gold)] cursor-pointer"
-                />
-                <span className="text-sm font-sans text-white">{tier}</span>
-              </label>
-            ))}
-          </div>
-
-          {/* Staff Roles */}
-          <div className="space-y-3">
-            <h3 className="text-sm font-sans font-medium text-white/60 tracking-[0.08em] uppercase">Staff Roles</h3>
-            {staffRoles.map((role) => (
-              <label key={role} className="flex items-center gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={masterSettings[role as keyof MasterCalendarAccessSettings] || false}
-                  onChange={() => handleMasterToggle(role as keyof MasterCalendarAccessSettings)}
-                  className="w-4 h-4 rounded border border-white/20 bg-transparent checked:bg-[var(--gold)] checked:border-[var(--gold)] cursor-pointer"
-                />
-                <span className="text-sm font-sans text-white">{role}</span>
-              </label>
-            ))}
-          </div>
+        <div className="space-y-3">
+          {allSkillGroups.map((skillGroup) => (
+            <label key={skillGroup} className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={masterSkillGroups.includes(skillGroup)}
+                onChange={() => handleMasterToggle(skillGroup)}
+                className="w-4 h-4 rounded border border-white/20 bg-transparent checked:bg-[var(--gold)] checked:border-[var(--gold)] cursor-pointer"
+              />
+              <span className="text-sm font-sans text-white">{skillGroup}</span>
+            </label>
+          ))}
         </div>
 
         <div className="pt-4">
@@ -168,38 +140,18 @@ export default function PortalCalendarSettings() {
             <div key={property.id} className="border border-white/8 rounded p-6">
               <h3 className="text-lg font-sans font-medium text-white mb-4">{property.name}</h3>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Tiers */}
-                <div className="space-y-3">
-                  <h4 className="text-sm font-sans font-medium text-white/60 tracking-[0.08em] uppercase">Member Tiers</h4>
-                  {tiers.map((tier) => (
-                    <label key={`${property.id}-${tier}`} className="flex items-center gap-3 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={propertySettings[property.id]?.[tier] || false}
-                        onChange={() => handlePropertyToggle(property.id, tier)}
-                        className="w-4 h-4 rounded border border-white/20 bg-transparent checked:bg-[var(--gold)] checked:border-[var(--gold)] cursor-pointer"
-                      />
-                      <span className="text-sm font-sans text-white">{tier}</span>
-                    </label>
-                  ))}
-                </div>
-
-                {/* Staff Roles */}
-                <div className="space-y-3">
-                  <h4 className="text-sm font-sans font-medium text-white/60 tracking-[0.08em] uppercase">Staff Roles</h4>
-                  {staffRoles.map((role) => (
-                    <label key={`${property.id}-${role}`} className="flex items-center gap-3 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={propertySettings[property.id]?.[role] || false}
-                        onChange={() => handlePropertyToggle(property.id, role)}
-                        className="w-4 h-4 rounded border border-white/20 bg-transparent checked:bg-[var(--gold)] checked:border-[var(--gold)] cursor-pointer"
-                      />
-                      <span className="text-sm font-sans text-white">{role}</span>
-                    </label>
-                  ))}
-                </div>
+              <div className="space-y-3">
+                {allSkillGroups.map((skillGroup) => (
+                  <label key={`${property.id}-${skillGroup}`} className="flex items-center gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={propertySkillGroups[property.id]?.includes(skillGroup) || false}
+                      onChange={() => handlePropertyToggle(property.id, skillGroup)}
+                      className="w-4 h-4 rounded border border-white/20 bg-transparent checked:bg-[var(--gold)] checked:border-[var(--gold)] cursor-pointer"
+                    />
+                    <span className="text-sm font-sans text-white">{skillGroup}</span>
+                  </label>
+                ))}
               </div>
             </div>
           ))}
@@ -218,13 +170,26 @@ export default function PortalCalendarSettings() {
 
       {/* Info Box */}
       <div className="border border-[var(--gold)]/20 bg-[var(--gold)]/5 rounded p-6">
-        <h3 className="text-sm font-sans font-medium text-[var(--gold)] mb-2 tracking-[0.08em] uppercase">About Skill Groups</h3>
-        <ul className="text-sm font-sans text-white/60 space-y-1">
-          <li>• <strong>Designated</strong>: Designated membership tier</li>
-          <li>• <strong>Silver</strong>: Silver membership tier</li>
-          <li>• <strong>Social</strong>: Social membership tier</li>
-          <li>• <strong>Admin</strong>: Users with admin staff role</li>
-          <li>• <strong>Employee</strong>: Users with employee staff role</li>
+        <h3 className="text-sm font-sans font-medium text-[var(--gold)] mb-3 tracking-[0.08em] uppercase">Understanding Skill Groups</h3>
+        <p className="text-sm font-sans text-white/60 mb-3">
+          A skill group represents a user's combination of membership tier and optional staff role. A single user can belong to multiple skill groups.
+        </p>
+        <ul className="text-sm font-sans text-white/60 space-y-2">
+          <li className="space-y-1">
+            <strong className="text-white">Member Tier Skill Groups:</strong>
+            <ul className="ml-4 space-y-1">
+              <li>• <strong>Designated</strong>: All members with Designated tier</li>
+              <li>• <strong>Silver</strong>: All members with Silver tier (cannot see Master Calendar by default)</li>
+              <li>• <strong>Social</strong>: All members with Social tier (cannot see Master Calendar by default)</li>
+            </ul>
+          </li>
+          <li className="space-y-1">
+            <strong className="text-white">Staff Role Skill Groups:</strong>
+            <ul className="ml-4 space-y-1">
+              <li>• <strong>Admin</strong>: Users with admin staff role (can manage all calendars)</li>
+              <li>• <strong>Employee</strong>: Users with employee staff role (can access calendars per permission)</li>
+            </ul>
+          </li>
         </ul>
       </div>
     </div>

@@ -70,6 +70,10 @@ export function CalendarTabs() {
     retry: false,
   });
 
+  const accessibleProperties = trpc.booking.bookings.accessibleProperties.useQuery(undefined, {
+    staleTime: 60000,
+  });
+
   const propertyCalendar = trpc.booking.bookings.propertyCalendarView.useQuery(
     { propertyId: selectedPropertyId ?? 0 },
     {
@@ -80,6 +84,12 @@ export function CalendarTabs() {
   );
 
   const masterAccessible = !masterCalendar.isError;
+  const properties = accessibleProperties.data ?? [];
+
+  // Auto-select first accessible property if none selected
+  if (properties.length > 0 && selectedPropertyId === null) {
+    setTimeout(() => setSelectedPropertyId(properties[0].id), 0);
+  }
 
   const myBookingDates = (myBookings.data ?? []).map((b: any) => {
     const date = new Date(b.startDate);
@@ -194,28 +204,27 @@ export function CalendarTabs() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div>
             <h3 className="font-serif text-lg text-white mb-4">Select Property</h3>
-            <div className="flex flex-col gap-2">
-              <button
-                onClick={() => setSelectedPropertyId(1)}
-                className={`px-4 py-3 text-left text-sm font-sans transition-colors ${
-                  selectedPropertyId === 1
-                    ? "bg-[var(--gold)]/20 border border-[var(--gold)] text-white"
-                    : "border border-white/8 text-white/60 hover:text-white"
-                }`}
-              >
-                Grand Lodge
-              </button>
-              <button
-                onClick={() => setSelectedPropertyId(2)}
-                className={`px-4 py-3 text-left text-sm font-sans transition-colors ${
-                  selectedPropertyId === 2
-                    ? "bg-[var(--gold)]/20 border border-[var(--gold)] text-white"
-                    : "border border-white/8 text-white/60 hover:text-white"
-                }`}
-              >
-                River House
-              </button>
-            </div>
+            {accessibleProperties.isLoading ? (
+              <p className="text-white/40 text-sm">Loading properties...</p>
+            ) : properties.length === 0 ? (
+              <p className="text-white/40 text-sm">No accessible properties at this time.</p>
+            ) : (
+              <div className="flex flex-col gap-2">
+                {properties.map((prop: any) => (
+                  <button
+                    key={prop.id}
+                    onClick={() => setSelectedPropertyId(prop.id)}
+                    className={`px-4 py-3 text-left text-sm font-sans transition-colors ${
+                      selectedPropertyId === prop.id
+                        ? "bg-[var(--gold)]/20 border border-[var(--gold)] text-white"
+                        : "border border-white/8 text-white/60 hover:text-white"
+                    }`}
+                  >
+                    {prop.name}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {selectedPropertyId && (
@@ -223,7 +232,7 @@ export function CalendarTabs() {
               {propertyCalendar.isLoading ? (
                 <p className="text-white/40">Loading calendar...</p>
               ) : propertyCalendar.isError ? (
-                <p className="text-red-400">Access denied to this property calendar</p>
+                <p className="text-white/40">No calendar data available.</p>
               ) : (
                 <MiniCalendar dates={propertyBookingDates} title="Property Bookings" />
               )}
