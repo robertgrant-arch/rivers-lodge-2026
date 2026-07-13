@@ -4,18 +4,18 @@ import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const projectRoot = path.resolve(__dirname, '..');
-const srcDb = path.join(projectRoot, 'db');
+const srcDb = path.join(projectRoot, '_core', 'db');
 const distDb = path.join(projectRoot, 'dist', 'db');
 
-// Only copy if db/ exists
+// Copy _core/db to dist/db so applySqlMigrations() can find migrations at runtime
 if (existsSync(srcDb)) {
   try {
     cpSync(srcDb, distDb, { recursive: true, force: true });
-    console.log(`✓ Copied db/ to dist/db`);
+    console.log(`✓ Copied _core/db to dist/db`);
   } catch (err) {
-    console.error(`✗ Failed to copy db/: ${err.message}`);
+    console.error(`✗ Failed to copy _core/db: ${err.message}`);
     process.exit(1);
   }
 } else {
-  console.log(`ℹ db/ directory not found; skipping copy`);
+  console.log(`ℹ _core/db directory not found; skipping copy`);
 }
