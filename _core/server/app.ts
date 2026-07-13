@@ -11,6 +11,7 @@ import { submitLimiter, loginLimiter, acceptInviteLimiter, changePasswordLimiter
 import { resolvePort } from "./port";
 import { checkDbHealth } from "./db";
 import { runStartupMigration, checkHuntingPropertiesSchema } from "./startup-migration";
+import { applySqlMigrations } from "./apply-sql-migrations";
 
 let deployedCommit = "unknown";
 try {
@@ -164,6 +165,11 @@ async function startServer() {
   await runStartupMigration();
 
   const port = await resolvePort();
+
+  // ── Apply SQL migrations ────────────────────────────────────────────────────
+  // Runs all pending migrations (0001–0017) from _core/db/migrations/
+  // Uses _migrations_applied table for idempotent tracking
+  await applySqlMigrations();
 
   server.listen(port, () => {
     console.log(`Server running on http://localhost:${port}/`);
