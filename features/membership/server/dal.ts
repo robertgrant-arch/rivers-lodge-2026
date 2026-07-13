@@ -9,7 +9,7 @@ import {
   members,
   InsertMember,
 } from '@core/db/schema';
-import { getDb } from "../../_core/server/db";
+import { getDb, getPortalDb } from "../../_core/server/db";
 
 // ─── Membership Applications ──────────────────────────────────────────────────
 
@@ -34,26 +34,22 @@ export async function updateApplicationStatus(id: number, status: "pending" | "a
 // ─── Members ──────────────────────────────────────────────────────────────────
 
 export async function getAllMembers() {
-  const db = await getDb();
-  if (!db) return [];
+  const db = getPortalDb();
   return db.select().from(members).orderBy(desc(members.createdAt));
 }
 
 export async function getMemberByUserId(userId: string) {
-  const db = await getDb();
-  if (!db) return undefined;
+  const db = getPortalDb();
   const result = await db.select().from(members).where(eq(members.userId, userId)).limit(1);
   return result.length > 0 ? result[0] : undefined;
 }
 
 export async function createMember(data: InsertMember) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
+  const db = getPortalDb();
   await db.insert(members).values(data);
 }
 
 export async function updateMember(id: number, data: Partial<InsertMember>) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
+  const db = getPortalDb();
   await db.update(members).set(data).where(eq(members.id, id));
 }
