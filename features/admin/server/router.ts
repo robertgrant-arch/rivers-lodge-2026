@@ -1426,7 +1426,7 @@ const membershipPortalRouter = router({
       cursor: z.number().int().optional(),
     }))
     .query(async ({ input }) => {
-      const db = getDb();
+      const db = getPortalDb();
       const limit = input.limit;
       const conditions = [];
       if (input.status) conditions.push(eq(membershipApplications.status, input.status as any));
@@ -1447,7 +1447,7 @@ const membershipPortalRouter = router({
       notes: z.string().optional(),
     }))
     .mutation(async ({ input, ctx }) => {
-      const db = getDb();
+      const db = getPortalDb();
       await db.update(membershipApplications)
         .set({ status: input.status })
         .where(eq(membershipApplications.id, input.id));
@@ -1464,7 +1464,7 @@ const membershipPortalRouter = router({
     }),
 
   stats: portalProcedure.query(async () => {
-    const db = getDb();
+    const db = getPortalDb();
     const today = new Date().toISOString().split("T")[0];
     const [[total], [active], [inactive], [pendingRenewal]] = await Promise.all([
       db.select({ count: sql<number>`count(*)` }).from(members),
@@ -1488,7 +1488,7 @@ const membershipPortalRouter = router({
       cursor: z.number().int().optional(),
     }))
     .query(async ({ input }) => {
-      const db = getDb();
+      const db = getPortalDb();
       const limit = input.limit;
       const conditions = [];
       if (input.active !== undefined) conditions.push(eq(members.active, input.active));
