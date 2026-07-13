@@ -35,12 +35,34 @@ export async function updateApplicationStatus(id: number, status: "pending" | "a
 
 export async function getAllMembers() {
   const db = getPortalDb();
-  return db.select().from(members).orderBy(desc(members.createdAt));
+  return db.select({
+    id: members.id,
+    userId: members.userId,
+    memberNumber: members.memberNumber,
+    tier: members.tier,
+    joinDate: members.joinDate,
+    renewalDate: members.renewalDate,
+    active: members.active,
+    notes: members.notes,
+    createdAt: members.createdAt,
+    updatedAt: members.updatedAt,
+  }).from(members).orderBy(desc(members.createdAt));
 }
 
 export async function getMemberByUserId(userId: string) {
   const db = getPortalDb();
-  const result = await db.select().from(members).where(eq(members.userId, userId)).limit(1);
+  const result = await db.select({
+    id: members.id,
+    userId: members.userId,
+    memberNumber: members.memberNumber,
+    tier: members.tier,
+    joinDate: members.joinDate,
+    renewalDate: members.renewalDate,
+    active: members.active,
+    notes: members.notes,
+    createdAt: members.createdAt,
+    updatedAt: members.updatedAt,
+  }).from(members).where(eq(members.userId, userId)).limit(1);
   return result.length > 0 ? result[0] : undefined;
 }
 
