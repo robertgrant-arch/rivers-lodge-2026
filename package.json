@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "NODE_ENV=development tsx watch _core/server/app.ts",
     "prebuild": "node scripts/generate-version.mjs && node scripts/run-migrations.mjs",
-    "build": "node scripts/generate-image-variants.mjs && vite build && esbuild _core/server/app.ts --platform=node --packages=external --bundle --format=esm --outfile=dist/index.js && node scripts/copy-db-migrations.mjs",
+    "build": "node scripts/generate-image-variants.mjs && vite build && esbuild _core/server/app.ts --platform=node --packages=external --bundle --format=esm --outfile=dist/index.js && node scripts/copy-db-migrations.mjs && node scripts/verify-migrations-copied.mjs",
     "start": "NODE_ENV=production node dist/index.js",
     "check": "tsc --noEmit",
     "format": "prettier --write .",

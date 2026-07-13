@@ -92,16 +92,51 @@ export async function applySqlMigrations(): Promise<void> {
     // Continue \u2014 the file-based migrator below may still succeed.
   }
 
-  // Resolve migrations directory. When bundled/transpiled, __dirname is not
-  // reliable, so derive from import.meta.url when available, else fall back to
-  // process.cwd().
-  let migrationsDir: string;
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const here = dirname(fileURLToPath((import.meta as any).url));
-    migrationsDir = resolve(here, "..", "db", "migrations");
-  } catch {
-    migrationsDir = resolve(process.cwd(), "_core", "db", "migrations");
+  // ============================================================
+  // RESOLVE MIGRATIONS DIRECTORY (robust, multi-candidate)
+  // ============================================================
+  // After esbuild bundling, __dirname and relative paths become unreliable.
+  // Try multiple candidates and use the first one that exists.
+  // Candidates:
+  //   (a) sibling of import.meta.url + /db/migrations (bundled at dist/db)
+  //   (b) __dirname + /../db/migrations (source layout _core/server → _core/db)
+  //   (c) process.cwd() + /_core/db/migrations (source root)
+  //   (d) process.cwd() + /dist/db/migrations (built artifact)
+
+  const cwd = process.cwd();
+  const importMetaUrl = (import.meta as any).url;
+  const importMetaDirname = dirname(fileURLToPath(importMetaUrl));
+
+  console.log("[apply-sql-migrations] cwd:", cwd);
+  console.log("[apply-sql-migrations] import.meta.url:", importMetaUrl);
+
+  const candidates = [
+    join(importMetaDirname, "db", "migrations"),              // (a) sibling of bundled file
+    resolve(importMetaDirname, "..", "db", "migrations"),     // (b) relative from current file
+    resolve(cwd, "_core", "db", "migrations"),                // (c) source root
+    resolve(cwd, "dist", "db", "migrations"),                 // (d) built artifact
+  ];
+
+  console.log("[apply-sql-migrations] candidates tried:", candidates);
+
+  let migrationsDir: string | null = null;
+  for (const candidate of candidates) {
+    try {
+      const stat = await import("node:fs/promises").then(fs => fs.stat(candidate));
+      if (stat.isDirectory()) {
+        migrationsDir = candidate;
+        console.log("[apply-sql-migrations] resolved migrationsDir:", migrationsDir);
+        break;
+      }
+    } catch {
+      // Candidate doesn't exist; try next
+    }
+  }
+
+  if (!migrationsDir) {
+    const error = `[apply-sql-migrations:FATAL] No migrations directory found. Tried: ${candidates.join(", ")}`;
+    console.error(error);
+    process.exit(1);
   }
 
   let files: string[];
@@ -109,18 +144,20 @@ export async function applySqlMigrations(): Promise<void> {
     const entries = await readdir(migrationsDir);
     files = entries.filter((f) => f.endsWith(".sql")).sort();
   } catch (err) {
-    console.warn(
-      `[apply-sql-migrations] could not read ${migrationsDir}: ${
-        err instanceof Error ? err.message : String(err)
-      }`
-    );
-    return;
+    const error = `[apply-sql-migrations:FATAL] could not read ${migrationsDir}: ${
+      err instanceof Error ? err.message : String(err)
+    }`;
+    console.error(error);
+    process.exit(1);
   }
 
   if (files.length === 0) {
-    console.log("[apply-sql-migrations] no .sql files found; nothing to do");
-    return;
+    const error = `[apply-sql-migrations:FATAL] no .sql files found in ${migrationsDir}`;
+    console.error(error);
+    process.exit(1);
   }
+
+  console.log("[apply-sql-migrations] found", files.length, "migration files");
 
   const pgModule = await import("pg");
   const Pool = pgModule.Pool;
@@ -144,7 +181,13 @@ export async function applySqlMigrations(): Promise<void> {
         `SELECT filename FROM _migrations_applied`
       );
       const applied = new Set(appliedRes.rows.map((r) => r.filename));
+      const appliedFilenames = Array.from(applied).sort();
+      const pending = files.filter((f) => !applied.has(f));
 
+      console.log("[apply-sql-migrations] previously applied:", appliedFilenames.length > 0 ? appliedFilenames : "(none)");
+      console.log("[apply-sql-migrations] pending:", pending.length > 0 ? pending : "(none)");
+
+      let appliedCount = 0;
       for (const file of files) {
         if (applied.has(file)) {
           continue;
@@ -162,6 +205,7 @@ export async function applySqlMigrations(): Promise<void> {
           );
           await client.query("COMMIT");
           console.log(`[apply-sql-migrations] \u2705 ${file}`);
+          appliedCount++;
         } catch (err) {
           await client.query("ROLLBACK").catch(() => undefined);
           console.error(
@@ -176,7 +220,9 @@ export async function applySqlMigrations(): Promise<void> {
         }
       }
 
-      console.log("[apply-sql-migrations] done");
+      console.log(
+        `[apply-sql-migrations] all migrations applied successfully (${appliedCount} pending executed, ${appliedFilenames.length} already applied)`
+      );
     } finally {
       client.release();
     }
