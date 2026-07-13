@@ -6,7 +6,6 @@ services:
     plan: starter
     branch: main
     autoDeploy: true
-    preDeployCommand: node scripts/run-migrations.mjs
     buildCommand: pnpm install --frozen-lockfile && pnpm build
     startCommand: pnpm start
     healthCheckPath: /api/health
