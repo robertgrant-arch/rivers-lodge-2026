@@ -327,12 +327,14 @@ export const membershipRouter = router({
 
   // Filterable member list with joined user data
   members: portalProcedure
-    .input(z.object({ active: z.boolean().optional(), tier: z.string().optional() }))
+    .input(z.object({ active: z.boolean().optional(), tier: z.string().optional(), limit: z.number().int().min(1).max(100).default(25), cursor: z.number().int().optional() }))
     .query(async ({ input }) => {
       const db = getPortalDb();
+      const limit = input.limit;
       const conditions = [];
       if (input.active !== undefined) conditions.push(eq(members.active, input.active));
       if (input.tier) conditions.push(eq(members.tier, input.tier as any));
+      if (input.cursor !== undefined) conditions.push(lt(members.id, input.cursor));
       const query =
         conditions.length > 0
           ? db
@@ -344,7 +346,10 @@ export const membershipRouter = router({
               .select({ member: members, user: users })
               .from(members)
               .leftJoin(users, eq(members.userId, users.id));
-      return query.orderBy(desc(members.createdAt));
+      const rows = await query.orderBy(desc(members.id)).limit(limit + 1);
+      const items = rows.slice(0, limit);
+      const nextCursor = rows.length > limit ? (items[items.length - 1]?.member.id ?? null) : null;
+      return { items, nextCursor };
     }),
 
   // Search users by name or email (for the Add Member form in the portal)
