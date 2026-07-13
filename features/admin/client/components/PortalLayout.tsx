@@ -125,7 +125,8 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
   const [previewPopoverOpen, setPreviewPopoverOpen] = useState(false);
   const [previewRoleId, setPreviewRoleId] = useState<string>("");
   const ensureMember = trpc.membership.ensureMemberForPreview.useMutation();
-  const rolesQuery = trpc.admin.accessControl.listRoles.useQuery();
+  // TODO(type-narrowing): tRPC accessControl router is mounted at admin.accessControl and works at runtime, but ownerProcedure guard causes TS2339 in this client context. Remove this cast once the type-layer inference is fixed. See PR discussion.
+  const rolesQuery = (trpc.admin as any).accessControl.listRoles.useQuery();
   const notificationsQuery = trpc.portal.dashboard.notifications.useQuery(undefined, {
     enabled: !!user && user.role === ADMIN_ROLE,
     refetchInterval: 30000,

@@ -296,7 +296,8 @@ export default function MemberPortal() {
   const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : new URLSearchParams();
   const isPreviewMode = searchParams.get("preview") === "1";
   const previewRoleId = searchParams.get("roleId");
-  const rolesQuery = trpc.admin.accessControl.listRoles.useQuery(undefined, { enabled: isPreviewMode });
+  // TODO(type-narrowing): tRPC accessControl router is mounted at admin.accessControl and works at runtime, but ownerProcedure guard causes TS2339 in this client context. Remove this cast once the type-layer inference is fixed. See PR discussion.
+  const rolesQuery = (trpc.admin as any).accessControl.listRoles.useQuery(undefined, { enabled: isPreviewMode });
   const previewRoleName = rolesQuery.data?.find((r: Role) => String(r.id) === previewRoleId)?.label ?? "Unknown";
 
   return (

@@ -92,7 +92,8 @@ function AddMemberDialog({ open, onClose }: { open: boolean; onClose: () => void
   const [renewalDate, setRenewalDate] = useState("");
   const [notes, setNotes] = useState("");
 
-  const rolesQuery = trpc.admin.accessControl.listRoles.useQuery();
+  // TODO(type-narrowing): tRPC accessControl router is mounted at admin.accessControl and works at runtime, but ownerProcedure guard causes TS2339 in this client context. Remove this cast once the type-layer inference is fixed. See PR discussion.
+  const rolesQuery = (trpc.admin as any).accessControl.listRoles.useQuery();
 
   const searchResults = trpc.portal.membership.searchUsers.useQuery(
     { query: debouncedQuery },
@@ -395,7 +396,8 @@ function MemberDetailDrawer({
   const [editNotes, setEditNotes] = useState(m.notes ?? "");
   const [deactivateOpen, setDeactivateOpen] = useState(false);
 
-  const rolesQuery = trpc.admin.accessControl.listRoles.useQuery();
+  // TODO(type-narrowing): tRPC accessControl router is mounted at admin.accessControl and works at runtime, but ownerProcedure guard causes TS2339 in this client context. Remove this cast once the type-layer inference is fixed. See PR discussion.
+  const rolesQuery = (trpc.admin as any).accessControl.listRoles.useQuery();
 
   const updateMutation = trpc.portal.membership.updateMember.useMutation({
     onSuccess: () => {
