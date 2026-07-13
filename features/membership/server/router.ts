@@ -338,12 +338,50 @@ export const membershipRouter = router({
       const query =
         conditions.length > 0
           ? db
-              .select({ member: members, user: users })
+              .select({
+                member: {
+                  id: members.id,
+                  userId: members.userId,
+                  memberNumber: members.memberNumber,
+                  tier: members.tier,
+                  socialParentOrganizationId: members.socialParentOrganizationId,
+                  roleId: members.roleId,
+                  joinDate: members.joinDate,
+                  renewalDate: members.renewalDate,
+                  active: members.active,
+                  notes: members.notes,
+                  createdAt: members.createdAt,
+                  updatedAt: members.updatedAt,
+                },
+                user: {
+                  id: users.id,
+                  email: users.email,
+                },
+              })
               .from(members)
               .leftJoin(users, eq(members.userId, users.id))
               .where(and(...conditions))
           : db
-              .select({ member: members, user: users })
+              .select({
+                member: {
+                  id: members.id,
+                  userId: members.userId,
+                  memberNumber: members.memberNumber,
+                  tier: members.tier,
+                  socialParentOrganizationId: members.socialParentOrganizationId,
+                  roleId: members.roleId,
+                  joinDate: members.joinDate,
+                  renewalDate: members.renewalDate,
+                  active: members.active,
+                  notes: members.notes,
+                  createdAt: members.createdAt,
+                  updatedAt: members.updatedAt,
+                },
+                user: {
+                  id: users.id,
+                  email: users.email,
+                },
+              })
               .from(members)
               .leftJoin(users, eq(members.userId, users.id));
       const rows = await query.orderBy(desc(members.id)).limit(limit + 1);
