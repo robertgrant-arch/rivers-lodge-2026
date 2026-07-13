@@ -38,12 +38,22 @@ function runSQL(sql, description) {
   }
 }
 
-// 1. APPLIED MIGRATIONS
+// 1. APPLIED MIGRATIONS - Check both possible tracking tables
+console.log('\n▶ 1a. Applied Migrations (schema_migrations)');
+console.log('─'.repeat(60));
 runSQL(`
   SELECT version, installed_on, success
   FROM schema_migrations
   ORDER BY version;
-`, '1. Applied Migrations (schema_migrations)');
+`, '1a. Applied Migrations (schema_migrations)');
+
+console.log('\n▶ 1b. Applied Migrations (_migrations_applied - boot-time runner)');
+console.log('─'.repeat(60));
+runSQL(`
+  SELECT filename, applied_at
+  FROM _migrations_applied
+  ORDER BY applied_at;
+`, '1b. Applied Migrations (_migrations_applied)');
 
 // 2. TABLE EXISTENCE CHECK
 const tables = ['roles', 'skill_groups', 'property_skill_groups', 'role_skill_group_access', 'role_property_skill_group_access', 'members'];
