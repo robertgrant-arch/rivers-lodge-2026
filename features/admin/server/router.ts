@@ -1488,20 +1488,47 @@ const membershipPortalRouter = router({
       cursor: z.number().int().optional(),
     }))
     .query(async ({ input }) => {
-      const db = getPortalDb();
-      const limit = input.limit;
-      const conditions = [];
-      if (input.active !== undefined) conditions.push(eq(members.active, input.active));
-      if (input.tier) conditions.push(eq(members.tier, input.tier as any));
-      if (input.cursor !== undefined) conditions.push(lt(members.id, input.cursor));
-      const rows = await db.select({ member: members, user: users }).from(members)
-        .leftJoin(users, eq(members.userId, users.id))
-        .where(conditions.length ? and(...conditions) : undefined)
-        .orderBy(desc(members.id))
-        .limit(limit + 1);
-      const items = rows.slice(0, limit);
-      const nextCursor = rows.length > limit ? (items[items.length - 1]?.member.id ?? null) : null;
-      return { items, nextCursor };
+      try {
+        const db = getPortalDb();
+        const limit = input.limit;
+        const conditions = [];
+        if (input.active !== undefined) conditions.push(eq(members.active, input.active));
+        if (input.tier) conditions.push(eq(members.tier, input.tier as any));
+        if (input.cursor !== undefined) conditions.push(lt(members.id, input.cursor));
+        // Explicit column projection: select only columns confirmed present in prod.
+        // Excludes socialParentOrganizationId and roleId which exist in schema but not in prod.
+        const rows = await db.select({
+          member: {
+            id: members.id,
+            userId: members.userId,
+            memberNumber: members.memberNumber,
+            tier: members.tier,
+            joinDate: members.joinDate,
+            renewalDate: members.renewalDate,
+            active: members.active,
+            notes: members.notes,
+            createdAt: members.createdAt,
+            updatedAt: members.updatedAt,
+          },
+          user: {
+            id: users.id,
+            email: users.email,
+          },
+        }).from(members)
+          .leftJoin(users, eq(members.userId, users.id))
+          .where(conditions.length ? and(...conditions) : undefined)
+          .orderBy(desc(members.id))
+          .limit(limit + 1);
+        const items = rows.slice(0, limit);
+        const nextCursor = rows.length > limit ? (items[items.length - 1]?.member.id ?? null) : null;
+        return { items, nextCursor };
+      } catch (cause) {
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to load members',
+          cause: cause instanceof Error ? cause : undefined,
+        });
+      }
     }),
 
   updateMember: portalProcedure
