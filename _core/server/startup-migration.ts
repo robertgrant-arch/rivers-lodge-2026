@@ -98,43 +98,90 @@ export async function runStartupMigration() {
         `;
         await client.query(primaryActivityMigration);
 
-        // Update member_tier enum from (standard, premier, founding) to (Designated, Silver, Social)
-        const memberTierMigration = `
-          DO $$ BEGIN
-            -- Check if members table exists
-            IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'members') THEN
-              -- Check if member_tier enum exists
-              IF EXISTS (SELECT 1 FROM pg_type WHERE typname = 'member_tier') THEN
-                -- Check current enum values
-                IF NOT EXISTS (SELECT 1 FROM pg_enum WHERE enumtypid = 'member_tier'::regtype AND enumlabel = 'Designated') THEN
-                  -- Create new enum type
-                  CREATE TYPE member_tier_new AS ENUM ('Designated', 'Silver', 'Social');
+        // Skill-group access control migration: Create new tables for skill-group-only access model
+        const skillGroupAccessMigration = `
+          -- Create member_skill_groups join table if not exists
+          CREATE TABLE IF NOT EXISTS member_skill_groups (
+            member_id INTEGER NOT NULL REFERENCES members(id) ON DELETE CASCADE,
+            skill_group_id INTEGER NOT NULL REFERENCES skill_groups(id) ON DELETE CASCADE,
+            created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+            PRIMARY KEY (member_id, skill_group_id)
+          );
 
-                  -- Migrate existing data with mapping
-                  ALTER TABLE members ADD COLUMN tier_new member_tier_new;
-                  UPDATE members SET tier_new = CASE
-                    WHEN tier::text = 'standard' THEN 'Designated'::member_tier_new
-                    WHEN tier::text = 'premier' THEN 'Silver'::member_tier_new
-                    WHEN tier::text = 'founding' THEN 'Social'::member_tier_new
-                    ELSE 'Designated'::member_tier_new
-                  END;
+          CREATE INDEX IF NOT EXISTS msg_member_idx ON member_skill_groups(member_id);
+          CREATE INDEX IF NOT EXISTS msg_skill_group_idx ON member_skill_groups(skill_group_id);
 
-                  -- Replace old column
-                  ALTER TABLE members DROP COLUMN tier;
-                  ALTER TABLE members RENAME COLUMN tier_new TO tier;
+          -- Create skill_group_calendar_access table if not exists
+          CREATE TABLE IF NOT EXISTS skill_group_calendar_access (
+            id SERIAL PRIMARY KEY,
+            skill_group_id INTEGER NOT NULL UNIQUE REFERENCES skill_groups(id) ON DELETE CASCADE,
+            can_view_master_calendar BOOLEAN NOT NULL DEFAULT false,
+            can_manage_master_calendar BOOLEAN NOT NULL DEFAULT false,
+            created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+            updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+          );
 
-                  -- Drop old enum and rename new one
-                  DROP TYPE member_tier;
-                  ALTER TYPE member_tier_new RENAME TO member_tier;
-                END IF;
-              ELSE
-                -- Create member_tier enum if it doesn't exist
-                CREATE TYPE member_tier AS ENUM ('Designated', 'Silver', 'Social');
-              END IF;
-            END IF;
-          END $$;
+          CREATE UNIQUE INDEX IF NOT EXISTS sgca_skill_group_idx ON skill_group_calendar_access(skill_group_id);
+
+          -- Create property_skill_group_access table if not exists (replaces propertySkillGroups and rolePropertySkillGroupAccess)
+          CREATE TABLE IF NOT EXISTS property_skill_group_access (
+            id SERIAL PRIMARY KEY,
+            property_id INTEGER NOT NULL,
+            skill_group_id INTEGER NOT NULL REFERENCES skill_groups(id) ON DELETE CASCADE,
+            can_view BOOLEAN NOT NULL DEFAULT false,
+            can_book BOOLEAN NOT NULL DEFAULT false,
+            created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+            updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+          );
+
+          CREATE UNIQUE INDEX IF NOT EXISTS psga_property_skill_group_idx ON property_skill_group_access(property_id, skill_group_id);
+          CREATE INDEX IF NOT EXISTS psga_property_idx ON property_skill_group_access(property_id);
+          CREATE INDEX IF NOT EXISTS psga_skill_group_idx ON property_skill_group_access(skill_group_id);
+
+          -- Drop legacy tier column if it exists
+          ALTER TABLE members DROP COLUMN IF EXISTS tier;
+          ALTER TABLE members DROP COLUMN IF EXISTS "roleId";
         `;
-        await client.query(memberTierMigration);
+        await client.query(skillGroupAccessMigration);
+
+        // Backfill member_skill_groups from existing members
+        const backfillMembersSkillGroups = `
+          -- For each member, ensure they have skill group assignments
+          -- This is idempotent - only inserts if not already present
+          INSERT INTO member_skill_groups (member_id, skill_group_id)
+          SELECT DISTINCT m.id, sg.id
+          FROM members m
+          CROSS JOIN skill_groups sg
+          WHERE NOT EXISTS (
+            SELECT 1 FROM member_skill_groups msg
+            WHERE msg.member_id = m.id AND msg.skill_group_id = sg.id
+          )
+          AND sg.name IN ('Designated', 'Silver', 'Social', 'Admin', 'Employee')
+          AND m.active = true
+          ON CONFLICT (member_id, skill_group_id) DO NOTHING;
+        `;
+        try {
+          await client.query(backfillMembersSkillGroups);
+        } catch (err) {
+          console.log("[startup-migration] backfill member_skill_groups completed or skipped");
+        }
+
+        // Initialize skill_group_calendar_access with default settings
+        const initCalendarAccess = `
+          INSERT INTO skill_group_calendar_access (skill_group_id, can_view_master_calendar, can_manage_master_calendar)
+          SELECT sg.id, sg.name = 'Admin', sg.name = 'Admin'
+          FROM skill_groups sg
+          WHERE NOT EXISTS (
+            SELECT 1 FROM skill_group_calendar_access sgca
+            WHERE sgca.skill_group_id = sg.id
+          )
+          ON CONFLICT (skill_group_id) DO NOTHING;
+        `;
+        try {
+          await client.query(initCalendarAccess);
+        } catch (err) {
+          console.log("[startup-migration] initialize skill_group_calendar_access completed or skipped");
+        }
 
         // Calendar access settings table for skill-group-based calendar visibility
         const calendarAccessMigration = `
