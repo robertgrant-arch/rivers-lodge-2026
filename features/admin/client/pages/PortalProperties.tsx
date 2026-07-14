@@ -19,7 +19,6 @@ import {
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from '@shared/ui/dialog';
-import AccessControlPanel from '@features/portal/client/components/AccessControlPanel';
 import { Switch } from '@shared/ui/switch';
 import { Checkbox } from '@shared/ui/checkbox';
 import {
@@ -807,10 +806,6 @@ function EditPropertyForm({
         </div>
       </div>
 
-      {/* Access Control Panel */}
-      <div className="border-t border-stone-700 pt-5">
-        <AccessControlPanel resourceType="property" resourceId={String(initial.id)} />
-      </div>
 
       <DialogFooter className="gap-2 pt-2">
         <Button

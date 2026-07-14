@@ -7,7 +7,6 @@ import PublicLayout from "@/components/PublicLayout";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@shared/ui/dialog';
 import { Eye, X } from "lucide-react";
 import PropertyBrowser from "@features/portal/client/pages/PropertyBrowser";
-import type { Role } from "@features/membership/public";
 
 type Tab = "dashboard" | "bookings" | "request" | "updates" | "messages" | "profile" | "properties";
 
@@ -283,21 +282,12 @@ export default function MemberPortal() {
     { key: "profile",     label: "Profile" },
   ];
 
-  // For staff/admin users without a member record, show their role as the tier label
-  const tierLabel = member?.tier
-    ? member.tier.charAt(0).toUpperCase() + member.tier.slice(1)
-    : isStaff
-      ? (user?.role === "admin" ? "Admin" : "Staff")
-      : "Standard";
   const pendingRequests = (myRequests.data ?? []).filter(r => !["converted","rejected","lost"].includes(r.status));
   const announcements = cmsAnnouncements.data ?? [];
 
-  // Detect admin preview mode via ?preview=1 query param and roleId
+  // Detect admin preview mode via ?preview=1 query param
   const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : new URLSearchParams();
   const isPreviewMode = searchParams.get("preview") === "1";
-  const previewRoleId = searchParams.get("roleId");
-  const rolesQuery = trpc.admin.accessControl.listRoles.useQuery(undefined, { enabled: isPreviewMode });
-  const previewRoleName = rolesQuery.data?.find((r: Role) => String(r.id) === previewRoleId)?.label ?? "Unknown";
 
   return (
     <PublicLayout>
@@ -306,7 +296,7 @@ export default function MemberPortal() {
         <div className="fixed top-0 left-0 right-0 z-[200] bg-amber-600 text-white text-sm font-medium flex items-center justify-between px-4 py-2 shadow-lg">
           <div className="flex items-center gap-2">
             <Eye className="w-4 h-4 flex-shrink-0" />
-            <span>Admin Preview Mode — you are viewing the Member Portal as a {previewRoleName}.</span>
+            <span>Admin Preview Mode — you are viewing the Member Portal with a preview member account.</span>
           </div>
           <a
             href="/ops"
@@ -329,9 +319,11 @@ export default function MemberPortal() {
                   Welcome back, {user?.email?.split("@")[0]}.
                 </h1>
                 <div className="flex items-center gap-3 flex-wrap">
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 border border-[var(--gold)]/40 text-[var(--gold)] text-[10px] tracking-[0.18em] uppercase font-sans">
-                    {tierLabel} Member
-                  </span>
+                  {member && (
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 border border-[var(--gold)]/40 text-[var(--gold)] text-[10px] tracking-[0.18em] uppercase font-sans">
+                      Member
+                    </span>
+                  )}
                   {member?.memberNumber && (
                     <span className="text-sm font-sans text-white/30">#{member.memberNumber}</span>
                   )}
@@ -418,7 +410,7 @@ export default function MemberPortal() {
               {/* Stats row */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {[
-                  { label: "Membership", value: tierLabel, sub: member?.memberNumber ? `#${member.memberNumber}` : "Active" },
+                  { label: "Membership", value: member ? "Active" : "—", sub: member?.memberNumber ? `#${member.memberNumber}` : "N/A" },
                   { label: "Current Season", value: "Spring 2026", sub: "Turkey · Fishing · Clays" },
                   { label: "Stay Requests", value: String((myRequests.data ?? []).length), sub: `${pendingRequests.length} active` },
                   { label: "Messages", value: String(myMessages.data?.length ?? 0), sub: "with concierge" },
@@ -910,7 +902,6 @@ export default function MemberPortal() {
                   {[
                     { label: "Email", value: user?.email ?? "—" },
                     { label: "Email", value: user?.email ?? "—" },
-                    { label: "Membership Tier", value: tierLabel },
                     { label: "Member Number", value: member?.memberNumber ? `#${member.memberNumber}` : "—" },
                     { label: "Status", value: member?.active ? "Active" : isStaff ? "Staff Access" : "Inactive" },
                     { label: "Member Since", value: member?.joinDate ? new Date(member.joinDate).toLocaleDateString("en-US", { month: "long", year: "numeric" }) : "—" },
