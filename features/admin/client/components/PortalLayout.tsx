@@ -134,17 +134,31 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
   const unreadCount = notificationsQuery.data?.length ?? 0;
 
   const handlePreviewAsSkillGroup = async () => {
-    if (!previewSkillGroupId) return;
+    console.log("[Preview] Handler called, skillGroupId:", previewSkillGroupId);
+    if (!previewSkillGroupId) {
+      console.warn("[Preview] No skill group selected, aborting");
+      return;
+    }
     setPreviewLoading(true);
     try {
+      console.log("[Preview] Step 1: Ensuring member...");
       await ensureMember.mutateAsync();
+      console.log("[Preview] Step 1: Member ensured");
+
       const skillGroupIdNum = parseInt(previewSkillGroupId, 10);
+      console.log("[Preview] Step 2: Setting preview skill groups, id:", skillGroupIdNum);
       await setPreviewSkillGroups.mutateAsync({ skillGroupIds: [skillGroupIdNum] });
+      console.log("[Preview] Step 2: Preview skill groups set");
+
+      console.log("[Preview] Step 3: Closing popover and resetting state");
       setPreviewPopoverOpen(false);
       setPreviewSkillGroupId("");
-      window.location.href = `/portal?preview=1&skillGroupId=${skillGroupIdNum}`;
+
+      const targetUrl = `/portal?preview=1&skillGroupId=${skillGroupIdNum}`;
+      console.log("[Preview] Step 4: Navigating to:", targetUrl);
+      window.location.href = targetUrl;
     } catch (err) {
-      console.error("Preview failed:", err);
+      console.error("[Preview] Error during preview setup:", err);
       setPreviewLoading(false);
     }
   };
