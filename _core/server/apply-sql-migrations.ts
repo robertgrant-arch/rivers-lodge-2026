@@ -92,15 +92,18 @@ export async function applySqlMigrations(): Promise<void> {
     // Continue \u2014 the file-based migrator below may still succeed.
   }
 
-  // Resolve migrations directory. When bundled/transpiled, __dirname is not
-  // reliable, so derive from import.meta.url when available, else fall back to
-  // process.cwd().
+  // Resolve migrations directory. When bundled/transpiled to dist/, import.meta.url
+  // points to the compiled dist location, so we resolve relative to that.
+  // The build copies _core/db → dist/db, so migrations are at dist/db/migrations.
   let migrationsDir: string;
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const here = dirname(fileURLToPath((import.meta as any).url));
-    migrationsDir = resolve(here, "..", "db", "migrations");
+    // In bundled context, 'here' is the directory containing the compiled app.js.
+    // Resolve relative to that directory (e.g., /dist → /dist/db/migrations).
+    migrationsDir = resolve(here, "db", "migrations");
   } catch {
+    // Fallback for development: resolve from project root.
     migrationsDir = resolve(process.cwd(), "_core", "db", "migrations");
   }
 
