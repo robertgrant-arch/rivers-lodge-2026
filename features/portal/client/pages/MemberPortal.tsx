@@ -245,7 +245,7 @@ export default function MemberPortal() {
 
   const member = memberStatus.data;
   // Admins, owners, and staff roles always have portal access regardless of member record
-  const STAFF_ROLES = ["admin", "owner", "venue_sales", "events_manager", "membership_manager", "hunt_fish_ops", "hospitality", "staff", "finance"];
+  const STAFF_ROLES = ["admin", "employee", "owner", "venue_sales", "events_manager", "membership_manager", "hunt_fish_ops", "hospitality", "staff", "finance"];
   const isStaff = !!user?.role && STAFF_ROLES.includes(user.role as string);
   const isMember = isStaff || (!!member && member.active);
 
@@ -409,12 +409,19 @@ export default function MemberPortal() {
             <div className="space-y-8">
               {/* Stats row */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {[
-                  { label: "Membership", value: member ? "Active" : "—", sub: member?.memberNumber ? `#${member.memberNumber}` : "N/A" },
-                  { label: "Current Season", value: "Spring 2026", sub: "Turkey · Fishing · Clays" },
-                  { label: "Stay Requests", value: String((myRequests.data ?? []).length), sub: `${pendingRequests.length} active` },
-                  { label: "Messages", value: String(myMessages.data?.length ?? 0), sub: "with concierge" },
-                ].map((stat) => (
+                {(() => {
+                  const membershipTypeValue = isStaff
+                    ? user?.role === "admin" ? "Admin" : user?.role === "employee" ? "Employee" : (user?.role as string)?.replace(/_/g, " ").toUpperCase() || "—"
+                    : (member as any)?.membershipType || "—";
+
+                  const stats = [
+                    { label: "Membership", value: member ? "Active" : "—", sub: member?.memberNumber ? `#${member.memberNumber}` : "N/A" },
+                    { label: "Membership Type", value: membershipTypeValue, sub: isStaff ? "Staff" : "Member Type" },
+                    { label: "Stay Requests", value: String((myRequests.data ?? []).length), sub: `${pendingRequests.length} active` },
+                    { label: "Messages", value: String(myMessages.data?.length ?? 0), sub: "with concierge" },
+                  ];
+                  return stats;
+                })().map((stat) => (
                   <div key={stat.label} className="bg-[#2B2823] border border-white/8 p-5">
                     <p className="eyebrow text-white/30 mb-2">{stat.label}</p>
                     <div className="font-serif text-2xl text-white mb-0.5">{stat.value}</div>
