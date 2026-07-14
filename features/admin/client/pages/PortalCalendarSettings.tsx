@@ -10,6 +10,7 @@ export default function PortalCalendarSettings() {
   const [propertySkillGroups, setPropertySkillGroups] = useState<Record<string, SkillGroup[]>>({});
   const [isSaving, setIsSaving] = useState(false);
 
+  const skillGroupsQuery = trpc.membership.listSkillGroupsForPreview.useQuery();
   const masterCalendarQuery = trpc.portal.calendarSettings.getMasterCalendarAccessBySkillGroup.useQuery();
   const propertyCalendarQuery = trpc.portal.calendarSettings.getPropertyCalendarAccessBySkillGroup.useQuery();
 
@@ -83,7 +84,7 @@ export default function PortalCalendarSettings() {
     }
   };
 
-  const allSkillGroups: SkillGroup[] = ["Designated", "Silver", "Social", "Admin", "Employee"];
+  const allSkillGroups: SkillGroup[] = skillGroupsQuery.data?.map((sg) => sg.name as SkillGroup) || [];
   const properties = [
     { id: "1", name: "Grand Lodge" },
     { id: "2", name: "River House" },

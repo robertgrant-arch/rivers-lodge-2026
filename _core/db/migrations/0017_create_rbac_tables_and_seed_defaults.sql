@@ -118,15 +118,20 @@ VALUES
   ('social', 'Social', 4, NOW(), NOW())
 ON CONFLICT (key) DO NOTHING;
 
--- 8. SEED SKILL_GROUPS
+-- 8. SEED SKILL_GROUPS with membership/employee types
+-- These represent member tiers and staff roles, NOT activities
 INSERT INTO skill_groups (name, slug, sort_order, active, created_at, updated_at)
 VALUES
-  ('Deer Hunting', 'deer_hunt', 0, true, NOW(), NOW()),
-  ('Waterfowl Hunting', 'waterfowl', 1, true, NOW(), NOW()),
-  ('Fishing', 'fishing', 2, true, NOW(), NOW()),
-  ('Clays Shooting', 'clays', 3, true, NOW(), NOW()),
-  ('Corporate Events', 'corporate', 4, true, NOW(), NOW())
-ON CONFLICT (slug) DO NOTHING;
+  ('Designated', 'designated', 0, true, NOW(), NOW()),
+  ('Silver', 'silver', 1, true, NOW(), NOW()),
+  ('Social', 'social', 2, true, NOW(), NOW()),
+  ('Employee', 'employee', 3, true, NOW(), NOW()),
+  ('Admin', 'admin', 4, true, NOW(), NOW())
+ON CONFLICT (slug) DO UPDATE SET
+  name = EXCLUDED.name,
+  sort_order = EXCLUDED.sort_order,
+  active = EXCLUDED.active,
+  updated_at = NOW();
 
 -- 9. SEED DEFAULT ROLE × SKILL_GROUP ACCESS MATRIX
 -- Admin: all skill groups, can view and book
