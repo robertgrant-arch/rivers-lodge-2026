@@ -8,7 +8,7 @@ import {
   boolean,
 } from "drizzle-orm/pg-core";
 
-export const userRoleEnum = pgEnum("user_role", ["admin", "member"]);
+export const userRoleEnum = pgEnum("user_role", ["admin", "member", "employee"]);
 export const userStatusEnum = pgEnum("user_status", ["invited", "active", "disabled"]);
 
 export const users = pgTable("users", {
