@@ -2082,10 +2082,27 @@ const calendarSettingsRouter = router({
 
       try {
         // Validate that all skill group names exist in the database
-        const validSkillGroups = await db
-          .select({ name: skillGroups.name })
-          .from(skillGroups)
-          .where(eq(skillGroups.active, true));
+        let validSkillGroups;
+        try {
+          validSkillGroups = await db
+            .select({ name: skillGroups.name })
+            .from(skillGroups)
+            .where(eq(skillGroups.active, true));
+        } catch (dbError) {
+          console.error("[calendar-settings] Failed to query skill_groups table:", dbError);
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: `Unable to load skill groups from database: ${dbError instanceof Error ? dbError.message : String(dbError)}`,
+          });
+        }
+
+        if (validSkillGroups.length === 0) {
+          console.warn("[calendar-settings] No active skill groups found in database. Available skill groups:", validSkillGroups);
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "No skill groups are configured in the system. Please contact an administrator.",
+          });
+        }
 
         const validNames = new Set(validSkillGroups.map((sg) => sg.name));
         const invalidNames = input.filter((name) => !validNames.has(name));
@@ -2132,10 +2149,11 @@ const calendarSettingsRouter = router({
         return { success: true };
       } catch (error) {
         if (error instanceof TRPCError) throw error;
-        console.error("[calendar-settings] updateMasterCalendarAccessBySkillGroup failed:", error);
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        console.error("[calendar-settings] updateMasterCalendarAccessBySkillGroup unexpected error:", errorMsg, error);
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to update master calendar access settings",
+          message: `Failed to update master calendar access settings: ${errorMsg}`,
         });
       }
     }),
@@ -2162,10 +2180,27 @@ const calendarSettingsRouter = router({
 
       try {
         // Validate that all skill group names exist in the database
-        const validSkillGroups = await db
-          .select({ name: skillGroups.name })
-          .from(skillGroups)
-          .where(eq(skillGroups.active, true));
+        let validSkillGroups;
+        try {
+          validSkillGroups = await db
+            .select({ name: skillGroups.name })
+            .from(skillGroups)
+            .where(eq(skillGroups.active, true));
+        } catch (dbError) {
+          console.error("[calendar-settings] Failed to query skill_groups table:", dbError);
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: `Unable to load skill groups from database: ${dbError instanceof Error ? dbError.message : String(dbError)}`,
+          });
+        }
+
+        if (validSkillGroups.length === 0) {
+          console.warn("[calendar-settings] No active skill groups found in database.");
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "No skill groups are configured in the system. Please contact an administrator.",
+          });
+        }
 
         const validNames = new Set(validSkillGroups.map((sg) => sg.name));
         const allSubmittedNames = Object.values(input).flat();
@@ -2203,10 +2238,11 @@ const calendarSettingsRouter = router({
         return { success: true };
       } catch (error) {
         if (error instanceof TRPCError) throw error;
-        console.error("[calendar-settings] updatePropertyCalendarAccessBySkillGroup failed:", error);
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        console.error("[calendar-settings] updatePropertyCalendarAccessBySkillGroup unexpected error:", errorMsg, error);
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to update property calendar access settings",
+          message: `Failed to update property calendar access settings: ${errorMsg}`,
         });
       }
     }),
