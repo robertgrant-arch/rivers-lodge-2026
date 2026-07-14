@@ -32,7 +32,7 @@ export const loginLimiter = rateLimit({
   standardHeaders: "draft-6",
   legacyHeaders: false,
   message: { error: "Too many login attempts — please wait 15 minutes and try again." },
-  keyGenerator: (req) => {
+  keyGenerator: (req: any) => {
     // Key on IP + email body so per-account brute force is also limited
     const ip = ipKeyGenerator(req);
     try {
