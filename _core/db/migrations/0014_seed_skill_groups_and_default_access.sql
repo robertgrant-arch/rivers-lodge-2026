@@ -1,13 +1,14 @@
--- Seed skill_groups table with default activity groups
+-- Seed skill_groups table with membership/employee types
+-- These represent member tiers and staff roles, NOT activities
 -- Idempotent: uses ON CONFLICT to allow re-running
 
 INSERT INTO skill_groups (name, slug, sort_order, active)
 VALUES
-  ('Deer Hunting', 'deer_hunt', 0, true),
-  ('Waterfowl Hunting', 'waterfowl', 1, true),
-  ('Fishing', 'fishing', 2, true),
-  ('Clays Shooting', 'clays', 3, true),
-  ('Corporate Events', 'corporate', 4, true)
+  ('Designated', 'designated', 0, true),
+  ('Silver', 'silver', 1, true),
+  ('Social', 'social', 2, true),
+  ('Employee', 'employee', 3, true),
+  ('Admin', 'admin', 4, true)
 ON CONFLICT (slug) DO NOTHING;
 
 -- Seed default role access matrix
