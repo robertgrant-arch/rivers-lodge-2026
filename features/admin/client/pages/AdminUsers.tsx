@@ -45,8 +45,14 @@ import {
 // Types
 // ---------------------------------------------------------------------------
 
-type UserRole = "admin" | "member";
+type UserRole = "admin" | "member" | "employee";
 type UserStatus = "active" | "invited" | "disabled";
+
+// Normalize legacy "member" role to "employee" for staff users
+function normalizeUserRole(role: string): UserRole {
+  if (role === "member") return "employee";
+  return role as UserRole;
+}
 
 interface UserRecord {
   id: string;
@@ -237,7 +243,13 @@ function InvitationsTab() {
     search: "",
   });
 
-  const pendingInvites: UserRecord[] = (allUsers ?? []).filter(
+  // Normalize roles: convert legacy "member" to "employee"
+  const normalizedUsers = (allUsers ?? []).map(u => ({
+    ...u,
+    role: normalizeUserRole(u.role),
+  })) as UserRecord[];
+
+  const pendingInvites: UserRecord[] = normalizedUsers.filter(
     (u: UserRecord) => u.status === "invited"
   );
 
@@ -245,7 +257,7 @@ function InvitationsTab() {
     onSuccess: (data: { inviteUrl: string; emailSent: boolean }) => {
       setInviteUrl(data.inviteUrl);
       setEmail("");
-      setRole("member");
+      setRole("employee");
       utils.portal.users.list.invalidate();
     },
   });
@@ -449,7 +461,13 @@ function UsersTab() {
 
   const { data: users, isLoading } = trpc.portal.users.list.useQuery({ search });
 
-  const activeUsers: UserRecord[] = (users ?? []).filter(
+  // Normalize roles: convert legacy "member" to "employee"
+  const normalizedSearchUsers = (users ?? []).map(u => ({
+    ...u,
+    role: normalizeUserRole(u.role),
+  })) as UserRecord[];
+
+  const activeUsers: UserRecord[] = normalizedSearchUsers.filter(
     (u: UserRecord) => u.status !== "invited"
   );
 
@@ -489,7 +507,7 @@ function UsersTab() {
         updateRoleMutation.mutate({ userId: pendingAction.user.id, role: "admin" });
         break;
       case "demoteAdmin":
-        updateRoleMutation.mutate({ userId: pendingAction.user.id, role: "member" });
+        updateRoleMutation.mutate({ userId: pendingAction.user.id, role: "employee" });
         break;
       case "enable":
         updateStatusMutation.mutate({ userId: pendingAction.user.id, status: "active" });
