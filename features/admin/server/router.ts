@@ -23,7 +23,7 @@ import {
 } from "../schema";
 // Cross-feature table refs — imported only via public.ts barrels
 import { users } from "@features/auth/server/public";
-import { members, membershipApplications, memberSkillGroups, skillGroups } from "@features/membership/public";
+import { members, membershipApplications, memberSkillGroups, skillGroups, employees, employeeSkillGroups } from "@features/membership/public";
 import { inquiries } from "@features/inquiries/public";
 import { bookings } from "@features/booking-engine/public";
 import { waivers } from "@features/waivers/public";
@@ -1412,6 +1412,116 @@ const employeesPortalRouter = router({
       });
       return { success: true };
     }),
+
+  // Employee skill groups management (for admin employees with skill groups like Admin, Employee)
+  employeeSkillGroups: portalProcedure.query(async () => {
+    const db = getPortalDb();
+    return db.select({
+      id: skillGroups.id,
+      name: skillGroups.name,
+      slug: skillGroups.slug,
+    })
+      .from(skillGroups)
+      .where(and(
+        eq(skillGroups.active, true),
+        or(
+          eq(skillGroups.slug, "admin"),
+          eq(skillGroups.slug, "employee")
+        )
+      ))
+      .orderBy(skillGroups.sortOrder);
+  }),
+
+  employeeAssignments: portalProcedure
+    .input(z.object({ employeeId: z.number() }))
+    .query(async ({ input }) => {
+      const db = getPortalDb();
+      const results = await db.select({
+        skillGroupId: employeeSkillGroups.skillGroupId,
+      })
+        .from(employeeSkillGroups)
+        .where(eq(employeeSkillGroups.employeeId, input.employeeId));
+      return results.map(r => r.skillGroupId);
+    }),
+
+  createEmployee: portalProcedure
+    .input(z.object({
+      userId: z.string(),
+      email: z.string().email(),
+      firstName: z.string().optional(),
+      lastName: z.string().optional(),
+      notes: z.string().optional(),
+      skillGroupIds: z.array(z.number()).optional(),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const db = getDb();
+      const [existing] = await db.select({ id: employees.id }).from(employees).where(eq(employees.userId, input.userId)).limit(1);
+      if (existing) throw new TRPCError({ code: "CONFLICT", message: "This user already has an employee record" });
+      const [newEmployee] = await db.insert(employees).values({
+        userId: input.userId,
+        email: input.email,
+        firstName: input.firstName ?? null,
+        lastName: input.lastName ?? null,
+        active: true,
+        notes: input.notes ?? null,
+      } as any).returning({ id: employees.id });
+
+      if (input.skillGroupIds && input.skillGroupIds.length > 0) {
+        await db.insert(employeeSkillGroups).values(
+          input.skillGroupIds.map(skillGroupId => ({
+            employeeId: newEmployee.id,
+            skillGroupId,
+          }))
+        );
+      }
+
+      await logAudit({
+        actingUserId: ctx.user.id,
+        actingUserName: ctx.user.email ?? "Staff",
+        actionType: "create",
+        entityType: "Employee",
+        entityId: String(newEmployee.id),
+        notes: `Created employee ${input.email}`,
+      });
+      return { success: true, employeeId: newEmployee.id };
+    }),
+
+  updateEmployee: portalProcedure
+    .input(z.object({
+      id: z.number(),
+      active: z.boolean().optional(),
+      firstName: z.string().optional(),
+      lastName: z.string().optional(),
+      notes: z.string().optional(),
+      skillGroupIds: z.array(z.number()).optional(),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const db = getDb();
+      const { id, skillGroupIds, ...updates } = input;
+      const filtered = Object.fromEntries(Object.entries(updates).filter(([, v]) => v !== undefined));
+      await db.update(employees).set(filtered as any).where(eq(employees.id, id));
+
+      if (skillGroupIds !== undefined) {
+        await db.delete(employeeSkillGroups).where(eq(employeeSkillGroups.employeeId, id));
+        if (skillGroupIds.length > 0) {
+          await db.insert(employeeSkillGroups).values(
+            skillGroupIds.map(skillGroupId => ({
+              employeeId: id,
+              skillGroupId,
+            }))
+          );
+        }
+      }
+
+      await logAudit({
+        actingUserId: ctx.user.id,
+        actingUserName: ctx.user.email ?? "Staff",
+        actionType: "update",
+        entityType: "Employee",
+        entityId: String(id),
+      });
+      return { success: true };
+    }),
 });
 
 // ─── Membership Portal Router ─────────────────────────────────────────────────
@@ -1494,60 +1604,28 @@ const membershipPortalRouter = router({
         const conditions = [];
         if (input.active !== undefined) conditions.push(eq(members.active, input.active));
         if (input.cursor !== undefined) conditions.push(lt(members.id, input.cursor));
-        const query =
-          conditions.length > 0
-            ? db.select({
-                member: {
-                  id: members.id,
-                  userId: members.userId,
-                  memberNumber: members.memberNumber,
-                  joinDate: members.joinDate,
-                  renewalDate: members.renewalDate,
-                  active: members.active,
-                  notes: members.notes,
-                  createdAt: members.createdAt,
-                  updatedAt: members.updatedAt,
-                },
-                user: {
-                  id: users.id,
-                  email: users.email,
-                },
-                skillGroupNames: sql<string>`
-                  COALESCE(string_agg(${skillGroups.name}, ', ' ORDER BY ${skillGroups.sortOrder}), '')
-                `,
-              })
-              .from(members)
-              .leftJoin(users, eq(members.userId, users.id))
-              .leftJoin(memberSkillGroups, eq(members.id, memberSkillGroups.memberId))
-              .leftJoin(skillGroups, eq(memberSkillGroups.skillGroupId, skillGroups.id))
-              .where(and(...conditions))
-              .groupBy(members.id, users.id)
-            : db.select({
-                member: {
-                  id: members.id,
-                  userId: members.userId,
-                  memberNumber: members.memberNumber,
-                  joinDate: members.joinDate,
-                  renewalDate: members.renewalDate,
-                  active: members.active,
-                  notes: members.notes,
-                  createdAt: members.createdAt,
-                  updatedAt: members.updatedAt,
-                },
-                user: {
-                  id: users.id,
-                  email: users.email,
-                },
-                skillGroupNames: sql<string>`
-                  COALESCE(string_agg(${skillGroups.name}, ', ' ORDER BY ${skillGroups.sortOrder}), '')
-                `,
-              })
-              .from(members)
-              .leftJoin(users, eq(members.userId, users.id))
-              .leftJoin(memberSkillGroups, eq(members.id, memberSkillGroups.memberId))
-              .leftJoin(skillGroups, eq(memberSkillGroups.skillGroupId, skillGroups.id))
-              .groupBy(members.id, users.id);
-        const rows = await query.orderBy(desc(members.id)).limit(limit + 1);
+        const rows = await db.select({
+          member: {
+            id: members.id,
+            userId: members.userId,
+            memberNumber: members.memberNumber,
+            membershipType: members.membershipType,
+            joinDate: members.joinDate,
+            renewalDate: members.renewalDate,
+            active: members.active,
+            notes: members.notes,
+            createdAt: members.createdAt,
+            updatedAt: members.updatedAt,
+          },
+          user: {
+            id: users.id,
+            email: users.email,
+          },
+        }).from(members)
+          .leftJoin(users, eq(members.userId, users.id))
+          .where(conditions.length ? and(...conditions) : undefined)
+          .orderBy(desc(members.id))
+          .limit(limit + 1);
         const items = rows.slice(0, limit);
         const nextCursor = rows.length > limit ? (items[items.length - 1]?.member.id ?? null) : null;
         return { items, nextCursor };
@@ -1566,26 +1644,13 @@ const membershipPortalRouter = router({
       active: z.boolean().optional(),
       renewalDate: z.string().optional(),
       notes: z.string().optional(),
-      skillGroupIds: z.array(z.number()).optional(),
+      membershipType: z.enum(["Designated", "Silver", "Social"]).optional(),
     }))
     .mutation(async ({ input, ctx }) => {
       const db = getDb();
-      const { id, skillGroupIds, ...updates } = input;
+      const { id, ...updates } = input;
       const filtered = Object.fromEntries(Object.entries(updates).filter(([, v]) => v !== undefined));
       await db.update(members).set(filtered as any).where(eq(members.id, id));
-
-      // Update skill group assignments if provided
-      if (skillGroupIds !== undefined) {
-        await db.delete(memberSkillGroups).where(eq(memberSkillGroups.memberId, id));
-        if (skillGroupIds.length > 0) {
-          await db.insert(memberSkillGroups).values(
-            skillGroupIds.map(skillGroupId => ({
-              memberId: id,
-              skillGroupId,
-            }))
-          );
-        }
-      }
 
       await logAudit({
         actingUserId: ctx.user.id,
@@ -1616,7 +1681,7 @@ const membershipPortalRouter = router({
       joinDate: z.string().optional(),
       renewalDate: z.string().optional(),
       notes: z.string().optional(),
-      skillGroupIds: z.array(z.number()).optional(),
+      membershipType: z.enum(["Designated", "Silver", "Social"]).optional(),
     }))
     .mutation(async ({ input, ctx }) => {
       const db = getDb();
@@ -1631,21 +1696,12 @@ const membershipPortalRouter = router({
       const [newMember] = await db.insert(members).values({
         userId: input.userId,
         memberNumber,
+        membershipType: (input.membershipType ?? "Social") as any,
         active: true,
         joinDate: input.joinDate ?? new Date().toISOString().split("T")[0],
         renewalDate: input.renewalDate ?? null,
         notes: input.notes ?? null,
       } as any).returning({ id: members.id });
-
-      // Assign skill groups
-      if (input.skillGroupIds && input.skillGroupIds.length > 0) {
-        await db.insert(memberSkillGroups).values(
-          input.skillGroupIds.map(skillGroupId => ({
-            memberId: newMember.id,
-            skillGroupId,
-          }))
-        );
-      }
 
       await logAudit({
         actingUserId: ctx.user.id,
@@ -1658,36 +1714,6 @@ const membershipPortalRouter = router({
       return { success: true, memberId: newMember.id, memberNumber };
     }),
 
-  memberSkillGroups: portalProcedure.query(async () => {
-    const db = getPortalDb();
-    return db.select({
-      id: skillGroups.id,
-      name: skillGroups.name,
-      slug: skillGroups.slug,
-    })
-      .from(skillGroups)
-      .where(and(
-        eq(skillGroups.active, true),
-        or(
-          eq(skillGroups.slug, "designated"),
-          eq(skillGroups.slug, "silver"),
-          eq(skillGroups.slug, "social")
-        )
-      ))
-      .orderBy(skillGroups.sortOrder);
-  }),
-
-  memberAssignments: portalProcedure
-    .input(z.object({ memberId: z.number() }))
-    .query(async ({ input }) => {
-      const db = getPortalDb();
-      const results = await db.select({
-        skillGroupId: memberSkillGroups.skillGroupId,
-      })
-        .from(memberSkillGroups)
-        .where(eq(memberSkillGroups.memberId, input.memberId));
-      return results.map(r => r.skillGroupId);
-    }),
 });
 
 // ─── Audit Log Router ─────────────────────────────────────────────────────────

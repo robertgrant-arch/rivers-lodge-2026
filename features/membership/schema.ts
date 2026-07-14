@@ -12,6 +12,9 @@ import {
   uniqueIndex,
 } from "drizzle-orm/pg-core";
 
+// ─── Member Type Enum ─────────────────────────────────────────────────────────
+export const memberTypeEnum = pgEnum("member_type", ["Designated", "Silver", "Social"]);
+
 export const applicationStatusEnum = pgEnum("application_status", ["pending", "approved", "declined"]);
 
 export const membershipApplications = pgTable("membership_applications", {
@@ -146,6 +149,7 @@ export const members = pgTable("members", {
   id: integer("id").generatedAlwaysAsIdentity().primaryKey(),
   userId: varchar("userId", { length: 36 }).notNull(),
   memberNumber: varchar("memberNumber", { length: 50 }),
+  membershipType: memberTypeEnum("membership_type").notNull().default("Social"),
   socialParentOrganizationId: integer("social_parent_organization_id").references(
     () => socialParentOrganizations.id,
     { onDelete: "set null" }
@@ -159,9 +163,46 @@ export const members = pgTable("members", {
 }, (t) => [
   index("mem_user_idx").on(t.userId),
   index("mem_active_idx").on(t.active),
+  index("mem_membership_type_idx").on(t.membershipType),
   index("mem_org_idx").on(t.socialParentOrganizationId),
   index("mem_created_at_idx").on(t.createdAt),
 ]);
 
 export type Member = typeof members.$inferSelect;
 export type InsertMember = typeof members.$inferInsert;
+
+// ─── Employees (for /ops/employees admin) ─────────────────────────────────────
+
+export const employees = pgTable("employees", {
+  id: integer("id").generatedAlwaysAsIdentity().primaryKey(),
+  userId: varchar("user_id", { length: 36 }).notNull().unique(),
+  email: varchar("email", { length: 320 }).notNull().unique(),
+  firstName: varchar("first_name", { length: 100 }),
+  lastName: varchar("last_name", { length: 100 }),
+  active: boolean("active").notNull().default(true),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().$onUpdate(() => new Date()).notNull(),
+}, (t) => [
+  index("emp_user_idx").on(t.userId),
+  index("emp_email_idx").on(t.email),
+  index("emp_active_idx").on(t.active),
+]);
+
+export type Employee = typeof employees.$inferSelect;
+export type InsertEmployee = typeof employees.$inferInsert;
+
+// ─── Employee × Skill Group Join Table ────────────────────────────────────────
+
+export const employeeSkillGroups = pgTable("employee_skill_groups", {
+  employeeId: integer("employee_id").notNull().references(() => employees.id, { onDelete: "cascade" }),
+  skillGroupId: integer("skill_group_id").notNull().references(() => skillGroups.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (t) => [
+  index("esg_employee_idx").on(t.employeeId),
+  index("esg_skill_group_idx").on(t.skillGroupId),
+  primaryKey({ columns: [t.employeeId, t.skillGroupId] }),
+]);
+
+export type EmployeeSkillGroup = typeof employeeSkillGroups.$inferSelect;
+export type InsertEmployeeSkillGroup = typeof employeeSkillGroups.$inferInsert;
