@@ -87,11 +87,14 @@ function AddMemberDialog({ open, onClose }: { open: boolean; onClose: () => void
   const [joinDate, setJoinDate] = useState(new Date().toISOString().split("T")[0]);
   const [renewalDate, setRenewalDate] = useState("");
   const [notes, setNotes] = useState("");
+  const [selectedSkillGroupIds, setSelectedSkillGroupIds] = useState<number[]>([]);
 
   const searchResults = trpc.portal.membership.searchUsers.useQuery(
     { query: debouncedQuery },
     { enabled: debouncedQuery.length >= 2 }
   );
+
+  const skillGroupsQuery = trpc.portal.membership.memberSkillGroups.useQuery();
 
   const createMutation = trpc.portal.membership.createMember.useMutation({
     onSuccess: (data) => {
@@ -112,6 +115,7 @@ function AddMemberDialog({ open, onClose }: { open: boolean; onClose: () => void
     setNotes("");
     setJoinDate(new Date().toISOString().split("T")[0]);
     setRenewalDate("");
+    setSelectedSkillGroupIds([]);
   }
 
   const handleSearch = useCallback((v: string) => {
@@ -128,6 +132,7 @@ function AddMemberDialog({ open, onClose }: { open: boolean; onClose: () => void
       joinDate: joinDate || undefined,
       renewalDate: renewalDate || undefined,
       notes: notes || undefined,
+      skillGroupIds: selectedSkillGroupIds.length > 0 ? selectedSkillGroupIds : undefined,
     });
   };
 
@@ -250,6 +255,39 @@ function AddMemberDialog({ open, onClose }: { open: boolean; onClose: () => void
               onChange={(e) => setNotes(e.target.value)}
             />
           </div>
+
+          {/* Skill Groups */}
+          <div className="space-y-2">
+            <Label className={labelCls}>
+              Membership Type{" "}
+              <span className="normal-case tracking-normal text-[#57544E]">(optional)</span>
+            </Label>
+            <div className="space-y-2">
+              {skillGroupsQuery.isLoading ? (
+                <div className="text-xs text-[#BABAAE]">Loading...</div>
+              ) : (skillGroupsQuery.data ?? []).length === 0 ? (
+                <div className="text-xs text-[#BABAAE]">No membership types available</div>
+              ) : (
+                (skillGroupsQuery.data ?? []).map((sg) => (
+                  <label key={sg.id} className="flex items-center gap-2 cursor-pointer hover:bg-[#423F3B] p-2 -mx-2 rounded">
+                    <input
+                      type="checkbox"
+                      checked={selectedSkillGroupIds.includes(sg.id)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedSkillGroupIds([...selectedSkillGroupIds, sg.id]);
+                        } else {
+                          setSelectedSkillGroupIds(selectedSkillGroupIds.filter(id => id !== sg.id));
+                        }
+                      }}
+                      className="w-4 h-4 cursor-pointer"
+                    />
+                    <span className="text-sm text-[#E0D3BD]">{sg.name}</span>
+                  </label>
+                ))
+              )}
+            </div>
+          </div>
         </div>
 
         <DialogFooter className="px-6 py-4 border-t border-[#57544E] flex gap-3">
@@ -344,7 +382,14 @@ function MemberDetailDrawer({
   const utils = trpc.useUtils();
   const [editRenewal, setEditRenewal] = useState(m.renewalDate ?? "");
   const [editNotes, setEditNotes] = useState(m.notes ?? "");
+  const [editSkillGroupIds, setEditSkillGroupIds] = useState<number[]>([]);
   const [deactivateOpen, setDeactivateOpen] = useState(false);
+
+  const skillGroupsQuery = trpc.portal.membership.memberSkillGroups.useQuery();
+  const memberAssignmentsQuery = trpc.portal.membership.memberAssignments.useQuery(
+    { memberId: m.id },
+    { onSuccess: (data) => setEditSkillGroupIds(data) }
+  );
 
   const updateMutation = trpc.portal.membership.updateMember.useMutation({
     onSuccess: () => {
@@ -361,6 +406,7 @@ function MemberDetailDrawer({
       id: m.id,
       renewalDate: editRenewal || undefined,
       notes: editNotes || undefined,
+      skillGroupIds: editSkillGroupIds,
     });
   };
 
@@ -437,6 +483,35 @@ function MemberDetailDrawer({
                 value={editNotes}
                 onChange={(e) => setEditNotes(e.target.value)}
               />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className={labelCls}>Membership Type</label>
+              {skillGroupsQuery.isLoading || memberAssignmentsQuery.isLoading ? (
+                <div className="text-xs text-[#BABAAE]">Loading...</div>
+              ) : (skillGroupsQuery.data ?? []).length === 0 ? (
+                <div className="text-xs text-[#BABAAE]">No membership types available</div>
+              ) : (
+                <div className="space-y-1.5">
+                  {(skillGroupsQuery.data ?? []).map((sg) => (
+                    <label key={sg.id} className="flex items-center gap-2 cursor-pointer hover:bg-[#423F3B] p-1 -mx-1 rounded">
+                      <input
+                        type="checkbox"
+                        checked={editSkillGroupIds.includes(sg.id)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setEditSkillGroupIds([...editSkillGroupIds, sg.id]);
+                          } else {
+                            setEditSkillGroupIds(editSkillGroupIds.filter(id => id !== sg.id));
+                          }
+                        }}
+                        className="w-4 h-4 cursor-pointer"
+                      />
+                      <span className="text-sm text-[#BABAAE]">{sg.name}</span>
+                    </label>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
@@ -589,6 +664,7 @@ export default function PortalMembership() {
                   <tr>
                     <th className={thCls}>Email</th>
                     <th className={thCls}>Member #</th>
+                    <th className={thCls}>Membership Type</th>
                     <th className={thCls}>Joined</th>
                     <th className={thCls}>Renewal</th>
                     <th className={thCls}>Status</th>
@@ -621,8 +697,8 @@ export default function PortalMembership() {
                       </td>
                     </tr>
                   ) : (
-                    membersFiltered.map((row) => {
-                      const { member: m, user: u } = row;
+                    membersFiltered.map((row: any) => {
+                      const { member: m, user: u, skillGroupNames } = row;
                       return (
                         <tr
                           key={m.id}
@@ -633,6 +709,9 @@ export default function PortalMembership() {
                             {u?.email ?? "—"}
                           </td>
                           <td className={`${tdCls} font-mono text-xs`}>{m.memberNumber ?? "—"}</td>
+                          <td className={tdCls}>
+                            {skillGroupNames && skillGroupNames.length > 0 ? skillGroupNames : "—"}
+                          </td>
                           <td className={tdCls}>{formatDate(m.joinDate)}</td>
                           <td className={tdCls}>{formatDate(m.renewalDate)}</td>
                           <td className={tdCls}>
