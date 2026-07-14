@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Button } from "@shared/ui/button";
 import { Skeleton } from "@shared/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@shared/ui/tabs";
@@ -385,11 +385,14 @@ function MemberDetailDrawer({
   const [editSkillGroupIds, setEditSkillGroupIds] = useState<number[]>([]);
   const [deactivateOpen, setDeactivateOpen] = useState(false);
 
-  const skillGroupsQuery = trpc.portal.membership.memberSkillGroups.useQuery() as any;
-  const memberAssignmentsQuery = trpc.portal.membership.memberAssignments.useQuery(
-    { memberId: m.id },
-    { onSuccess: (data: any) => setEditSkillGroupIds(data) }
-  ) as any;
+  const skillGroupsQuery = trpc.portal.membership.memberSkillGroups.useQuery();
+  const memberAssignmentsQuery = trpc.portal.membership.memberAssignments.useQuery({ memberId: m.id });
+
+  useEffect(() => {
+    if (memberAssignmentsQuery.data) {
+      setEditSkillGroupIds(memberAssignmentsQuery.data);
+    }
+  }, [memberAssignmentsQuery.data]);
 
   const updateMutation = trpc.portal.membership.updateMember.useMutation({
     onSuccess: () => {

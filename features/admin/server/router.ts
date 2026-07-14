@@ -23,7 +23,7 @@ import {
 } from "../schema";
 // Cross-feature table refs — imported only via public.ts barrels
 import { users } from "@features/auth/server/public";
-import { members, membershipApplications } from "@features/membership/public";
+import { members, membershipApplications, memberSkillGroups, skillGroups } from "@features/membership/public";
 import { inquiries } from "@features/inquiries/public";
 import { bookings } from "@features/booking-engine/public";
 import { waivers } from "@features/waivers/public";
@@ -1494,29 +1494,60 @@ const membershipPortalRouter = router({
         const conditions = [];
         if (input.active !== undefined) conditions.push(eq(members.active, input.active));
         if (input.cursor !== undefined) conditions.push(lt(members.id, input.cursor));
-        // Explicit column projection: select only columns confirmed present in prod.
-        // Excludes socialParentOrganizationId and roleId which exist in schema but not in prod.
-        const rows = await db.select({
-          member: {
-            id: members.id,
-            userId: members.userId,
-            memberNumber: members.memberNumber,
-            joinDate: members.joinDate,
-            renewalDate: members.renewalDate,
-            active: members.active,
-            notes: members.notes,
-            createdAt: members.createdAt,
-            updatedAt: members.updatedAt,
-          },
-          user: {
-            id: users.id,
-            email: users.email,
-          },
-        }).from(members)
-          .leftJoin(users, eq(members.userId, users.id))
-          .where(conditions.length ? and(...conditions) : undefined)
-          .orderBy(desc(members.id))
-          .limit(limit + 1);
+        const query =
+          conditions.length > 0
+            ? db.select({
+                member: {
+                  id: members.id,
+                  userId: members.userId,
+                  memberNumber: members.memberNumber,
+                  joinDate: members.joinDate,
+                  renewalDate: members.renewalDate,
+                  active: members.active,
+                  notes: members.notes,
+                  createdAt: members.createdAt,
+                  updatedAt: members.updatedAt,
+                },
+                user: {
+                  id: users.id,
+                  email: users.email,
+                },
+                skillGroupNames: sql<string>`
+                  COALESCE(string_agg(${skillGroups.name}, ', ' ORDER BY ${skillGroups.sortOrder}), '')
+                `,
+              })
+              .from(members)
+              .leftJoin(users, eq(members.userId, users.id))
+              .leftJoin(memberSkillGroups, eq(members.id, memberSkillGroups.memberId))
+              .leftJoin(skillGroups, eq(memberSkillGroups.skillGroupId, skillGroups.id))
+              .where(and(...conditions))
+              .groupBy(members.id, users.id)
+            : db.select({
+                member: {
+                  id: members.id,
+                  userId: members.userId,
+                  memberNumber: members.memberNumber,
+                  joinDate: members.joinDate,
+                  renewalDate: members.renewalDate,
+                  active: members.active,
+                  notes: members.notes,
+                  createdAt: members.createdAt,
+                  updatedAt: members.updatedAt,
+                },
+                user: {
+                  id: users.id,
+                  email: users.email,
+                },
+                skillGroupNames: sql<string>`
+                  COALESCE(string_agg(${skillGroups.name}, ', ' ORDER BY ${skillGroups.sortOrder}), '')
+                `,
+              })
+              .from(members)
+              .leftJoin(users, eq(members.userId, users.id))
+              .leftJoin(memberSkillGroups, eq(members.id, memberSkillGroups.memberId))
+              .leftJoin(skillGroups, eq(memberSkillGroups.skillGroupId, skillGroups.id))
+              .groupBy(members.id, users.id);
+        const rows = await query.orderBy(desc(members.id)).limit(limit + 1);
         const items = rows.slice(0, limit);
         const nextCursor = rows.length > limit ? (items[items.length - 1]?.member.id ?? null) : null;
         return { items, nextCursor };
@@ -1535,12 +1566,27 @@ const membershipPortalRouter = router({
       active: z.boolean().optional(),
       renewalDate: z.string().optional(),
       notes: z.string().optional(),
+      skillGroupIds: z.array(z.number()).optional(),
     }))
     .mutation(async ({ input, ctx }) => {
       const db = getDb();
-      const { id, ...updates } = input;
+      const { id, skillGroupIds, ...updates } = input;
       const filtered = Object.fromEntries(Object.entries(updates).filter(([, v]) => v !== undefined));
       await db.update(members).set(filtered as any).where(eq(members.id, id));
+
+      // Update skill group assignments if provided
+      if (skillGroupIds !== undefined) {
+        await db.delete(memberSkillGroups).where(eq(memberSkillGroups.memberId, id));
+        if (skillGroupIds.length > 0) {
+          await db.insert(memberSkillGroups).values(
+            skillGroupIds.map(skillGroupId => ({
+              memberId: id,
+              skillGroupId,
+            }))
+          );
+        }
+      }
+
       await logAudit({
         actingUserId: ctx.user.id,
         actingUserName: ctx.user.email ?? "Staff",
@@ -1570,6 +1616,7 @@ const membershipPortalRouter = router({
       joinDate: z.string().optional(),
       renewalDate: z.string().optional(),
       notes: z.string().optional(),
+      skillGroupIds: z.array(z.number()).optional(),
     }))
     .mutation(async ({ input, ctx }) => {
       const db = getDb();
@@ -1589,6 +1636,17 @@ const membershipPortalRouter = router({
         renewalDate: input.renewalDate ?? null,
         notes: input.notes ?? null,
       } as any).returning({ id: members.id });
+
+      // Assign skill groups
+      if (input.skillGroupIds && input.skillGroupIds.length > 0) {
+        await db.insert(memberSkillGroups).values(
+          input.skillGroupIds.map(skillGroupId => ({
+            memberId: newMember.id,
+            skillGroupId,
+          }))
+        );
+      }
+
       await logAudit({
         actingUserId: ctx.user.id,
         actingUserName: ctx.user.email ?? "Staff",
@@ -1598,6 +1656,37 @@ const membershipPortalRouter = router({
         notes: `Created member ${memberNumber}`,
       });
       return { success: true, memberId: newMember.id, memberNumber };
+    }),
+
+  memberSkillGroups: portalProcedure.query(async () => {
+    const db = getPortalDb();
+    return db.select({
+      id: skillGroups.id,
+      name: skillGroups.name,
+      slug: skillGroups.slug,
+    })
+      .from(skillGroups)
+      .where(and(
+        eq(skillGroups.active, true),
+        or(
+          eq(skillGroups.slug, "designated"),
+          eq(skillGroups.slug, "silver"),
+          eq(skillGroups.slug, "social")
+        )
+      ))
+      .orderBy(skillGroups.sortOrder);
+  }),
+
+  memberAssignments: portalProcedure
+    .input(z.object({ memberId: z.number() }))
+    .query(async ({ input }) => {
+      const db = getPortalDb();
+      const results = await db.select({
+        skillGroupId: memberSkillGroups.skillGroupId,
+      })
+        .from(memberSkillGroups)
+        .where(eq(memberSkillGroups.memberId, input.memberId));
+      return results.map(r => r.skillGroupId);
     }),
 });
 
