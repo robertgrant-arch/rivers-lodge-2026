@@ -121,49 +121,18 @@ const navGroups = [
 export default function PortalLayout({ children }: { children: React.ReactNode }) {
   const { loading, user, logout } = useAuth();
   const [location] = useLocation();
-  const [previewLoading, setPreviewLoading] = useState(false);
   const [previewPopoverOpen, setPreviewPopoverOpen] = useState(false);
   const [previewSkillGroupId, setPreviewSkillGroupId] = useState<string>("");
-  const ensureMember = trpc.membership.ensureMemberForPreview.useMutation();
   const skillGroupsQuery = trpc.membership.listSkillGroupsForPreview.useQuery();
-  const setPreviewSkillGroups = trpc.membership.setPreviewMemberSkillGroups.useMutation();
   const notificationsQuery = trpc.portal.dashboard.notifications.useQuery(undefined, {
     enabled: !!user && user.role === ADMIN_ROLE,
     refetchInterval: 30000,
   });
   const unreadCount = notificationsQuery.data?.length ?? 0;
 
-  const handlePreviewAsSkillGroup = async () => {
-    if (!previewSkillGroupId) {
-      console.warn("No skill group selected");
-      return;
-    }
-    setPreviewLoading(true);
-    try {
-      const skillGroupIdNum = parseInt(previewSkillGroupId, 10);
-      if (isNaN(skillGroupIdNum)) {
-        throw new Error("Invalid skill group ID");
-      }
-
-      // Ensure preview member exists
-      console.log("Ensuring preview member exists...");
-      const memberResult = await ensureMember.mutateAsync();
-      console.log("Preview member ready:", memberResult);
-
-      // Set skill groups for preview member
-      console.log("Setting preview skill groups...", [skillGroupIdNum]);
-      const groupResult = await setPreviewSkillGroups.mutateAsync({ skillGroupIds: [skillGroupIdNum] });
-      console.log("Skill groups set:", groupResult);
-
-      // Navigate to portal preview
-      setPreviewPopoverOpen(false);
-      setPreviewSkillGroupId("");
-      console.log("Navigating to portal preview:", `/portal?preview=1&skillGroupId=${skillGroupIdNum}`);
-      window.location.href = `/portal?preview=1&skillGroupId=${skillGroupIdNum}`;
-    } catch (err) {
-      console.error("Preview failed:", err);
-      setPreviewLoading(false);
-    }
+  const handlePreviewAsSkillGroup = () => {
+    if (!previewSkillGroupId) return;
+    window.location.assign(`/portal?preview=1&skillGroup=${previewSkillGroupId}`);
   };
 
   if (loading) return <DashboardLayoutSkeleton />;
@@ -330,10 +299,9 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
                     variant="outline"
                     size="sm"
                     className="gap-1.5 text-xs h-8 border-[#57544E] text-[#BABAAE] hover:border-[#9B4D19] hover:text-[#E0D3BD] rounded-none font-sans tracking-[0.06em] uppercase"
-                    disabled={previewLoading}
                   >
                     <Eye className="w-3.5 h-3.5" />
-                    {previewLoading ? "Setting up…" : "Preview as Skill Group"}
+                    Preview as Skill Group
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-48 p-3 bg-[#363330] border border-[#57544E] rounded-none">
@@ -346,17 +314,17 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
                     >
                       <option value="">Choose a skill group...</option>
                       {(skillGroupsQuery.data ?? []).map((sg) => (
-                        <option key={sg.id} value={String(sg.id)}>
+                        <option key={sg.id} value={sg.slug}>
                           {sg.name}
                         </option>
                       ))}
                     </select>
                     <Button
                       onClick={handlePreviewAsSkillGroup}
-                      disabled={!previewSkillGroupId || previewLoading}
+                      disabled={!previewSkillGroupId}
                       className="w-full bg-[#9B4D19] hover:bg-[#7a3c14] text-[#E0D3BD] font-sans text-xs tracking-[0.1em] uppercase rounded-none h-8"
                     >
-                      {previewLoading ? "Starting…" : "Preview"}
+                      Preview
                     </Button>
                   </div>
                 </PopoverContent>
