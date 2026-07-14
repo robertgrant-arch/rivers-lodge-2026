@@ -2076,34 +2076,68 @@ const calendarSettingsRouter = router({
   }),
 
   updateMasterCalendarAccessBySkillGroup: ownerProcedure
-    .input(z.array(z.string()))
+    .input(z.array(z.string()).min(1, "At least one skill group must be selected"))
     .mutation(async ({ input, ctx }) => {
       const db = getDb();
 
-      // LOCKED DESIGN: Silver and Social can NEVER access Master Calendar
-      const filtered = input.filter((sg) => sg !== "Silver" && sg !== "Social");
+      try {
+        // Validate that all skill group names exist in the database
+        const validSkillGroups = await db
+          .select({ name: skillGroups.name })
+          .from(skillGroups)
+          .where(eq(skillGroups.active, true));
 
-      await db
-        .insert(calendarAccessSettings)
-        .values({
-          settingKey: "master_calendar_skill_groups",
-          settingValue: JSON.stringify(filtered),
-        })
-        .onConflictDoUpdate({
-          target: calendarAccessSettings.settingKey,
-          set: { settingValue: JSON.stringify(filtered) },
+        const validNames = new Set(validSkillGroups.map((sg) => sg.name));
+        const invalidNames = input.filter((name) => !validNames.has(name));
+
+        if (invalidNames.length > 0) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: `Invalid skill group(s): ${invalidNames.join(", ")}. Valid options are: ${Array.from(validNames).join(", ")}`,
+          });
+        }
+
+        // LOCKED DESIGN: Silver and Social can NEVER access Master Calendar
+        const filtered = input.filter((sg) => sg !== "Silver" && sg !== "Social");
+
+        if (filtered.length === 0) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Master Calendar must have at least one skill group with access (cannot be Silver or Social only)",
+          });
+        }
+
+        const settingValue = JSON.stringify(filtered);
+
+        await db
+          .insert(calendarAccessSettings)
+          .values({
+            settingKey: "master_calendar_skill_groups",
+            settingValue,
+          })
+          .onConflictDoUpdate({
+            target: calendarAccessSettings.settingKey,
+            set: { settingValue },
+          });
+
+        await logAudit({
+          actingUserId: ctx.user.id,
+          actingUserName: ctx.user.email ?? "Admin",
+          actionType: "update",
+          entityType: "CalendarAccessSettings",
+          fieldChanged: "master_calendar_skill_groups",
+          newValue: JSON.stringify(filtered),
         });
 
-      await logAudit({
-        actingUserId: ctx.user.id,
-        actingUserName: ctx.user.email ?? "Admin",
-        actionType: "update",
-        entityType: "CalendarAccessSettings",
-        fieldChanged: "master_calendar_skill_groups",
-        newValue: JSON.stringify(input),
-      });
-
-      return { success: true };
+        return { success: true };
+      } catch (error) {
+        if (error instanceof TRPCError) throw error;
+        console.error("[calendar-settings] updateMasterCalendarAccessBySkillGroup failed:", error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to update master calendar access settings",
+        });
+      }
     }),
 
   // ─── Property Calendars: Skill Group Based ───
@@ -2126,27 +2160,55 @@ const calendarSettingsRouter = router({
     .mutation(async ({ input, ctx }) => {
       const db = getDb();
 
-      await db
-        .insert(calendarAccessSettings)
-        .values({
-          settingKey: "property_calendar_skill_groups",
-          settingValue: JSON.stringify(input),
-        })
-        .onConflictDoUpdate({
-          target: calendarAccessSettings.settingKey,
-          set: { settingValue: JSON.stringify(input) },
+      try {
+        // Validate that all skill group names exist in the database
+        const validSkillGroups = await db
+          .select({ name: skillGroups.name })
+          .from(skillGroups)
+          .where(eq(skillGroups.active, true));
+
+        const validNames = new Set(validSkillGroups.map((sg) => sg.name));
+        const allSubmittedNames = Object.values(input).flat();
+        const invalidNames = Array.from(new Set(allSubmittedNames.filter((name) => !validNames.has(name))));
+
+        if (invalidNames.length > 0) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: `Invalid skill group(s): ${invalidNames.join(", ")}. Valid options are: ${Array.from(validNames).join(", ")}`,
+          });
+        }
+
+        const settingValue = JSON.stringify(input);
+
+        await db
+          .insert(calendarAccessSettings)
+          .values({
+            settingKey: "property_calendar_skill_groups",
+            settingValue,
+          })
+          .onConflictDoUpdate({
+            target: calendarAccessSettings.settingKey,
+            set: { settingValue },
+          });
+
+        await logAudit({
+          actingUserId: ctx.user.id,
+          actingUserName: ctx.user.email ?? "Admin",
+          actionType: "update",
+          entityType: "CalendarAccessSettings",
+          fieldChanged: "property_calendar_skill_groups",
+          newValue: JSON.stringify(input),
         });
 
-      await logAudit({
-        actingUserId: ctx.user.id,
-        actingUserName: ctx.user.email ?? "Admin",
-        actionType: "update",
-        entityType: "CalendarAccessSettings",
-        fieldChanged: "property_calendar_skill_groups",
-        newValue: JSON.stringify(input),
-      });
-
-      return { success: true };
+        return { success: true };
+      } catch (error) {
+        if (error instanceof TRPCError) throw error;
+        console.error("[calendar-settings] updatePropertyCalendarAccessBySkillGroup failed:", error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to update property calendar access settings",
+        });
+      }
     }),
 
   // ─── Legacy Format (for UI backward compat) ───
