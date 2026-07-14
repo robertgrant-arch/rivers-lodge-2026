@@ -21,11 +21,11 @@ import { Check, Copy, Mail, Shield, UserPlus } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
-type StaffRole = "admin" | "member";
+type StaffRole = "admin" | "employee";
 
 const ROLES: { value: StaffRole; label: string }[] = [
   { value: "admin", label: "Admin" },
-  { value: "member", label: "Member" },
+  { value: "employee", label: "Employee" },
 ];
 
 function formatDate(d: string | Date | null | undefined) {
@@ -244,7 +244,7 @@ export default function PortalEmployees() {
                       className="border-[#57544E] text-[#E0D3BD] hover:border-[#9B4D19] hover:text-[#9B4D19] rounded-none font-sans text-xs tracking-[0.08em] uppercase h-8 px-3"
                       onClick={() => {
                         setEditingUser({ id: e.id, email: e.email, role: e.role });
-                        setNewRole((e.role === "admin" ? "admin" : "member"));
+                        setNewRole((e.role === "admin" ? "admin" : "employee"));
                       }}
                     >
                       Change Role

@@ -39,7 +39,7 @@ const getDb = getPortalDb;
 // ─── Role Guards ──────────────────────────────────────────────────────────────
 
 const staffProcedure = protectedProcedure.use(({ ctx, next }) => {
-  if (ctx.user?.role !== "admin" && ctx.user?.role !== "member") {
+  if (ctx.user?.role !== "admin" && ctx.user?.role !== "employee") {
     throw new TRPCError({ code: "FORBIDDEN", message: "Staff access required" });
   }
   return next({ ctx });

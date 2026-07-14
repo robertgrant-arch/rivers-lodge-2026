@@ -44,7 +44,7 @@ import { getPortalDb } from "@core/server/db";
 const getDb = getPortalDb;
 
 // ─── Portal Role Guards ───────────────────────────────────────────────────────
-const STAFF_ROLES = ["admin", "member"] as const;
+const STAFF_ROLES = ["admin", "employee"] as const;
 type StaffRole = typeof STAFF_ROLES[number];
 
 const portalProcedure = protectedProcedure.use(({ ctx, next }) => {
@@ -1394,7 +1394,7 @@ const employeesPortalRouter = router({
   updateRole: ownerProcedure
     .input(z.object({
       userId: z.string(),
-      role: z.enum(["admin", "member"]),
+      role: z.enum(["admin", "employee"]),
     }))
     .mutation(async ({ input, ctx }) => {
       const db = getDb();
@@ -1848,7 +1848,7 @@ const usersAdminRouter = router({
   invite: ownerProcedure
     .input(z.object({
       email: z.string().email(),
-      role: z.enum(["admin", "member"]).default("member"),
+      role: z.enum(["admin", "employee"]).default("employee"),
     }))
     .mutation(async ({ input, ctx }) => {
       const db = getDb();
@@ -1947,7 +1947,7 @@ const usersAdminRouter = router({
   updateRole: ownerProcedure
     .input(z.object({
       userId: z.string(),
-      role: z.enum(["admin", "member"]),
+      role: z.enum(["admin", "employee"]),
     }))
     .mutation(async ({ input, ctx }) => {
       if (input.userId === ctx.user.id && input.role !== "admin") {

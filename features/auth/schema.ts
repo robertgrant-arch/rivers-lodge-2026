@@ -8,14 +8,14 @@ import {
   boolean,
 } from "drizzle-orm/pg-core";
 
-export const userRoleEnum = pgEnum("user_role", ["admin", "member"]);
+export const userRoleEnum = pgEnum("user_role", ["admin", "employee"]);
 export const userStatusEnum = pgEnum("user_status", ["invited", "active", "disabled"]);
 
 export const users = pgTable("users", {
   id: varchar("id", { length: 36 }).primaryKey().$default(() => crypto.randomUUID()),
   email: varchar("email", { length: 320 }).notNull().unique(),
   passwordHash: text("password_hash"),
-  role: userRoleEnum("role").notNull().default("member"),
+  role: userRoleEnum("role").notNull().default("employee"),
   status: userStatusEnum("status").notNull().default("invited"),
   mustChangePassword: boolean("must_change_password").notNull().default(true),
   createdAt: timestamp("created_at").notNull().$default(() => new Date()),

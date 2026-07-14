@@ -21,7 +21,7 @@ const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
   return next({ ctx });
 });
 
-const STAFF_ROLES = ["admin", "member"] as const;
+const STAFF_ROLES = ["admin", "employee"] as const;
 type StaffRole = typeof STAFF_ROLES[number];
 
 const portalProcedure = protectedProcedure.use(({ ctx, next }) => {

@@ -27,6 +27,7 @@ import {
 } from "@shared/ui/dropdown-menu";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@shared/ui/tabs";
 import { useAuth } from "@features/auth/public";
+import type { UserRole } from "@features/auth/schema";
 import {
   Shield,
   MoreHorizontal,
@@ -45,7 +46,6 @@ import {
 // Types
 // ---------------------------------------------------------------------------
 
-type UserRole = "admin" | "member";
 type UserStatus = "active" | "invited" | "disabled";
 
 interface UserRecord {
@@ -221,7 +221,7 @@ function ConfirmDialog({
 
 function InvitationsTab() {
   const [email, setEmail] = useState("");
-  const [role, setRole] = useState<UserRole>("member");
+  const [role, setRole] = useState<UserRole>("employee");
   const [inviteUrl, setInviteUrl] = useState<string | null>(null);
 
   // Resend confirm state
@@ -245,7 +245,7 @@ function InvitationsTab() {
     onSuccess: (data: { inviteUrl: string; emailSent: boolean }) => {
       setInviteUrl(data.inviteUrl);
       setEmail("");
-      setRole("member");
+      setRole("employee");
       utils.portal.users.list.invalidate();
     },
   });
@@ -489,7 +489,7 @@ function UsersTab() {
         updateRoleMutation.mutate({ userId: pendingAction.user.id, role: "admin" });
         break;
       case "demoteAdmin":
-        updateRoleMutation.mutate({ userId: pendingAction.user.id, role: "member" });
+        updateRoleMutation.mutate({ userId: pendingAction.user.id, role: "employee" });
         break;
       case "enable":
         updateStatusMutation.mutate({ userId: pendingAction.user.id, status: "active" });
@@ -656,7 +656,7 @@ function UsersTab() {
 
                         <DropdownMenuSeparator className="bg-[#57544E]" />
 
-                        {user.role === "member" ? (
+                        {user.role === "employee" ? (
                           <DropdownMenuItem
                             className="font-sans text-xs tracking-[0.06em] cursor-pointer focus:bg-[#423F3B] focus:text-[#E0D3BD] gap-2"
                             onClick={() =>
