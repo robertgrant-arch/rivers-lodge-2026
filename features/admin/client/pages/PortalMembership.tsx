@@ -87,14 +87,12 @@ function AddMemberDialog({ open, onClose }: { open: boolean; onClose: () => void
   const [joinDate, setJoinDate] = useState(new Date().toISOString().split("T")[0]);
   const [renewalDate, setRenewalDate] = useState("");
   const [notes, setNotes] = useState("");
-  const [selectedSkillGroupIds, setSelectedSkillGroupIds] = useState<number[]>([]);
+  const [membershipType, setMembershipType] = useState<"Designated" | "Silver" | "Social">("Social");
 
   const searchResults = trpc.portal.membership.searchUsers.useQuery(
     { query: debouncedQuery },
     { enabled: debouncedQuery.length >= 2 }
   );
-
-  const skillGroupsQuery = trpc.portal.membership.memberSkillGroups.useQuery() as any;
 
   const createMutation = trpc.portal.membership.createMember.useMutation({
     onSuccess: (data: any) => {
@@ -115,7 +113,7 @@ function AddMemberDialog({ open, onClose }: { open: boolean; onClose: () => void
     setNotes("");
     setJoinDate(new Date().toISOString().split("T")[0]);
     setRenewalDate("");
-    setSelectedSkillGroupIds([]);
+    setMembershipType("Social");
   }
 
   const handleSearch = useCallback((v: string) => {
@@ -132,7 +130,7 @@ function AddMemberDialog({ open, onClose }: { open: boolean; onClose: () => void
       joinDate: joinDate || undefined,
       renewalDate: renewalDate || undefined,
       notes: notes || undefined,
-      skillGroupIds: selectedSkillGroupIds.length > 0 ? selectedSkillGroupIds : undefined,
+      membershipType,
     } as any);
   };
 
@@ -256,36 +254,25 @@ function AddMemberDialog({ open, onClose }: { open: boolean; onClose: () => void
             />
           </div>
 
-          {/* Skill Groups */}
+          {/* Membership Type */}
           <div className="space-y-2">
             <Label className={labelCls}>
-              Membership Type{" "}
-              <span className="normal-case tracking-normal text-[#57544E]">(optional)</span>
+              Membership Type
             </Label>
             <div className="space-y-2">
-              {skillGroupsQuery.isLoading ? (
-                <div className="text-xs text-[#BABAAE]">Loading...</div>
-              ) : (skillGroupsQuery.data ?? []).length === 0 ? (
-                <div className="text-xs text-[#BABAAE]">No membership types available</div>
-              ) : (
-                (skillGroupsQuery.data ?? []).map((sg: any) => (
-                  <label key={sg.id} className="flex items-center gap-2 cursor-pointer hover:bg-[#423F3B] p-2 -mx-2 rounded">
-                    <input
-                      type="checkbox"
-                      checked={selectedSkillGroupIds.includes(sg.id)}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setSelectedSkillGroupIds([...selectedSkillGroupIds, sg.id]);
-                        } else {
-                          setSelectedSkillGroupIds(selectedSkillGroupIds.filter(id => id !== sg.id));
-                        }
-                      }}
-                      className="w-4 h-4 cursor-pointer"
-                    />
-                    <span className="text-sm text-[#E0D3BD]">{sg.name}</span>
-                  </label>
-                ))
-              )}
+              {(["Designated", "Silver", "Social"] as const).map((type) => (
+                <label key={type} className="flex items-center gap-2 cursor-pointer hover:bg-[#423F3B] p-2 -mx-2 rounded">
+                  <input
+                    type="radio"
+                    name="membershipType"
+                    value={type}
+                    checked={membershipType === type}
+                    onChange={() => setMembershipType(type)}
+                    className="w-4 h-4 cursor-pointer"
+                  />
+                  <span className="text-sm text-[#E0D3BD]">{type}</span>
+                </label>
+              ))}
             </div>
           </div>
         </div>
@@ -360,6 +347,7 @@ type MemberRow = {
     id: number;
     userId: string;
     memberNumber: string | null;
+    membershipType: "Designated" | "Silver" | "Social";
     joinDate: string | null;
     renewalDate: string | null;
     active: boolean;
@@ -382,17 +370,14 @@ function MemberDetailDrawer({
   const utils = trpc.useUtils();
   const [editRenewal, setEditRenewal] = useState(m.renewalDate ?? "");
   const [editNotes, setEditNotes] = useState(m.notes ?? "");
-  const [editSkillGroupIds, setEditSkillGroupIds] = useState<number[]>([]);
+  const [editMembershipType, setEditMembershipType] = useState<"Designated" | "Silver" | "Social">(m.membershipType ?? "Social");
   const [deactivateOpen, setDeactivateOpen] = useState(false);
 
-  const skillGroupsQuery = trpc.portal.membership.memberSkillGroups.useQuery();
-  const memberAssignmentsQuery = trpc.portal.membership.memberAssignments.useQuery({ memberId: m.id });
-
   useEffect(() => {
-    if (memberAssignmentsQuery.data) {
-      setEditSkillGroupIds(memberAssignmentsQuery.data);
+    if (m.membershipType) {
+      setEditMembershipType(m.membershipType as "Designated" | "Silver" | "Social");
     }
-  }, [memberAssignmentsQuery.data]);
+  }, [m.membershipType]);
 
   const updateMutation = trpc.portal.membership.updateMember.useMutation({
     onSuccess: () => {
@@ -409,7 +394,7 @@ function MemberDetailDrawer({
       id: m.id,
       renewalDate: editRenewal || undefined,
       notes: editNotes || undefined,
-      skillGroupIds: editSkillGroupIds,
+      membershipType: editMembershipType,
     } as any);
   };
 
@@ -490,31 +475,21 @@ function MemberDetailDrawer({
 
             <div className="space-y-1.5">
               <label className={labelCls}>Membership Type</label>
-              {skillGroupsQuery.isLoading || memberAssignmentsQuery.isLoading ? (
-                <div className="text-xs text-[#BABAAE]">Loading...</div>
-              ) : (skillGroupsQuery.data ?? []).length === 0 ? (
-                <div className="text-xs text-[#BABAAE]">No membership types available</div>
-              ) : (
-                <div className="space-y-1.5">
-                  {(skillGroupsQuery.data ?? []).map((sg: any) => (
-                    <label key={sg.id} className="flex items-center gap-2 cursor-pointer hover:bg-[#423F3B] p-1 -mx-1 rounded">
-                      <input
-                        type="checkbox"
-                        checked={editSkillGroupIds.includes(sg.id)}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setEditSkillGroupIds([...editSkillGroupIds, sg.id]);
-                          } else {
-                            setEditSkillGroupIds(editSkillGroupIds.filter(id => id !== sg.id));
-                          }
-                        }}
-                        className="w-4 h-4 cursor-pointer"
-                      />
-                      <span className="text-sm text-[#BABAAE]">{sg.name}</span>
-                    </label>
-                  ))}
-                </div>
-              )}
+              <div className="space-y-1.5">
+                {(["Designated", "Silver", "Social"] as const).map((type) => (
+                  <label key={type} className="flex items-center gap-2 cursor-pointer hover:bg-[#423F3B] p-1 -mx-1 rounded">
+                    <input
+                      type="radio"
+                      name="editMembershipType"
+                      value={type}
+                      checked={editMembershipType === type}
+                      onChange={() => setEditMembershipType(type)}
+                      className="w-4 h-4 cursor-pointer"
+                    />
+                    <span className="text-sm text-[#BABAAE]">{type}</span>
+                  </label>
+                ))}
+              </div>
             </div>
           </div>
 
@@ -701,7 +676,7 @@ export default function PortalMembership() {
                     </tr>
                   ) : (
                     membersFiltered.map((row: any) => {
-                      const { member: m, user: u, skillGroupNames } = row;
+                      const { member: m, user: u } = row;
                       return (
                         <tr
                           key={m.id}
@@ -713,7 +688,7 @@ export default function PortalMembership() {
                           </td>
                           <td className={`${tdCls} font-mono text-xs`}>{m.memberNumber ?? "—"}</td>
                           <td className={tdCls}>
-                            {skillGroupNames && skillGroupNames.length > 0 ? skillGroupNames : "—"}
+                            {m.membershipType ?? "—"}
                           </td>
                           <td className={tdCls}>{formatDate(m.joinDate)}</td>
                           <td className={tdCls}>{formatDate(m.renewalDate)}</td>

@@ -1,6 +1,6 @@
 export { membershipRouter } from './server/router';
 // DB table refs — for admin feature consumption only
-export { members, membershipApplications, memberSkillGroups, skillGroups, skillGroupCalendarAccess, propertySkillGroupAccess } from './schema';
+export { members, membershipApplications, memberSkillGroups, skillGroups, skillGroupCalendarAccess, propertySkillGroupAccess, employees, employeeSkillGroups } from './schema';
 // Skill group access types
 export type {
   SkillGroup,
@@ -11,4 +11,10 @@ export type {
   InsertSkillGroupCalendarAccess,
   PropertySkillGroupAccess,
   InsertPropertySkillGroupAccess,
+  Member,
+  InsertMember,
+  Employee,
+  InsertEmployee,
+  EmployeeSkillGroup,
+  InsertEmployeeSkillGroup,
 } from '@core/db/schema';
