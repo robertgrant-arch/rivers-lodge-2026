@@ -12,7 +12,7 @@ import { publicProcedure, protectedProcedure, router } from "../../_core/server/
 import { notifyOwner } from "../../_core/server/notification";
 import { verifyCaptcha } from "@core/server/captcha";
 import * as dal from "./dal";
-import { members, users, membershipApplications } from '@core/db/schema';
+import { members, users, membershipApplications, memberSkillGroups, skillGroups } from '@core/db/schema';
 
 // ─── Role Guards ──────────────────────────────────────────────────────────────
 
@@ -177,7 +177,7 @@ export const membershipRouter = router({
     .input(
       z.object({
         userId: z.string(),
-        tier: z.enum(["standard", "premier", "founding"]).default("standard"),
+        skillGroupIds: z.array(z.number()).optional(),
         memberNumber: z.string().optional(),
         joinDate: z.string().optional(),
         renewalDate: z.string().optional(),
@@ -200,20 +200,29 @@ export const membershipRouter = router({
       }
       const [newMember] = await db.insert(members).values({
         userId: input.userId,
-        tier: input.tier,
         memberNumber,
         active: true,
         joinDate: input.joinDate ?? new Date().toISOString().split("T")[0],
         renewalDate: input.renewalDate ?? null,
         notes: input.notes ?? null,
       } as any).returning({ id: members.id });
+
+      if (input.skillGroupIds && input.skillGroupIds.length > 0) {
+        await db.insert(memberSkillGroups).values(
+          input.skillGroupIds.map(sgId => ({
+            memberId: newMember.id,
+            skillGroupId: sgId,
+          }))
+        );
+      }
+
       await logAudit({
         actingUserId: ctx.user.id,
         actingUserName: ctx.user.email ?? "Staff",
         actionType: "create",
         entityType: "Member",
         entityId: String(newMember.id),
-        notes: `Created member ${memberNumber} (tier: ${input.tier})`,
+        notes: `Created member ${memberNumber}`,
       });
       return { success: true, memberId: newMember.id, memberNumber };
     }),
@@ -224,7 +233,7 @@ export const membershipRouter = router({
     .input(
       z.object({
         id: z.number(),
-        tier: z.enum(["standard", "premier", "founding"]).optional(),
+        skillGroupIds: z.array(z.number()).optional(),
         active: z.boolean().optional(),
         notes: z.string().optional(),
         renewalDate: z.string().optional(),
@@ -232,9 +241,22 @@ export const membershipRouter = router({
     )
     .mutation(async ({ input, ctx }) => {
       const db = getPortalDb();
-      const { id, ...updates } = input;
+      const { id, skillGroupIds, ...updates } = input;
       const filtered = Object.fromEntries(Object.entries(updates).filter(([, v]) => v !== undefined));
       await db.update(members).set(filtered as any).where(eq(members.id, id));
+
+      if (skillGroupIds) {
+        await db.delete(memberSkillGroups).where(eq(memberSkillGroups.memberId, id));
+        if (skillGroupIds.length > 0) {
+          await db.insert(memberSkillGroups).values(
+            skillGroupIds.map(sgId => ({
+              memberId: id,
+              skillGroupId: sgId,
+            }))
+          );
+        }
+      }
+
       await logAudit({
         actingUserId: ctx.user.id,
         actingUserName: ctx.user.email ?? "Staff",
@@ -246,21 +268,73 @@ export const membershipRouter = router({
     }),
 
   // Admin-only preview helper (from server/routers.ts → membershipRouter)
+  // Creates a preview member if one doesn't exist, allowing admins to see the portal as different skill groups
   ensureMemberForPreview: adminProcedure.mutation(async ({ ctx }) => {
-    const existing = await dal.getMemberByUserId(ctx.user.id);
-    if (existing) return { member: existing, created: false };
+    const db = getPortalDb();
+    const existing = await db
+      .select()
+      .from(members)
+      .where(eq(members.userId, ctx.user.id))
+      .limit(1);
+
+    if (existing.length > 0) {
+      return { member: existing[0], created: false };
+    }
+
     const year = new Date().getFullYear();
     const memberNumber = `RL-${year}-PREVIEW`;
-    await dal.createMember({
+    const [newMember] = await db.insert(members).values({
       userId: ctx.user.id,
       memberNumber,
-      tier: "founding",
       active: true,
       joinDate: new Date().toISOString().split("T")[0],
-    } as any);
-    const created = await dal.getMemberByUserId(ctx.user.id);
-    return { member: created, created: true };
+    }).returning();
+
+    return { member: newMember, created: true };
   }),
+
+  // List available skill groups for preview dropdown
+  listSkillGroupsForPreview: adminProcedure.query(async () => {
+    const db = getPortalDb();
+    return db.select({
+      id: skillGroups.id,
+      name: skillGroups.name,
+      slug: skillGroups.slug,
+    })
+      .from(skillGroups)
+      .where(eq(skillGroups.active, true))
+      .orderBy(skillGroups.sortOrder);
+  }),
+
+  // Assign skill groups to preview member
+  setPreviewMemberSkillGroups: adminProcedure
+    .input(z.object({ skillGroupIds: z.array(z.number()) }))
+    .mutation(async ({ input, ctx }) => {
+      const db = getPortalDb();
+      const member = await db
+        .select()
+        .from(members)
+        .where(eq(members.userId, ctx.user.id))
+        .limit(1);
+
+      if (!member.length) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Preview member not found" });
+      }
+
+      const memberId = member[0].id;
+      await db.delete(memberSkillGroups).where(eq(memberSkillGroups.memberId, memberId));
+
+      if (input.skillGroupIds.length > 0) {
+        await db.insert(memberSkillGroups).values(
+          input.skillGroupIds.map(sgId => ({
+            memberId,
+            skillGroupId: sgId,
+          }))
+        );
+      }
+
+      return { success: true };
+    }),
 
   // ── Staff portal procedures (from server/portalRouter.ts → membershipPortalRouter) ──
 
@@ -280,7 +354,7 @@ export const membershipRouter = router({
     }),
 
   stats: portalProcedure
-    .input(z.object({ active: z.boolean().optional(), tier: z.string().optional() }))
+    .input(z.object({ active: z.boolean().optional() }))
     .query(async ({ input }) => {
       const db = getPortalDb();
       const today = new Date().toISOString().split("T")[0];
@@ -288,7 +362,6 @@ export const membershipRouter = router({
       // Build base filter conditions from input
       const baseConditions = [];
       if (input.active !== undefined) baseConditions.push(eq(members.active, input.active));
-      if (input.tier) baseConditions.push(eq(members.tier, input.tier as any));
       const baseWhere = baseConditions.length > 0 ? and(...baseConditions) : undefined;
 
       const [[total], [active], [inactive], [pendingRenewal]] = await Promise.all([
@@ -327,13 +400,12 @@ export const membershipRouter = router({
 
   // Filterable member list with joined user data and pagination
   members: portalProcedure
-    .input(z.object({ active: z.boolean().optional(), tier: z.string().optional(), limit: z.number().int().min(1).max(100).default(25), cursor: z.number().int().optional() }))
+    .input(z.object({ active: z.boolean().optional(), limit: z.number().int().min(1).max(100).default(25), cursor: z.number().int().optional() }))
     .query(async ({ input }) => {
       const db = getPortalDb();
       const limit = input.limit;
       const conditions = [];
       if (input.active !== undefined) conditions.push(eq(members.active, input.active));
-      if (input.tier) conditions.push(eq(members.tier, input.tier as any));
       if (input.cursor !== undefined) conditions.push(lt(members.id, input.cursor));
       const query =
         conditions.length > 0
@@ -343,7 +415,6 @@ export const membershipRouter = router({
                   id: members.id,
                   userId: members.userId,
                   memberNumber: members.memberNumber,
-                  tier: members.tier,
                   joinDate: members.joinDate,
                   renewalDate: members.renewalDate,
                   active: members.active,
@@ -365,7 +436,6 @@ export const membershipRouter = router({
                   id: members.id,
                   userId: members.userId,
                   memberNumber: members.memberNumber,
-                  tier: members.tier,
                   joinDate: members.joinDate,
                   renewalDate: members.renewalDate,
                   active: members.active,

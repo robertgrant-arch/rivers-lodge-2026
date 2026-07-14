@@ -10,10 +10,10 @@ export default function PortalCalendarSettings() {
   const [propertySkillGroups, setPropertySkillGroups] = useState<Record<string, SkillGroup[]>>({});
   const [isSaving, setIsSaving] = useState(false);
 
-  const masterCalendarQuery = trpc.admin.calendarSettings.getMasterCalendarAccessBySkillGroup.useQuery();
-  const propertyCalendarQuery = trpc.admin.calendarSettings.getPropertyCalendarAccessBySkillGroup.useQuery();
+  const masterCalendarQuery = trpc.portal.calendarSettings.getMasterCalendarAccessBySkillGroup.useQuery();
+  const propertyCalendarQuery = trpc.portal.calendarSettings.getPropertyCalendarAccessBySkillGroup.useQuery();
 
-  const updateMasterMutation = trpc.admin.calendarSettings.updateMasterCalendarAccessBySkillGroup.useMutation({
+  const updateMasterMutation = trpc.portal.calendarSettings.updateMasterCalendarAccessBySkillGroup.useMutation({
     onSuccess: () => {
       toast.success("Master Calendar access updated");
       masterCalendarQuery.refetch();
@@ -23,7 +23,7 @@ export default function PortalCalendarSettings() {
     },
   });
 
-  const updatePropertyMutation = trpc.admin.calendarSettings.updatePropertyCalendarAccessBySkillGroup.useMutation({
+  const updatePropertyMutation = trpc.portal.calendarSettings.updatePropertyCalendarAccessBySkillGroup.useMutation({
     onSuccess: () => {
       toast.success("Property calendar access updated");
       propertyCalendarQuery.refetch();
@@ -35,13 +35,13 @@ export default function PortalCalendarSettings() {
 
   useEffect(() => {
     if (masterCalendarQuery.data) {
-      setMasterSkillGroups(masterCalendarQuery.data);
+      setMasterSkillGroups(masterCalendarQuery.data as SkillGroup[]);
     }
   }, [masterCalendarQuery.data]);
 
   useEffect(() => {
     if (propertyCalendarQuery.data) {
-      setPropertySkillGroups(propertyCalendarQuery.data);
+      setPropertySkillGroups(propertyCalendarQuery.data as Record<string, SkillGroup[]>);
     }
   }, [propertyCalendarQuery.data]);
 

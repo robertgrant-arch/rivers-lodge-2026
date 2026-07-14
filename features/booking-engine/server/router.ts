@@ -32,7 +32,7 @@ import {
 import { bookings, users, blockedDates } from '@core/db/schema';
 import { propertyBookings, huntingProperties } from '@core/db/property-booking-schema';
 import { calendarAccessSettings } from '@features/admin/schema';
-import { members } from '@features/membership/schema';
+import { members, memberSkillGroups, skillGroups } from '@features/membership/public';
 import { gte, lte } from "drizzle-orm";
 import {
   checkAvailability,
@@ -590,8 +590,14 @@ const bookingsRouter = router({
       const member = memberResult[0];
       if (!member) throw new TRPCError({ code: "UNAUTHORIZED", message: "Not a member" });
 
-      // Get user's skill groups
-      const userSkillGroups = getUserSkillGroups(member.tier, ctx.user.role);
+      // Get user's skill groups from memberSkillGroups table
+      const memberSkillGroupsResult = await db
+        .select({ id: skillGroups.id, slug: skillGroups.slug })
+        .from(memberSkillGroups)
+        .innerJoin(skillGroups, eq(memberSkillGroups.skillGroupId, skillGroups.id))
+        .where(eq(memberSkillGroups.memberId, member.id));
+
+      const userSkillGroups = memberSkillGroupsResult.map(sg => sg.slug) as any[];
 
       // Get property calendar access settings
       const settingsResult = await db
@@ -654,8 +660,14 @@ const bookingsRouter = router({
       const member = memberResult[0];
       if (!member) throw new TRPCError({ code: "UNAUTHORIZED", message: "Not a member" });
 
-      // Get user's skill groups
-      const userSkillGroups = getUserSkillGroups(member.tier, ctx.user.role);
+      // Get user's skill groups from memberSkillGroups table
+      const memberSkillGroupsResult = await db
+        .select({ id: skillGroups.id, slug: skillGroups.slug })
+        .from(memberSkillGroups)
+        .innerJoin(skillGroups, eq(memberSkillGroups.skillGroupId, skillGroups.id))
+        .where(eq(memberSkillGroups.memberId, member.id));
+
+      const userSkillGroups = memberSkillGroupsResult.map(sg => sg.slug) as any[];
 
       // Get Master Calendar access settings (new skill-group-based format)
       const settingsResult = await db
@@ -696,8 +708,14 @@ const bookingsRouter = router({
       const member = memberResult[0];
       if (!member) throw new TRPCError({ code: "UNAUTHORIZED", message: "Not a member" });
 
-      // Get user's skill groups
-      const userSkillGroups = getUserSkillGroups(member.tier, ctx.user.role);
+      // Get user's skill groups from memberSkillGroups table
+      const memberSkillGroupsResult = await db
+        .select({ id: skillGroups.id, slug: skillGroups.slug })
+        .from(memberSkillGroups)
+        .innerJoin(skillGroups, eq(memberSkillGroups.skillGroupId, skillGroups.id))
+        .where(eq(memberSkillGroups.memberId, member.id));
+
+      const userSkillGroups = memberSkillGroupsResult.map(sg => sg.slug) as any[];
 
       // Get property calendar access settings (new skill-group-based format)
       const settingsResult = await db
@@ -722,7 +740,7 @@ const bookingsRouter = router({
 
       // LOCKED DESIGN: Social members see org-scoped bookings only (members from same org)
       // Non-Social see all bookings for the property
-      if (member.tier === "Social" && member.socialParentOrganizationId) {
+      if (userSkillGroups.includes("Social") && member.socialParentOrganizationId) {
         // For Social: only show bookings from members in same org
         const orgMembers = await db
           .select({ userId: members.userId })

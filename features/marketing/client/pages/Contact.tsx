@@ -315,7 +315,7 @@ export default function Contact() {
                     defaultType={selectedType}
                     track={track}
                     allowedTypes={allowedTypes}
-                    onTypeChange={setSelectedType}
+                    onTypeChange={(type) => setSelectedType(type)}
                   />
                 )}
               </div>

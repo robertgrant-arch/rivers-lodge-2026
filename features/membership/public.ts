@@ -1,18 +1,14 @@
 export { membershipRouter } from './server/router';
 // DB table refs — for admin feature consumption only
-export { members, membershipApplications, roles, resourceAccess } from './schema';
-// RBAC and skill group types
+export { members, membershipApplications, memberSkillGroups, skillGroups, skillGroupCalendarAccess, propertySkillGroupAccess } from './schema';
+// Skill group access types
 export type {
-  Role,
-  InsertRole,
-  ResourceAccess,
-  InsertResourceAccess,
   SkillGroup,
   InsertSkillGroup,
-  RoleSkillGroupAccess,
-  InsertRoleSkillGroupAccess,
-  RolePropertySkillGroupAccess,
-  InsertRolePropertySkillGroupAccess,
-  PropertySkillGroup,
-  InsertPropertySkillGroup,
+  MemberSkillGroup,
+  InsertMemberSkillGroup,
+  SkillGroupCalendarAccess,
+  InsertSkillGroupCalendarAccess,
+  PropertySkillGroupAccess,
+  InsertPropertySkillGroupAccess,
 } from '@core/db/schema';

@@ -123,21 +123,24 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
   const [location] = useLocation();
   const [previewLoading, setPreviewLoading] = useState(false);
   const [previewPopoverOpen, setPreviewPopoverOpen] = useState(false);
-  const [previewRoleId, setPreviewRoleId] = useState<string>("");
+  const [previewSkillGroupId, setPreviewSkillGroupId] = useState<string>("");
   const ensureMember = trpc.membership.ensureMemberForPreview.useMutation();
-  const rolesQuery = trpc.admin.accessControl.listRoles.useQuery();
+  const skillGroupsQuery = trpc.membership.listSkillGroupsForPreview.useQuery();
+  const setPreviewSkillGroups = trpc.membership.setPreviewMemberSkillGroups.useMutation();
   const notificationsQuery = trpc.portal.dashboard.notifications.useQuery(undefined, {
     enabled: !!user && user.role === ADMIN_ROLE,
     refetchInterval: 30000,
   });
   const unreadCount = notificationsQuery.data?.length ?? 0;
 
-  const handlePreviewAsRole = async () => {
-    if (!previewRoleId) return;
+  const handlePreviewAsSkillGroup = async () => {
+    if (!previewSkillGroupId) return;
     setPreviewLoading(true);
     try {
       await ensureMember.mutateAsync();
-      window.location.href = `/portal?preview=1&roleId=${previewRoleId}`;
+      const skillGroupIdNum = parseInt(previewSkillGroupId, 10);
+      await setPreviewSkillGroups.mutateAsync({ skillGroupIds: [skillGroupIdNum] });
+      window.location.href = `/portal?preview=1`;
     } catch {
       setPreviewLoading(false);
     }
@@ -299,7 +302,7 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
           <header className="flex items-center gap-3 px-4 py-3 border-b border-border bg-background/95 backdrop-blur sticky top-0 z-10">
             <SidebarTrigger className="text-muted-foreground hover:text-foreground" />
             <div className="flex-1" />
-            {/* Preview as Member — owner/admin only */}
+            {/* Preview as Skill Group — admin only */}
             {user?.role === "admin" && (
               <Popover open={previewPopoverOpen} onOpenChange={setPreviewPopoverOpen}>
                 <PopoverTrigger asChild>
@@ -310,27 +313,27 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
                     disabled={previewLoading}
                   >
                     <Eye className="w-3.5 h-3.5" />
-                    {previewLoading ? "Setting up…" : "Preview as Role"}
+                    {previewLoading ? "Setting up…" : "Preview as Skill Group"}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-48 p-3 bg-[#363330] border border-[#57544E] rounded-none">
                   <div className="space-y-2">
-                    <p className="text-xs font-sans tracking-[0.1em] uppercase text-[#BABAAE]">Select Role</p>
+                    <p className="text-xs font-sans tracking-[0.1em] uppercase text-[#BABAAE]">Select Skill Group</p>
                     <select
-                      value={previewRoleId}
-                      onChange={(e) => setPreviewRoleId(e.target.value)}
+                      value={previewSkillGroupId}
+                      onChange={(e) => setPreviewSkillGroupId(e.target.value)}
                       className="w-full px-3 py-2 bg-[#2B2823] border border-[#57544E] text-[#E0D3BD] font-sans text-sm rounded-none focus:outline-none focus:ring-1 focus:ring-[#9B4D19]"
                     >
-                      <option value="">Choose a role...</option>
-                      {(rolesQuery.data ?? []).map((role) => (
-                        <option key={role.id} value={role.id}>
-                          {role.label}
+                      <option value="">Choose a skill group...</option>
+                      {(skillGroupsQuery.data ?? []).map((sg) => (
+                        <option key={sg.id} value={sg.id}>
+                          {sg.name}
                         </option>
                       ))}
                     </select>
                     <Button
-                      onClick={handlePreviewAsRole}
-                      disabled={!previewRoleId || previewLoading}
+                      onClick={handlePreviewAsSkillGroup}
+                      disabled={!previewSkillGroupId || previewLoading}
                       className="w-full bg-[#9B4D19] hover:bg-[#7a3c14] text-[#E0D3BD] font-sans text-xs tracking-[0.1em] uppercase rounded-none h-8"
                     >
                       {previewLoading ? "Starting…" : "Preview"}

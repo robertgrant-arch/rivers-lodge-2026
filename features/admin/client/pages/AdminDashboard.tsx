@@ -391,7 +391,7 @@ export default function AdminDashboard() {
                 <table className="w-full text-sm font-sans">
                   <thead>
                     <tr className="border-b border-border">
-                      {["Member #", "User ID", "Tier", "Active", "Joined", "Renewal"].map(h => (
+                      {["Member #", "User ID", "Active", "Joined", "Renewal"].map(h => (
                         <th key={h} className="text-left text-[9px] tracking-[0.16em] uppercase text-muted-foreground py-3 pr-4">{h}</th>
                       ))}
                     </tr>
@@ -401,7 +401,6 @@ export default function AdminDashboard() {
                       <tr key={m.id} className="border-b border-border/50 hover:bg-secondary/30 transition-colors">
                         <td className="py-3 pr-4 font-medium text-foreground">{m.memberNumber ?? `#${m.id}`}</td>
                         <td className="py-3 pr-4 text-muted-foreground">{m.userId}</td>
-                        <td className="py-3 pr-4 text-muted-foreground capitalize">{m.tier ?? "standard"}</td>
                         <td className="py-3 pr-4">
                           <span className={`text-[9px] tracking-[0.12em] uppercase font-sans px-2 py-1 ${m.active ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" : "bg-secondary text-muted-foreground"}`}>
                             {m.active ? "Active" : "Inactive"}

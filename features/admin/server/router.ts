@@ -23,7 +23,7 @@ import {
 } from "../schema";
 // Cross-feature table refs — imported only via public.ts barrels
 import { users } from "@features/auth/server/public";
-import { members, membershipApplications, roles, resourceAccess } from "@features/membership/public";
+import { members, membershipApplications } from "@features/membership/public";
 import { inquiries } from "@features/inquiries/public";
 import { bookings } from "@features/booking-engine/public";
 import { waivers } from "@features/waivers/public";
@@ -1493,7 +1493,6 @@ const membershipPortalRouter = router({
         const limit = input.limit;
         const conditions = [];
         if (input.active !== undefined) conditions.push(eq(members.active, input.active));
-        if (input.tier) conditions.push(eq(members.tier, input.tier as any));
         if (input.cursor !== undefined) conditions.push(lt(members.id, input.cursor));
         // Explicit column projection: select only columns confirmed present in prod.
         // Excludes socialParentOrganizationId and roleId which exist in schema but not in prod.
@@ -1502,7 +1501,6 @@ const membershipPortalRouter = router({
             id: members.id,
             userId: members.userId,
             memberNumber: members.memberNumber,
-            tier: members.tier,
             joinDate: members.joinDate,
             renewalDate: members.renewalDate,
             active: members.active,
@@ -1534,8 +1532,6 @@ const membershipPortalRouter = router({
   updateMember: portalProcedure
     .input(z.object({
       id: z.number(),
-      tier: z.enum(["Designated", "Silver", "Social"]).optional(),
-      roleId: z.number().optional(),
       active: z.boolean().optional(),
       renewalDate: z.string().optional(),
       notes: z.string().optional(),
@@ -1570,8 +1566,6 @@ const membershipPortalRouter = router({
   createMember: portalProcedure
     .input(z.object({
       userId: z.string(),
-      tier: z.enum(["Designated", "Silver", "Social"]).default("Designated"),
-      roleId: z.number(),
       memberNumber: z.string().optional(),
       joinDate: z.string().optional(),
       renewalDate: z.string().optional(),
@@ -1589,8 +1583,6 @@ const membershipPortalRouter = router({
       }
       const [newMember] = await db.insert(members).values({
         userId: input.userId,
-        tier: input.tier,
-        roleId: input.roleId,
         memberNumber,
         active: true,
         joinDate: input.joinDate ?? new Date().toISOString().split("T")[0],
@@ -1603,7 +1595,7 @@ const membershipPortalRouter = router({
         actionType: "create",
         entityType: "Member",
         entityId: String(newMember.id),
-        notes: `Created member ${memberNumber} (tier: ${input.tier})`,
+        notes: `Created member ${memberNumber}`,
       });
       return { success: true, memberId: newMember.id, memberNumber };
     }),
@@ -1651,14 +1643,8 @@ const analyticsRouter = router({
 
   memberActivity: portalProcedure.query(async () => {
     const db = getDb();
-    const [[total], byTier] = await Promise.all([
-      db.select({ count: sql<number>`count(*)` }).from(members).where(eq(members.active, true)),
-      db.select({
-        tier: members.tier,
-        count: sql<number>`count(*)`,
-      }).from(members).where(eq(members.active, true)).groupBy(members.tier),
-    ]);
-    return { totalActive: total.count, byTier };
+    const [total] = await db.select({ count: sql<number>`count(*)` }).from(members).where(eq(members.active, true));
+    return { totalActive: total.count, byTier: [] };
   }),
 
   huntFishSeason: portalProcedure
@@ -2140,121 +2126,12 @@ const calendarSettingsRouter = router({
     }),
 });
 
-// ─── Access Control Router ───────────────────────────────────────────────────
-const accessControlRouter = router({
-  // Get all roles
-  listRoles: ownerProcedure.query(async () => {
-    const db = getDb();
-    return await db.select().from(roles).orderBy(roles.sortOrder);
-  }),
-
-  // Get resource access for a specific resource
-  getResourceAccess: ownerProcedure
-    .input(z.object({
-      resourceType: z.string(),
-      resourceId: z.string(),
-    }))
-    .query(async ({ input }) => {
-      const db = getDb();
-      const access = await db
-        .select({
-          id: resourceAccess.id,
-          roleId: resourceAccess.roleId,
-          canViewAndBook: resourceAccess.canViewAndBook,
-        })
-        .from(resourceAccess)
-        .where(and(
-          eq(resourceAccess.resourceType, input.resourceType),
-          eq(resourceAccess.resourceId, input.resourceId)
-        ));
-      return access;
-    }),
-
-  // Update resource access for a role
-  updateResourceAccess: ownerProcedure
-    .input(z.object({
-      resourceType: z.string(),
-      resourceId: z.string(),
-      roleId: z.number(),
-      canViewAndBook: z.boolean(),
-    }))
-    .mutation(async ({ input }) => {
-      const db = getDb();
-      // Upsert: update if exists, insert if not
-      const existing = await db
-        .select({ id: resourceAccess.id })
-        .from(resourceAccess)
-        .where(and(
-          eq(resourceAccess.resourceType, input.resourceType),
-          eq(resourceAccess.resourceId, input.resourceId),
-          eq(resourceAccess.roleId, input.roleId)
-        ))
-        .limit(1);
-
-      if (existing.length > 0) {
-        await db
-          .update(resourceAccess)
-          .set({ canViewAndBook: input.canViewAndBook })
-          .where(eq(resourceAccess.id, existing[0].id));
-      } else {
-        await db.insert(resourceAccess).values({
-          resourceType: input.resourceType,
-          resourceId: input.resourceId,
-          roleId: input.roleId,
-          canViewAndBook: input.canViewAndBook,
-        });
-      }
-      return { success: true };
-    }),
-
-  // Check if user can access a resource (based on their member role)
-  canAccessResource: protectedProcedure
-    .input(z.object({
-      resourceType: z.string(),
-      resourceId: z.string(),
-    }))
-    .query(async ({ ctx, input }) => {
-      const db = getDb();
-
-      // Get the member record for this user
-      const member = await db
-        .select()
-        .from(members)
-        .where(eq(members.userId, ctx.user.id))
-        .limit(1);
-
-      if (!member.length) {
-        // Non-members can't access
-        return { canAccess: false };
-      }
-
-      const memberRole = member[0].roleId;
-      if (!memberRole) {
-        // No role assigned
-        return { canAccess: false };
-      }
-
-      // Check if there's an access entry for this resource and role
-      const access = await db
-        .select()
-        .from(resourceAccess)
-        .where(and(
-          eq(resourceAccess.resourceType, input.resourceType),
-          eq(resourceAccess.resourceId, input.resourceId),
-          eq(resourceAccess.roleId, memberRole)
-        ))
-        .limit(1);
-
-      return { canAccess: access.length > 0 && access[0].canViewAndBook };
-    }),
-});
 
 // ─── Admin App Router ─────────────────────────────────────────────────────────
 export const adminRouter = router({
   dashboard: dashboardRouter,
   calendar: calendarRouter,
   calendarSettings: calendarSettingsRouter,
-  accessControl: accessControlRouter,
   weddings: weddingsPortalRouter,
   corporate: corporatePortalRouter,
   huntFish: huntFishPortalRouter,
