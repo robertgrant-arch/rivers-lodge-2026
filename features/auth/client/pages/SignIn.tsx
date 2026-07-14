@@ -15,7 +15,7 @@ export default function SignIn() {
         navigate("/account/change-password");
       } else if (data.role === "admin") {
         navigate("/ops");
-      } else if (data.role === "member") {
+      } else if (data.role === "employee") {
         navigate("/portal");
       } else {
         // Unknown or missing role — safe fallback

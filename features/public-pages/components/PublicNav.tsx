@@ -74,7 +74,7 @@ export default function PublicNav() {
 
   const { user, isAuthenticated, logout } = useAuth();
 
-  const hasPortalAccess = isAuthenticated && (user?.role === "admin" || user?.role === "member");
+  const hasPortalAccess = isAuthenticated && (user?.role === "admin" || user?.role === "employee");
 
   const track = getTrackFromPath(location);
   const isTransparent = !scrolled && !mobileOpen;

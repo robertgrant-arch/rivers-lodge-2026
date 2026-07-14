@@ -27,6 +27,7 @@ import {
 } from "@shared/ui/dropdown-menu";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@shared/ui/tabs";
 import { useAuth } from "@features/auth/public";
+import type { UserRole } from "@features/auth/schema";
 import {
   Shield,
   MoreHorizontal,
@@ -45,14 +46,7 @@ import {
 // Types
 // ---------------------------------------------------------------------------
 
-type UserRole = "admin" | "member" | "employee";
 type UserStatus = "active" | "invited" | "disabled";
-
-// Normalize legacy "member" role to "employee" for staff users
-function normalizeUserRole(role: string): UserRole {
-  if (role === "member") return "employee";
-  return role as UserRole;
-}
 
 interface UserRecord {
   id: string;
@@ -227,7 +221,7 @@ function ConfirmDialog({
 
 function InvitationsTab() {
   const [email, setEmail] = useState("");
-  const [role, setRole] = useState<UserRole>("member");
+  const [role, setRole] = useState<UserRole>("employee");
   const [inviteUrl, setInviteUrl] = useState<string | null>(null);
 
   // Resend confirm state
@@ -243,13 +237,7 @@ function InvitationsTab() {
     search: "",
   });
 
-  // Normalize roles: convert legacy "member" to "employee"
-  const normalizedUsers = (allUsers ?? []).map(u => ({
-    ...u,
-    role: normalizeUserRole(u.role),
-  })) as UserRecord[];
-
-  const pendingInvites: UserRecord[] = normalizedUsers.filter(
+  const pendingInvites: UserRecord[] = (allUsers ?? []).filter(
     (u: UserRecord) => u.status === "invited"
   );
 
@@ -461,13 +449,7 @@ function UsersTab() {
 
   const { data: users, isLoading } = trpc.portal.users.list.useQuery({ search });
 
-  // Normalize roles: convert legacy "member" to "employee"
-  const normalizedSearchUsers = (users ?? []).map(u => ({
-    ...u,
-    role: normalizeUserRole(u.role),
-  })) as UserRecord[];
-
-  const activeUsers: UserRecord[] = normalizedSearchUsers.filter(
+  const activeUsers: UserRecord[] = (users ?? []).filter(
     (u: UserRecord) => u.status !== "invited"
   );
 
@@ -674,7 +656,7 @@ function UsersTab() {
 
                         <DropdownMenuSeparator className="bg-[#57544E]" />
 
-                        {user.role === "member" ? (
+                        {user.role === "employee" ? (
                           <DropdownMenuItem
                             className="font-sans text-xs tracking-[0.06em] cursor-pointer focus:bg-[#423F3B] focus:text-[#E0D3BD] gap-2"
                             onClick={() =>
