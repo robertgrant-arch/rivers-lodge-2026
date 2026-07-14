@@ -59,13 +59,29 @@ export default function CalendarMaster() {
     redirectOnUnauthenticated: true,
   });
 
+  // Read preview skill group from URL param
+  const queryParams = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
+  const previewSkillGroupId = queryParams.get('skillGroupId');
+
   const memberStatus = trpc.membership.myStatus.useQuery(undefined, { enabled: isAuthenticated });
+  const skillGroupsQuery = trpc.membership.listSkillGroupsForPreview.useQuery();
+  const masterCalendarAccessQuery = trpc.portal.calendarSettings.getMasterCalendarAccessBySkillGroup.useQuery();
+
   const today = new Date();
   const year = today.getFullYear();
   const calendarEvents = trpc.portal.calendar.events.useQuery({
     startDate: `${year}-01-01`,
     endDate: `${year}-12-31`,
   });
+
+  // Get preview skill group details
+  const previewSkillGroup = previewSkillGroupId
+    ? skillGroupsQuery.data?.find((sg) => sg.id === parseInt(previewSkillGroupId))
+    : null;
+
+  // Check if preview skill group can view master calendar
+  const canViewMasterCalendar =
+    !previewSkillGroup || masterCalendarAccessQuery.data?.includes(previewSkillGroup.name);
 
   if (loading) {
     return (
@@ -150,9 +166,47 @@ export default function CalendarMaster() {
     return Array.from(dates);
   })();
 
+  // If previewing but skill group cannot view master calendar, show error
+  if (previewSkillGroup && !canViewMasterCalendar) {
+    return (
+      <PublicLayout>
+        <section className="min-h-screen flex items-center justify-center bg-background">
+          <div className="max-w-md w-full mx-auto px-6 text-center">
+            <div className="w-16 h-px bg-white/20 mx-auto mb-8" />
+            <p className="eyebrow text-white/40 mb-4">Preview Restricted</p>
+            <h1 className="font-serif text-4xl text-white mb-5">Access Denied</h1>
+            <p className="text-base font-sans text-white/50 leading-relaxed mb-8">
+              The <strong>{previewSkillGroup.name}</strong> skill group cannot view the Master Calendar.
+            </p>
+            <a href="/portal" className="btn-primary inline-flex items-center justify-center px-8 py-3.5">
+              Return to Portal
+            </a>
+          </div>
+        </section>
+      </PublicLayout>
+    );
+  }
+
   return (
     <PublicLayout>
       <div className="min-h-screen bg-background">
+        {/* ── Preview Banner ────────────────────────────────────── */}
+        {previewSkillGroup && (
+          <div className="bg-amber-950/40 border-b-2 border-amber-600 px-6 py-3">
+            <div className="max-w-[1440px] mx-auto flex items-center justify-between gap-4">
+              <p className="text-sm font-sans text-amber-100">
+                🔍 <strong>Preview Mode:</strong> Viewing as <strong>{previewSkillGroup.name}</strong> skill group
+              </p>
+              <a
+                href="/portal"
+                className="text-xs font-sans text-amber-300 hover:text-amber-200 underline transition-colors"
+              >
+                Exit Preview
+              </a>
+            </div>
+          </div>
+        )}
+
         {/* ── Header ─────────────────────────────────────────────── */}
         <div className="bg-[#2B2823] border-b border-white/8 pt-24 pb-8">
           <div className="max-w-[1440px] mx-auto px-6 lg:px-16">

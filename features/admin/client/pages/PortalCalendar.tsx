@@ -19,6 +19,8 @@ import { Textarea } from '@shared/ui/textarea';
 import { trpc } from '@shared/lib/trpc';
 import { useState, useMemo } from 'react';
 import { toast } from 'sonner';
+import { Settings } from 'lucide-react';
+import MasterCalendarSettingsPanel from '../components/MasterCalendarSettingsPanel';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -434,6 +436,7 @@ export default function PortalCalendar() {
   const [createOpen, setCreateOpen] = useState(false);
   const [createDefaultDate, setCreateDefaultDate] = useState<string | undefined>();
   const [selectedEvent, setSelectedEvent] = useState<CalEvent | null>(null);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   const startDate = toDateStr(new Date(year, month, 1));
   const endDate = toDateStr(new Date(year, month + 1, 0));
@@ -513,6 +516,16 @@ export default function PortalCalendar() {
           <h1 className="font-sans text-2xl font-medium tracking-tight text-[#E0D3BD]">Calendar</h1>
         </div>
         <div className="flex items-start gap-4">
+          <Button
+            onClick={() => setSettingsOpen(true)}
+            variant="outline"
+            size="sm"
+            className="border-[#57544E] text-[#BABAAE] hover:border-[#9B4D19] hover:text-[#E0D3BD] rounded-none font-sans text-xs tracking-[0.1em] uppercase px-3 py-2 h-auto gap-2"
+            title="Configure calendar visibility by skill group"
+          >
+            <Settings className="w-4 h-4" />
+            Settings
+          </Button>
           <Button
             onClick={() => { setCreateDefaultDate(undefined); setCreateOpen(true); }}
             className="bg-[#9B4D19] hover:bg-[#7a3c14] text-[#E0D3BD] rounded-none font-sans text-xs tracking-[0.1em] uppercase px-5 py-2 h-auto"
@@ -734,6 +747,16 @@ export default function PortalCalendar() {
         onClose={() => setSelectedEvent(null)}
         onUnblocked={() => refetch()}
       />
+
+      {/* Master Calendar Settings Modal */}
+      <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
+        <DialogContent className="bg-stone-900 border-stone-700 text-stone-100 max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-stone-100">Calendar Settings</DialogTitle>
+          </DialogHeader>
+          <MasterCalendarSettingsPanel onClose={() => setSettingsOpen(false)} />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

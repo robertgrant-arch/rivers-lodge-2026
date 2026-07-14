@@ -6,7 +6,7 @@
  * for each property.
  */
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { trpc } from '@shared/lib/trpc';
 import { Button } from '@shared/ui/button';
 import { Badge } from '@shared/ui/badge';
@@ -520,10 +520,22 @@ function EditPropertyForm({
     sortOrder: initial.sortOrder ?? 0,
   });
   const [isUploadingMap, setIsUploadingMap] = useState(false);
+  const [propertySkillGroupAccess, setPropertySkillGroupAccess] = useState<Record<number, boolean>>({});
 
   const set = (key: string, value: any) => setForm((f) => ({ ...f, [key]: value }));
   const uploadMap = trpc.propertyBooking.admin.properties.uploadMap.useMutation();
   const { data: availableActivities } = trpc.propertyBooking.properties.activities.useQuery();
+  const skillGroupsQuery = trpc.membership.listSkillGroupsForPreview.useQuery();
+  const propertyAccessQuery = trpc.portal.calendarSettings.getPropertyCalendarAccessBySkillGroup.useQuery();
+  const updatePropertyAccessMutation = trpc.portal.calendarSettings.updatePropertyCalendarAccessBySkillGroup.useMutation({
+    onSuccess: () => {
+      toast.success("Property skill group access updated");
+      propertyAccessQuery.refetch();
+    },
+    onError: () => {
+      toast.error("Failed to update property access");
+    },
+  });
 
   const handleMapFileSelect = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
@@ -566,7 +578,19 @@ function EditPropertyForm({
     }
   };
 
-  const handleSubmit = () => {
+  // Load existing property skill group access on mount
+  useEffect(() => {
+    if (propertyAccessQuery.data && initial.id) {
+      const groupAccess = propertyAccessQuery.data[String(initial.id)] ?? [];
+      const accessMap: Record<number, boolean> = {};
+      (skillGroupsQuery.data ?? []).forEach((sg) => {
+        accessMap[sg.id] = groupAccess.includes(sg.name);
+      });
+      setPropertySkillGroupAccess(accessMap);
+    }
+  }, [propertyAccessQuery.data, initial.id, skillGroupsQuery.data]);
+
+  const handleSubmit = async () => {
     if (!form.name.trim()) { toast.error("Property name is required."); return; }
 
     // Validate capacity fields
@@ -607,6 +631,23 @@ function EditPropertyForm({
       featuredOnPublicSite: form.featuredOnPublicSite,
       sortOrder: Number(form.sortOrder),
     });
+
+    // Persist skill group access
+    try {
+      const selectedGroupNames = Object.entries(propertySkillGroupAccess)
+        .filter(([_, isSelected]) => isSelected)
+        .map(([sgId]) => {
+          const sg = skillGroupsQuery.data?.find(s => s.id === parseInt(sgId, 10));
+          return sg?.name;
+        })
+        .filter((name): name is string => !!name);
+
+      await updatePropertyAccessMutation.mutateAsync({
+        [String(initial.id)]: selectedGroupNames,
+      });
+    } catch (err) {
+      console.error("Failed to update skill group access:", err);
+    }
   };
 
   return (
@@ -793,6 +834,35 @@ function EditPropertyForm({
             )}
           </div>
         </div>
+      </div>
+
+      <div className="border border-stone-700 rounded-lg p-4 space-y-3">
+        <p className="text-xs font-semibold text-stone-400 uppercase tracking-wider">Skill Group Visibility</p>
+        <p className="text-xs text-stone-500 mb-3">Choose which skill groups can book this property. No access by default.</p>
+        {skillGroupsQuery.isLoading ? (
+          <div className="flex items-center gap-2 text-sm text-stone-400">
+            <Loader2 className="w-4 h-4 animate-spin" />
+            Loading skill groups...
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {(skillGroupsQuery.data ?? []).map((sg) => (
+              <label key={sg.id} className="flex items-center gap-3 cursor-pointer hover:bg-stone-800/50 p-2 rounded">
+                <Checkbox
+                  checked={propertySkillGroupAccess[sg.id] ?? false}
+                  onCheckedChange={(v) => {
+                    setPropertySkillGroupAccess((prev) => ({
+                      ...prev,
+                      [sg.id]: !!v,
+                    }));
+                  }}
+                  className="border-stone-600"
+                />
+                <span className="text-sm text-stone-300">{sg.name}</span>
+              </label>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="flex items-center gap-4 justify-end">

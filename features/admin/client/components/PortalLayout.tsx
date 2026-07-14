@@ -140,8 +140,11 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
       await ensureMember.mutateAsync();
       const skillGroupIdNum = parseInt(previewSkillGroupId, 10);
       await setPreviewSkillGroups.mutateAsync({ skillGroupIds: [skillGroupIdNum] });
-      window.location.href = `/portal?preview=1`;
-    } catch {
+      setPreviewPopoverOpen(false);
+      setPreviewSkillGroupId("");
+      window.location.href = `/portal?preview=1&skillGroupId=${skillGroupIdNum}`;
+    } catch (err) {
+      console.error("Preview failed:", err);
       setPreviewLoading(false);
     }
   };
