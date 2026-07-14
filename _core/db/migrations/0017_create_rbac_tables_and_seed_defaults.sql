@@ -127,7 +127,11 @@ VALUES
   ('Social', 'social', 2, true, NOW(), NOW()),
   ('Employee', 'employee', 3, true, NOW(), NOW()),
   ('Admin', 'admin', 4, true, NOW(), NOW())
-ON CONFLICT (slug) DO NOTHING;
+ON CONFLICT (slug) DO UPDATE SET
+  name = EXCLUDED.name,
+  sort_order = EXCLUDED.sort_order,
+  active = EXCLUDED.active,
+  updated_at = NOW();
 
 -- 9. SEED DEFAULT ROLE × SKILL_GROUP ACCESS MATRIX
 -- Admin: all skill groups, can view and book

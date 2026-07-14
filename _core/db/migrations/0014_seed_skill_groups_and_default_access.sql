@@ -9,7 +9,10 @@ VALUES
   ('Social', 'social', 2, true),
   ('Employee', 'employee', 3, true),
   ('Admin', 'admin', 4, true)
-ON CONFLICT (slug) DO NOTHING;
+ON CONFLICT (slug) DO UPDATE SET
+  name = EXCLUDED.name,
+  sort_order = EXCLUDED.sort_order,
+  active = EXCLUDED.active;
 
 -- Seed default role access matrix
 -- Get role and skill_group IDs dynamically to avoid hardcoding IDs
