@@ -94,10 +94,10 @@ function AddMemberDialog({ open, onClose }: { open: boolean; onClose: () => void
     { enabled: debouncedQuery.length >= 2 }
   );
 
-  const skillGroupsQuery = trpc.portal.membership.memberSkillGroups.useQuery();
+  const skillGroupsQuery = trpc.portal.membership.memberSkillGroups.useQuery() as any;
 
   const createMutation = trpc.portal.membership.createMember.useMutation({
-    onSuccess: (data) => {
+    onSuccess: (data: any) => {
       utils.portal.membership.members.invalidate();
       utils.portal.membership.stats.invalidate();
       toast.success(`Member created — ${data.memberNumber}`);
@@ -133,7 +133,7 @@ function AddMemberDialog({ open, onClose }: { open: boolean; onClose: () => void
       renewalDate: renewalDate || undefined,
       notes: notes || undefined,
       skillGroupIds: selectedSkillGroupIds.length > 0 ? selectedSkillGroupIds : undefined,
-    });
+    } as any);
   };
 
   const inputCls =
@@ -268,7 +268,7 @@ function AddMemberDialog({ open, onClose }: { open: boolean; onClose: () => void
               ) : (skillGroupsQuery.data ?? []).length === 0 ? (
                 <div className="text-xs text-[#BABAAE]">No membership types available</div>
               ) : (
-                (skillGroupsQuery.data ?? []).map((sg) => (
+                (skillGroupsQuery.data ?? []).map((sg: any) => (
                   <label key={sg.id} className="flex items-center gap-2 cursor-pointer hover:bg-[#423F3B] p-2 -mx-2 rounded">
                     <input
                       type="checkbox"
@@ -385,11 +385,11 @@ function MemberDetailDrawer({
   const [editSkillGroupIds, setEditSkillGroupIds] = useState<number[]>([]);
   const [deactivateOpen, setDeactivateOpen] = useState(false);
 
-  const skillGroupsQuery = trpc.portal.membership.memberSkillGroups.useQuery();
+  const skillGroupsQuery = trpc.portal.membership.memberSkillGroups.useQuery() as any;
   const memberAssignmentsQuery = trpc.portal.membership.memberAssignments.useQuery(
     { memberId: m.id },
-    { onSuccess: (data) => setEditSkillGroupIds(data) }
-  );
+    { onSuccess: (data: any) => setEditSkillGroupIds(data) }
+  ) as any;
 
   const updateMutation = trpc.portal.membership.updateMember.useMutation({
     onSuccess: () => {
@@ -407,7 +407,7 @@ function MemberDetailDrawer({
       renewalDate: editRenewal || undefined,
       notes: editNotes || undefined,
       skillGroupIds: editSkillGroupIds,
-    });
+    } as any);
   };
 
   const handleToggleActive = () => {
@@ -493,7 +493,7 @@ function MemberDetailDrawer({
                 <div className="text-xs text-[#BABAAE]">No membership types available</div>
               ) : (
                 <div className="space-y-1.5">
-                  {(skillGroupsQuery.data ?? []).map((sg) => (
+                  {(skillGroupsQuery.data ?? []).map((sg: any) => (
                     <label key={sg.id} className="flex items-center gap-2 cursor-pointer hover:bg-[#423F3B] p-1 -mx-1 rounded">
                       <input
                         type="checkbox"
