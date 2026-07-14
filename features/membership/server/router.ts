@@ -426,10 +426,16 @@ export const membershipRouter = router({
                   id: users.id,
                   email: users.email,
                 },
+                skillGroupNames: sql<string>`
+                  COALESCE(string_agg(${skillGroups.name}, ', ' ORDER BY ${skillGroups.sortOrder}), '')
+                `,
               })
               .from(members)
               .leftJoin(users, eq(members.userId, users.id))
+              .leftJoin(memberSkillGroups, eq(members.id, memberSkillGroups.memberId))
+              .leftJoin(skillGroups, eq(memberSkillGroups.skillGroupId, skillGroups.id))
               .where(and(...conditions))
+              .groupBy(members.id, users.id)
           : db
               .select({
                 member: {
@@ -447,9 +453,15 @@ export const membershipRouter = router({
                   id: users.id,
                   email: users.email,
                 },
+                skillGroupNames: sql<string>`
+                  COALESCE(string_agg(${skillGroups.name}, ', ' ORDER BY ${skillGroups.sortOrder}), '')
+                `,
               })
               .from(members)
-              .leftJoin(users, eq(members.userId, users.id));
+              .leftJoin(users, eq(members.userId, users.id))
+              .leftJoin(memberSkillGroups, eq(members.id, memberSkillGroups.memberId))
+              .leftJoin(skillGroups, eq(memberSkillGroups.skillGroupId, skillGroups.id))
+              .groupBy(members.id, users.id);
       const rows = await query.orderBy(desc(members.id)).limit(limit + 1);
       const items = rows.slice(0, limit);
       const nextCursor = rows.length > limit ? (items[items.length - 1]?.member.id ?? null) : null;
@@ -467,5 +479,38 @@ export const membershipRouter = router({
         .from(users)
         .where(like(users.email, q))
         .limit(20);
+    }),
+
+  // Get skill groups for members UI (excluding Employee/Admin which are staff-only)
+  memberSkillGroups: portalProcedure.query(async () => {
+    const db = getPortalDb();
+    return db.select({
+      id: skillGroups.id,
+      name: skillGroups.name,
+      slug: skillGroups.slug,
+    })
+      .from(skillGroups)
+      .where(and(
+        eq(skillGroups.active, true),
+        or(
+          eq(skillGroups.slug, "designated"),
+          eq(skillGroups.slug, "silver"),
+          eq(skillGroups.slug, "social")
+        )
+      ))
+      .orderBy(skillGroups.sortOrder);
+  }),
+
+  // Get skill group assignments for a specific member
+  memberAssignments: portalProcedure
+    .input(z.object({ memberId: z.number() }))
+    .query(async ({ input }) => {
+      const db = getPortalDb();
+      const results = await db.select({
+        skillGroupId: memberSkillGroups.skillGroupId,
+      })
+        .from(memberSkillGroups)
+        .where(eq(memberSkillGroups.memberId, input.memberId));
+      return results.map(r => r.skillGroupId);
     }),
 });
