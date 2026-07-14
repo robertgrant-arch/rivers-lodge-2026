@@ -329,7 +329,7 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
                     >
                       <option value="">Choose a skill group...</option>
                       {(skillGroupsQuery.data ?? []).map((sg) => (
-                        <option key={sg.id} value={sg.id}>
+                        <option key={sg.id} value={String(sg.id)}>
                           {sg.name}
                         </option>
                       ))}
