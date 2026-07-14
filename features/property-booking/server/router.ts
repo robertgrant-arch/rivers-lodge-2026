@@ -567,17 +567,8 @@ export const propertyBookingRouter = router({
             .where(eq(propertyBookingRules.propertyId, input.propertyId))
             .limit(1);
 
-          // ── Tier access ───────────────────────────────────────────────────
-          if (rules?.tierAccess) {
-            const tierAccess = rules.tierAccess as Record<string, boolean>;
-            const memberTier = (member as any).tier ?? "standard";
-            if (tierAccess[memberTier] === false) {
-              throw new TRPCError({
-                code: "FORBIDDEN",
-                message: `Your membership tier (${memberTier}) does not have access to this property.`,
-              });
-            }
-          }
+          // NOTE: Property access control now driven by propertySkillGroupAccess table.
+          // Tier-based access checks removed; use skill group membership to determine property access.
 
           // ── Party size ────────────────────────────────────────────────────
           if (input.partySize > property.maxHunters) {
