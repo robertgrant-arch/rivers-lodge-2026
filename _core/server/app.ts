@@ -79,6 +79,11 @@ async function startServer() {
   app.get("/sitemap.xml", (_req, res) => {
     const base = "https://theriverslodge.com";
     const now = new Date().toISOString().split("T")[0];
+    // ─── Feature Flags ─────────────────────────────────────────────────────
+    // SHOW_BIG_TINE: set to true when Big Tine House content is ready.
+    const SHOW_BIG_TINE = false;
+    // SHOW_TREGO: set to true when Trego Road content is ready.
+    const SHOW_TREGO = false;
     const urls = [
       { loc: "/",                                    priority: "1.0", changefreq: "weekly"  },
       { loc: "/weddings-events",                      priority: "0.9", changefreq: "monthly" },
@@ -95,8 +100,8 @@ async function startServer() {
       { loc: "/lodging/the-annex",                   priority: "0.7", changefreq: "monthly" },
       { loc: "/lodging/the-ohana",                   priority: "0.7", changefreq: "monthly" },
       { loc: "/lodging/the-farmhouse",               priority: "0.7", changefreq: "monthly" },
-      { loc: "/lodging/big-tine-house",               priority: "0.7", changefreq: "monthly" },
-      { loc: "/lodging/trego-road",                  priority: "0.7", changefreq: "monthly" },
+      ...(SHOW_BIG_TINE ? [{ loc: "/lodging/big-tine-house", priority: "0.7", changefreq: "monthly" }] : []),
+      ...(SHOW_TREGO ? [{ loc: "/lodging/trego-road", priority: "0.7", changefreq: "monthly" }] : []),
       { loc: "/lodging/the-barn",                    priority: "0.7", changefreq: "monthly" },
       { loc: "/lodging/the-green-drake",             priority: "0.7", changefreq: "monthly" },
       { loc: "/lodging/the-clubhouse",               priority: "0.7", changefreq: "monthly" },
