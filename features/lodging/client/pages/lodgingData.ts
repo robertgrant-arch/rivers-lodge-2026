@@ -1,3 +1,10 @@
+// ─── Feature Flags ─────────────────────────────────────────────────────────
+// SHOW_BIG_TINE: set to true when Big Tine House content (images, copy, amenities) is ready.
+const SHOW_BIG_TINE = false;
+
+// SHOW_TREGO: set to true when Trego Road content is ready.
+const SHOW_TREGO = false;
+
 export interface GalleryImg {
 src: string;
 alt: string;
@@ -312,9 +319,16 @@ galleryImgs: [
 },
 ];
 
+// Apply feature flags to filter venues
+const filteredVENUES = VENUES.filter((v) => {
+  if (v.slug === "big-tine-house" && !SHOW_BIG_TINE) return false;
+  if (v.slug === "trego-road" && !SHOW_TREGO) return false;
+  return true;
+});
+
 export function getVenue(slug: string): LodgingVenue | undefined {
-return VENUES.find((v) => v.slug === slug);
+  return filteredVENUES.find((v) => v.slug === slug);
 }
 
-export const STAY_VENUES = VENUES.filter((v) => v.group === "stay");
-export const GATHER_VENUES = VENUES.filter((v) => v.group === "gather");
+export const STAY_VENUES = filteredVENUES.filter((v) => v.group === "stay");
+export const GATHER_VENUES = filteredVENUES.filter((v) => v.group === "gather");
