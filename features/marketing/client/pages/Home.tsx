@@ -9,9 +9,6 @@ const HERO_SLIDES: { src: string; alt: string; label: string; pos?: string }[] =
     { src: "/img/Ohana%20Aerial.jpg", alt: "Rivers Lodge & Hunt Club — aerial view at golden hour", label: "Hero Image 1", pos: "center 72%" },
   { src: "/img/Clubhouse%20Home.jpg", alt: "Timber Edge Clubhouse bar and lounge interior", label: "Hero Image 2" },
     { src: "/img/hero%203.jpg", alt: "Rivers Lodge & Hunt Club", label: "Hero Image 3", pos: "center 68%" },
-    { src: "/brand/clubhouse%204.jpg", alt: "Rivers Lodge & Hunt Club", label: "Hero Image 4", pos: "center 40%" },
-  { src: "/brand/clubhouse%20exterior.jpg", alt: "Rivers Lodge & Hunt Club exterior", label: "Hero Image 5" },
-  { src: "/img/weddinghero-1-homepage.jpg", alt: "Wedding celebration at Rivers Lodge", label: "Hero Image 6", pos: "center 75%" },
 ];
 
 function HeroSlideshow() {
@@ -150,7 +147,7 @@ export default function Home() {
             className="font-sans text-white/70 max-w-lg mb-10 leading-relaxed"
             style={{ fontSize: "clamp(0.9375rem,1.2vw,1.0625rem)" }}
           >
-            A private estate on the Marais des Cygnes — one hour south of Kansas City. An exclusive membership club, a wedding venue, and a premier outdoor destination for those who love the outdoors with a touch of luxury.
+            A private lodge just 45 minutes south of Kansas City. Rivers Lodge is an exclusive membership club, a wedding venue and a premier outdoor destination for those who love the outdoors with a touch of luxury.
           </p>
           <div className="flex flex-col sm:flex-row gap-4">
             <Link href="/membership" className="btn-primary">Explore Membership</Link>
@@ -160,40 +157,107 @@ export default function Home() {
         <ScrollIndicator />
       </section>
 
-      {/* ── 02. Teaser: The Estate ───────────────────────────────────────── */}
-      <section ref={estateRef} className="fade-up section bg-background">
+      {/* ── 02. Teaser: Our Story ────────────────────────────────────────── */}
+      <section ref={storyRef} className="fade-up section bg-background">
+        <div className="max-w-[1440px] mx-auto px-5 lg:px-14">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+            <div>
+              <div className="gold-rule mb-5" />
+              <p className="eyebrow text-muted-brand mb-4">Our Story</p>
+              <h2
+                className="font-serif font-light text-warm leading-tight mb-6"
+                style={{ fontSize: "clamp(1.875rem,3.5vw,3rem)" }}
+              >
+                The Rivers Lodge<br />
+                <em className="italic">&amp; Hunt Club.</em>
+              </h2>
+              <p className="font-sans text-muted-brand leading-relaxed mb-10" style={{ fontSize: "0.9375rem" }}>
+                A privately owned luxury lodge located just 45 minutes south of Kansas City. The Main Lodge and Campus was built around a simple idea: give a small number of families and guests exclusive access to thousands of acres of land with high end accommodations and something for everyone to enjoy.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4">
+                <Link href="/about" className="btn-ghost">Our Story</Link>
+                <Link href="/about/property" className="btn-ghost">The Property</Link>
+              </div>
+            </div>
+            <Picture
+                        src="https://riverslodgehunt.com/img/rivers-1-rockhome.jpg"
+                        alt="The rock home at Rivers Lodge & Hunt Club"
+                        label="Our story"
+              className="order-first lg:order-first aspect-[4/3] overflow-hidden w-full"
+              width={1200}
+              height={900}
+              sizes="(max-width: 1024px) 100vw, 50vw"
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* ── 03. Teaser: Lodging & Venues ─────────────────────────────────── */}
+      <section ref={stayRef} className="fade-up section bg-surface">
+        <div className="max-w-[1440px] mx-auto px-5 lg:px-14">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+            {/* Text — left on desktop */}
+            <div className="order-2 lg:order-1">
+              <div className="h-px w-8 mb-5" style={{ backgroundColor: "#9B4D19" }} />
+              <p className="eyebrow text-muted-brand mb-4">Lodging &amp; Venues</p>
+              <h2
+                className="font-serif font-light text-warm leading-tight mb-6"
+                style={{ fontSize: "clamp(1.875rem,3.5vw,3rem)" }}
+              >
+                From ceremonies to corporate retreats — entirely yours.
+              </h2>
+              <p className="font-sans text-muted-brand leading-relaxed mb-10" style={{ fontSize: "0.9375rem" }}>
+                When you book Rivers for any event the property is exclusively yours. You will have the full attention of our staff and our team will make your event exactly what you want. All of our events are curated specifically for your group. No overlapping events, no shared grounds.
+              </p>
+              <Link href="/lodging" className="btn-ghost" style={{ borderColor: "#9B4D19", color: "#9B4D19" }}>Plan Your Stay</Link>
+            </div>
+            {/* Image — right on desktop */}
+            <Picture
+              src="/img/Clubhouse%20Home.jpg"
+              alt="Clubhouse interior at Rivers Lodge"
+              label="Clubhouse interior"
+              className="aspect-[4/3] overflow-hidden w-full order-1 lg:order-2"
+              width={1200}
+              height={900}
+              sizes="(max-width: 1024px) 100vw, 50vw"
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* ── 04. Teaser: Explore Membership ──────────────────────────────────── */}
+      <section className="section bg-muted/20 border-t border-white/5">
         <div className="max-w-[1440px] mx-auto px-5 lg:px-14">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
             {/* Image */}
-            <Picture
-          src="https://riverslodgehunt.com/img/Lodge Aerial.jpg"
-                        alt="The main lodge at Rivers Lodge & Hunt Club"
-          label="Main lodge"
-              className="order-first lg:order-first aspect-[4/3] overflow-hidden w-full"
+            <img
+              src="/img/membershiphomepage-1-.jpg"
+              alt="Upland bird hunting at Rivers Lodge & Hunt Club"
+              className="order-first lg:order-first aspect-[4/3] overflow-hidden w-full object-cover"
               width={1200}
               height={900}
               sizes="(max-width: 1024px) 100vw, 50vw"
             />
             {/* Text */}
             <div>
-              <div className="gold-rule mb-5" />
-              <p className="eyebrow text-muted-brand mb-4">The Lodge</p>
+              <div className="h-px w-8 mb-5" style={{ backgroundColor: "#6B7250" }} />
+              <p className="eyebrow text-muted-brand mb-4">Explore Membership</p>
               <h2
                 className="font-serif font-light text-warm leading-tight mb-6"
                 style={{ fontSize: "clamp(1.875rem,3.5vw,3rem)" }}
               >
-                Thousands of acres. One event at a time.
+                A private club shaped by land and season.
               </h2>
               <p className="font-sans text-muted-brand leading-relaxed mb-10" style={{ fontSize: "0.9375rem" }}>
-                The Rivers Lodge is a land portfolio — available exclusively, to one group or member at a time. Whether you arrive for a wedding weekend, a booked hunt, a corporate event, or a member Do-It-Yourself hunt, you will be alone and the Lodge is entirely yours.
+                Managed hunting and fishing across thousands of private acres, alongside guest chef dinners, private concerts, game dinners, and seasonal celebrations. An intentional membership — small by design — with access to the full Lodge and the community around it.
               </p>
-              <Link href="/about/property" className="btn-ghost">Discover the Property</Link>
+              <Link href="/membership" className="btn-ghost" style={{ borderColor: "#6B7250", color: "#6B7250" }}>Explore Membership</Link>
             </div>
           </div>
         </div>
       </section>
 
-            {/* ── 02b. Teaser: Outdoor Pursuits ─────────────────────────────────── */}
+            {/* ── 05. Teaser: Outdoor Pursuits ─────────────────────────────────── */}
 <section className="section bg-muted/20 border-t border-white/5">
   <div className="max-w-[1440px] mx-auto px-5 lg:px-14">
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
@@ -226,110 +290,6 @@ export default function Home() {
   </div>
 </section>
 
-      {/* ── 03. Teaser: Stay & Gather ────────────────────────────────────── */}
-      <section ref={stayRef} className="fade-up section bg-surface">
-        <div className="max-w-[1440px] mx-auto px-5 lg:px-14">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
-            {/* Text — left on desktop */}
-            <div className="order-2 lg:order-1">
-              <div className="h-px w-8 mb-5" style={{ backgroundColor: "#9B4D19" }} />
-              <p className="eyebrow text-muted-brand mb-4">Stay &amp; Gather</p>
-              <h2
-                className="font-serif font-light text-warm leading-tight mb-6"
-                style={{ fontSize: "clamp(1.875rem,3.5vw,3rem)" }}
-              >
-                From ceremonies to corporate retreats — entirely yours.
-              </h2>
-              <p className="font-sans text-muted-brand leading-relaxed mb-10" style={{ fontSize: "0.9375rem" }}>
-                When you book Rivers for any event the property is exclusively yours. You will have the full attention of our staff and our team will make your event exactly what you want. All of our events are curated specifically for your group. No overlapping events, no shared grounds.
-              </p>
-              <Link href="/lodging" className="btn-ghost" style={{ borderColor: "#9B4D19", color: "#9B4D19" }}>Plan Your Stay</Link>
-            </div>
-            {/* Image — right on desktop */}
-            <Picture
-              src="/img/Clubhouse%20Home.jpg"
-              alt="Clubhouse interior at Rivers Lodge"
-              label="Clubhouse interior"
-              className="aspect-[4/3] overflow-hidden w-full order-1 lg:order-2"
-              width={1200}
-              height={900}
-              sizes="(max-width: 1024px) 100vw, 50vw"
-            />
-          </div>
-        </div>
-      </section>
-
-      {/* ── 04. Teaser: About ───────────────────────────────────────────── */}
-      <section ref={storyRef} className="fade-up section bg-background">
-        <div className="max-w-[1440px] mx-auto px-5 lg:px-14">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
-            <div>
-              <div className="gold-rule mb-5" />
-              <p className="eyebrow text-muted-brand mb-4">Our Story</p>
-              <h2
-                className="font-serif font-light text-warm leading-tight mb-6"
-                style={{ fontSize: "clamp(1.875rem,3.5vw,3rem)" }}
-              >
-                The Rivers Lodge<br />
-                <em className="italic">&amp; Hunt Club.</em>
-              </h2>
-              <p className="font-sans text-muted-brand leading-relaxed mb-6" style={{ fontSize: "0.9375rem" }}>
-                A privately owned working land estate on the Marais des Cygnes in La Cygne, Kansas — one hour south of Kansas City. The Lodge was built around a simple idea: give a small number of families and guests exclusive, unhurried access to thousands of managed acres and the people who care for them.
-              </p>
-              <p className="font-sans text-muted-brand leading-relaxed mb-10" style={{ fontSize: "0.9375rem" }}>
-                Every visit — whether a wedding weekend, a hunting season, or a member gathering — is yours alone. No shared grounds, no overlapping events.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4">
-                <Link href="/about" className="btn-ghost">Our Story</Link>
-                <Link href="/about/property" className="btn-ghost">The Property</Link>
-              </div>
-            </div>
-            <Picture
-                        src="https://riverslodgehunt.com/img/rivers-1-rockhome.jpg"
-                        alt="The rock home at Rivers Lodge & Hunt Club"
-                        label="Our story"
-              className="order-first lg:order-first aspect-[4/3] overflow-hidden w-full"
-              width={1200}
-              height={900}
-              sizes="(max-width: 1024px) 100vw, 50vw"
-            />
-          </div>
-        </div>
-      </section>
-
-      <div className="h-px bg-white/15" style={{ margin: "2rem 0" }} />
-
-      {/* ── 05. Teaser: Membership ───────────────────────────────────────── */}
-      <section className="section bg-muted/20 border-t border-white/5">
-        <div className="max-w-[1440px] mx-auto px-5 lg:px-14">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
-            {/* Image */}
-            <img
-              src="/img/membershiphomepage-1-.jpg"
-              alt="Upland bird hunting at Rivers Lodge & Hunt Club"
-              className="order-first lg:order-first aspect-[4/3] overflow-hidden w-full object-cover"
-              width={1200}
-              height={900}
-              sizes="(max-width: 1024px) 100vw, 50vw"
-            />
-            {/* Text */}
-            <div>
-              <div className="h-px w-8 mb-5" style={{ backgroundColor: "#6B7250" }} />
-              <p className="eyebrow text-muted-brand mb-4">Membership</p>
-              <h2
-                className="font-serif font-light text-warm leading-tight mb-6"
-                style={{ fontSize: "clamp(1.875rem,3.5vw,3rem)" }}
-              >
-                A private club shaped by land and season.
-              </h2>
-              <p className="font-sans text-muted-brand leading-relaxed mb-10" style={{ fontSize: "0.9375rem" }}>
-                Managed hunting and fishing across thousands of private acres, alongside guest chef dinners, private concerts, game dinners, and seasonal celebrations. An intentional membership — small by design — with access to the full Lodge and the community around it.
-              </p>
-              <Link href="/membership" className="btn-ghost" style={{ borderColor: "#6B7250", color: "#6B7250" }}>Explore Membership</Link>
-            </div>
-          </div>
-        </div>
-      </section>
 
     </PublicLayout>
   );
