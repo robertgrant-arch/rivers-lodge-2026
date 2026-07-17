@@ -6,9 +6,9 @@ import Picture from "@shared/components/Picture";
 
 /* ── Hero slideshow ──────────────────────────────────────────────────────── */
 const HERO_SLIDES: { src: string; alt: string; label: string; pos?: string }[] = [
-    { src: "/img/Ohana%20Aerial.jpg", alt: "Rivers Lodge & Hunt Club — aerial view at golden hour", label: "Hero Image 1", pos: "center 72%" },
-  { src: "/img/Clubhouse%20Home.jpg", alt: "Timber Edge Clubhouse bar and lounge interior", label: "Hero Image 2" },
-    { src: "/img/hero%203.jpg", alt: "Rivers Lodge & Hunt Club", label: "Hero Image 3", pos: "center 68%" },
+  { src: "/img/Clubhouse%20Home.jpg", alt: "Timber Edge Clubhouse bar and lounge interior", label: "Hero Image 1" },
+  { src: "/img/hero%203.jpg", alt: "Rivers Lodge & Hunt Club barn at sunset", label: "Hero Image 2", pos: "center 68%" },
+  { src: "/brand/clubhouse%20exterior.jpg", alt: "Rivers Lodge & Hunt Club exterior at sunset", label: "Hero Image 3" },
 ];
 
 function HeroSlideshow() {
