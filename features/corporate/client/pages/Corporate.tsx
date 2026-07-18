@@ -71,18 +71,20 @@ export default function Corporate() {
             height={1080}
             sizes="100vw"
           />
-          <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, transparent 0%, oklch(0 0 0/0.12) 40%, oklch(0 0 0/0.80) 100%)" }} />
+          <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, transparent 0%, oklch(0 0 0/0.35) 40%, oklch(0 0 0/0.90) 100%)" }} />
         </div>
         <div className="relative z-10 max-w-[1440px] mx-auto px-5 lg:px-14 w-full">
           <div className="gold-rule mb-5" />
           <p className="eyebrow text-white/50 mb-4">Corporate Outings &amp; Events</p>
-          <h1 className="font-serif font-light text-white leading-[0.92] mb-6" style={{ fontSize: "clamp(2.75rem,6.5vw,5.5rem)" }}>
-            Off-site that actually
-            <br /><em className="italic font-light">means something.</em>
-          </h1>
-          <p className="font-sans text-white/65 max-w-lg leading-relaxed mb-10" style={{ fontSize: "0.9375rem" }}>
-            Corporate retreats, executive meetings, client entertainment, and team-building days on a private 300-acre estate. One group at a time.
-          </p>
+          <div className="max-w-2xl">
+            <h1 className="font-serif font-light text-white leading-[0.92] mb-6" style={{ fontSize: "clamp(2.75rem,6.5vw,5.5rem)", textShadow: "0 2px 8px rgba(0,0,0,0.6)" }}>
+              Off-site that actually
+              <br /><em className="italic font-light">means something.</em>
+            </h1>
+            <p className="font-sans text-white/65 max-w-lg leading-relaxed mb-10" style={{ fontSize: "0.9375rem", textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}>
+              Corporate retreats, executive meetings, client entertainment, and team building days in a private lodge setting. One group at a time.
+            </p>
+          </div>
           <Link href="/contact?type=corporate" className="btn-primary">Begin Corporate Inquiry</Link>
         </div>
       </section>
@@ -95,8 +97,8 @@ export default function Corporate() {
               <div className="gold-rule mb-5" />
               <p className="eyebrow text-muted-brand mb-4">Why Rivers Lodge</p>
               <h2 className="font-serif font-light text-warm leading-tight mb-8" style={{ fontSize: "clamp(1.875rem,3.5vw,3rem)" }}>
-                The land changes
-                <br /><em className="italic">the conversation.</em>
+                A Different
+                <br /><em className="italic">Experience.</em>
               </h2>
               <div className="space-y-5 font-sans text-muted-brand leading-relaxed" style={{ fontSize: "0.9375rem" }}>
                 <p>The River's experience is genuinely different. It allows you to get away from the office and spend time with your team or clients in a distraction free environment that is a memorable experience.</p>
