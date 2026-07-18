@@ -37,8 +37,8 @@ bedrooms: 4,
 sqft: "6,000 sq ft",
 capacity: "14 guests",
 description: [
-"Our 6,000 square foot lodge is the gathering center of the Rivers Lodge estate. Four bedrooms decorated by a prominent Kansas City designer incorporate elements of natural history and regional outdoor heritage throughout — from hand-hewn timber to curated taxidermy and custom ironwork.",
-"The lodge features a full kitchen, large wraparound balcony overlooking the property, radiant heated floors, full HVAC, and a spacious recreation room with billiards, bar, and fireplace. It is the social nucleus for weddings, corporate retreats, and hunting parties alike.",
+"Our 6,000 square foot lodge is the center of the Rivers Lodge property. Four bedrooms decorated by a prominent Kansas City designer incorporate elements of history and regional outdoor heritage.",
+"The lodge features a full kitchen, large wraparound balcony overlooking the property, heated floors, and a spacious recreational room with billiards, bar and fireplace.",
 ],
 features: [
 "4 bedrooms",
@@ -73,7 +73,7 @@ description: [
 "The building is positioned along the river corridor for morning light and evening views across the water. Ideal for couples, small parties, or as overflow accommodation for lodge guests.",
 ],
 features: [
-"4 private suites",
+"8 private suites",
 "En-suite bath per room",
 "Individual HVAC",
 "Uniquely decorated rooms",
@@ -96,7 +96,7 @@ heroImg: "",
 heroAlt: "The Annex — HERO / EMPTY #1",
 group: "stay",
 bedrooms: 4,
-capacity: "10 guests",
+capacity: "8 guests",
 description: [
 "The Annex was completely remodeled in 2021 with a light, modern farmhouse aesthetic. Four bedrooms and three full bathrooms make it ideal for the bridal party, a close family group, or a private hunting camp just steps away from Rivers Barn.",
 "The design pairs clean white shiplap and warm natural wood with updated fixtures throughout. Its proximity to the Barn makes it the natural staging ground for morning-of wedding preparations.",
@@ -157,7 +157,7 @@ heroImg: "/brand/farmhouse%20interior%201.jpg",
 heroAlt: "The Farmhouse at Rivers Lodge",
 group: "stay",
 description: [
-"A classic Kansas farmhouse on the estate grounds. Comfortable, private, and full of the character that only comes from a building that's been lived in for generations. Ideal for overflow lodging, family groups, or guests who prefer a quieter corner of the property.",
+"A classic Kansas farmhouse.",
 "The Farmhouse has been updated for modern comfort while preserving the bones that give it its appeal — original hardwood floors, deep-set windows, and a front porch that looks out over open field.",
 ],
 features: [
