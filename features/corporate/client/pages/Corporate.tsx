@@ -34,17 +34,9 @@ const eventTypes = [
   { title: "Team-Building Days",    desc: "Guided outdoor experiences — from clay shooting to river fishing — that build genuine connection without a single trust fall.", img: AERIAL,          alt: "Team-building days at Rivers Lodge" },
 ];
 
-const capacities = [
-  { space: "Rivers Barn",          seated: "256", reception: "300", notes: "Full AV, catering kitchen" },
-  { space: "Clubhouse",            seated: "40",  reception: "60",  notes: "Bar, private dining room" },
-  { space: "River Lawn",           seated: "200", reception: "300", notes: "Outdoor ceremony & dinner" },
-  { space: "The Lodge",            seated: "20",  reception: "20",  notes: "Exclusive overnight lodging" },
-  { space: "Riverhouse Suites",    seated: "—",   reception: "—",   notes: "8 boutique suites" },
-];
 
 export default function Corporate() {
   const typesRef = useFadeUp();
-  const capRef   = useFadeUp();
   const ctaRef   = useFadeUp();
 
   return (
@@ -151,41 +143,6 @@ export default function Corporate() {
                 </div>
               </div>
             ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Capacity Table */}
-      <section ref={capRef as React.RefObject<HTMLDivElement>} className="fade-up section bg-background">
-        <div className="max-w-[1440px] mx-auto px-5 lg:px-14">
-          <div className="mb-12">
-            <div className="gold-rule mb-5" />
-            <p className="eyebrow text-muted-brand mb-4">Venue Capacities</p>
-            <h2 className="font-serif font-light text-warm leading-tight" style={{ fontSize: "clamp(1.75rem,3vw,2.5rem)" }}>
-              Space for every format.
-            </h2>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full font-sans text-sm">
-              <thead>
-                <tr className="border-b border-border">
-                  <th className="text-left eyebrow text-muted-brand pb-4 pr-8" style={{ fontSize: "10px" }}>Space</th>
-                  <th className="text-left eyebrow text-muted-brand pb-4 pr-8" style={{ fontSize: "10px" }}>Seated Dinner</th>
-                  <th className="text-left eyebrow text-muted-brand pb-4 pr-8" style={{ fontSize: "10px" }}>Reception</th>
-                  <th className="text-left eyebrow text-muted-brand pb-4" style={{ fontSize: "10px" }}>Notes</th>
-                </tr>
-              </thead>
-              <tbody>
-                {capacities.map((row, i) => (
-                  <tr key={row.space} className={`border-b border-border/50 ${i % 2 === 0 ? "" : "bg-surface/30"}`}>
-                    <td className="py-4 pr-8 text-warm font-medium">{row.space}</td>
-                    <td className="py-4 pr-8 text-muted-brand">{row.seated}</td>
-                    <td className="py-4 pr-8 text-muted-brand">{row.reception}</td>
-                    <td className="py-4 text-muted-brand">{row.notes}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
           </div>
         </div>
       </section>
