@@ -28,7 +28,7 @@ const CORP_RETREAT = "/brand/corporate%20clubhouse%20.JPG";
 const CORP_ENTERTAIN = "/brand/corporate%204.jpg";
 
 const eventTypes = [
-  { title: "Corporate Retreats",    desc: "Multi-day team retreats with lodging, dining, and curated outdoor programming. The Lodge sleeps up to 20; the Barn accommodates 300 for evening events.", img: CORP_RETREAT,   alt: "Corporate retreat at the Clubhouse" },
+  { title: "Corporate Retreats",    desc: "Multi-day team retreats with lodging, dining, and curated outdoor programming. From 5 to 300 people Lodge events are custom built for your team's retreat.", img: CORP_RETREAT,   alt: "Corporate retreat at the Clubhouse" },
   { title: "Executive Meetings",    desc: "Private meeting space in the Clubhouse for boards, leadership teams, and strategy sessions — away from the office, on the land.", img: INTERIOR,       alt: "Executive meetings at Rivers Lodge" },
   { title: "Client Entertainment",  desc: "Hunting days, fishing excursions, sporting clays, and private dinners. The most memorable client entertainment is the kind that can't be replicated.", img: CORP_ENTERTAIN, alt: "Client entertainment at Rivers Lodge" },
   { title: "Team-Building Days",    desc: "Guided outdoor experiences — from clay shooting to river fishing — that build genuine connection without a single trust fall.", img: AERIAL,          alt: "Team-building days at Rivers Lodge" },
@@ -39,7 +39,7 @@ const capacities = [
   { space: "Clubhouse",            seated: "40",  reception: "60",  notes: "Bar, private dining room" },
   { space: "River Lawn",           seated: "200", reception: "300", notes: "Outdoor ceremony & dinner" },
   { space: "The Lodge",            seated: "20",  reception: "20",  notes: "Exclusive overnight lodging" },
-  { space: "Riverhouse Suites",    seated: "—",   reception: "—",   notes: "4 boutique suites" },
+  { space: "Riverhouse Suites",    seated: "—",   reception: "—",   notes: "8 boutique suites" },
 ];
 
 export default function Corporate() {
@@ -71,18 +71,20 @@ export default function Corporate() {
             height={1080}
             sizes="100vw"
           />
-          <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, transparent 0%, oklch(0 0 0/0.12) 40%, oklch(0 0 0/0.80) 100%)" }} />
+          <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, transparent 0%, oklch(0 0 0/0.35) 40%, oklch(0 0 0/0.90) 100%)" }} />
         </div>
         <div className="relative z-10 max-w-[1440px] mx-auto px-5 lg:px-14 w-full">
           <div className="gold-rule mb-5" />
           <p className="eyebrow text-white/50 mb-4">Corporate Outings &amp; Events</p>
-          <h1 className="font-serif font-light text-white leading-[0.92] mb-6" style={{ fontSize: "clamp(2.75rem,6.5vw,5.5rem)" }}>
-            Off-site that actually
-            <br /><em className="italic font-light">means something.</em>
-          </h1>
-          <p className="font-sans text-white/65 max-w-lg leading-relaxed mb-10" style={{ fontSize: "0.9375rem" }}>
-            Corporate retreats, executive meetings, client entertainment, and team-building days on a private 300-acre estate. One group at a time.
-          </p>
+          <div className="max-w-2xl">
+            <h1 className="font-serif font-light text-white leading-[0.92] mb-6" style={{ fontSize: "clamp(2.75rem,6.5vw,5.5rem)", textShadow: "0 2px 8px rgba(0,0,0,0.6)" }}>
+              Off-site that actually
+              <br /><em className="italic font-light">means something.</em>
+            </h1>
+            <p className="font-sans text-white/65 max-w-lg leading-relaxed mb-10" style={{ fontSize: "0.9375rem", textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}>
+              Corporate retreats, executive meetings, client entertainment, and team building days in a private lodge setting. One group at a time.
+            </p>
+          </div>
           <Link href="/contact?type=corporate" className="btn-primary">Begin Corporate Inquiry</Link>
         </div>
       </section>
@@ -95,12 +97,12 @@ export default function Corporate() {
               <div className="gold-rule mb-5" />
               <p className="eyebrow text-muted-brand mb-4">Why Rivers Lodge</p>
               <h2 className="font-serif font-light text-warm leading-tight mb-8" style={{ fontSize: "clamp(1.875rem,3.5vw,3rem)" }}>
-                The land changes
-                <br /><em className="italic">the conversation.</em>
+                A Different
+                <br /><em className="italic">Experience.</em>
               </h2>
               <div className="space-y-5 font-sans text-muted-brand leading-relaxed" style={{ fontSize: "0.9375rem" }}>
-                <p>There is a reason the best corporate decisions get made away from the office. Rivers Lodge provides the kind of environment that strips away distraction and replaces it with clarity — open land, clean air, and the particular focus that comes from being somewhere genuinely different.</p>
-                <p>The estate accommodates groups from 10 to 300. The Lodge sleeps 20 overnight guests. The Rivers Barn seats 256 for formal dinners. The Clubhouse provides private meeting space. And the 300 acres provide the programming.</p>
+                <p>The River's experience is genuinely different. It allows you to get away from the office and spend time with your team or clients in a distraction free environment that is a memorable experience.</p>
+                <p>The Main Lodge accommodates any size group from 5 people to 300 people. Everything is custom and everything is built around your team.</p>
               </div>
             </div>
             <Picture
