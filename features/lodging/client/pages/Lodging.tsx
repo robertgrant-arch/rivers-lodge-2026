@@ -99,7 +99,7 @@ export default function Lodging() {
                 className="absolute inset-0 pointer-events-none"
                 style={{ background: "linear-gradient(to top, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.45) 55%, transparent 100%)" }}
               />
-              <div className="relative z-10 max-w-[1440px] mx-auto px-5 lg:px-10 w-full pb-10 md:pb-12">
+              <div className="relative z-10 max-w-[1440px] mx-auto px-5 lg:px-10 w-full pt-8 pb-10 md:pt-12 md:pb-12">
                 <p className="text-[9px] tracking-[0.22em] uppercase font-sans text-white/50 mb-3">{prop.teaser}</p>
                 <h2
                   className="font-serif font-light text-white leading-tight mb-3"
@@ -212,7 +212,7 @@ export default function Lodging() {
                 className="absolute inset-0 pointer-events-none"
                 style={{ background: "linear-gradient(to top, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.45) 55%, transparent 100%)" }}
               />
-              <div className="relative z-10 max-w-[1440px] mx-auto px-5 lg:px-10 w-full pb-10 md:pb-12">
+              <div className="relative z-10 max-w-[1440px] mx-auto px-5 lg:px-10 w-full pt-8 pb-10 md:pt-12 md:pb-12">
                 <p className="text-[9px] tracking-[0.20em] uppercase font-sans text-white/50 mb-3">{venue.teaser}</p>
                 <h2
                   className="font-serif font-light text-white leading-tight mb-3"
