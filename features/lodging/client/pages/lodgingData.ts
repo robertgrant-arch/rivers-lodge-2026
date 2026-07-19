@@ -70,7 +70,7 @@ bedrooms: 4,
 capacity: "8 guests",
 description: [
 "Completed in 2022, the Riverhouse Suites were designed from the ground up for luxury private stays. Each of the four suites is uniquely appointed and all include an en-suite bath and individual heating and cooling — so every guest has complete control over their own space.",
-"The building is positioned along the river corridor for morning light and evening views across the water. Ideal for couples, small parties, or as overflow accommodation for lodge guests.",
+"Ideal for couples, small parties, or as overflow accommodation for lodge guests.",
 ],
 features: [
 "8 private suites",
