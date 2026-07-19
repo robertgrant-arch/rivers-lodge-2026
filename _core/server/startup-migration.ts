@@ -123,20 +123,8 @@ export async function runStartupMigration() {
 
           CREATE UNIQUE INDEX IF NOT EXISTS sgca_skill_group_idx ON skill_group_calendar_access(skill_group_id);
 
-          -- Create property_skill_group_access table if not exists (replaces propertySkillGroups and rolePropertySkillGroupAccess)
-          CREATE TABLE IF NOT EXISTS property_skill_group_access (
-            id SERIAL PRIMARY KEY,
-            property_id INTEGER NOT NULL,
-            skill_group_id INTEGER NOT NULL REFERENCES skill_groups(id) ON DELETE CASCADE,
-            can_view BOOLEAN NOT NULL DEFAULT false,
-            can_book BOOLEAN NOT NULL DEFAULT false,
-            created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-            updated_at TIMESTAMP NOT NULL DEFAULT NOW()
-          );
-
-          CREATE UNIQUE INDEX IF NOT EXISTS psga_property_skill_group_idx ON property_skill_group_access(property_id, skill_group_id);
-          CREATE INDEX IF NOT EXISTS psga_property_idx ON property_skill_group_access(property_id);
-          CREATE INDEX IF NOT EXISTS psga_skill_group_idx ON property_skill_group_access(skill_group_id);
+          -- property_skill_group_access table is managed by Drizzle ORM (see features/membership/schema.ts)
+          -- Do not create redundant DDL here to avoid schema conflicts.
 
           -- Drop legacy tier column if it exists
           ALTER TABLE members DROP COLUMN IF EXISTS tier;
