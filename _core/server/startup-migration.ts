@@ -72,8 +72,9 @@ export async function runStartupMigration() {
         `;
         await client.query(backfillMigration);
 
-        // property_activity enum + property_activities join table (idempotent).
-        // Create enum type if missing, then table if missing. Both are safe to re-run.
+        // property_activity enum (idempotent).
+        // property_activities table is managed by Drizzle and already exists with camelCase "propertyId".
+        // Only create the enum type if missing.
         const activitiesMigration = `
           DO $$ BEGIN
             IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'property_activity') THEN
@@ -82,12 +83,6 @@ export async function runStartupMigration() {
               );
             END IF;
           END $$;
-
-          CREATE TABLE IF NOT EXISTS property_activities (
-            property_id integer NOT NULL REFERENCES hunting_properties(id) ON DELETE CASCADE,
-            "activity" property_activity NOT NULL,
-            PRIMARY KEY (property_id, "activity")
-          );
         `;
         await client.query(activitiesMigration);
 
