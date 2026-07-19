@@ -2087,6 +2087,14 @@ const calendarSettingsRouter = router({
           .from(skillGroups)
           .where(eq(skillGroups.active, true));
 
+        if (validSkillGroups.length === 0) {
+          console.error("[CAL_VIS_SAVE_ERROR] No active skill groups found in database");
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "No skill groups are configured in the system. Please contact an administrator.",
+          });
+        }
+
         const validNames = new Set(validSkillGroups.map((sg) => sg.name));
         const invalidNames = input.filter((name) => !validNames.has(name));
 
@@ -2132,10 +2140,11 @@ const calendarSettingsRouter = router({
         return { success: true };
       } catch (error) {
         if (error instanceof TRPCError) throw error;
-        console.error("[calendar-settings] updateMasterCalendarAccessBySkillGroup failed:", error);
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        console.error("[CAL_VIS_SAVE_ERROR] updateMasterCalendarAccessBySkillGroup failed:", errorMsg, error);
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to update master calendar access settings",
+          message: `Failed to update master calendar access settings: ${errorMsg}`,
         });
       }
     }),
@@ -2166,6 +2175,14 @@ const calendarSettingsRouter = router({
           .select({ name: skillGroups.name })
           .from(skillGroups)
           .where(eq(skillGroups.active, true));
+
+        if (validSkillGroups.length === 0) {
+          console.error("[CAL_VIS_SAVE_ERROR] No active skill groups found in database");
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "No skill groups are configured in the system. Please contact an administrator.",
+          });
+        }
 
         const validNames = new Set(validSkillGroups.map((sg) => sg.name));
         const allSubmittedNames = Object.values(input).flat();
@@ -2203,10 +2220,11 @@ const calendarSettingsRouter = router({
         return { success: true };
       } catch (error) {
         if (error instanceof TRPCError) throw error;
-        console.error("[calendar-settings] updatePropertyCalendarAccessBySkillGroup failed:", error);
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        console.error("[CAL_VIS_SAVE_ERROR] updatePropertyCalendarAccessBySkillGroup failed:", errorMsg, error);
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to update property calendar access settings",
+          message: `Failed to update property calendar access settings: ${errorMsg}`,
         });
       }
     }),
