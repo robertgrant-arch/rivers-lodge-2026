@@ -189,7 +189,7 @@ export async function runStartupMigration() {
         const cleanupTestProperties = `
           DELETE FROM hunting_properties
           WHERE name ILIKE 'test%' OR name ILIKE '%delete%' OR name = '69 highway' OR slug LIKE 'test-%'
-          AND id NOT IN (SELECT DISTINCT property_id FROM property_bookings);
+          AND id NOT IN (SELECT DISTINCT "propertyId" FROM property_bookings);
         `;
         const cleanupResult = await client.query(cleanupTestProperties);
         if ((cleanupResult.rowCount ?? 0) > 0) {
