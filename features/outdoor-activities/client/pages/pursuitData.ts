@@ -30,6 +30,7 @@ export const PURSUITS: Pursuit[] = [
       { src: "/deer-2-gallery.jpg", alt: "Whitetail deer at Rivers Lodge" },
       { src: "/deer-4-gallery.jpg", alt: "Trophy whitetail habitat" },
       { src: "/deer-5-gallery.jpg", alt: "Deer landscape at Rivers Lodge" },
+      { src: "", alt: "01" },
     ],
     season: [
       { label: "Archery",      value: "Sep 15 – Nov 15" },
@@ -83,12 +84,12 @@ export const PURSUITS: Pursuit[] = [
     description: [
       "Kansas upland hunting at its finest — quail in the native grass corridors, pheasant along the hedgerows, and a private sporting clays course for off-day practice. The estate manages its upland habitat with controlled burns and native grass restoration that produces bird numbers most public ground can only promise.",
       "Guided upland hunts are available with trained pointing and flushing dogs. The guides are experienced in both wild bird hunting and released-bird programs; they adapt to guest preference and skill level. Half-day and full-day formats available.",
-      "The sporting clays course runs through timber and open field stations, offering shots that replicate upland, waterfowl, and dove scenarios. Instruction from a certified shooting coach is available by request — ideal for guests looking to improve before a hunt or entertaining corporate groups.",
     ],
     galleryImgs: [
       { src: "/upland-1-gallery.jpg", alt: "Upland birds at Rivers Lodge" },
       { src: "/upland-2-gallery.jpg", alt: "Upland habitat" },
       { src: "/upland-3-gallery.jpg", alt: "Upland birds hunting grounds" },
+      { src: "", alt: "02" },
     ],
     season: [
       { label: "Quail",          value: "Nov 15 – Feb 15" },

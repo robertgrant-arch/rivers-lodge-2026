@@ -78,27 +78,6 @@ export default function OutdoorActivities() {
         </div>
       </section>
 
-      {/* Intro band */}
-      <section className="section bg-background">
-        <div className="max-w-[1440px] mx-auto px-5 lg:px-14">
-          <div className="max-w-3xl">
-            <div style={{ height: "1px", width: "2rem", backgroundColor: ACCENT, marginBottom: "1.25rem" }} />
-            <p className="eyebrow text-muted-brand mb-4">The Land</p>
-            <h2
-              className="font-serif font-light text-warm leading-tight mb-8"
-              style={{ fontSize: "clamp(1.875rem,3.5vw,3rem)" }}
-            >
-              What The Land Holds.
-            </h2>
-            <div className="space-y-5 font-sans text-muted-brand leading-relaxed" style={{ fontSize: "0.9375rem" }}>
-              <p>
-                Thousands of privately managed acres in the Marais des Cygnes River valley with something for everyone. Whether you enjoy hiking, biking, ATVs, 5-stand shooting, trophy fishing, whitetail deer hunting or waterfowl, there is an outdoor pursuit for everyone — one hour south of Kansas City.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* Pursuit cards grid */}
       <section
         id="pursuits"
