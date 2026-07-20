@@ -65,7 +65,7 @@ export default function OutdoorActivities() {
             What the land holds.
           </h1>
           <p className="font-sans text-white/65 max-w-lg leading-relaxed mb-10" style={{ fontSize: "0.9375rem" }}>
-            Thousands of privately managed acres along the Marais des Cygnes. Trophy whitetail, world-class fishing, waterfowl, upland birds, and more — one hour south of Kansas City.
+            Thousands of privately managed acres within the Marais des Cygnes River Valley. Trophy whitetail, world-class fishing, waterfowl, upland birds, and more — one hour south of Kansas City.
           </p>
           <div className="flex flex-col sm:flex-row gap-4">
             <a href="#pursuits" className="btn-outline" style={{ borderColor: ACCENT, color: ACCENT }}>
