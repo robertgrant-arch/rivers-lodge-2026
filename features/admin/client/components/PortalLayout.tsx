@@ -132,7 +132,7 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
 
   const handlePreviewAsSkillGroup = () => {
     if (!previewSkillGroupId) return;
-    window.location.assign(`/portal?preview=1&skillGroup=${previewSkillGroupId}`);
+    window.location.assign(`/portal/calendar/master?preview=1&skillGroupId=${previewSkillGroupId}`);
   };
 
   if (loading) return <DashboardLayoutSkeleton />;
@@ -314,7 +314,7 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
                     >
                       <option value="">Choose a skill group...</option>
                       {(skillGroupsQuery.data ?? []).map((sg) => (
-                        <option key={sg.id} value={sg.slug}>
+                        <option key={sg.id} value={String(sg.id)}>
                           {sg.name}
                         </option>
                       ))}
