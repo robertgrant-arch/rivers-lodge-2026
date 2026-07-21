@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Link } from "wouter";
 import { useAuth, getLoginUrl } from '@features/auth/public';
 import { trpc } from '@shared/lib/trpc';
@@ -186,21 +186,12 @@ export default function MemberPortal() {
   type RequestItem = NonNullable<typeof myRequests.data>[number];
   const [selectedRequest, setSelectedRequest] = useState<RequestItem | null>(null);
 
-  // Detect admin preview mode via ?preview=1 query param (must be before early returns per Rules of Hooks)
-  const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : new URLSearchParams();
-  const isPreviewMode = searchParams.get("preview") === "1";
-  const previewSkillGroup = searchParams.get("skillGroup") || undefined;
-
   const memberStatus   = trpc.membership.myStatus.useQuery(undefined, { enabled: isAuthenticated });
   const updates        = trpc.updates.list.useQuery();
   const cmsMemberContent = trpc.cms.getMemberContent.useQuery(undefined, { enabled: isAuthenticated });
   const cmsAnnouncements = trpc.cms.getAnnouncements.useQuery({ audience: "members" });
   const myMessages     = trpc.messages.myMessages.useQuery(undefined, { enabled: isAuthenticated });
   const myRequests     = trpc.booking.requests.myRequests.useQuery(undefined, { enabled: isAuthenticated });
-  const canViewMasterCalendar = trpc.memberPortal.canViewMasterCalendar.useQuery(
-    previewSkillGroup ? { previewSkillGroupName: previewSkillGroup } : undefined,
-    { enabled: isAuthenticated }
-  );
 
   const sendMsg = trpc.messages.send.useMutation({
     onSuccess: () => {
@@ -235,6 +226,20 @@ export default function MemberPortal() {
     guestCount: "",
     specialRequests: "",
   });
+
+  // Read URL params on client side only (after hydration)
+  const [urlParams, setUrlParams] = useState({ isPreviewMode: false, previewSkillGroup: undefined as string | undefined });
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    setUrlParams({
+      isPreviewMode: searchParams.get("preview") === "1",
+      previewSkillGroup: searchParams.get("skillGroup") || undefined,
+    });
+  }, []);
+
+  const isPreviewMode = urlParams.isPreviewMode;
+  const previewSkillGroup = urlParams.previewSkillGroup;
+
   if (loading) {
     return (
       <PublicLayout>
@@ -293,6 +298,12 @@ export default function MemberPortal() {
 
   const pendingRequests = (myRequests.data ?? []).filter(r => !["converted","rejected","lost"].includes(r.status));
   const announcements = cmsAnnouncements.data ?? [];
+
+  // Check if member (or preview group) can view master calendar
+  const canViewMasterCalendar = trpc.memberPortal.canViewMasterCalendar.useQuery(
+    previewSkillGroup ? { previewSkillGroupName: previewSkillGroup } : undefined,
+    { enabled: isAuthenticated }
+  );
 
   return (
     <PublicLayout>
