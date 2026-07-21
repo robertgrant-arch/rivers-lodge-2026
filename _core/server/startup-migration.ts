@@ -167,13 +167,14 @@ export async function runStartupMigration() {
         }
 
         // Calendar access settings table for skill-group-based calendar visibility
+        // Column names must match Drizzle schema (portal/schema.ts): camelCase "createdAt"/"updatedAt"
         const calendarAccessMigration = `
           CREATE TABLE IF NOT EXISTS calendar_access_settings (
             id SERIAL PRIMARY KEY,
             setting_key VARCHAR(255) UNIQUE NOT NULL,
             setting_value JSONB NOT NULL,
-            created_at TIMESTAMP DEFAULT NOW(),
-            updated_at TIMESTAMP DEFAULT NOW()
+            "createdAt" TIMESTAMP DEFAULT NOW(),
+            "updatedAt" TIMESTAMP DEFAULT NOW()
           );
 
           INSERT INTO calendar_access_settings (setting_key, setting_value)
@@ -181,6 +182,10 @@ export async function runStartupMigration() {
             ('master_calendar_access', '{"Designated": true, "Silver": false, "Social": false, "Admin": true, "Employee": true}'::JSONB),
             ('property_calendar_access', '{}'::JSONB)
           ON CONFLICT (setting_key) DO NOTHING;
+
+          -- Fix any existing tables created with wrong column names (snake_case)
+          ALTER TABLE calendar_access_settings ADD COLUMN IF NOT EXISTS "createdAt" TIMESTAMP DEFAULT NOW();
+          ALTER TABLE calendar_access_settings ADD COLUMN IF NOT EXISTS "updatedAt" TIMESTAMP DEFAULT NOW();
         `;
         await client.query(calendarAccessMigration);
 
