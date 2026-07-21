@@ -8,6 +8,7 @@
  * features/admin/server/router.ts.
  */
 
+import { z } from "zod";
 import { router, memberProcedure } from "../../_core/server/trpc";
 import { getDb } from "@core/server/db";
 import { members, messages, bookings, memberSkillGroups, skillGroups } from "@core/db/schema";
@@ -56,34 +57,46 @@ export const memberPortalRouter = router({
   }),
 
   /**
-   * Checks if the authenticated member can view the master calendar based on their skill groups.
+   * Checks if a member or preview skill group can view the master calendar.
+   * If previewSkillGroupName is provided, checks that group's access (for preview mode).
+   * Otherwise, checks the authenticated member's skill groups.
    */
-  canViewMasterCalendar: memberProcedure.query(async ({ ctx }) => {
-    const db = await getDb();
-    if (!db) return false;
+  canViewMasterCalendar: memberProcedure
+    .input(z.object({ previewSkillGroupName: z.string().optional() }).optional())
+    .query(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) return false;
 
-    const member = await db.select().from(members).where(eq(members.userId, ctx.user.id)).limit(1);
-    if (!member[0]) return false;
+      const skillGroupNames: string[] = [];
 
-    const memberGroups = await db.select({ name: skillGroups.name })
-      .from(memberSkillGroups)
-      .innerJoin(skillGroups, eq(memberSkillGroups.skillGroupId, skillGroups.id))
-      .where(eq(memberSkillGroups.memberId, member[0].id));
+      // If preview mode, use the preview skill group
+      if (input?.previewSkillGroupName) {
+        skillGroupNames.push(input.previewSkillGroupName);
+      } else {
+        // Otherwise, get the authenticated member's skill groups
+        const member = await db.select().from(members).where(eq(members.userId, ctx.user.id)).limit(1);
+        if (!member[0]) return false;
 
-    const groupNames = memberGroups.map(g => g.name);
-    if (groupNames.length === 0) return false;
+        const memberGroups = await db.select({ name: skillGroups.name })
+          .from(memberSkillGroups)
+          .innerJoin(skillGroups, eq(memberSkillGroups.skillGroupId, skillGroups.id))
+          .where(eq(memberSkillGroups.memberId, member[0].id));
 
-    const accessSettings = await db.select()
-      .from(calendarAccessSettings)
-      .where(eq(calendarAccessSettings.settingKey, "master_calendar_skill_groups"))
-      .limit(1);
+        skillGroupNames.push(...memberGroups.map(g => g.name));
+        if (skillGroupNames.length === 0) return false;
+      }
 
-    if (!accessSettings[0]) {
-      const defaults = ["Designated", "Admin", "Employee"];
-      return groupNames.some(name => defaults.includes(name));
-    }
+      const accessSettings = await db.select()
+        .from(calendarAccessSettings)
+        .where(eq(calendarAccessSettings.settingKey, "master_calendar_skill_groups"))
+        .limit(1);
 
-    const allowedGroups = JSON.parse(accessSettings[0].settingValue) as string[];
-    return groupNames.some(name => allowedGroups.includes(name));
-  }),
+      if (!accessSettings[0]) {
+        const defaults = ["Designated", "Admin", "Employee"];
+        return skillGroupNames.some(name => defaults.includes(name));
+      }
+
+      const allowedGroups = JSON.parse(accessSettings[0].settingValue) as string[];
+      return skillGroupNames.some(name => allowedGroups.includes(name));
+    }),
 });
