@@ -93,10 +93,10 @@ export const memberPortalRouter = router({
 
       if (!accessSettings[0]) {
         const defaults = ["Designated", "Admin", "Employee"];
-        return skillGroupNames.some(name => defaults.includes(name));
+        return skillGroupNames.some(name => defaults.some(d => d.toLowerCase() === name.toLowerCase()));
       }
 
       const allowedGroups = JSON.parse(accessSettings[0].settingValue) as string[];
-      return skillGroupNames.some(name => allowedGroups.includes(name));
+      return skillGroupNames.some(name => allowedGroups.some(g => g.toLowerCase() === name.toLowerCase()));
     }),
 });
