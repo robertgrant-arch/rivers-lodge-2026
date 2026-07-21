@@ -10,8 +10,9 @@
 
 import { router, memberProcedure } from "../../_core/server/trpc";
 import { getDb } from "@core/server/db";
-import { members, messages, bookings } from "@core/db/schema";
+import { members, messages, bookings, memberSkillGroups, skillGroups } from "@core/db/schema";
 import { eq } from "drizzle-orm";
+import { calendarAccessSettings } from "../schema";
 
 // ─── Portal Router (member-facing) ────────────────────────────────────────────
 
@@ -52,5 +53,37 @@ export const memberPortalRouter = router({
     if (!db) return [];
     const rows = await db.select().from(messages).where(eq(messages.fromUserId, ctx.user.id));
     return rows;
+  }),
+
+  /**
+   * Checks if the authenticated member can view the master calendar based on their skill groups.
+   */
+  canViewMasterCalendar: memberProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) return false;
+
+    const member = await db.select().from(members).where(eq(members.userId, ctx.user.id)).limit(1);
+    if (!member[0]) return false;
+
+    const memberGroups = await db.select({ name: skillGroups.name })
+      .from(memberSkillGroups)
+      .innerJoin(skillGroups, eq(memberSkillGroups.skillGroupId, skillGroups.id))
+      .where(eq(memberSkillGroups.memberId, member[0].id));
+
+    const groupNames = memberGroups.map(g => g.name);
+    if (groupNames.length === 0) return false;
+
+    const accessSettings = await db.select()
+      .from(calendarAccessSettings)
+      .where(eq(calendarAccessSettings.settingKey, "master_calendar_skill_groups"))
+      .limit(1);
+
+    if (!accessSettings[0]) {
+      const defaults = ["Designated", "Admin", "Employee"];
+      return groupNames.some(name => defaults.includes(name));
+    }
+
+    const allowedGroups = JSON.parse(accessSettings[0].settingValue) as string[];
+    return groupNames.some(name => allowedGroups.includes(name));
   }),
 });

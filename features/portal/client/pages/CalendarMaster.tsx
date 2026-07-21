@@ -193,13 +193,33 @@ export default function CalendarMaster() {
         {/* ── Preview Banner ────────────────────────────────────── */}
         {previewSkillGroup && (
           <div className="bg-amber-950/40 border-b-2 border-amber-600 px-6 py-3">
-            <div className="max-w-[1440px] mx-auto flex items-center justify-between gap-4">
-              <p className="text-sm font-sans text-amber-100">
-                🔍 <strong>Preview Mode:</strong> Viewing as <strong>{previewSkillGroup.name}</strong> skill group
-              </p>
+            <div className="max-w-[1440px] mx-auto flex items-center justify-between gap-4 flex-wrap">
+              <div className="flex items-center gap-4 flex-1 min-w-0">
+                <p className="text-sm font-sans text-amber-100 whitespace-nowrap">
+                  🔍 <strong>Preview Mode:</strong>
+                </p>
+                <select
+                  value={previewSkillGroupId || ""}
+                  onChange={(e) => {
+                    const newId = e.target.value;
+                    if (newId) {
+                      const params = new URLSearchParams(window.location.search);
+                      params.set("skillGroupId", newId);
+                      window.location.search = params.toString();
+                    }
+                  }}
+                  className="px-2 py-1 bg-amber-900/30 border border-amber-600 text-amber-100 font-sans text-xs rounded hover:bg-amber-900/50 transition-colors focus:outline-none focus:ring-1 focus:ring-amber-500"
+                >
+                  {(skillGroupsQuery.data ?? []).map((sg) => (
+                    <option key={sg.id} value={String(sg.id)}>
+                      {sg.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
               <a
                 href="/portal"
-                className="text-xs font-sans text-amber-300 hover:text-amber-200 underline transition-colors"
+                className="text-xs font-sans text-amber-300 hover:text-amber-200 underline transition-colors whitespace-nowrap"
               >
                 Exit Preview
               </a>

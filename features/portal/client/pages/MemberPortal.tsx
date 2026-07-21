@@ -192,6 +192,7 @@ export default function MemberPortal() {
   const cmsAnnouncements = trpc.cms.getAnnouncements.useQuery({ audience: "members" });
   const myMessages     = trpc.messages.myMessages.useQuery(undefined, { enabled: isAuthenticated });
   const myRequests     = trpc.booking.requests.myRequests.useQuery(undefined, { enabled: isAuthenticated });
+  const canViewMasterCalendar = trpc.memberPortal.canViewMasterCalendar.useQuery(undefined, { enabled: isAuthenticated });
 
   const sendMsg = trpc.messages.send.useMutation({
     onSuccess: () => {
@@ -480,7 +481,7 @@ export default function MemberPortal() {
               </div>
 
               {/* Calendar & Property quick links */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className={`grid ${canViewMasterCalendar.data ? 'grid-cols-1 sm:grid-cols-3' : 'grid-cols-1 sm:grid-cols-2'} gap-3`}>
                 <Link href="/portal/calendar/mine">
                   <div className="flex items-center gap-4 bg-[#2B2823] border border-white/8 hover:border-[var(--gold)]/40 p-5 text-left transition-colors group cursor-pointer">
                     <div className="w-10 h-10 flex items-center justify-center border border-white/10 group-hover:border-[var(--gold)]/40 transition-colors flex-shrink-0">
@@ -494,6 +495,21 @@ export default function MemberPortal() {
                     </div>
                   </div>
                 </Link>
+                {canViewMasterCalendar.data && (
+                  <Link href="/portal/calendar/master">
+                    <div className="flex items-center gap-4 bg-[#2B2823] border border-white/8 hover:border-[var(--gold)]/40 p-5 text-left transition-colors group cursor-pointer">
+                      <div className="w-10 h-10 flex items-center justify-center border border-white/10 group-hover:border-[var(--gold)]/40 transition-colors flex-shrink-0">
+                        <svg className="w-4 h-4 text-white/50 group-hover:text-[var(--gold)] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                      </div>
+                      <div>
+                        <p className="text-sm font-sans text-white font-medium">Master Calendar</p>
+                        <p className="text-xs font-sans text-white/40 mt-0.5">View all estate bookings</p>
+                      </div>
+                    </div>
+                  </Link>
+                )}
                 <Link href="/portal/properties">
                   <div className="flex items-center gap-4 bg-[#2B2823] border border-[var(--gold)]/30 hover:border-[var(--gold)]/60 p-5 text-left transition-colors group cursor-pointer">
                     <div className="w-10 h-10 flex items-center justify-center border border-[var(--gold)]/30 group-hover:border-[var(--gold)]/60 transition-colors flex-shrink-0">
