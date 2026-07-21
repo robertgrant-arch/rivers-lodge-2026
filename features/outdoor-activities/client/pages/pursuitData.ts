@@ -78,7 +78,7 @@ export const PURSUITS: Pursuit[] = [
   {
     slug: "upland-birds",
     title: "Upland Birds",
-    teaser: "Quail, pheasant, and sporting clays in native Kansas uplands.",
+    teaser: "Quail, pheasant and dove hunting in native Kansas uplands.",
     heroImg: "/upland-1-gallery.jpg",
     heroAlt: "Upland bird hunting at Rivers Lodge",
     description: [
@@ -90,6 +90,8 @@ export const PURSUITS: Pursuit[] = [
       { src: "/upland-2-gallery.jpg", alt: "Upland habitat" },
       { src: "/upland-3-gallery.jpg", alt: "Upland birds hunting grounds" },
       { src: "", alt: "02" },
+      { src: "", alt: "04" },
+      { src: "", alt: "05" },
     ],
     season: [
       { label: "Quail",          value: "Nov 15 – Feb 15" },
@@ -120,7 +122,8 @@ export const PURSUITS: Pursuit[] = [
     ],
     galleryImgs: [
       { src: "/img/turkey-2-gallery.jpg", alt: "Turkey at Rivers Lodge" },
-      { src: "/img/turkey-3-gallery.jpg", alt: "Turkey at Rivers Lodge" },
+      { src: "", alt: "06" },
+      { src: "", alt: "07" },
     ],
     season: [
       { label: "Spring Season", value: "Apr 1 – May 31" },
@@ -138,7 +141,7 @@ export const PURSUITS: Pursuit[] = [
   {
     slug: "fishing",
     title: "Fishing",
-    teaser: "Five private fisheries — world-class bass, walleye, and more.",
+    teaser: "World class fishing for trophy Largemouth Bass, Smallmouth Bass, Striped Bass, Musky and more.",
     heroImg: "/img/Fishing%20net.jpg",
     heroAlt: "Fishing on the Marais des Cygnes at Rivers Lodge",
     description: [
@@ -152,6 +155,7 @@ export const PURSUITS: Pursuit[] = [
       { src: "/img/fishing-01-gallery.jpg", alt: "Fishing the Marais des Cygnes at Rivers Lodge" },
       { src: "/img/fishing-02-gallery.jpg", alt: "Trophy catch on the private fisheries at Rivers Lodge" },
       { src: "/img/fishing-03-gallery.jpg", alt: "Guided fishing trip at Rivers Lodge & Hunt Club" },
+      { src: "", alt: "03" },
     ],
     season: [
       { label: "Bass",          value: "Apr – Oct (year-round for members)" },
