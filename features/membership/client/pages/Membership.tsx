@@ -35,7 +35,7 @@ const benefits = [
   { title: "Private Events",         desc: "Exclusive member events throughout the year — concerts, chef tours, lodge parties, and seasonal gatherings." },
   { title: "Guided Hunting",         desc: "Guided whitetail, waterfowl, turkey, and upland hunts with dedicated hunt managers and full field support." },
   { title: "DIY Hunting Access",     desc: "Self-guided access to the property's timber, food plots, river bottom, and blinds on your own schedule." },
-  { title: "Guided Fishing",         desc: "Guided trips on the Marais des Cygnes, private lakes, and river sloughs for bass, catfish, crappie, and bluegill." },
+  { title: "Guided Fishing",         desc: "Guided trips on our professionally managed private strip pits and lakes or guided trout fishing on our own private stream." },
   { title: "DIY Fishing Access",     desc: "Unrestricted DIY fishing access on select properties." },
   { title: "Lodging Priority",       desc: "Priority booking on The Lodge, Riverhouse Suites, The Annex, and all other lodge accommodations." },
   { title: "Land Access & Updates",  desc: "Year-round land access and seasonal stewardship updates — stay connected to the property between visits." },
