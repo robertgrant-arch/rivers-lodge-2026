@@ -231,9 +231,12 @@ export default function MemberPortal() {
   const [urlParams, setUrlParams] = useState({ isPreviewMode: false, previewSkillGroup: undefined as string | undefined });
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
+    // Normalize skillGroup: trim whitespace and treat empty string as undefined
+    const rawSkillGroup = searchParams.get("skillGroup");
+    const normalizedSkillGroup = rawSkillGroup?.trim() ? rawSkillGroup.trim() : undefined;
     setUrlParams({
       isPreviewMode: searchParams.get("preview") === "1",
-      previewSkillGroup: searchParams.get("skillGroup") || undefined,
+      previewSkillGroup: normalizedSkillGroup,
     });
   }, []);
 
@@ -302,7 +305,7 @@ export default function MemberPortal() {
   // Check if member (or preview group) can view master calendar
   const canViewMasterCalendar = trpc.memberPortal.canViewMasterCalendar.useQuery(
     previewSkillGroup ? { previewSkillGroupName: previewSkillGroup } : undefined,
-    { enabled: isAuthenticated }
+    { enabled: isAuthenticated && (!isPreviewMode || !!previewSkillGroup) }
   );
 
   return (
@@ -510,7 +513,7 @@ export default function MemberPortal() {
                     </div>
                   </div>
                 </Link>
-                {canViewMasterCalendar.data && (
+                {canViewMasterCalendar.data ? (
                   <Link href="/portal/calendar/master">
                     <div className="flex items-center gap-4 bg-[#2B2823] border border-white/8 hover:border-[var(--gold)]/40 p-5 text-left transition-colors group cursor-pointer">
                       <div className="w-10 h-10 flex items-center justify-center border border-white/10 group-hover:border-[var(--gold)]/40 transition-colors flex-shrink-0">
@@ -524,7 +527,17 @@ export default function MemberPortal() {
                       </div>
                     </div>
                   </Link>
-                )}
+                ) : isPreviewMode && canViewMasterCalendar.isLoading ? (
+                  <div className="flex items-center gap-4 bg-[#2B2823] border border-white/8 p-5 text-left opacity-50">
+                    <div className="w-10 h-10 flex items-center justify-center border border-white/10 flex-shrink-0">
+                      <div className="w-4 h-4 border border-white/20 border-t-white/60 rounded-full animate-spin" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-sans text-white font-medium">Master Calendar</p>
+                      <p className="text-xs font-sans text-white/40 mt-0.5">Checking access...</p>
+                    </div>
+                  </div>
+                ) : null}
                 <Link href="/portal/properties">
                   <div className="flex items-center gap-4 bg-[#2B2823] border border-[var(--gold)]/30 hover:border-[var(--gold)]/60 p-5 text-left transition-colors group cursor-pointer">
                     <div className="w-10 h-10 flex items-center justify-center border border-[var(--gold)]/30 group-hover:border-[var(--gold)]/60 transition-colors flex-shrink-0">
