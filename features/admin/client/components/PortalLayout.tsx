@@ -130,14 +130,9 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
   });
   const unreadCount = notificationsQuery.data?.length ?? 0;
 
-  const handlePreviewDashboard = () => {
+  const handlePreview = () => {
     if (!previewSkillGroupId) return;
-    window.location.assign(`/portal?skillGroupId=${previewSkillGroupId}`);
-  };
-
-  const handlePreviewCalendar = () => {
-    if (!previewSkillGroupId) return;
-    window.location.assign(`/portal/calendar/master?skillGroupId=${previewSkillGroupId}`);
+    window.location.assign(`/portal?preview=1&skillGroupId=${previewSkillGroupId}`);
   };
 
   if (loading) return <DashboardLayoutSkeleton />;
@@ -324,22 +319,13 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
                         </option>
                       ))}
                     </select>
-                    <div className="flex gap-2">
-                      <Button
-                        onClick={handlePreviewDashboard}
-                        disabled={!previewSkillGroupId}
-                        className="flex-1 bg-[#9B4D19] hover:bg-[#7a3c14] text-[#E0D3BD] font-sans text-xs tracking-[0.1em] uppercase rounded-none h-8"
-                      >
-                        Dashboard
-                      </Button>
-                      <Button
-                        onClick={handlePreviewCalendar}
-                        disabled={!previewSkillGroupId}
-                        className="flex-1 bg-[#9B4D19] hover:bg-[#7a3c14] text-[#E0D3BD] font-sans text-xs tracking-[0.1em] uppercase rounded-none h-8"
-                      >
-                        Calendar
-                      </Button>
-                    </div>
+                    <Button
+                      onClick={handlePreview}
+                      disabled={!previewSkillGroupId}
+                      className="w-full bg-[#9B4D19] hover:bg-[#7a3c14] text-[#E0D3BD] font-sans text-xs tracking-[0.1em] uppercase rounded-none h-8"
+                    >
+                      Preview as Member
+                    </Button>
                   </div>
                 </PopoverContent>
               </Popover>

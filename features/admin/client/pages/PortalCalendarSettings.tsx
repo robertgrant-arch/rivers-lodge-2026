@@ -5,16 +5,21 @@ import { Button } from "@shared/ui/button";
 
 type SkillGroup = "Designated" | "Silver" | "Social" | "Admin" | "Employee";
 
+interface MasterCalendarGrant {
+  skillGroupId: number;
+  canViewMasterCalendar: boolean;
+}
+
 export default function PortalCalendarSettings() {
-  const [masterSkillGroups, setMasterSkillGroups] = useState<SkillGroup[]>(["Designated", "Admin", "Employee"]);
+  const [masterGrants, setMasterGrants] = useState<MasterCalendarGrant[]>([]);
   const [propertySkillGroups, setPropertySkillGroups] = useState<Record<string, SkillGroup[]>>({});
   const [isSaving, setIsSaving] = useState(false);
 
   const skillGroupsQuery = trpc.membership.listSkillGroupsForPreview.useQuery();
-  const masterCalendarQuery = trpc.portal.calendarSettings.getMasterCalendarAccessBySkillGroup.useQuery();
+  const masterCalendarQuery = trpc.portal.calendarSettings.getMasterCalendarAccessBySkillGroupId.useQuery();
   const propertyCalendarQuery = trpc.portal.calendarSettings.getPropertyCalendarAccessBySkillGroup.useQuery();
 
-  const updateMasterMutation = trpc.portal.calendarSettings.updateMasterCalendarAccessBySkillGroup.useMutation({
+  const updateMasterMutation = trpc.portal.calendarSettings.updateMasterCalendarAccessBySkillGroupId.useMutation({
     onSuccess: () => {
       toast.success("Master Calendar access updated");
       masterCalendarQuery.refetch();
@@ -36,9 +41,18 @@ export default function PortalCalendarSettings() {
 
   useEffect(() => {
     if (masterCalendarQuery.data) {
-      setMasterSkillGroups(masterCalendarQuery.data as SkillGroup[]);
+      // Initialize grants from query data, with all skill groups set to false by default
+      const allSkillGroupIds = new Set((skillGroupsQuery.data ?? []).map(sg => sg.id));
+      const grants: MasterCalendarGrant[] = Array.from(allSkillGroupIds).map(sgId => {
+        const existing = masterCalendarQuery.data.find(g => g.skillGroupId === sgId);
+        return {
+          skillGroupId: sgId,
+          canViewMasterCalendar: existing?.canViewMasterCalendar ?? false,
+        };
+      });
+      setMasterGrants(grants);
     }
-  }, [masterCalendarQuery.data]);
+  }, [masterCalendarQuery.data, skillGroupsQuery.data]);
 
   useEffect(() => {
     if (propertyCalendarQuery.data) {
@@ -46,9 +60,9 @@ export default function PortalCalendarSettings() {
     }
   }, [propertyCalendarQuery.data]);
 
-  const handleMasterToggle = (skillGroup: SkillGroup) => {
-    setMasterSkillGroups((prev) =>
-      prev.includes(skillGroup) ? prev.filter((g) => g !== skillGroup) : [...prev, skillGroup]
+  const handleMasterToggle = (skillGroupId: number) => {
+    setMasterGrants((prev) =>
+      prev.map(g => g.skillGroupId === skillGroupId ? { ...g, canViewMasterCalendar: !g.canViewMasterCalendar } : g)
     );
   };
 
@@ -69,7 +83,7 @@ export default function PortalCalendarSettings() {
   const saveMasterSettings = async () => {
     setIsSaving(true);
     try {
-      await updateMasterMutation.mutateAsync(masterSkillGroups);
+      await updateMasterMutation.mutateAsync(masterGrants);
     } finally {
       setIsSaving(false);
     }
@@ -105,15 +119,15 @@ export default function PortalCalendarSettings() {
         </div>
 
         <div className="space-y-3">
-          {allSkillGroups.map((skillGroup) => (
-            <label key={skillGroup} className="flex items-center gap-3 cursor-pointer">
+          {(skillGroupsQuery.data ?? []).map((skillGroup) => (
+            <label key={skillGroup.id} className="flex items-center gap-3 cursor-pointer">
               <input
                 type="checkbox"
-                checked={masterSkillGroups.includes(skillGroup)}
-                onChange={() => handleMasterToggle(skillGroup)}
+                checked={masterGrants.find(g => g.skillGroupId === skillGroup.id)?.canViewMasterCalendar ?? false}
+                onChange={() => handleMasterToggle(skillGroup.id)}
                 className="w-4 h-4 rounded border border-white/20 bg-transparent checked:bg-[var(--gold)] checked:border-[var(--gold)] cursor-pointer"
               />
-              <span className="text-sm font-sans text-white">{skillGroup}</span>
+              <span className="text-sm font-sans text-white">{skillGroup.name}</span>
             </label>
           ))}
         </div>

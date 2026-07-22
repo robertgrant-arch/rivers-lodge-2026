@@ -32,7 +32,7 @@ import {
 import { bookings, users, blockedDates } from '@core/db/schema';
 import { propertyBookings, huntingProperties } from '@core/db/property-booking-schema';
 import { calendarAccessSettings } from '@features/admin/schema';
-import { members, memberSkillGroups, skillGroups } from '@features/membership/public';
+import { members, memberSkillGroups, skillGroups, skillGroupCalendarAccess } from '@features/membership/public';
 import { gte, lte } from "drizzle-orm";
 import {
   checkAvailability,
@@ -660,29 +660,24 @@ const bookingsRouter = router({
       const member = memberResult[0];
       if (!member) throw new TRPCError({ code: "UNAUTHORIZED", message: "Not a member" });
 
-      // Get user's skill groups from memberSkillGroups table
+      // Get user's skill group IDs from memberSkillGroups table
       const memberSkillGroupsResult = await db
-        .select({ id: skillGroups.id, slug: skillGroups.slug })
+        .select({ skillGroupId: memberSkillGroups.skillGroupId })
         .from(memberSkillGroups)
-        .innerJoin(skillGroups, eq(memberSkillGroups.skillGroupId, skillGroups.id))
         .where(eq(memberSkillGroups.memberId, member.id));
 
-      const userSkillGroups = memberSkillGroupsResult.map(sg => sg.slug) as any[];
-
-      // Get Master Calendar access settings (new skill-group-based format)
-      const settingsResult = await db
-        .select()
-        .from(calendarAccessSettings)
-        .where(eq(calendarAccessSettings.settingKey, "master_calendar_skill_groups"));
-
-      let allowedSkillGroups: string[] = ["Designated", "Admin", "Employee"]; // Default
-
-      if (settingsResult[0]) {
-        allowedSkillGroups = JSON.parse(settingsResult[0].settingValue);
+      const userSkillGroupIds = memberSkillGroupsResult.map(sg => sg.skillGroupId);
+      if (userSkillGroupIds.length === 0) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Master Calendar access denied" });
       }
 
-      // Check if user's skill groups grant access
-      if (!hasSkillGroupAccess(userSkillGroups, allowedSkillGroups)) {
+      // Check if any of user's skill groups have master calendar access (ID-based)
+      const grants = await db
+        .select({ canViewMasterCalendar: skillGroupCalendarAccess.canViewMasterCalendar })
+        .from(skillGroupCalendarAccess)
+        .where(inArray(skillGroupCalendarAccess.skillGroupId, userSkillGroupIds));
+
+      if (!grants.some(g => g.canViewMasterCalendar)) {
         throw new TRPCError({ code: "FORBIDDEN", message: "Master Calendar access denied" });
       }
 
