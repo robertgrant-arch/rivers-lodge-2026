@@ -132,14 +132,12 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
 
   const handlePreviewDashboard = () => {
     if (!previewSkillGroupId) return;
-    setPreviewPopoverOpen(false);
-    window.location.assign(`/portal?preview=1&skillGroupId=${previewSkillGroupId}`);
+    window.location.assign(`/portal?skillGroupId=${previewSkillGroupId}`);
   };
 
   const handlePreviewCalendar = () => {
     if (!previewSkillGroupId) return;
-    setPreviewPopoverOpen(false);
-    window.location.assign(`/portal/calendar/master?preview=1&skillGroupId=${previewSkillGroupId}`);
+    window.location.assign(`/portal/calendar/master?skillGroupId=${previewSkillGroupId}`);
   };
 
   if (loading) return <DashboardLayoutSkeleton />;
@@ -311,7 +309,7 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
                     Preview as Skill Group
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-56 p-3 bg-[#363330] border border-[#57544E] rounded-none">
+                <PopoverContent className="w-48 p-3 bg-[#363330] border border-[#57544E] rounded-none">
                   <div className="space-y-2">
                     <p className="text-xs font-sans tracking-[0.1em] uppercase text-[#BABAAE]">Select Skill Group</p>
                     <select
@@ -326,7 +324,7 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
                         </option>
                       ))}
                     </select>
-                    <div className="flex gap-1.5">
+                    <div className="flex gap-2">
                       <Button
                         onClick={handlePreviewDashboard}
                         disabled={!previewSkillGroupId}

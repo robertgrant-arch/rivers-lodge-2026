@@ -12,9 +12,8 @@ import { z } from "zod";
 import { router, memberProcedure } from "../../_core/server/trpc";
 import { getDb } from "@core/server/db";
 import { members, messages, bookings, memberSkillGroups, skillGroups } from "@core/db/schema";
-import { eq, inArray } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { calendarAccessSettings } from "../schema";
-import { skillGroupCalendarAccess } from "@features/membership/public";
 
 // ─── Portal Router (member-facing) ────────────────────────────────────────────
 
@@ -59,40 +58,45 @@ export const memberPortalRouter = router({
 
   /**
    * Checks if a member or preview skill group can view the master calendar.
-   * If previewSkillGroupId is provided, checks that group's access (for preview mode).
-   * Otherwise, checks the authenticated member's skill groups via skillGroupCalendarAccess table.
+   * If previewSkillGroupName is provided, checks that group's access (for preview mode).
+   * Otherwise, checks the authenticated member's skill groups.
    */
   canViewMasterCalendar: memberProcedure
-    .input(z.object({ previewSkillGroupId: z.number().optional() }).optional())
+    .input(z.object({ previewSkillGroupName: z.string().optional() }).optional())
     .query(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) return false;
 
-      // If preview mode, check if the preview skill group has access
-      if (input?.previewSkillGroupId) {
-        const access = await db.select()
-          .from(skillGroupCalendarAccess)
-          .where(eq(skillGroupCalendarAccess.skillGroupId, input.previewSkillGroupId))
-          .limit(1);
-        return access[0]?.canViewMasterCalendar ?? false;
+      const skillGroupNames: string[] = [];
+
+      // If preview mode, use the preview skill group
+      if (input?.previewSkillGroupName) {
+        skillGroupNames.push(input.previewSkillGroupName);
+      } else {
+        // Otherwise, get the authenticated member's skill groups
+        const member = await db.select().from(members).where(eq(members.userId, ctx.user.id)).limit(1);
+        if (!member[0]) return false;
+
+        const memberGroups = await db.select({ name: skillGroups.name })
+          .from(memberSkillGroups)
+          .innerJoin(skillGroups, eq(memberSkillGroups.skillGroupId, skillGroups.id))
+          .where(eq(memberSkillGroups.memberId, member[0].id));
+
+        skillGroupNames.push(...memberGroups.map(g => g.name));
+        if (skillGroupNames.length === 0) return false;
       }
 
-      // Otherwise, check the authenticated member's skill groups
-      const member = await db.select().from(members).where(eq(members.userId, ctx.user.id)).limit(1);
-      if (!member[0]) return false;
-
-      const memberGroupIds = await db.select({ skillGroupId: memberSkillGroups.skillGroupId })
-        .from(memberSkillGroups)
-        .where(eq(memberSkillGroups.memberId, member[0].id));
-
-      if (memberGroupIds.length === 0) return false;
-
-      const ids = memberGroupIds.map(g => g.skillGroupId);
-      const hasAccess = await db.select()
-        .from(skillGroupCalendarAccess)
-        .where(inArray(skillGroupCalendarAccess.skillGroupId, ids))
+      const accessSettings = await db.select()
+        .from(calendarAccessSettings)
+        .where(eq(calendarAccessSettings.settingKey, "master_calendar_skill_groups"))
         .limit(1);
 
-      return hasAccess[0]?.canViewMasterCalendar ?? false;
+      if (!accessSettings[0]) {
+        const defaults = ["Designated", "Admin", "Employee"];
+        return skillGroupNames.some(name => defaults.some(d => d.toLowerCase() === name.toLowerCase()));
+      }
+
+      const allowedGroups = JSON.parse(accessSettings[0].settingValue) as string[];
+      return skillGroupNames.some(name => allowedGroups.some(g => g.toLowerCase() === name.toLowerCase()));
     }),
 });

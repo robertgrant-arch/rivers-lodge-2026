@@ -228,18 +228,20 @@ export default function MemberPortal() {
   });
 
   // Read URL params on client side only (after hydration)
-  const [urlParams, setUrlParams] = useState({ isPreviewMode: false, previewSkillGroupId: undefined as number | undefined });
+  const [urlParams, setUrlParams] = useState({ isPreviewMode: false, previewSkillGroup: undefined as string | undefined });
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
-    const id = searchParams.get("skillGroupId");
+    // Normalize skillGroup: trim whitespace and treat empty string as undefined
+    const rawSkillGroup = searchParams.get("skillGroup");
+    const normalizedSkillGroup = rawSkillGroup?.trim() ? rawSkillGroup.trim() : undefined;
     setUrlParams({
       isPreviewMode: searchParams.get("preview") === "1",
-      previewSkillGroupId: id ? parseInt(id) : undefined,
+      previewSkillGroup: normalizedSkillGroup,
     });
   }, []);
 
   const isPreviewMode = urlParams.isPreviewMode;
-  const previewSkillGroupId = urlParams.previewSkillGroupId;
+  const previewSkillGroup = urlParams.previewSkillGroup;
 
   if (loading) {
     return (
@@ -302,8 +304,8 @@ export default function MemberPortal() {
 
   // Check if member (or preview group) can view master calendar
   const canViewMasterCalendar = trpc.memberPortal.canViewMasterCalendar.useQuery(
-    previewSkillGroupId ? { previewSkillGroupId } : undefined,
-    { enabled: isAuthenticated && (!isPreviewMode || !!previewSkillGroupId) }
+    previewSkillGroup ? { previewSkillGroupName: previewSkillGroup } : undefined,
+    { enabled: isAuthenticated && (!isPreviewMode || !!previewSkillGroup) }
   );
 
   return (
