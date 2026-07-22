@@ -151,11 +151,12 @@ export async function runStartupMigration() {
 
         // Initialize skill_group_calendar_access with default settings
         // Designated, Admin, and Employee can view master calendar by default
+        // Use LOWER() for case-insensitive name matching to handle any casing in production
         const initCalendarAccess = `
           INSERT INTO skill_group_calendar_access (skill_group_id, can_view_master_calendar, can_manage_master_calendar)
           SELECT sg.id,
-                 CASE WHEN sg.name IN ('Designated', 'Admin', 'Employee') THEN true ELSE false END,
-                 CASE WHEN sg.name = 'Admin' THEN true ELSE false END
+                 CASE WHEN LOWER(sg.name) IN ('designated', 'admin', 'employee') THEN true ELSE false END,
+                 CASE WHEN LOWER(sg.name) = 'admin' THEN true ELSE false END
           FROM skill_groups sg
           WHERE NOT EXISTS (
             SELECT 1 FROM skill_group_calendar_access sgca
@@ -163,20 +164,31 @@ export async function runStartupMigration() {
           );
         `;
         try {
+          // First, log what skill groups exist in the database
+          const allGroupsResult = await client.query(`
+            SELECT id, name FROM skill_groups WHERE active = true ORDER BY name;
+          `);
+          console.log("[startup-migration] Available skill groups in database:");
+          allGroupsResult.rows.forEach((row: any) => {
+            console.log(`  - ${row.name} (ID ${row.id})`);
+          });
+
           const insertResult = await client.query(initCalendarAccess);
           console.log(`[startup-migration] inserted ${insertResult.rowCount ?? 0} rows into skill_group_calendar_access`);
 
-          // Verify: log the final state
+          // Verify: log the final state with detailed access grants
           const verifyResult = await client.query(`
-            SELECT sg.id, sg.name, COALESCE(sgca.can_view_master_calendar, false) as can_view
+            SELECT sg.id, sg.name, COALESCE(sgca.can_view_master_calendar, false) as can_view, COALESCE(sgca.can_manage_master_calendar, false) as can_manage
             FROM skill_groups sg
             LEFT JOIN skill_group_calendar_access sgca ON sgca.skill_group_id = sg.id
             WHERE sg.active = true
             ORDER BY sg.name;
           `);
-          console.log("[startup-migration] skill_group_calendar_access state:");
+          console.log("[startup-migration] skill_group_calendar_access state after initialization:");
           verifyResult.rows.forEach((row: any) => {
-            console.log(`  - ${row.name} (ID ${row.id}): can_view=${row.can_view}`);
+            const access = row.can_view ? '✓ VIEW' : '✗ no-view';
+            const manage = row.can_manage ? '✓ MANAGE' : '✗ no-manage';
+            console.log(`  - ${row.name} (ID ${row.id}): ${access} | ${manage}`);
           });
         } catch (err) {
           console.error("[startup-migration] initialize skill_group_calendar_access failed:", err instanceof Error ? err.message : String(err));
