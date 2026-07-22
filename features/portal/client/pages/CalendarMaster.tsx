@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@features/auth/public";
 import { trpc } from "@shared/lib/trpc";
 import PublicLayout from "@/components/PublicLayout";
@@ -59,13 +59,20 @@ export default function CalendarMaster() {
     redirectOnUnauthenticated: true,
   });
 
-  // Read preview skill group from URL param
-  const queryParams = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
-  const previewSkillGroupId = queryParams.get('skillGroupId');
+  // Read preview skill group ID from URL param (client-side only for hydration safety)
+  const [urlParams, setUrlParams] = useState({ previewSkillGroupId: undefined as number | undefined });
+  useEffect(() => {
+    const searchParams = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
+    const id = searchParams.get('skillGroupId');
+    if (id) {
+      setUrlParams({ previewSkillGroupId: parseInt(id) });
+    }
+  }, []);
+
+  const previewSkillGroupId = urlParams.previewSkillGroupId;
 
   const memberStatus = trpc.membership.myStatus.useQuery(undefined, { enabled: isAuthenticated });
   const skillGroupsQuery = trpc.membership.listSkillGroupsForPreview.useQuery();
-  const masterCalendarAccessQuery = trpc.portal.calendarSettings.getMasterCalendarAccessBySkillGroup.useQuery();
 
   const today = new Date();
   const year = today.getFullYear();
@@ -75,13 +82,17 @@ export default function CalendarMaster() {
   });
 
   // Get preview skill group details
-  const previewSkillGroup = previewSkillGroupId
-    ? skillGroupsQuery.data?.find((sg) => sg.id === parseInt(previewSkillGroupId))
+  const previewSkillGroup = previewSkillGroupId && skillGroupsQuery.data
+    ? skillGroupsQuery.data.find((sg) => sg.id === previewSkillGroupId)
     : null;
 
   // Check if preview skill group can view master calendar
-  const canViewMasterCalendar =
-    !previewSkillGroup || masterCalendarAccessQuery.data?.includes(previewSkillGroup.name);
+  const canViewMasterCalendarQuery = trpc.memberPortal.canViewMasterCalendar.useQuery(
+    previewSkillGroupId ? { previewSkillGroupId } : undefined,
+    { enabled: !previewSkillGroupId || !!previewSkillGroup }
+  );
+
+  const canViewMasterCalendar = !previewSkillGroup || canViewMasterCalendarQuery.data;
 
   if (loading) {
     return (

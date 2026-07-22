@@ -130,8 +130,15 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
   });
   const unreadCount = notificationsQuery.data?.length ?? 0;
 
-  const handlePreviewAsSkillGroup = () => {
+  const handlePreviewDashboard = () => {
     if (!previewSkillGroupId) return;
+    setPreviewPopoverOpen(false);
+    window.location.assign(`/portal?preview=1&skillGroupId=${previewSkillGroupId}`);
+  };
+
+  const handlePreviewCalendar = () => {
+    if (!previewSkillGroupId) return;
+    setPreviewPopoverOpen(false);
     window.location.assign(`/portal/calendar/master?preview=1&skillGroupId=${previewSkillGroupId}`);
   };
 
@@ -304,7 +311,7 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
                     Preview as Skill Group
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-48 p-3 bg-[#363330] border border-[#57544E] rounded-none">
+                <PopoverContent className="w-56 p-3 bg-[#363330] border border-[#57544E] rounded-none">
                   <div className="space-y-2">
                     <p className="text-xs font-sans tracking-[0.1em] uppercase text-[#BABAAE]">Select Skill Group</p>
                     <select
@@ -319,13 +326,22 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
                         </option>
                       ))}
                     </select>
-                    <Button
-                      onClick={handlePreviewAsSkillGroup}
-                      disabled={!previewSkillGroupId}
-                      className="w-full bg-[#9B4D19] hover:bg-[#7a3c14] text-[#E0D3BD] font-sans text-xs tracking-[0.1em] uppercase rounded-none h-8"
-                    >
-                      Preview
-                    </Button>
+                    <div className="flex gap-1.5">
+                      <Button
+                        onClick={handlePreviewDashboard}
+                        disabled={!previewSkillGroupId}
+                        className="flex-1 bg-[#9B4D19] hover:bg-[#7a3c14] text-[#E0D3BD] font-sans text-xs tracking-[0.1em] uppercase rounded-none h-8"
+                      >
+                        Dashboard
+                      </Button>
+                      <Button
+                        onClick={handlePreviewCalendar}
+                        disabled={!previewSkillGroupId}
+                        className="flex-1 bg-[#9B4D19] hover:bg-[#7a3c14] text-[#E0D3BD] font-sans text-xs tracking-[0.1em] uppercase rounded-none h-8"
+                      >
+                        Calendar
+                      </Button>
+                    </div>
                   </div>
                 </PopoverContent>
               </Popover>
