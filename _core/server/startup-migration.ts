@@ -150,9 +150,12 @@ export async function runStartupMigration() {
         }
 
         // Initialize skill_group_calendar_access with default settings
+        // Designated, Admin, and Employee can view master calendar by default
         const initCalendarAccess = `
           INSERT INTO skill_group_calendar_access (skill_group_id, can_view_master_calendar, can_manage_master_calendar)
-          SELECT sg.id, sg.name = 'Admin', sg.name = 'Admin'
+          SELECT sg.id,
+                 sg.name IN ('Designated', 'Admin', 'Employee') as can_view,
+                 sg.name = 'Admin' as can_manage
           FROM skill_groups sg
           WHERE NOT EXISTS (
             SELECT 1 FROM skill_group_calendar_access sgca
