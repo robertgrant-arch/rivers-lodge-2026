@@ -241,6 +241,12 @@ export default function MemberPortal() {
   const isPreviewMode = urlParams.isPreviewMode;
   const previewSkillGroupId = urlParams.previewSkillGroupId;
 
+  // Check if member (or preview group) can view master calendar — MUST be before early returns
+  const canViewMasterCalendar = trpc.memberPortal.canViewMasterCalendar.useQuery(
+    previewSkillGroupId ? { previewSkillGroupId } : undefined,
+    { enabled: isAuthenticated && (!isPreviewMode || !!previewSkillGroupId) }
+  );
+
   if (loading) {
     return (
       <PublicLayout>
@@ -299,12 +305,6 @@ export default function MemberPortal() {
 
   const pendingRequests = (myRequests.data ?? []).filter(r => !["converted","rejected","lost"].includes(r.status));
   const announcements = cmsAnnouncements.data ?? [];
-
-  // Check if member (or preview group) can view master calendar
-  const canViewMasterCalendar = trpc.memberPortal.canViewMasterCalendar.useQuery(
-    previewSkillGroupId ? { previewSkillGroupId } : undefined,
-    { enabled: isAuthenticated && (!isPreviewMode || !!previewSkillGroupId) }
-  );
 
   return (
     <PublicLayout>
