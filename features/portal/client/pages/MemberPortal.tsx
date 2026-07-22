@@ -302,8 +302,8 @@ export default function MemberPortal() {
 
   // Check if member (or preview group) can view master calendar
   const canViewMasterCalendar = trpc.memberPortal.canViewMasterCalendar.useQuery(
-    previewSkillGroup ? { previewSkillGroupName: previewSkillGroup } : undefined,
-    { enabled: isAuthenticated && (!isPreviewMode || !!previewSkillGroup) }
+    previewSkillGroupId ? { previewSkillGroupId } : undefined,
+    { enabled: isAuthenticated && (!isPreviewMode || !!previewSkillGroupId) }
   );
 
   return (
