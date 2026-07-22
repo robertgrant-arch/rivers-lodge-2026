@@ -241,9 +241,15 @@ export default function MemberPortal() {
   const isPreviewMode = urlParams.isPreviewMode;
   const previewSkillGroupId = urlParams.previewSkillGroupId;
 
+  // Memoize query input to prevent new object reference on every render
+  const calendarQueryInput = useMemo(() =>
+    previewSkillGroupId ? { previewSkillGroupId } : undefined,
+    [previewSkillGroupId]
+  );
+
   // Check if member (or preview group) can view master calendar — MUST be before early returns
   const canViewMasterCalendar = trpc.memberPortal.canViewMasterCalendar.useQuery(
-    previewSkillGroupId ? { previewSkillGroupId } : undefined,
+    calendarQueryInput,
     { enabled: isAuthenticated && (!isPreviewMode || !!previewSkillGroupId) }
   );
 
