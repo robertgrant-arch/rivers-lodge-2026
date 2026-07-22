@@ -154,19 +154,32 @@ export async function runStartupMigration() {
         const initCalendarAccess = `
           INSERT INTO skill_group_calendar_access (skill_group_id, can_view_master_calendar, can_manage_master_calendar)
           SELECT sg.id,
-                 sg.name IN ('Designated', 'Admin', 'Employee') as can_view,
-                 sg.name = 'Admin' as can_manage
+                 CASE WHEN sg.name IN ('Designated', 'Admin', 'Employee') THEN true ELSE false END,
+                 CASE WHEN sg.name = 'Admin' THEN true ELSE false END
           FROM skill_groups sg
           WHERE NOT EXISTS (
             SELECT 1 FROM skill_group_calendar_access sgca
             WHERE sgca.skill_group_id = sg.id
-          )
-          ON CONFLICT (skill_group_id) DO NOTHING;
+          );
         `;
         try {
-          await client.query(initCalendarAccess);
+          const insertResult = await client.query(initCalendarAccess);
+          console.log(`[startup-migration] inserted ${insertResult.rowCount ?? 0} rows into skill_group_calendar_access`);
+
+          // Verify: log the final state
+          const verifyResult = await client.query(`
+            SELECT sg.id, sg.name, COALESCE(sgca.can_view_master_calendar, false) as can_view
+            FROM skill_groups sg
+            LEFT JOIN skill_group_calendar_access sgca ON sgca.skill_group_id = sg.id
+            WHERE sg.active = true
+            ORDER BY sg.name;
+          `);
+          console.log("[startup-migration] skill_group_calendar_access state:");
+          verifyResult.rows.forEach((row: any) => {
+            console.log(`  - ${row.name} (ID ${row.id}): can_view=${row.can_view}`);
+          });
         } catch (err) {
-          console.log("[startup-migration] initialize skill_group_calendar_access completed or skipped");
+          console.error("[startup-migration] initialize skill_group_calendar_access failed:", err instanceof Error ? err.message : String(err));
         }
 
         // Calendar access settings table for skill-group-based calendar visibility
