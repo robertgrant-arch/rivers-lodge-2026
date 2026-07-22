@@ -58,20 +58,25 @@ export const memberPortalRouter = router({
 
   /**
    * Checks if a member or preview skill group can view the master calendar.
-   * If previewSkillGroupName is provided, checks that group's access (for preview mode).
+   * If previewSkillGroupId is provided, resolves to name and checks access (for preview mode).
    * Otherwise, checks the authenticated member's skill groups.
    */
   canViewMasterCalendar: memberProcedure
-    .input(z.object({ previewSkillGroupName: z.string().optional() }).optional())
+    .input(z.object({ previewSkillGroupId: z.number().optional() }).optional())
     .query(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) return false;
 
       const skillGroupNames: string[] = [];
 
-      // If preview mode, use the preview skill group
-      if (input?.previewSkillGroupName) {
-        skillGroupNames.push(input.previewSkillGroupName);
+      // If preview mode, resolve skill group ID to name
+      if (input?.previewSkillGroupId) {
+        const skillGroup = await db.select({ name: skillGroups.name })
+          .from(skillGroups)
+          .where(eq(skillGroups.id, input.previewSkillGroupId))
+          .limit(1);
+        if (!skillGroup[0]) return false;
+        skillGroupNames.push(skillGroup[0].name);
       } else {
         // Otherwise, get the authenticated member's skill groups
         const member = await db.select().from(members).where(eq(members.userId, ctx.user.id)).limit(1);
