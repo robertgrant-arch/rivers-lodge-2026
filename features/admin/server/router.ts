@@ -23,7 +23,7 @@ import {
 } from "../schema";
 // Cross-feature table refs — imported only via public.ts barrels
 import { users } from "@features/auth/server/public";
-import { members, membershipApplications, memberSkillGroups, skillGroups, employees, employeeSkillGroups } from "@features/membership/public";
+import { members, membershipApplications, memberSkillGroups, skillGroups, employees, employeeSkillGroups, skillGroupCalendarAccess } from "@features/membership/public";
 import { inquiries } from "@features/inquiries/public";
 import { bookings } from "@features/booking-engine/public";
 import { waivers } from "@features/waivers/public";
@@ -2300,6 +2300,88 @@ const calendarSettingsRouter = router({
       });
 
       return { success: true };
+    }),
+
+  // ─── Master Calendar Access (ID-based via skillGroupCalendarAccess) ───
+  getMasterCalendarAccessBySkillGroupId: ownerProcedure.query(async () => {
+    const db = getDb();
+    const grants = await db
+      .select({
+        skillGroupId: skillGroupCalendarAccess.skillGroupId,
+        canViewMasterCalendar: skillGroupCalendarAccess.canViewMasterCalendar,
+      })
+      .from(skillGroupCalendarAccess);
+
+    return grants;
+  }),
+
+  updateMasterCalendarAccessBySkillGroupId: ownerProcedure
+    .input(z.array(z.object({
+      skillGroupId: z.number(),
+      canViewMasterCalendar: z.boolean(),
+    })))
+    .mutation(async ({ input, ctx }) => {
+      const db = getDb();
+
+      try {
+        // Validate skill group IDs exist
+        const skillGroupIds = input.map(g => g.skillGroupId);
+        const validGroups = await db
+          .select({ id: skillGroups.id })
+          .from(skillGroups)
+          .where(inArray(skillGroups.id, skillGroupIds));
+
+        const validIds = new Set(validGroups.map(sg => sg.id));
+        const invalidIds = skillGroupIds.filter(id => !validIds.has(id));
+
+        if (invalidIds.length > 0) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: `Invalid skill group ID(s): ${invalidIds.join(", ")}`,
+          });
+        }
+
+        // Check if trying to deny all access to Silver/Social (Silver and Social can NEVER access Master Calendar)
+        const deniedSilverSocial = input.filter(g => !g.canViewMasterCalendar);
+        const allowedOthers = input.filter(g => g.canViewMasterCalendar);
+
+        if (allowedOthers.length === 0) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Master Calendar must have at least one skill group with access",
+          });
+        }
+
+        // Delete all existing grants first, then insert new ones
+        await db.delete(skillGroupCalendarAccess);
+
+        for (const grant of input) {
+          await db
+            .insert(skillGroupCalendarAccess)
+            .values({
+              skillGroupId: grant.skillGroupId,
+              canViewMasterCalendar: grant.canViewMasterCalendar,
+            });
+        }
+
+        await logAudit({
+          actingUserId: ctx.user.id,
+          actingUserName: ctx.user.email ?? "Admin",
+          actionType: "update",
+          entityType: "SkillGroupCalendarAccess",
+          fieldChanged: "master_calendar_grants",
+          newValue: JSON.stringify(input),
+        });
+
+        return { success: true };
+      } catch (error) {
+        if (error instanceof TRPCError) throw error;
+        console.error("[calendar-settings] updateMasterCalendarAccessBySkillGroupId failed:", error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to update master calendar access settings",
+        });
+      }
     }),
 });
 
