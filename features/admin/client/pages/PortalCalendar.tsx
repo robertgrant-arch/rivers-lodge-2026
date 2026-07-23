@@ -33,6 +33,12 @@ function toDateStr(d: Date): string {
   return `${y}-${m}-${day}`;
 }
 
+// Parse YYYY-MM-DD safely without timezone conversion
+function parseYYYYMMDD(dateStr: string): Date {
+  const [year, month, day] = dateStr.split('-').map(Number);
+  return new Date(year, month - 1, day);
+}
+
 function getMonthDays(year: number, month: number): (Date | null)[] {
   // month is 0-indexed
   const firstDay = new Date(year, month, 1);
@@ -106,6 +112,8 @@ function CreateEventModal({ open, defaultDate, onClose, onSuccess }: CreateModal
   const [endTime, setEndTime] = useState('17:00');
   const [allDay, setAllDay] = useState(true);
   const [notes, setNotes] = useState('');
+  const [isBlockDay, setIsBlockDay] = useState(false);
+  const [hiddenFromMembers, setHiddenFromMembers] = useState(false);
   const [error, setError] = useState('');
 
   const blockMutation = trpc.portal.calendar.blockDates.useMutation({
@@ -124,6 +132,8 @@ function CreateEventModal({ open, defaultDate, onClose, onSuccess }: CreateModal
       setEndTime('17:00');
       setAllDay(true);
       setNotes('');
+      setIsBlockDay(false);
+      setHiddenFromMembers(false);
       setError('');
     },
     onError: (err) => {
@@ -138,12 +148,6 @@ function CreateEventModal({ open, defaultDate, onClose, onSuccess }: CreateModal
     e.preventDefault();
     setError('');
 
-    // Validate title
-    if (!title.trim()) {
-      setError('Title is required');
-      return;
-    }
-
     // Validate dates
     if (!startDate || !endDate) {
       setError('Start and end dates are required');
@@ -153,6 +157,12 @@ function CreateEventModal({ open, defaultDate, onClose, onSuccess }: CreateModal
     // Validate end date >= start date
     if (endDate < startDate) {
       setError('End date must be on or after start date');
+      return;
+    }
+
+    // Validate title for non-Block Day events
+    if (!isBlockDay && !title.trim()) {
+      setError('Title is required (or select "Block Day" for a simple unavailability)');
       return;
     }
 
@@ -173,18 +183,23 @@ function CreateEventModal({ open, defaultDate, onClose, onSuccess }: CreateModal
     // undefined values get serialized as empty strings by tRPC, causing DB constraint violations
     const startAt = allDay || !startTime ? null : `${startDate}T${startTime}:00Z`;
     const endAt = allDay || !endTime ? null : `${endDate}T${endTime}:00Z`;
-    const reasonNotes = notes?.trim() ? `${title} — ${notes.trim()}` : null;
+    const reasonNotes = isBlockDay
+      ? null
+      : notes?.trim()
+        ? `${title} — ${notes.trim()}`
+        : null;
 
     blockMutation.mutate({
       startDate,
       endDate,
-      title: title.trim(),
+      title: isBlockDay ? undefined : title.trim(),
       kind,
       startAt,
       endAt,
       allDay,
       reason,
       reasonNotes,
+      hiddenFromMembers,
     });
   }
 
@@ -204,31 +219,48 @@ function CreateEventModal({ open, defaultDate, onClose, onSuccess }: CreateModal
             </div>
           )}
 
-          <div className="space-y-1.5">
-            <Label className="font-sans text-xs tracking-[0.1em] uppercase text-[#BABAAE]">Title *</Label>
-            <Input
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Event or hold name"
-              className="bg-[#2B2823] border-[#57544E] text-[#E0D3BD] placeholder:text-[#57544E] rounded-none focus-visible:ring-[#9B4D19] focus-visible:ring-1 focus-visible:border-[#9B4D19]"
+          <div className="flex items-center gap-2 mb-3">
+            <input
+              type="checkbox"
+              id="blockday"
+              checked={isBlockDay}
+              onChange={(e) => setIsBlockDay(e.target.checked)}
+              className="w-4 h-4 rounded border-[#57544E] bg-[#2B2823]"
             />
+            <Label htmlFor="blockday" className="font-sans text-xs tracking-[0.1em] uppercase text-[#BABAAE] cursor-pointer">
+              Block Day (simple unavailability, no title/details needed)
+            </Label>
           </div>
 
-          <div className="space-y-1.5">
-            <Label className="font-sans text-xs tracking-[0.1em] uppercase text-[#BABAAE]">Type</Label>
-            <Select value={type} onValueChange={setType}>
-              <SelectTrigger className="bg-[#2B2823] border-[#57544E] text-[#E0D3BD] rounded-none focus:ring-[#9B4D19]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="bg-[#363330] border-[#57544E] rounded-none text-[#E0D3BD]">
-                <SelectItem value="member_event">Member Event</SelectItem>
-                <SelectItem value="meeting">Meeting</SelectItem>
-                <SelectItem value="maintenance">Maintenance</SelectItem>
-                <SelectItem value="private_hold">Private Hold</SelectItem>
-                <SelectItem value="other">Other / Block</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          {!isBlockDay && (
+            <div className="space-y-1.5">
+              <Label className="font-sans text-xs tracking-[0.1em] uppercase text-[#BABAAE]">Title *</Label>
+              <Input
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Event or hold name"
+                className="bg-[#2B2823] border-[#57544E] text-[#E0D3BD] placeholder:text-[#57544E] rounded-none focus-visible:ring-[#9B4D19] focus-visible:ring-1 focus-visible:border-[#9B4D19]"
+              />
+            </div>
+          )}
+
+          {!isBlockDay && (
+            <div className="space-y-1.5">
+              <Label className="font-sans text-xs tracking-[0.1em] uppercase text-[#BABAAE]">Type</Label>
+              <Select value={type} onValueChange={setType}>
+                <SelectTrigger className="bg-[#2B2823] border-[#57544E] text-[#E0D3BD] rounded-none focus:ring-[#9B4D19]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-[#363330] border-[#57544E] rounded-none text-[#E0D3BD]">
+                  <SelectItem value="member_event">Member Event</SelectItem>
+                  <SelectItem value="meeting">Meeting</SelectItem>
+                  <SelectItem value="maintenance">Maintenance</SelectItem>
+                  <SelectItem value="private_hold">Private Hold</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
@@ -287,15 +319,30 @@ function CreateEventModal({ open, defaultDate, onClose, onSuccess }: CreateModal
             </div>
           )}
 
-          <div className="space-y-1.5">
-            <Label className="font-sans text-xs tracking-[0.1em] uppercase text-[#BABAAE]">Notes</Label>
-            <Textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              rows={3}
-              placeholder="Optional details"
-              className="bg-[#2B2823] border-[#57544E] text-[#E0D3BD] placeholder:text-[#57544E] rounded-none focus-visible:ring-[#9B4D19] focus-visible:ring-1 focus-visible:border-[#9B4D19] resize-none"
+          {!isBlockDay && (
+            <div className="space-y-1.5">
+              <Label className="font-sans text-xs tracking-[0.1em] uppercase text-[#BABAAE]">Notes</Label>
+              <Textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                rows={3}
+                placeholder="Optional details"
+                className="bg-[#2B2823] border-[#57544E] text-[#E0D3BD] placeholder:text-[#57544E] rounded-none focus-visible:ring-[#9B4D19] focus-visible:ring-1 focus-visible:border-[#9B4D19] resize-none"
+              />
+            </div>
+          )}
+
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="hidefrom"
+              checked={hiddenFromMembers}
+              onChange={(e) => setHiddenFromMembers(e.target.checked)}
+              className="w-4 h-4 rounded border-[#57544E] bg-[#2B2823]"
             />
+            <Label htmlFor="hidefrom" className="font-sans text-xs tracking-[0.1em] uppercase text-[#BABAAE] cursor-pointer">
+              Hide from members
+            </Label>
           </div>
 
           <DialogFooter className="pt-2 gap-2">
@@ -476,8 +523,9 @@ export default function PortalCalendar() {
   const eventsByDate = useMemo(() => {
     const map = new Map<string, CalEvent[]>();
     visibleEvents.forEach((ev) => {
-      const start = new Date(ev.startDate + 'T00:00:00');
-      const end = new Date(ev.endDate + 'T00:00:00');
+      // Use safe date parsing to avoid timezone issues
+      const start = parseYYYYMMDD(ev.startDate);
+      const end = parseYYYYMMDD(ev.endDate);
       const cur = new Date(start);
       while (cur <= end) {
         const key = toDateStr(cur);

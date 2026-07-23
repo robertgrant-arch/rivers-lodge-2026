@@ -360,6 +360,7 @@ const calendarRouter = router({
       reasonNotes: z.string().nullable().optional(),
       scope: z.enum(["entire_property", "specific_venue", "specific_lodging"]).optional(),
       scopeTarget: z.string().nullable().optional(),
+      hiddenFromMembers: z.boolean().optional(),
     }))
     .mutation(async ({ input, ctx }) => {
       try {
@@ -381,6 +382,7 @@ const calendarRouter = router({
           reasonNotes: payload.reasonNotes === "" ? null : payload.reasonNotes,
           scope: payload.scope,
           scopeTarget: payload.scopeTarget === "" ? null : payload.scopeTarget,
+          hiddenFromMembers: input.hiddenFromMembers ?? false,
           createdByUserId: ctx.user.id,
         };
 
