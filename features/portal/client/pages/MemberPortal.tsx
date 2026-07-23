@@ -7,6 +7,7 @@ import PublicLayout from "@/components/PublicLayout";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@shared/ui/dialog';
 import { Eye, X } from "lucide-react";
 import PropertyBrowser from "@features/portal/client/pages/PropertyBrowser";
+import { getMembershipTypeValue, getMembershipTypeSub } from "@features/portal/client/utils/membershipTypeHelpers";
 
 type Tab = "dashboard" | "bookings" | "request" | "updates" | "messages" | "profile" | "properties";
 
@@ -313,7 +314,7 @@ export default function MemberPortal() {
   const announcements = cmsAnnouncements.data ?? [];
 
   return (
-    <PublicLayout>
+    <PublicLayout hideNav={isPreviewMode || isAuthenticated}>
       {/* Admin preview banner */}
       {isPreviewMode && (
         <div className="fixed top-0 left-0 right-0 z-[200] bg-amber-600 text-white text-sm font-medium flex items-center justify-between px-4 py-2 shadow-lg">
@@ -433,13 +434,23 @@ export default function MemberPortal() {
               {/* Stats row */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {(() => {
-                  const membershipTypeValue = isStaff
-                    ? user?.role === "admin" ? "Admin" : user?.role === "employee" ? "Employee" : (user?.role as string)?.replace(/_/g, " ").toUpperCase() || "—"
-                    : (member as any)?.membershipType || "—";
+                  const membershipTypeValue = getMembershipTypeValue({
+                    isPreviewMode,
+                    previewSkillGroupId,
+                    isStaff,
+                    userRole: user?.role,
+                    membershipType: (member as any)?.membershipType,
+                  });
+
+                  const membershipTypeSub = getMembershipTypeSub({
+                    isPreviewMode,
+                    previewSkillGroupId,
+                    isStaff,
+                  });
 
                   const stats = [
                     { label: "Membership", value: member ? "Active" : "—", sub: member?.memberNumber ? `#${member.memberNumber}` : "N/A" },
-                    { label: "Membership Type", value: membershipTypeValue, sub: isStaff ? "Staff" : "Member Type" },
+                    { label: "Membership Type", value: membershipTypeValue, sub: membershipTypeSub },
                     { label: "Stay Requests", value: String((myRequests.data ?? []).length), sub: `${pendingRequests.length} active` },
                     { label: "Messages", value: String(myMessages.data?.length ?? 0), sub: "with concierge" },
                   ];
