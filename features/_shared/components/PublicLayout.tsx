@@ -4,9 +4,10 @@ import PublicFooter from "./PublicFooter";
 interface PublicLayoutProps {
   children: React.ReactNode;
   transparentNav?: boolean;
+  hideNav?: boolean;
 }
 
-export default function PublicLayout({ children }: PublicLayoutProps) {
+export default function PublicLayout({ children, hideNav }: PublicLayoutProps) {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       {/* Skip-to-content for keyboard / screen reader users */}
@@ -16,7 +17,7 @@ export default function PublicLayout({ children }: PublicLayoutProps) {
       >
         Skip to main content
       </a>
-      <PublicNav />
+      {!hideNav && <PublicNav />}
       <main id="main-content" className="flex-1">{children}</main>
       <PublicFooter />
     </div>
