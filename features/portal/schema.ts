@@ -237,6 +237,7 @@ export const portalBlockedDates = pgTable("portal_blocked_dates", {
   reasonNotes: text("reasonNotes"),
   scope: portalBlockedScopeEnum("scope").default("entire_property"),
   scopeTarget: varchar("scopeTarget", { length: 100 }),
+  hiddenFromMembers: boolean("hiddenFromMembers").default(false).notNull(),
   createdByUserId: varchar("createdByUserId", { length: 36 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 }, (t) => [

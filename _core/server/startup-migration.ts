@@ -228,6 +228,14 @@ export async function runStartupMigration() {
         `;
         await client.query(calendarAccessMigration);
 
+        // Portal blocked dates: add hiddenFromMembers column (idempotent)
+        const portalBlockedDatesMigration = `
+          ALTER TABLE portal_blocked_dates
+          ADD COLUMN IF NOT EXISTS "hiddenFromMembers" boolean NOT NULL DEFAULT false;
+        `;
+        await client.query(portalBlockedDatesMigration);
+        console.log("[startup-migration] portal_blocked_dates.hiddenFromMembers column added (if missing)");
+
         // Clean up orphan test properties from failed create attempts
         // (one-time cleanup of: Test Alpha, Test Bravo, Test 1 Minimal, 69 highway, Test - delete me, etc.)
         const cleanupTestProperties = `

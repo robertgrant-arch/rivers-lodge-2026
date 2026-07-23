@@ -134,6 +134,28 @@ export default function CalendarMaster() {
     );
   }
 
+  // Helper: safely parse YYYY-MM-DD string without timezone conversion
+  const parseYYYYMMDD = (dateStr: string): Date => {
+    const [year, month, day] = dateStr.split('-').map(Number);
+    return new Date(year, month - 1, day);
+  };
+
+  // Helper: format Date as YYYY-MM-DD
+  const formatYYYYMMDD = (date: Date): string => {
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+  };
+
+  // Helper: iterate from start to end date (inclusive), yielding YYYY-MM-DD strings
+  const dateRange = (startStr: string, endStr: string): string[] => {
+    const dates: string[] = [];
+    const start = parseYYYYMMDD(startStr);
+    const end = parseYYYYMMDD(endStr);
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+      dates.push(formatYYYYMMDD(d));
+    }
+    return dates;
+  };
+
   const blockedDateStrings: string[] = (() => {
     const events = calendarEvents.data;
     if (!events) return [];
@@ -142,35 +164,25 @@ export default function CalendarMaster() {
 
     // Add weddings
     events.weddings?.forEach((w: any) => {
-      const date = new Date(w.weddingDate);
-      const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
-      dates.add(dateStr);
+      dates.add(w.weddingDate);
     });
 
     // Add corporate events (range from arrival to departure)
     events.corporate?.forEach((c: any) => {
-      const start = new Date(c.arrivalDate);
-      const end = new Date(c.departureDate);
-      for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-        const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-        dates.add(dateStr);
-      }
+      dateRange(c.arrivalDate, c.departureDate).forEach(d => dates.add(d));
     });
 
     // Add hunt/fish bookings
     events.huntFish?.forEach((h: any) => {
-      const date = new Date(h.bookingDate);
-      const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
-      dates.add(dateStr);
+      dates.add(h.bookingDate);
     });
 
     // Add manually blocked dates (range from start to end)
     events.blocked?.forEach((b: any) => {
-      const start = new Date(b.startDate);
-      const end = new Date(b.endDate);
-      for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-        const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-        dates.add(dateStr);
+      // Show if: not hidden from members, OR it's a pure block day (no title)
+      // Pure block days (no title) are always shown as unavailable
+      if (!b.hiddenFromMembers || !b.title) {
+        dateRange(b.startDate, b.endDate).forEach(d => dates.add(d));
       }
     });
 
