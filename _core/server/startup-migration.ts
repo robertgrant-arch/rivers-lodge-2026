@@ -256,6 +256,8 @@ export async function runStartupMigration() {
         // Portal blocked dates: add missing columns for partial-time blocks and updatedAt
         const portalBlockedDatesMigration = `
           ALTER TABLE portal_blocked_dates
+          ADD COLUMN IF NOT EXISTS "startAt" timestamp,
+          ADD COLUMN IF NOT EXISTS "endAt" timestamp,
           ADD COLUMN IF NOT EXISTS "hiddenFromMembers" boolean NOT NULL DEFAULT false,
           ADD COLUMN IF NOT EXISTS "startTime" varchar(20),
           ADD COLUMN IF NOT EXISTS "endTime" varchar(20),
