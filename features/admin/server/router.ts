@@ -9,6 +9,7 @@ import {
   huntFishBookings,
   harvestRecords,
   seasonConfigs,
+  portalEvents,
   portalBlockedDates,
   calendarAccessSettings,
   portalStaffAssignments,
@@ -273,8 +274,8 @@ const calendarRouter = router({
       const db = getDb();
       const startTime = Date.now();
 
-      // All four ranges are independent — fetch concurrently.
-      const [weddings, corporate, huntFish, blocked] = await Promise.all([
+      // All ranges are independent — fetch concurrently.
+      const [weddings, corporate, huntFish, blocked, events] = await Promise.all([
         db.select().from(weddingBookings)
           .where(and(
             sql`${weddingBookings.weddingDate} >= ${input.startDate}`,
@@ -294,6 +295,11 @@ const calendarRouter = router({
           .where(and(
             sql`${portalBlockedDates.startDate} <= ${input.endDate}`,
             sql`${portalBlockedDates.endDate} >= ${input.startDate}`
+          )),
+        db.select().from(portalEvents)
+          .where(and(
+            sql`${portalEvents.startDate} <= ${input.endDate}`,
+            sql`${portalEvents.endDate} >= ${input.startDate}`
           )),
       ]);
 
@@ -334,6 +340,14 @@ const calendarRouter = router({
           endAt: b.endAt,
           allDay: b.allDay ?? true,
         })),
+        events: events.map(e => ({
+          ...e,
+          _type: "event" as const,
+          title: e.title,
+          kind: "member_event" as const,
+          startAt: e.startTime ? `${e.startDate}T${e.startTime}:00Z` : null,
+          endAt: e.endTime ? `${e.endDate}T${e.endTime}:00Z` : null,
+        })),
       };
 
       const duration = Date.now() - startTime;
@@ -342,70 +356,162 @@ const calendarRouter = router({
         corporate: corporate.length,
         huntFish: huntFish.length,
         blocked: blocked.length,
+        events: events.length,
         blockedTitles: blocked.map(b => b.title).slice(0, 5),
       });
       return result;
     }),
 
-  blockDates: portalProcedure
+  // Save a regular event (non-block)
+  saveEvent: portalProcedure
     .input(z.object({
+      title: z.string().min(1),
+      type: z.string(),
       startDate: z.string(),
       endDate: z.string(),
-      title: z.string().min(1).optional(),
-      kind: z.enum(["wedding", "corporate", "hunt_fish", "blocked"]).optional(),
-      startAt: z.string().datetime().nullable().optional(),
-      endAt: z.string().datetime().nullable().optional(),
+      startTime: z.string().nullable().optional(),
+      endTime: z.string().nullable().optional(),
       allDay: z.boolean().optional(),
-      reason: z.enum(["maintenance", "private_use", "seasonal_closure", "buffer", "other"]).optional(),
-      reasonNotes: z.string().nullable().optional(),
-      scope: z.enum(["entire_property", "specific_venue", "specific_lodging"]).optional(),
-      scopeTarget: z.string().nullable().optional(),
+      notes: z.string().nullable().optional(),
       hiddenFromMembers: z.boolean().optional(),
     }))
     .mutation(async ({ input, ctx }) => {
       try {
         const db = getDb();
-
-        // Normalize all nullable fields: empty strings → null, falsy → null
-        const payload = normalizeInsertPayload(input);
-
-        // Defensive coercion: ensure null fields stay null, never empty string
-        const insert = {
+        const [result] = await db.insert(portalEvents).values({
+          title: input.title.trim(),
+          type: input.type,
           startDate: input.startDate,
           endDate: input.endDate,
-          title: input.title?.trim() || null,
-          kind: input.kind ?? "blocked",
-          startAt: payload.startAt === "" ? null : payload.startAt,
-          endAt: payload.endAt === "" ? null : payload.endAt,
+          startTime: input.startTime || null,
+          endTime: input.endTime || null,
           allDay: input.allDay ?? true,
-          reason: input.reason ?? "other",
-          reasonNotes: payload.reasonNotes === "" ? null : payload.reasonNotes,
-          scope: payload.scope,
-          scopeTarget: payload.scopeTarget === "" ? null : payload.scopeTarget,
+          notes: input.notes?.trim() || null,
           hiddenFromMembers: input.hiddenFromMembers ?? false,
           createdByUserId: ctx.user.id,
-        };
+        }).returning({ id: portalEvents.id });
 
-        // Log the insert payload for debugging
-        console.log('[blockDates] Insert payload:', JSON.stringify({
-          ...insert,
-          createdByUserId: '[REDACTED]',
-        }, null, 2));
+        await logAudit({
+          actingUserId: ctx.user.id,
+          actingUserName: ctx.user.email ?? "Staff",
+          actionType: "create",
+          entityType: "PortalEvent",
+          entityId: String(result.id),
+          notes: `Event: ${input.title} (${input.startDate} to ${input.endDate})`,
+        });
 
-        const [result] = await db.insert(portalBlockedDates).values(insert as any)
-          .returning({
-            id: portalBlockedDates.id,
-            startDate: portalBlockedDates.startDate,
-            endDate: portalBlockedDates.endDate,
-            title: portalBlockedDates.title,
-          });
+        return { success: true, id: result.id };
+      } catch (err) {
+        console.error('[saveEvent] Failed:', err instanceof Error ? err.message : String(err));
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: `Failed to save event: ${err instanceof Error ? err.message : String(err)}`,
+        });
+      }
+    }),
 
-        console.log('[blockDates] Insert succeeded:', JSON.stringify({
-          insertedId: result.id,
-          startDate: result.startDate,
-          endDate: result.endDate,
-          title: result.title,
-        }));
+  // Update a regular event
+  updateEvent: portalProcedure
+    .input(z.object({
+      id: z.number(),
+      title: z.string().min(1).optional(),
+      type: z.string().optional(),
+      startDate: z.string().optional(),
+      endDate: z.string().optional(),
+      startTime: z.string().nullable().optional(),
+      endTime: z.string().nullable().optional(),
+      allDay: z.boolean().optional(),
+      notes: z.string().nullable().optional(),
+      hiddenFromMembers: z.boolean().optional(),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      try {
+        const db = getDb();
+        const updates: any = {};
+        if (input.title !== undefined) updates.title = input.title.trim();
+        if (input.type !== undefined) updates.type = input.type;
+        if (input.startDate !== undefined) updates.startDate = input.startDate;
+        if (input.endDate !== undefined) updates.endDate = input.endDate;
+        if (input.startTime !== undefined) updates.startTime = input.startTime;
+        if (input.endTime !== undefined) updates.endTime = input.endTime;
+        if (input.allDay !== undefined) updates.allDay = input.allDay;
+        if (input.notes !== undefined) updates.notes = input.notes?.trim() || null;
+        if (input.hiddenFromMembers !== undefined) updates.hiddenFromMembers = input.hiddenFromMembers;
+        updates.updatedAt = new Date();
+
+        await db.update(portalEvents).set(updates).where(eq(portalEvents.id, input.id));
+
+        await logAudit({
+          actingUserId: ctx.user.id,
+          actingUserName: ctx.user.email ?? "Staff",
+          actionType: "update",
+          entityType: "PortalEvent",
+          entityId: String(input.id),
+        });
+
+        return { success: true };
+      } catch (err) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: `Failed to update event: ${err instanceof Error ? err.message : String(err)}`,
+        });
+      }
+    }),
+
+  // Delete a regular event
+  deleteEvent: portalProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ input, ctx }) => {
+      try {
+        const db = getDb();
+        await db.delete(portalEvents).where(eq(portalEvents.id, input.id));
+        await logAudit({
+          actingUserId: ctx.user.id,
+          actingUserName: ctx.user.email ?? "Staff",
+          actionType: "delete",
+          entityType: "PortalEvent",
+          entityId: String(input.id),
+        });
+        return { success: true };
+      } catch (err) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: `Failed to delete event: ${err instanceof Error ? err.message : String(err)}`,
+        });
+      }
+    }),
+
+  // Save a block day (unavailability)
+  blockDates: portalProcedure
+    .input(z.object({
+      startDate: z.string(),
+      endDate: z.string(),
+      startTime: z.string().nullable().optional(),
+      endTime: z.string().nullable().optional(),
+      allDay: z.boolean().optional(),
+      reason: z.enum(["maintenance", "private_use", "seasonal_closure", "buffer", "other"]).optional(),
+      reasonNotes: z.string().nullable().optional(),
+      scope: z.enum(["entire_property", "specific_venue", "specific_lodging"]).optional(),
+      scopeTarget: z.string().nullable().optional(),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      try {
+        const db = getDb();
+        const [result] = await db.insert(portalBlockedDates).values({
+          startDate: input.startDate,
+          endDate: input.endDate,
+          title: null, // Pure blocks have no title
+          kind: "blocked",
+          startTime: input.startTime || null,
+          endTime: input.endTime || null,
+          allDay: input.allDay ?? true,
+          reason: input.reason ?? "other",
+          reasonNotes: input.reasonNotes?.trim() || null,
+          scope: input.scope ?? "entire_property",
+          scopeTarget: input.scopeTarget?.trim() || null,
+          hiddenFromMembers: false, // Blocks are always visible
+          createdByUserId: ctx.user.id,
+        }).returning({ id: portalBlockedDates.id });
 
         await logAudit({
           actingUserId: ctx.user.id,
@@ -413,30 +519,88 @@ const calendarRouter = router({
           actionType: "create",
           entityType: "PortalBlockedDate",
           entityId: String(result.id),
-          notes: `Blocked ${insert.startDate} to ${insert.endDate}${insert.title ? `: ${insert.title}` : ""}`,
+          notes: `Block: ${input.startDate} to ${input.endDate}`,
         });
 
-        console.log('[blockDates] Returning success to client:', { success: true, id: result.id });
         return { success: true, id: result.id };
       } catch (err) {
-        console.error('[blockDates] Failed to insert:', err instanceof Error ? err.message : String(err));
-        { const rootErr: any = (err as any)?.cause ?? err; const baseMsg = err instanceof Error ? err.message : String(err); const pgErr = rootErr as any; const detail = pgErr?.detail ? ` | detail: ${pgErr.detail}` : ''; const code = pgErr?.code ? ` | code: ${pgErr.code}` : ''; const constraint = pgErr?.constraint ? ` | constraint: ${pgErr.constraint}` : ''; const column = pgErr?.column ? ` | column: ${pgErr.column}` : ''; const table = pgErr?.table ? ` | table: ${pgErr.table}` : ''; const hint = pgErr?.hint ? ` | hint: ${pgErr.hint}` : '';  throw new Error(`Failed to save event: ${baseMsg}${code}${detail}${(rootErr && (rootErr as any).message && (rootErr as any).message !== (err instanceof Error ? err.message : '')) ? ` | pgMessage: ${(rootErr as any).message}` : ''}${constraint}${column}${table}${hint}`); }
+        console.error('[blockDates] Failed:', err instanceof Error ? err.message : String(err));
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: `Failed to save block: ${err instanceof Error ? err.message : String(err)}`,
+        });
       }
     }),
 
+  // Update a block
+  updateBlock: portalProcedure
+    .input(z.object({
+      id: z.number(),
+      startDate: z.string().optional(),
+      endDate: z.string().optional(),
+      startTime: z.string().nullable().optional(),
+      endTime: z.string().nullable().optional(),
+      allDay: z.boolean().optional(),
+      reason: z.enum(["maintenance", "private_use", "seasonal_closure", "buffer", "other"]).optional(),
+      reasonNotes: z.string().nullable().optional(),
+      scope: z.enum(["entire_property", "specific_venue", "specific_lodging"]).optional(),
+      scopeTarget: z.string().nullable().optional(),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      try {
+        const db = getDb();
+        const updates: any = {};
+        if (input.startDate !== undefined) updates.startDate = input.startDate;
+        if (input.endDate !== undefined) updates.endDate = input.endDate;
+        if (input.startTime !== undefined) updates.startTime = input.startTime;
+        if (input.endTime !== undefined) updates.endTime = input.endTime;
+        if (input.allDay !== undefined) updates.allDay = input.allDay;
+        if (input.reason !== undefined) updates.reason = input.reason;
+        if (input.reasonNotes !== undefined) updates.reasonNotes = input.reasonNotes?.trim() || null;
+        if (input.scope !== undefined) updates.scope = input.scope;
+        if (input.scopeTarget !== undefined) updates.scopeTarget = input.scopeTarget?.trim() || null;
+        updates.updatedAt = new Date();
+
+        await db.update(portalBlockedDates).set(updates).where(eq(portalBlockedDates.id, input.id));
+
+        await logAudit({
+          actingUserId: ctx.user.id,
+          actingUserName: ctx.user.email ?? "Staff",
+          actionType: "update",
+          entityType: "PortalBlockedDate",
+          entityId: String(input.id),
+        });
+
+        return { success: true };
+      } catch (err) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: `Failed to update block: ${err instanceof Error ? err.message : String(err)}`,
+        });
+      }
+    }),
+
+  // Delete a block
   unblockDates: portalProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ input, ctx }) => {
-      const db = getDb();
-      await db.delete(portalBlockedDates).where(eq(portalBlockedDates.id, input.id));
-      await logAudit({
-        actingUserId: ctx.user.id,
-        actingUserName: ctx.user.email ?? "Staff",
-        actionType: "delete",
-        entityType: "PortalBlockedDate",
-        entityId: String(input.id),
-      });
-      return { success: true };
+      try {
+        const db = getDb();
+        await db.delete(portalBlockedDates).where(eq(portalBlockedDates.id, input.id));
+        await logAudit({
+          actingUserId: ctx.user.id,
+          actingUserName: ctx.user.email ?? "Staff",
+          actionType: "delete",
+          entityType: "PortalBlockedDate",
+          entityId: String(input.id),
+        });
+        return { success: true };
+      } catch (err) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: `Failed to delete block: ${err instanceof Error ? err.message : String(err)}`,
+        });
+      }
     }),
 });
 

@@ -222,17 +222,43 @@ export const seasonConfigs = pgTable("season_configs", {
 export type SeasonConfig = typeof seasonConfigs.$inferSelect;
 export type InsertSeasonConfig = typeof seasonConfigs.$inferInsert;
 
+// ─── Portal Events ────────────────────────────────────────────────────────────
+
+export const portalEvents = pgTable("portal_events", {
+  id: integer("id").generatedAlwaysAsIdentity().primaryKey(),
+  title: varchar("title", { length: 255 }).notNull(),
+  type: varchar("type", { length: 100 }).notNull(), // member_event, meeting, wedding, corporate, hunt_fish, etc.
+  startDate: date("startDate").notNull(),
+  endDate: date("endDate").notNull(),
+  startTime: varchar("startTime", { length: 20 }), // HH:MM optional
+  endTime: varchar("endTime", { length: 20 }), // HH:MM optional
+  allDay: boolean("allDay").default(true).notNull(),
+  notes: text("notes"),
+  hiddenFromMembers: boolean("hiddenFromMembers").default(false).notNull(),
+  createdByUserId: varchar("createdByUserId", { length: 36 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().$onUpdate(() => new Date()).notNull(),
+}, (t) => [
+  index("pe_start_date_idx").on(t.startDate),
+  index("pe_end_date_idx").on(t.endDate),
+  index("pe_hidden_idx").on(t.hiddenFromMembers),
+]);
+export type PortalEvent = typeof portalEvents.$inferSelect;
+export type InsertPortalEvent = typeof portalEvents.$inferInsert;
+
 // ─── Portal Blocked Dates ─────────────────────────────────────────────────────
 
 export const portalBlockedDates = pgTable("portal_blocked_dates", {
   id: integer("id").generatedAlwaysAsIdentity().primaryKey(),
   startDate: date("startDate").notNull(),
   endDate: date("endDate").notNull(),
-  title: varchar("title", { length: 255 }),
+  title: varchar("title", { length: 255 }), // optional; null = pure block day
   kind: portalEventKindEnum("kind").default("blocked"),
   startAt: timestamp("startAt", { mode: "string" }),
   endAt: timestamp("endAt", { mode: "string" }),
-  allDay: boolean("allDay").default(true),
+  startTime: varchar("startTime", { length: 20 }), // HH:MM for partial-day blocks
+  endTime: varchar("endTime", { length: 20 }), // HH:MM for partial-day blocks
+  allDay: boolean("allDay").default(true).notNull(),
   reason: portalBlockedReasonEnum("reason").default("other"),
   reasonNotes: text("reasonNotes"),
   scope: portalBlockedScopeEnum("scope").default("entire_property"),
@@ -240,6 +266,7 @@ export const portalBlockedDates = pgTable("portal_blocked_dates", {
   hiddenFromMembers: boolean("hiddenFromMembers").default(false).notNull(),
   createdByUserId: varchar("createdByUserId", { length: 36 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().$onUpdate(() => new Date()).notNull(),
 }, (t) => [
   index("pbd_start_date_idx").on(t.startDate),
   index("pbd_end_date_idx").on(t.endDate),

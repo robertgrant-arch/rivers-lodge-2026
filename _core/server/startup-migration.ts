@@ -228,13 +228,48 @@ export async function runStartupMigration() {
         `;
         await client.query(calendarAccessMigration);
 
-        // Portal blocked dates: add hiddenFromMembers column (idempotent)
+        // Portal events table: create if missing (for regular events, not blocks)
+        const portalEventsMigration = `
+          CREATE TABLE IF NOT EXISTS portal_events (
+            id SERIAL PRIMARY KEY,
+            title VARCHAR(255) NOT NULL,
+            type VARCHAR(100) NOT NULL,
+            "startDate" DATE NOT NULL,
+            "endDate" DATE NOT NULL,
+            "startTime" VARCHAR(20),
+            "endTime" VARCHAR(20),
+            "allDay" BOOLEAN NOT NULL DEFAULT true,
+            notes TEXT,
+            "hiddenFromMembers" BOOLEAN NOT NULL DEFAULT false,
+            "createdByUserId" VARCHAR(36),
+            "createdAt" TIMESTAMP NOT NULL DEFAULT NOW(),
+            "updatedAt" TIMESTAMP NOT NULL DEFAULT NOW()
+          );
+
+          CREATE INDEX IF NOT EXISTS pe_start_date_idx ON portal_events("startDate");
+          CREATE INDEX IF NOT EXISTS pe_end_date_idx ON portal_events("endDate");
+          CREATE INDEX IF NOT EXISTS pe_hidden_idx ON portal_events("hiddenFromMembers");
+        `;
+        await client.query(portalEventsMigration);
+        console.log("[startup-migration] portal_events table created (if missing)");
+
+        // Portal blocked dates: add missing columns for partial-time blocks and updatedAt
         const portalBlockedDatesMigration = `
           ALTER TABLE portal_blocked_dates
-          ADD COLUMN IF NOT EXISTS "hiddenFromMembers" boolean NOT NULL DEFAULT false;
+          ADD COLUMN IF NOT EXISTS "hiddenFromMembers" boolean NOT NULL DEFAULT false,
+          ADD COLUMN IF NOT EXISTS "startTime" varchar(20),
+          ADD COLUMN IF NOT EXISTS "endTime" varchar(20),
+          ADD COLUMN IF NOT EXISTS "updatedAt" timestamp;
+
+          UPDATE portal_blocked_dates
+          SET "updatedAt" = "createdAt"
+          WHERE "updatedAt" IS NULL;
+
+          ALTER TABLE portal_blocked_dates
+          ALTER COLUMN "updatedAt" SET NOT NULL;
         `;
         await client.query(portalBlockedDatesMigration);
-        console.log("[startup-migration] portal_blocked_dates.hiddenFromMembers column added (if missing)");
+        console.log("[startup-migration] portal_blocked_dates columns added/updated (if missing)");
 
         // Clean up orphan test properties from failed create attempts
         // (one-time cleanup of: Test Alpha, Test Bravo, Test 1 Minimal, 69 highway, Test - delete me, etc.)
