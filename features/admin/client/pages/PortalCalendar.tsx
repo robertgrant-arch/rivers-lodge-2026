@@ -60,23 +60,25 @@ const DAY_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 // Event type config
 // ---------------------------------------------------------------------------
 
-type EventKind = 'wedding' | 'corporate' | 'hunt_fish' | 'blocked';
+type EventKind = 'wedding' | 'corporate' | 'hunt_fish' | 'blocked' | 'member_event';
 
 const EVENT_CONFIG: Record<EventKind, { label: string; dot: string; text: string }> = {
-  wedding:    { label: 'Wedding',    dot: '#9B4D19', text: 'text-[#9B4D19]' },
-  corporate:  { label: 'Corporate',  dot: '#576276', text: 'text-[#576276]' },
-  hunt_fish:  { label: 'Hunt/Fish',  dot: '#6B7250', text: 'text-[#6B7250]' },
-  blocked:    { label: 'Hold/Block', dot: '#57544E', text: 'text-[#BABAAE]' },
+  wedding:       { label: 'Wedding',    dot: '#9B4D19', text: 'text-[#9B4D19]' },
+  corporate:     { label: 'Corporate',  dot: '#576276', text: 'text-[#576276]' },
+  hunt_fish:     { label: 'Hunt/Fish',  dot: '#6B7250', text: 'text-[#6B7250]' },
+  blocked:       { label: 'Hold/Block', dot: '#57544E', text: 'text-[#BABAAE]' },
+  member_event:  { label: 'Member Event', dot: '#BABAAE', text: 'text-[#BABAAE]' },
 };
 
 type FilterKey = EventKind | 'all';
 
 const FILTER_CHIPS: { key: FilterKey; label: string }[] = [
-  { key: 'all',       label: 'All' },
-  { key: 'wedding',   label: 'Weddings' },
-  { key: 'corporate', label: 'Corporate' },
-  { key: 'hunt_fish', label: 'Hunt/Fish' },
-  { key: 'blocked',   label: 'Blocks/Holds' },
+  { key: 'all',           label: 'All' },
+  { key: 'wedding',       label: 'Weddings' },
+  { key: 'corporate',     label: 'Corporate' },
+  { key: 'hunt_fish',     label: 'Hunt/Fish' },
+  { key: 'member_event',  label: 'Member Events' },
+  { key: 'blocked',       label: 'Blocks/Holds' },
 ];
 
 // ---------------------------------------------------------------------------
@@ -116,33 +118,51 @@ function CreateEventModal({ open, defaultDate, onClose, onSuccess }: CreateModal
   const [hiddenFromMembers, setHiddenFromMembers] = useState(false);
   const [error, setError] = useState('');
 
-  const blockMutation = trpc.portal.calendar.blockDates.useMutation({
+  const saveEventMutation = trpc.portal.calendar.saveEvent.useMutation({
     onSuccess: (data) => {
-      console.log('[PortalCalendar] blockDates mutation succeeded:', data);
+      console.log('[PortalCalendar] saveEvent mutation succeeded:', data);
       toast.success('Event saved successfully');
-      // Refetch calendar data to show the newly created event
       onSuccess();
-      // Clear form and close modal
+      resetForm();
       onClose();
-      setTitle('');
-      setType('member_event');
-      setStartDate('');
-      setEndDate('');
-      setStartTime('09:00');
-      setEndTime('17:00');
-      setAllDay(true);
-      setNotes('');
-      setIsBlockDay(false);
-      setHiddenFromMembers(false);
-      setError('');
     },
     onError: (err) => {
       const message = err.message || 'Failed to save event';
+      console.error('[PortalCalendar] saveEvent mutation failed:', message);
+      setError(message);
+      toast.error(`Save failed: ${message}`);
+    },
+  });
+
+  const blockMutation = trpc.portal.calendar.blockDates.useMutation({
+    onSuccess: (data) => {
+      console.log('[PortalCalendar] blockDates mutation succeeded:', data);
+      toast.success('Block saved successfully');
+      onSuccess();
+      resetForm();
+      onClose();
+    },
+    onError: (err) => {
+      const message = err.message || 'Failed to save block';
       console.error('[PortalCalendar] blockDates mutation failed:', message);
       setError(message);
       toast.error(`Save failed: ${message}`);
     },
   });
+
+  function resetForm() {
+    setTitle('');
+    setType('member_event');
+    setStartDate('');
+    setEndDate('');
+    setStartTime('09:00');
+    setEndTime('17:00');
+    setAllDay(true);
+    setNotes('');
+    setIsBlockDay(false);
+    setHiddenFromMembers(false);
+    setError('');
+  }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -166,41 +186,31 @@ function CreateEventModal({ open, defaultDate, onClose, onSuccess }: CreateModal
       return;
     }
 
-    const validReasons = ["maintenance", "private_use", "seasonal_closure", "buffer", "other"] as const;
-    const reason = (validReasons as readonly string[]).includes(type) ? type as typeof validReasons[number] : "other";
-
-    // Map type to kind enum
-    const kindMap: Record<string, 'wedding' | 'corporate' | 'hunt_fish' | 'blocked'> = {
-      'member_event': 'blocked',
-      'meeting': 'blocked',
-      'maintenance': 'blocked',
-      'private_hold': 'blocked',
-      'other': 'blocked',
-    };
-    const kind = kindMap[type] || 'blocked';
-
-    // Explicitly send null (not undefined) for empty/conditional fields
-    // undefined values get serialized as empty strings by tRPC, causing DB constraint violations
-    const startAt = allDay || !startTime ? null : `${startDate}T${startTime}:00Z`;
-    const endAt = allDay || !endTime ? null : `${endDate}T${endTime}:00Z`;
-    const reasonNotes = isBlockDay
-      ? null
-      : notes?.trim()
-        ? `${title} — ${notes.trim()}`
-        : null;
-
-    blockMutation.mutate({
-      startDate,
-      endDate,
-      title: isBlockDay ? undefined : title.trim(),
-      kind,
-      startAt,
-      endAt,
-      allDay,
-      reason,
-      reasonNotes,
-      hiddenFromMembers,
-    });
+    if (isBlockDay) {
+      // Route to blockDates mutation for Block Days
+      blockMutation.mutate({
+        startDate,
+        endDate,
+        startTime: allDay || !startTime ? null : startTime,
+        endTime: allDay || !endTime ? null : endTime,
+        allDay,
+        reason: "other",
+        reasonNotes: null,
+      });
+    } else {
+      // Route to saveEvent mutation for regular events
+      saveEventMutation.mutate({
+        title: title.trim(),
+        type,
+        startDate,
+        endDate,
+        startTime: allDay || !startTime ? null : startTime,
+        endTime: allDay || !endTime ? null : endTime,
+        allDay,
+        notes: notes?.trim() || null,
+        hiddenFromMembers,
+      });
+    }
   }
 
   return (
@@ -356,10 +366,10 @@ function CreateEventModal({ open, defaultDate, onClose, onSuccess }: CreateModal
             </Button>
             <Button
               type="submit"
-              disabled={blockMutation.isPending}
+              disabled={blockMutation.isPending || saveEventMutation.isPending}
               className="bg-[#9B4D19] hover:bg-[#7a3c14] text-[#E0D3BD] rounded-none font-sans text-xs tracking-[0.1em] uppercase"
             >
-              {blockMutation.isPending ? 'Saving...' : 'Save Event'}
+              {blockMutation.isPending || saveEventMutation.isPending ? 'Saving...' : 'Save Event'}
             </Button>
           </DialogFooter>
         </form>
@@ -381,7 +391,7 @@ interface DetailModalProps {
 function EventDetailModal({ event, onClose, onUnblocked }: DetailModalProps) {
   const [confirming, setConfirming] = useState(false);
 
-  const unblockMutation = trpc.portal.calendar.unblockDates.useMutation({
+  const deleteEventMutation = trpc.portal.calendar.deleteEvent.useMutation({
     onSuccess: () => {
       toast.success('Event removed successfully');
       onUnblocked();
@@ -394,8 +404,22 @@ function EventDetailModal({ event, onClose, onUnblocked }: DetailModalProps) {
     },
   });
 
+  const unblockMutation = trpc.portal.calendar.unblockDates.useMutation({
+    onSuccess: () => {
+      toast.success('Block removed successfully');
+      onUnblocked();
+      onClose();
+      setConfirming(false);
+    },
+    onError: (err) => {
+      const message = err.message || 'Failed to remove block';
+      toast.error(`Remove failed: ${message}`);
+    },
+  });
+
   if (!event) return null;
   const cfg = EVENT_CONFIG[event.kind];
+  const isEvent = event.kind === 'member_event';
 
   return (
     <Dialog open={!!event} onOpenChange={(v) => { if (!v) { onClose(); setConfirming(false); } }}>
@@ -443,7 +467,7 @@ function EventDetailModal({ event, onClose, onUnblocked }: DetailModalProps) {
                 onClick={() => setConfirming(true)}
                 className="border-[#57544E] text-[#BABAAE] hover:border-[#57544E] hover:text-[#E0D3BD] rounded-none bg-transparent font-sans text-xs tracking-[0.1em] uppercase"
               >
-                Remove / Unblock
+                {isEvent ? 'Remove Event' : 'Remove Block'}
               </Button>
             </>
           ) : (
@@ -457,11 +481,17 @@ function EventDetailModal({ event, onClose, onUnblocked }: DetailModalProps) {
                 Cancel
               </Button>
               <Button
-                onClick={() => unblockMutation.mutate({ id: Number(event.id) })}
-                disabled={unblockMutation.isPending}
+                onClick={() => {
+                  if (isEvent) {
+                    deleteEventMutation.mutate({ id: Number(event.id) });
+                  } else {
+                    unblockMutation.mutate({ id: Number(event.id) });
+                  }
+                }}
+                disabled={deleteEventMutation.isPending || unblockMutation.isPending}
                 className="bg-[#57544E] hover:bg-[#423F3B] text-[#E0D3BD] rounded-none font-sans text-xs tracking-[0.1em] uppercase"
               >
-                {unblockMutation.isPending ? 'Removing...' : 'Confirm Remove'}
+                {deleteEventMutation.isPending || unblockMutation.isPending ? 'Removing...' : 'Confirm Remove'}
               </Button>
             </>
           )}
@@ -509,6 +539,9 @@ export default function PortalCalendar() {
     );
     (data.blocked ?? []).forEach((e: any) =>
       result.push({ id: e.id, title: e.title ?? e.reasonNotes ?? (e.reason && e.reason !== 'other' ? e.reason : 'Hold'), startDate: e.startDate, endDate: e.endDate ?? e.startDate, kind: 'blocked', notes: e.reasonNotes }),
+    );
+    (data.events ?? []).forEach((e: any) =>
+      result.push({ id: e.id, title: e.title, startDate: e.startDate, endDate: e.endDate, kind: 'member_event', notes: e.notes }),
     );
 
     return result;
