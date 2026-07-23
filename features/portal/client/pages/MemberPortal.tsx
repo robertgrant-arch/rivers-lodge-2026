@@ -184,6 +184,7 @@ export default function MemberPortal() {
   const [tab, setTab] = useState<Tab>("dashboard");
   const [msgForm, setMsgForm] = useState({ subject: "", body: "" });
   const [notifOpen, setNotifOpen] = useState(false);
+  const [expandedSection, setExpandedSection] = useState<Tab | null>(null);
   type RequestItem = NonNullable<typeof myRequests.data>[number];
   const [selectedRequest, setSelectedRequest] = useState<RequestItem | null>(null);
 
@@ -399,31 +400,6 @@ export default function MemberPortal() {
           </div>
         </div>
 
-        {/* ── Tabs ──────────────────────────────────────────────────────── */}
-        <div className="border-b border-white/8 bg-[#2B2823] sticky top-0 z-10 overflow-x-auto scrollbar-none">
-          <div className="max-w-[1440px] mx-auto px-6 lg:px-16">
-            <div className="flex gap-0 whitespace-nowrap">
-              {tabs.map((t) => (
-                <button
-                  key={t.key}
-                  onClick={() => setTab(t.key)}
-                  className={`relative px-5 py-4 text-[10px] tracking-[0.16em] uppercase font-sans whitespace-nowrap transition-colors border-b-2 ${
-                    tab === t.key
-                      ? "border-[var(--gold)] text-white"
-                      : "border-transparent text-white/40 hover:text-white"
-                  }`}
-                >
-                  {t.label}
-                  {t.badge ? (
-                    <span className="ml-1.5 inline-flex items-center justify-center w-4 h-4 rounded-full bg-[var(--gold)] text-black text-[8px] font-bold">
-                      {t.badge}
-                    </span>
-                  ) : null}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
 
         {/* ── Content ───────────────────────────────────────────────────── */}
         <div className="max-w-[1440px] mx-auto px-6 lg:px-16 py-10">
@@ -464,126 +440,157 @@ export default function MemberPortal() {
                 ))}
               </div>
 
-              {/* Quick actions */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {/* Return to Rivers Website link */}
+              <div className="mb-2">
+                <a href="/" className="text-[10px] font-sans text-white/50 hover:text-[var(--gold)] transition-colors tracking-[0.1em] uppercase">
+                  ← Return to Rivers Website
+                </a>
+              </div>
+
+              {/* Navigation Tiles Grid */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                {/* Request a Stay */}
                 <button
                   onClick={() => setTab("request")}
-                  className="flex items-center gap-4 bg-[#2B2823] border border-white/8 hover:border-[var(--gold)]/40 p-5 text-left transition-colors group"
+                  className="flex flex-col items-center gap-3 bg-[#2B2823] border border-white/8 hover:border-[var(--gold)]/40 p-4 text-center transition-colors group"
                 >
-                  <div className="w-10 h-10 flex items-center justify-center border border-white/10 group-hover:border-[var(--gold)]/40 transition-colors flex-shrink-0">
-                    <svg className="w-4 h-4 text-white/50 group-hover:text-[var(--gold)] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="w-10 h-10 flex items-center justify-center border border-white/10 group-hover:border-[var(--gold)]/40 transition-colors">
+                    <svg className="w-5 h-5 text-white/50 group-hover:text-[var(--gold)] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
                   </div>
                   <div>
-                    <p className="text-sm font-sans text-white font-medium">Request a Stay</p>
-                    <p className="text-xs font-sans text-white/40 mt-0.5">Submit dates for your next visit</p>
+                    <p className="text-xs font-sans text-white font-medium">Request a Stay</p>
                   </div>
                 </button>
 
+                {/* Contact Concierge */}
                 <button
                   onClick={() => setTab("messages")}
-                  className="flex items-center gap-4 bg-[#2B2823] border border-white/8 hover:border-[var(--gold)]/40 p-5 text-left transition-colors group"
+                  className="flex flex-col items-center gap-3 bg-[#2B2823] border border-white/8 hover:border-[var(--gold)]/40 p-4 text-center transition-colors group"
                 >
-                  <div className="w-10 h-10 flex items-center justify-center border border-white/10 group-hover:border-[var(--gold)]/40 transition-colors flex-shrink-0">
-                    <svg className="w-4 h-4 text-white/50 group-hover:text-[var(--gold)] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="w-10 h-10 flex items-center justify-center border border-white/10 group-hover:border-[var(--gold)]/40 transition-colors">
+                    <svg className="w-5 h-5 text-white/50 group-hover:text-[var(--gold)] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                     </svg>
                   </div>
                   <div>
-                    <p className="text-sm font-sans text-white font-medium">Contact Concierge</p>
-                    <p className="text-xs font-sans text-white/40 mt-0.5">Message our team directly</p>
+                    <p className="text-xs font-sans text-white font-medium">Concierge</p>
+                  </div>
+                </button>
+
+                {/* My Bookings */}
+                <Link href="/portal/my-bookings">
+                  <div className="flex flex-col items-center gap-3 bg-[#2B2823] border border-white/8 hover:border-[var(--gold)]/40 p-4 text-center transition-colors group cursor-pointer">
+                    <div className="w-10 h-10 flex items-center justify-center border border-white/10 group-hover:border-[var(--gold)]/40 transition-colors">
+                      <svg className="w-5 h-5 text-white/50 group-hover:text-[var(--gold)] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="text-xs font-sans text-white font-medium">My Bookings</p>
+                    </div>
+                  </div>
+                </Link>
+
+                {/* My Calendar */}
+                <Link href="/portal/calendar/mine">
+                  <div className="flex flex-col items-center gap-3 bg-[#2B2823] border border-white/8 hover:border-[var(--gold)]/40 p-4 text-center transition-colors group cursor-pointer">
+                    <div className="w-10 h-10 flex items-center justify-center border border-white/10 group-hover:border-[var(--gold)]/40 transition-colors">
+                      <svg className="w-5 h-5 text-white/50 group-hover:text-[var(--gold)] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="text-xs font-sans text-white font-medium">My Calendar</p>
+                    </div>
+                  </div>
+                </Link>
+
+                {/* Master Calendar (conditional) */}
+                {canViewMasterCalendar.data ? (
+                  <Link href="/portal/calendar/master">
+                    <div className="flex flex-col items-center gap-3 bg-[#2B2823] border border-white/8 hover:border-[var(--gold)]/40 p-4 text-center transition-colors group cursor-pointer">
+                      <div className="w-10 h-10 flex items-center justify-center border border-white/10 group-hover:border-[var(--gold)]/40 transition-colors">
+                        <svg className="w-5 h-5 text-white/50 group-hover:text-[var(--gold)] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                      </div>
+                      <div>
+                        <p className="text-xs font-sans text-white font-medium">Master Calendar</p>
+                      </div>
+                    </div>
+                  </Link>
+                ) : isPreviewMode && canViewMasterCalendar.isLoading ? (
+                  <div className="flex flex-col items-center gap-3 bg-[#2B2823] border border-white/8 p-4 text-center opacity-50">
+                    <div className="w-10 h-10 flex items-center justify-center border border-white/10">
+                      <div className="w-4 h-4 border border-white/20 border-t-white/60 rounded-full animate-spin" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-sans text-white font-medium">Master Calendar</p>
+                    </div>
+                  </div>
+                ) : null}
+
+                {/* Explore Properties */}
+                <Link href="/portal/properties">
+                  <div className="flex flex-col items-center gap-3 bg-[#2B2823] border border-white/8 hover:border-[var(--gold)]/40 p-4 text-center transition-colors group cursor-pointer">
+                    <div className="w-10 h-10 flex items-center justify-center border border-white/10 group-hover:border-[var(--gold)]/40 transition-colors">
+                      <svg className="w-5 h-5 text-white/50 group-hover:text-[var(--gold)] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="text-xs font-sans text-white font-medium">Properties</p>
+                    </div>
+                  </div>
+                </Link>
+
+                {/* Seasonal Updates */}
+                <button
+                  onClick={() => setTab("updates")}
+                  className="flex flex-col items-center gap-3 bg-[#2B2823] border border-white/8 hover:border-[var(--gold)]/40 p-4 text-center transition-colors group"
+                >
+                  <div className="w-10 h-10 flex items-center justify-center border border-white/10 group-hover:border-[var(--gold)]/40 transition-colors">
+                    <svg className="w-5 h-5 text-white/50 group-hover:text-[var(--gold)] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v11m-5-5l-5 5m0 0l5 5m-5-5h12" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-xs font-sans text-white font-medium">Updates</p>
                   </div>
                 </button>
 
                 {/* Refer a Member */}
                 <a
                   href={`/contact?type=membership&ref=${encodeURIComponent(user?.email ?? "")}&note=${encodeURIComponent("I'd like to refer a friend for membership at The Rivers Lodge.")}`}
-                  className="flex items-center gap-4 bg-[oklch(0.13_0.008_66)] border border-white/8 hover:border-[var(--gold)]/40 p-5 text-left transition-colors group"
+                  className="flex flex-col items-center gap-3 bg-[#2B2823] border border-white/8 hover:border-[var(--gold)]/40 p-4 text-center transition-colors group cursor-pointer"
                 >
-                  <div className="w-10 h-10 flex items-center justify-center border border-white/10 group-hover:border-[var(--gold)]/40 transition-colors flex-shrink-0">
-                    <svg className="w-4 h-4 text-white/50 group-hover:text-[var(--gold)] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="w-10 h-10 flex items-center justify-center border border-white/10 group-hover:border-[var(--gold)]/40 transition-colors">
+                    <svg className="w-5 h-5 text-white/50 group-hover:text-[var(--gold)] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                     </svg>
                   </div>
                   <div>
-                    <p className="text-sm font-sans text-white font-medium">Refer a Member</p>
-                    <p className="text-xs font-sans text-white/40 mt-0.5">Invite someone to apply</p>
+                    <p className="text-xs font-sans text-white font-medium">Refer</p>
                   </div>
                 </a>
-              </div>
 
-              {/* Calendar & Property quick links */}
-              <div className={`grid ${canViewMasterCalendar.data ? 'grid-cols-1 sm:grid-cols-3' : 'grid-cols-1 sm:grid-cols-2'} gap-3`}>
-                <Link href="/portal/calendar/mine">
-                  <div className="flex items-center gap-4 bg-[#2B2823] border border-white/8 hover:border-[var(--gold)]/40 p-5 text-left transition-colors group cursor-pointer">
-                    <div className="w-10 h-10 flex items-center justify-center border border-white/10 group-hover:border-[var(--gold)]/40 transition-colors flex-shrink-0">
-                      <svg className="w-4 h-4 text-white/50 group-hover:text-[var(--gold)] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                    </div>
-                    <div>
-                      <p className="text-sm font-sans text-white font-medium">My Calendar</p>
-                      <p className="text-xs font-sans text-white/40 mt-0.5">View your personal bookings</p>
-                    </div>
+                {/* My Profile */}
+                <button
+                  onClick={() => setTab("profile")}
+                  className="flex flex-col items-center gap-3 bg-[#2B2823] border border-white/8 hover:border-[var(--gold)]/40 p-4 text-center transition-colors group"
+                >
+                  <div className="w-10 h-10 flex items-center justify-center border border-white/10 group-hover:border-[var(--gold)]/40 transition-colors">
+                    <svg className="w-5 h-5 text-white/50 group-hover:text-[var(--gold)] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
                   </div>
-                </Link>
-                {canViewMasterCalendar.data ? (
-                  <Link href="/portal/calendar/master">
-                    <div className="flex items-center gap-4 bg-[#2B2823] border border-white/8 hover:border-[var(--gold)]/40 p-5 text-left transition-colors group cursor-pointer">
-                      <div className="w-10 h-10 flex items-center justify-center border border-white/10 group-hover:border-[var(--gold)]/40 transition-colors flex-shrink-0">
-                        <svg className="w-4 h-4 text-white/50 group-hover:text-[var(--gold)] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                      </div>
-                      <div>
-                        <p className="text-sm font-sans text-white font-medium">Master Calendar</p>
-                        <p className="text-xs font-sans text-white/40 mt-0.5">View all estate bookings</p>
-                      </div>
-                    </div>
-                  </Link>
-                ) : isPreviewMode && canViewMasterCalendar.isLoading ? (
-                  <div className="flex items-center gap-4 bg-[#2B2823] border border-white/8 p-5 text-left opacity-50">
-                    <div className="w-10 h-10 flex items-center justify-center border border-white/10 flex-shrink-0">
-                      <div className="w-4 h-4 border border-white/20 border-t-white/60 rounded-full animate-spin" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-sans text-white font-medium">Master Calendar</p>
-                      <p className="text-xs font-sans text-white/40 mt-0.5">Checking access...</p>
-                    </div>
+                  <div>
+                    <p className="text-xs font-sans text-white font-medium">Profile</p>
                   </div>
-                ) : null}
-                <Link href="/portal/properties">
-                  <div className="flex items-center gap-4 bg-[#2B2823] border border-[var(--gold)]/30 hover:border-[var(--gold)]/60 p-5 text-left transition-colors group cursor-pointer">
-                    <div className="w-10 h-10 flex items-center justify-center border border-[var(--gold)]/30 group-hover:border-[var(--gold)]/60 transition-colors flex-shrink-0">
-                      <svg className="w-4 h-4 text-[var(--gold)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                      </svg>
-                    </div>
-                    <div>
-                      <p className="text-sm font-sans text-white font-medium">Book a Property</p>
-                      <p className="text-xs font-sans text-white/40 mt-0.5">Browse stands, blinds &amp; zones — book instantly</p>
-                    </div>
-                  </div>
-                </Link>
-              </div>
-
-              {/* My Bookings link */}
-              <div>
-                <Link href="/portal/my-bookings">
-                  <div className="flex items-center gap-4 bg-[#2B2823] border border-white/8 hover:border-[var(--gold)]/40 p-5 text-left transition-colors group cursor-pointer">
-                    <div className="w-10 h-10 flex items-center justify-center border border-white/10 group-hover:border-[var(--gold)]/40 transition-colors flex-shrink-0">
-                      <svg className="w-4 h-4 text-white/50 group-hover:text-[var(--gold)] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-                      </svg>
-                    </div>
-                    <div>
-                      <p className="text-sm font-sans text-white font-medium">My Bookings</p>
-                      <p className="text-xs font-sans text-white/40 mt-0.5">View upcoming &amp; past property reservations</p>
-                    </div>
-                  </div>
-                </Link>
+                </button>
               </div>
 
               {/* Recent requests summary */}
