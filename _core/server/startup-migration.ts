@@ -152,13 +152,22 @@ export async function runStartupMigration() {
         // Initialize skill_group_calendar_access with default settings
         // Designated, Admin, and Employee can view master calendar by default
         // Use LOWER() for case-insensitive name matching to handle any casing in production
+        // CRITICAL: UPDATE existing rows first (idempotent), then INSERT missing rows
         const initCalendarAccess = `
+          -- Update existing skill_group_calendar_access rows with correct grants
+          UPDATE skill_group_calendar_access sgca
+          SET can_view_master_calendar = CASE WHEN LOWER(sg.name) IN ('designated', 'admin', 'employee') THEN true ELSE false END,
+              can_manage_master_calendar = CASE WHEN LOWER(sg.name) = 'admin' THEN true ELSE false END
+          FROM skill_groups sg
+          WHERE sgca.skill_group_id = sg.id AND sg.active = true;
+
+          -- Insert any missing skill_group_calendar_access rows
           INSERT INTO skill_group_calendar_access (skill_group_id, can_view_master_calendar, can_manage_master_calendar)
           SELECT sg.id,
                  CASE WHEN LOWER(sg.name) IN ('designated', 'admin', 'employee') THEN true ELSE false END,
                  CASE WHEN LOWER(sg.name) = 'admin' THEN true ELSE false END
           FROM skill_groups sg
-          WHERE NOT EXISTS (
+          WHERE sg.active = true AND NOT EXISTS (
             SELECT 1 FROM skill_group_calendar_access sgca
             WHERE sgca.skill_group_id = sg.id
           );
@@ -173,8 +182,10 @@ export async function runStartupMigration() {
             console.log(`  - ${row.name} (ID ${row.id})`);
           });
 
-          const insertResult = await client.query(initCalendarAccess);
-          console.log(`[startup-migration] inserted ${insertResult.rowCount ?? 0} rows into skill_group_calendar_access`);
+          // Execute update + insert statements
+          const result = await client.query(initCalendarAccess);
+          // Note: result.rowCount reflects only the last query (INSERT); UPDATE count is in result.affectedRows if available
+          console.log(`[startup-migration] skill_group_calendar_access initialized (updated existing + inserted new rows)`);
 
           // Verify: log the final state with detailed access grants
           const verifyResult = await client.query(`
