@@ -76,7 +76,7 @@ The image will appear on the site after the next deploy (usually < 2 min on Rend
 | Filename | Used On | Dimensions | Status |
 |---|---|---|---|
 | `barn shot.jpg` | The Barn hero | 1920×1080 | ✅ Exists |
-| `green-drake-hero.jpg` | The Green Drake hero | 1920×1080 | ⬜ Upload needed |
+| `greendrake-1-hero.jpg` | The Green Drake hero | 1920×1080 | ✅ Exists |
 | `Clubhouse Hero.jpg` | The Clubhouse hero | 1920×1080 | ✅ Exists |
 
 ---
