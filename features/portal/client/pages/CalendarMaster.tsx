@@ -178,6 +178,28 @@ function EventDetailModal({ event, onClose }: { event: CalendarEvent | null; onC
   );
 }
 
+// Helper: safely parse YYYY-MM-DD string without timezone conversion
+const parseYYYYMMDD = (dateStr: string): Date => {
+  const [year, month, day] = dateStr.split('-').map(Number);
+  return new Date(year, month - 1, day);
+};
+
+// Helper: format Date as YYYY-MM-DD
+const formatYYYYMMDD = (date: Date): string => {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+};
+
+// Helper: iterate from start to end date (inclusive), yielding YYYY-MM-DD strings
+const dateRange = (startStr: string, endStr: string): string[] => {
+  const dates: string[] = [];
+  const start = parseYYYYMMDD(startStr);
+  const end = parseYYYYMMDD(endStr);
+  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+    dates.push(formatYYYYMMDD(d));
+  }
+  return dates;
+};
+
 export default function CalendarMaster() {
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
 
@@ -220,69 +242,8 @@ export default function CalendarMaster() {
 
   const canViewMasterCalendar = !previewSkillGroup || canViewMasterCalendarQuery.data;
 
-  if (loading) {
-    return (
-      <PublicLayout>
-        <div className="min-h-screen flex items-center justify-center bg-background">
-          <div className="flex flex-col items-center gap-3">
-            <div className="w-8 h-8 border border-white/20 border-t-white/60 rounded-full animate-spin" />
-            <p className="text-white/40 font-sans text-xs tracking-[0.14em] uppercase">Loading</p>
-          </div>
-        </div>
-      </PublicLayout>
-    );
-  }
-
-  if (!isAuthenticated) return null;
-
-  const member = memberStatus.data;
-  const STAFF_ROLES = ["admin", "owner", "venue_sales", "events_manager", "membership_manager", "hunt_fish_ops", "hospitality", "staff", "finance"];
-  const isStaff = !!user?.role && STAFF_ROLES.includes(user.role as string);
-  const isMember = isStaff || (!!member && member.active);
-
-  if (!isMember && !memberStatus.isLoading) {
-    return (
-      <PublicLayout>
-        <section className="min-h-screen flex items-center justify-center bg-background">
-          <div className="max-w-md w-full mx-auto px-6 text-center">
-            <div className="w-16 h-px bg-white/20 mx-auto mb-8" />
-            <p className="eyebrow text-white/40 mb-4">Access Denied</p>
-            <h1 className="font-serif text-4xl text-white mb-5">403 — Forbidden</h1>
-            <p className="text-base font-sans text-white/50 leading-relaxed mb-8">
-              You don't have permission to view the Master Calendar.
-            </p>
-            <a href="/portal" className="btn-primary inline-flex items-center justify-center px-8 py-3.5">
-              Return to Portal
-            </a>
-          </div>
-        </section>
-      </PublicLayout>
-    );
-  }
-
-  // Helper: safely parse YYYY-MM-DD string without timezone conversion
-  const parseYYYYMMDD = (dateStr: string): Date => {
-    const [year, month, day] = dateStr.split('-').map(Number);
-    return new Date(year, month - 1, day);
-  };
-
-  // Helper: format Date as YYYY-MM-DD
-  const formatYYYYMMDD = (date: Date): string => {
-    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
-  };
-
-  // Helper: iterate from start to end date (inclusive), yielding YYYY-MM-DD strings
-  const dateRange = (startStr: string, endStr: string): string[] => {
-    const dates: string[] = [];
-    const start = parseYYYYMMDD(startStr);
-    const end = parseYYYYMMDD(endStr);
-    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-      dates.push(formatYYYYMMDD(d));
-    }
-    return dates;
-  };
-
-  // Build map of dates to calendar entries (events and blocks)
+  // CRITICAL FIX: Move useMemo BEFORE early returns to avoid React hooks violation (#310)
+  // This ensures the number of hooks is stable across all render paths
   const dateMap: Map<string, DateEntry> = useMemo(() => {
     const map = new Map<string, DateEntry>();
     const data = calendarEvents.data;
@@ -342,17 +303,36 @@ export default function CalendarMaster() {
     return map;
   }, [calendarEvents.data]);
 
-  // If previewing but skill group cannot view master calendar, show error
-  if (previewSkillGroup && !canViewMasterCalendar) {
+  if (loading) {
+    return (
+      <PublicLayout>
+        <div className="min-h-screen flex items-center justify-center bg-background">
+          <div className="flex flex-col items-center gap-3">
+            <div className="w-8 h-8 border border-white/20 border-t-white/60 rounded-full animate-spin" />
+            <p className="text-white/40 font-sans text-xs tracking-[0.14em] uppercase">Loading</p>
+          </div>
+        </div>
+      </PublicLayout>
+    );
+  }
+
+  if (!isAuthenticated) return null;
+
+  const member = memberStatus.data;
+  const STAFF_ROLES = ["admin", "owner", "venue_sales", "events_manager", "membership_manager", "hunt_fish_ops", "hospitality", "staff", "finance"];
+  const isStaff = !!user?.role && STAFF_ROLES.includes(user.role as string);
+  const isMember = isStaff || (!!member && member.active);
+
+  if (!isMember && !memberStatus.isLoading) {
     return (
       <PublicLayout>
         <section className="min-h-screen flex items-center justify-center bg-background">
           <div className="max-w-md w-full mx-auto px-6 text-center">
             <div className="w-16 h-px bg-white/20 mx-auto mb-8" />
-            <p className="eyebrow text-white/40 mb-4">Preview Restricted</p>
-            <h1 className="font-serif text-4xl text-white mb-5">Access Denied</h1>
+            <p className="eyebrow text-white/40 mb-4">Access Denied</p>
+            <h1 className="font-serif text-4xl text-white mb-5">403 — Forbidden</h1>
             <p className="text-base font-sans text-white/50 leading-relaxed mb-8">
-              The <strong>{previewSkillGroup.name}</strong> skill group cannot view the Master Calendar.
+              You don't have permission to view the Master Calendar.
             </p>
             <a href="/portal" className="btn-primary inline-flex items-center justify-center px-8 py-3.5">
               Return to Portal
@@ -365,99 +345,73 @@ export default function CalendarMaster() {
 
   return (
     <PublicLayout>
-      <div className="min-h-screen bg-background">
-        {/* ── Preview Banner ────────────────────────────────────── */}
-        {previewSkillGroup && (
-          <div className="bg-amber-950/40 border-b-2 border-amber-600 px-6 py-3">
-            <div className="max-w-[1440px] mx-auto flex items-center justify-between gap-4 flex-wrap">
-              <div className="flex items-center gap-4 flex-1 min-w-0">
-                <p className="text-sm font-sans text-amber-100 whitespace-nowrap">
-                  🔍 <strong>Preview Mode:</strong>
-                </p>
-                <select
-                  value={previewSkillGroupId || ""}
-                  onChange={(e) => {
-                    const newId = e.target.value;
-                    if (newId) {
-                      const params = new URLSearchParams(window.location.search);
-                      params.set("skillGroupId", newId);
-                      window.location.search = params.toString();
-                    }
-                  }}
-                  className="px-2 py-1 bg-amber-900/30 border border-amber-600 text-amber-100 font-sans text-xs rounded hover:bg-amber-900/50 transition-colors focus:outline-none focus:ring-1 focus:ring-amber-500"
-                >
-                  {(skillGroupsQuery.data ?? []).map((sg) => (
-                    <option key={sg.id} value={String(sg.id)}>
-                      {sg.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <a
-                href="/portal"
-                className="text-xs font-sans text-amber-300 hover:text-amber-200 underline transition-colors whitespace-nowrap"
-              >
-                Exit Preview
-              </a>
-            </div>
-          </div>
-        )}
-
-        {/* ── Header ─────────────────────────────────────────────── */}
-        <div className="bg-[#2B2823] border-b border-white/8 pt-24 pb-8">
-          <div className="max-w-[1440px] mx-auto px-6 lg:px-16">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className="eyebrow text-white/40 mb-2">Member Portal</p>
-                <h1 className="font-serif text-3xl md:text-4xl text-white mb-3">Master Calendar</h1>
-                <p className="text-sm font-sans text-white/40">Complete view of all estate bookings and events.</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* ── Content ───────────────────────────────────────────────── */}
-        <div className="max-w-[1440px] mx-auto px-6 lg:px-16 py-10">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2">
-              <h2 className="font-serif text-3xl text-white mb-2">Master Calendar</h2>
-              <p className="text-sm font-sans text-white/40 mb-6">View all estate events and availability across all activities.</p>
-              <MiniCalendar dateMap={dateMap} onEventClick={setSelectedEvent} />
-            </div>
+      <section className="bg-background py-12 px-6">
+        <div className="max-w-4xl mx-auto">
+          <div className="flex items-center justify-between mb-8">
             <div>
-              <h3 className="font-serif text-xl text-white mb-5">Activity Status</h3>
-              <div className="flex flex-col gap-3">
-                {[
-                  { season: "Whitetail Deer", open: false },
-                  { season: "Waterfowl", open: false },
-                  { season: "Turkey", open: true },
-                  { season: "Fishing", open: true },
-                  { season: "Sporting Clays", open: true },
-                ].map((s) => (
-                  <div key={s.season} className="flex items-center justify-between bg-[#2B2823] border border-white/8 px-4 py-3">
-                    <div className="text-sm font-sans font-medium text-white">{s.season}</div>
-                    <span className={`text-[9px] tracking-[0.12em] uppercase font-sans px-2 py-0.5 ${
-                      s.open ? "text-green-400 bg-green-400/10" : "text-white/30 bg-white/5"
-                    }`}>
-                      {s.open ? "Open" : "Closed"}
-                    </span>
-                  </div>
-                ))}
+              <p className="eyebrow text-white/40 mb-2">Portal</p>
+              <h1 className="font-serif text-4xl text-white">Master Calendar</h1>
+            </div>
+            {previewSkillGroup && (
+              <div className="text-right">
+                <p className="text-xs font-sans text-white/40 tracking-[0.12em] uppercase mb-1">Previewing</p>
+                <p className="text-lg font-serif text-white">{previewSkillGroup.name}</p>
               </div>
-              <div className="mt-6 p-4 border border-[var(--gold)]/20 bg-[var(--gold)]/5">
-                <p className="text-[10px] tracking-[0.14em] uppercase font-sans text-[var(--gold)] mb-1">Member Portal</p>
-                <p className="text-xs font-sans text-white/50 leading-relaxed mb-3">Return to the main portal to manage your bookings.</p>
-                <a href="/portal" className="text-[10px] font-sans text-[var(--gold)] hover:underline tracking-[0.1em] uppercase">
-                  Back to Portal →
-                </a>
-              </div>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            <div className="lg:col-span-1">
+              <MiniCalendar
+                dateMap={dateMap}
+                onEventClick={(event) => setSelectedEvent(event)}
+              />
+            </div>
+
+            <div className="lg:col-span-3 space-y-4">
+              {dateMap.size === 0 ? (
+                <div className="text-white/40 text-center py-12 font-sans">
+                  <p>No events or blocks scheduled</p>
+                </div>
+              ) : (
+                Array.from(dateMap.entries())
+                  .sort(([dateA], [dateB]) => dateA.localeCompare(dateB))
+                  .map(([date, entry]) => (
+                    <div key={date} className="bg-surface border border-white/10 p-4 rounded-sm">
+                      <p className="font-sans text-xs tracking-[0.12em] uppercase text-white/40 mb-2">{date}</p>
+                      {entry.isBlocked && (
+                        <p className="font-serif text-base text-red-300 mb-2">
+                          {entry.blockLabel || 'Unavailable'}
+                        </p>
+                      )}
+                      {entry.events.map((evt) => (
+                        <div
+                          key={`${evt.id}-${evt.startDate}`}
+                          className="cursor-pointer hover:opacity-75 transition-opacity mb-3 last:mb-0"
+                          onClick={() => setSelectedEvent(evt)}
+                        >
+                          <p className="font-serif text-base text-white hover:underline">{evt.title}</p>
+                          {evt.type && <p className="text-xs font-sans text-white/50 capitalize">{evt.type.replace('_', ' ')}</p>}
+                          {!evt.allDay && (evt.startTime || evt.endTime) && (
+                            <p className="text-xs font-sans text-white/40 mt-1">
+                              {evt.startTime && evt.endTime
+                                ? `${evt.startTime} — ${evt.endTime}`
+                                : evt.startTime
+                                ? `From ${evt.startTime}`
+                                : `Until ${evt.endTime}`}
+                            </p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  ))
+              )}
             </div>
           </div>
         </div>
+      </section>
 
-        {/* ── Event Detail Modal ─────────────────────────────────── */}
-        <EventDetailModal event={selectedEvent} onClose={() => setSelectedEvent(null)} />
-      </div>
+      <EventDetailModal event={selectedEvent} onClose={() => setSelectedEvent(null)} />
     </PublicLayout>
   );
 }
