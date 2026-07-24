@@ -94,7 +94,22 @@ export default function Lodging() {
           >
             {/* Full-bleed compact hero */}
             <div className="relative min-h-[280px] h-[38vh] md:h-[50vh] xl:h-[60vh] xl:max-h-[720px] flex items-end overflow-hidden">
-              {prop.heroImg ? ( <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${prop.heroImg})` }} aria-hidden="true" /> ) : ( <div className="absolute inset-0 bg-[#2B2823] flex items-center justify-center" aria-hidden="true"><span className="text-[11px] tracking-[0.12em] uppercase font-sans text-[#6E655C]">{prop.heroAlt}</span></div> )}
+              {prop.heroImg ? (
+                <Picture
+                  src={prop.heroImg}
+                  alt={prop.heroAlt}
+                  label={prop.heroAlt}
+                  className="absolute inset-0 w-full h-full"
+                  imgClassName="absolute inset-0 w-full h-full object-cover object-center"
+                  fetchPriority="high"
+                  loading="eager"
+                  decoding="async"
+                />
+              ) : (
+                <div className="absolute inset-0 bg-[#2B2823] flex items-center justify-center" aria-hidden="true">
+                  <span className="text-[11px] tracking-[0.12em] uppercase font-sans text-[#6E655C]">{prop.heroAlt}</span>
+                </div>
+              )}
               <div
                 className="absolute inset-0 pointer-events-none"
                 style={{ background: "linear-gradient(to top, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.45) 55%, transparent 100%)" }}
@@ -155,17 +170,20 @@ export default function Lodging() {
               {prop.galleryImgs.length > 0 && (
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                   {prop.galleryImgs.map((img, j) => (
-                    <div key={j} className="relative aspect-[4/3] overflow-hidden bg-[#2B2823]">
+                    <div key={j} className="relative aspect-[4/3] overflow-hidden">
                       {img.src ? (
-                        <img
+                        <Picture
                           src={img.src}
                           alt={img.alt}
-                          className="absolute inset-0 w-full h-full object-cover hover:scale-105 transition-transform duration-700"
+                          className="absolute inset-0 w-full h-full"
+                          imgClassName="absolute inset-0 w-full h-full object-cover hover:scale-105 transition-transform duration-700"
                           loading="lazy"
                           decoding="async"
+                          width={600}
+                          height={450}
                         />
                       ) : (
-                        <div className="absolute inset-0 flex items-center justify-center px-4">
+                        <div className="absolute inset-0 bg-[#2B2823] flex items-center justify-center px-4">
                           <span className="text-[10px] tracking-[0.18em] uppercase font-sans text-white/25 select-none text-center">
                             {img.alt}
                           </span>
@@ -207,7 +225,24 @@ export default function Lodging() {
           >
             {/* Full-bleed compact hero */}
             <div className="relative min-h-[280px] h-[38vh] md:h-[50vh] xl:h-[60vh] xl:max-h-[720px] flex items-end overflow-hidden">
-              {venue.heroImg ? ( <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${venue.heroImg})` }} aria-hidden="true" /> ) : ( <div className="absolute inset-0 bg-[#1E1C19] flex items-center justify-center" aria-hidden="true"><span className="text-[11px] tracking-[0.12em] uppercase font-sans text-[#6E655C]">{venue.heroAlt}</span></div> )}
+              {venue.heroImg ? (
+                <Picture
+                  src={venue.heroImg}
+                  alt={venue.heroAlt}
+                  label={venue.heroAlt}
+                  className="absolute inset-0 w-full h-full"
+                  imgClassName={`absolute inset-0 w-full h-full object-cover ${venue.slug === "the-green-drake" ? "object-top" : "object-center"}`}
+                  fetchPriority="high"
+                  loading="eager"
+                  decoding="async"
+                  width={venue.slug === "the-green-drake" ? 1920 : undefined}
+                  height={venue.slug === "the-green-drake" ? 720 : undefined}
+                />
+              ) : (
+                <div className="absolute inset-0 bg-[#1E1C19] flex items-center justify-center" aria-hidden="true">
+                  <span className="text-[11px] tracking-[0.12em] uppercase font-sans text-[#6E655C]">{venue.heroAlt}</span>
+                </div>
+              )}
               <div
                 className="absolute inset-0 pointer-events-none"
                 style={{ background: "linear-gradient(to top, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.45) 55%, transparent 100%)" }}
@@ -254,17 +289,20 @@ export default function Lodging() {
               {venue.galleryImgs.length > 0 && (
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                   {venue.galleryImgs.map((img, j) => (
-                    <div key={j} className="relative aspect-[4/3] overflow-hidden bg-[#2B2823]">
+                    <div key={j} className="relative aspect-[4/3] overflow-hidden">
                       {img.src ? (
-                        <img
+                        <Picture
                           src={img.src}
                           alt={img.alt}
-                          className="absolute inset-0 w-full h-full object-cover hover:scale-105 transition-transform duration-700"
+                          className="absolute inset-0 w-full h-full"
+                          imgClassName="absolute inset-0 w-full h-full object-cover hover:scale-105 transition-transform duration-700"
                           loading="lazy"
                           decoding="async"
+                          width={600}
+                          height={450}
                         />
                       ) : (
-                        <div className="absolute inset-0 flex items-center justify-center px-4">
+                        <div className="absolute inset-0 bg-[#2B2823] flex items-center justify-center px-4">
                           <span className="text-[10px] tracking-[0.18em] uppercase font-sans text-white/25 select-none text-center">
                             {img.alt}
                           </span>
