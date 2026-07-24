@@ -7,6 +7,9 @@
  * _core/db/property-booking-schema.ts and matched exactly.
  */
 export async function runStartupMigration() {
+  console.log("[startup-migration] ========== STARTUP MIGRATION STARTED ==========");
+  const startTime = Date.now();
+
   if (!process.env.DATABASE_URL) {
     console.warn("[startup-migration] DATABASE_URL not set — skipping schema migration");
     return;
@@ -24,8 +27,9 @@ export async function runStartupMigration() {
     });
 
     try {
-      console.log("[startup-migration] connecting to database...");
+      console.log("[startup-migration] Connecting to database...");
       const client = await pool.connect();
+      console.log("[startup-migration] ✓ Database connection established");
 
       try {
         console.log("[startup-migration] running idempotent ALTER TABLE ADD COLUMN IF NOT EXISTS...");
@@ -254,7 +258,12 @@ export async function runStartupMigration() {
         console.log("[startup-migration] portal_events table created (if missing)");
 
         // Portal blocked dates: add missing columns for partial-time blocks and updatedAt
-        const portalBlockedDatesMigration = `
+        // NOTE: node-postgres does NOT support multiple statements in a single query() call.
+        // We must split into separate client.query() calls.
+
+        // 1. Add new columns (idempotent with IF NOT EXISTS)
+        console.log("[startup-migration] Adding columns to portal_blocked_dates...");
+        const addColumnsQuery = `
           ALTER TABLE portal_blocked_dates
           ADD COLUMN IF NOT EXISTS "startAt" timestamp,
           ADD COLUMN IF NOT EXISTS "endAt" timestamp,
@@ -262,16 +271,47 @@ export async function runStartupMigration() {
           ADD COLUMN IF NOT EXISTS "startTime" varchar(20),
           ADD COLUMN IF NOT EXISTS "endTime" varchar(20),
           ADD COLUMN IF NOT EXISTS "updatedAt" timestamp;
+        `;
+        try {
+          await client.query(addColumnsQuery);
+          console.log("[startup-migration] ✓ portal_blocked_dates columns added (if missing)");
+        } catch (err) {
+          console.error("[startup-migration] Failed to add columns:", err instanceof Error ? err.message : String(err));
+          throw err;
+        }
 
+        // 2. Backfill updatedAt from createdAt (idempotent)
+        console.log("[startup-migration] Backfilling updatedAt in portal_blocked_dates...");
+        const backfillUpdatedAtQuery = `
           UPDATE portal_blocked_dates
           SET "updatedAt" = "createdAt"
           WHERE "updatedAt" IS NULL;
+        `;
+        try {
+          const backfillResult = await client.query(backfillUpdatedAtQuery);
+          console.log(`[startup-migration] ✓ Backfilled ${backfillResult.rowCount ?? 0} rows with updatedAt`);
+        } catch (err) {
+          console.error("[startup-migration] Failed to backfill updatedAt:", err instanceof Error ? err.message : String(err));
+          throw err;
+        }
 
+        // 3. Set updatedAt as NOT NULL (idempotent)
+        console.log("[startup-migration] Setting updatedAt NOT NULL constraint...");
+        const setNotNullQuery = `
           ALTER TABLE portal_blocked_dates
           ALTER COLUMN "updatedAt" SET NOT NULL;
         `;
-        await client.query(portalBlockedDatesMigration);
-        console.log("[startup-migration] portal_blocked_dates columns added/updated (if missing)");
+        try {
+          await client.query(setNotNullQuery);
+          console.log("[startup-migration] ✓ updatedAt constraint set to NOT NULL");
+        } catch (err) {
+          // This might fail if column already has NOT NULL constraint, which is fine (idempotent)
+          if (err instanceof Error && err.message.includes("column \"updatedAt\" of relation \"portal_blocked_dates\" already exists")) {
+            console.log("[startup-migration] ℹ updatedAt constraint already set (idempotent)");
+          } else {
+            console.error("[startup-migration] Warning setting updatedAt NOT NULL:", err instanceof Error ? err.message : String(err));
+          }
+        }
 
         // Clean up orphan test properties from failed create attempts
         // (one-time cleanup of: Test Alpha, Test Bravo, Test 1 Minimal, 69 highway, Test - delete me, etc.)
@@ -285,7 +325,9 @@ export async function runStartupMigration() {
           console.log(`[startup-migration] 🧹 cleaned up ${cleanupResult.rowCount} orphan test properties`);
         }
 
-        console.log("[startup-migration] ✅ schema migration completed successfully");
+        const duration = Date.now() - startTime;
+        console.log(`[startup-migration] ✅ SCHEMA MIGRATION COMPLETED SUCCESSFULLY in ${duration}ms`);
+        console.log("[startup-migration] ========== STARTUP MIGRATION FINISHED ==========");
       } finally {
         client.release();
       }
