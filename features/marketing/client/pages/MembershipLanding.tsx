@@ -30,12 +30,6 @@ const experiences = [
     desc: "Five private fisheries — bass, crappie, catfish, and more along the Marais des Cygnes.",
     image: RIVER,
   },
-  {
-    label: "The Estate",
-    href: "/estate",
-    desc: "The Lodge, Clubhouse, and river access — your private retreat between seasons.",
-    image: INTERIOR,
-  },
 ];
 
 const tiers = [
@@ -117,10 +111,6 @@ export default function MembershipLanding() {
                 <p className="text-[#BABAAE] font-sans text-base leading-relaxed mb-8">
                   Membership at the Rivers Lodge is not a timeshare or a hunting lease. It is a community of like-minded people who share a deep respect for the land and a commitment to conservation.
                 </p>
-                <Link href="/estate" className="link-arrow">
-                  About the Estate
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-                </Link>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="aspect-[3/4] overflow-hidden">

@@ -14,7 +14,7 @@ function getTrackFromPath(path: string): Track {
   ) return "events";
   if (path.startsWith("/lodging")) return "lodging";
   if (path.startsWith("/outdoor-activities")) return "outdoor";
-  if (path.startsWith("/membership") || path.startsWith("/estate")) return "membership";
+  if (path.startsWith("/membership")) return "membership";
   return null;
 }
 

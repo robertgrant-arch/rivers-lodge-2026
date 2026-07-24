@@ -34,7 +34,6 @@ const PursuitDetail = lazy(() => import("@features/outdoor-activities/client/pag
 
 // Lodging pages
 const Lodging = lazy(() => import("@features/lodging/client/pages/Lodging"));
-const Estate = lazy(() => import("@features/lodging/client/pages/Estate"));
 const LodgingVenueDetail = lazy(() => import("@features/lodging/client/pages/LodgingVenueDetail"));
 
 // Weddings & Events hub
@@ -136,7 +135,6 @@ function Router() {
         <Route path="/corporate" component={Corporate} />
         <Route path="/corporate-events" component={Corporate} />
         <Route path="/food-and-wine" component={FoodAndWine} />
-        <Route path="/estate" component={Estate} />
         <Route path="/gallery" component={Gallery} />
         <Route path="/contact" component={Contact} />
         <Route path="/membership" component={Membership} />

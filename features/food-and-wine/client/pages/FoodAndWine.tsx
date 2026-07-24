@@ -278,7 +278,7 @@ export default function FoodAndWine() {
               className="font-serif font-light text-warm leading-tight mb-6"
               style={{ fontSize: "clamp(1.875rem,3.5vw,3rem)" }}
             >
-              Reserve your table.
+              Explore River's Dining Options
             </h2>
             <p className="font-sans text-muted-brand leading-relaxed mb-10" style={{ fontSize: "0.9375rem" }}>
               Whether you're planning a private dinner, a culinary weekend, or would like to learn more about dining at the lodge, we'd love to hear from you.
@@ -291,7 +291,6 @@ export default function FoodAndWine() {
               >
                 Inquire About Dining
               </Link>
-              <Link href="/estate" className="btn-ghost">Explore the Estate</Link>
             </div>
           </div>
         </div>

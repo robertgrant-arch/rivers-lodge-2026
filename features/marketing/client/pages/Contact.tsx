@@ -126,7 +126,7 @@ function CorporateInquiryForm() {
             value={form.name}
             onChange={(e) => set("name", e.target.value)}
             placeholder="Your full name"
-            className="form-field w-full"
+            className="w-full rounded-md bg-white/[0.04] border border-white/10 px-4 py-3 text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-[#9B4D19]/60 focus:border-[#9B4D19] transition"
             required
             aria-required="true"
             autoComplete="name"
@@ -144,7 +144,7 @@ function CorporateInquiryForm() {
             value={form.email}
             onChange={(e) => set("email", e.target.value)}
             placeholder="you@example.com"
-            className="form-field w-full"
+            className="w-full rounded-md bg-white/[0.04] border border-white/10 px-4 py-3 text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-[#9B4D19]/60 focus:border-[#9B4D19] transition"
             required
             aria-required="true"
             autoComplete="email"
@@ -164,7 +164,7 @@ function CorporateInquiryForm() {
             value={form.phone}
             onChange={(e) => set("phone", e.target.value)}
             placeholder="(555) 555-5555"
-            className="form-field w-full"
+            className="w-full rounded-md bg-white/[0.04] border border-white/10 px-4 py-3 text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-[#9B4D19]/60 focus:border-[#9B4D19] transition"
             required
             aria-required="true"
             autoComplete="tel"
@@ -181,7 +181,7 @@ function CorporateInquiryForm() {
             value={form.company}
             onChange={(e) => set("company", e.target.value)}
             placeholder="Your company"
-            className="form-field w-full"
+            className="w-full rounded-md bg-white/[0.04] border border-white/10 px-4 py-3 text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-[#9B4D19]/60 focus:border-[#9B4D19] transition"
             autoComplete="organization"
           />
         </div>
@@ -197,7 +197,7 @@ function CorporateInquiryForm() {
           value={form.guestCount}
           onChange={(e) => set("guestCount", e.target.value)}
           placeholder="Approximate guest count"
-          className="form-field w-full"
+          className="w-full rounded-md bg-white/[0.04] border border-white/10 px-4 py-3 text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-[#9B4D19]/60 focus:border-[#9B4D19] transition"
         />
       </div>
 
@@ -211,7 +211,7 @@ function CorporateInquiryForm() {
           value={form.message}
           onChange={(e) => set("message", e.target.value)}
           placeholder="Share any details about your event, specific needs, or questions."
-          className="form-field w-full resize-none"
+          className="w-full rounded-md bg-white/[0.04] border border-white/10 px-4 py-3 text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-[#9B4D19]/60 focus:border-[#9B4D19] transition resize-none"
         />
       </div>
 
