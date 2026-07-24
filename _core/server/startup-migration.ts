@@ -326,6 +326,71 @@ export async function runStartupMigration() {
           }
         }
 
+        // 4. CRITICAL FIX: Set DEFAULT now() on updatedAt for portal_blocked_dates
+        // Root cause: updatedAt is NOT NULL but had no DEFAULT, causing insert failures
+        // when app passes DEFAULT (which resolves to NULL).
+        console.log("[startup-migration] Setting DEFAULT now() on portal_blocked_dates.updatedAt...");
+        const setDefaultUpdatedAtBlockedQuery = `
+          ALTER TABLE portal_blocked_dates
+          ALTER COLUMN "updatedAt" SET DEFAULT now();
+        `;
+        try {
+          await client.query(setDefaultUpdatedAtBlockedQuery);
+          console.log("[startup-migration] ✓ portal_blocked_dates.updatedAt default set to now()");
+        } catch (err) {
+          console.error("[startup-migration] Warning setting updatedAt default:", err instanceof Error ? err.message : String(err));
+        }
+
+        // 5. Set DEFAULT now() on updatedAt for portal_events (same pattern)
+        console.log("[startup-migration] Setting DEFAULT now() on portal_events.updatedAt...");
+        const setDefaultUpdatedAtEventsQuery = `
+          ALTER TABLE portal_events
+          ALTER COLUMN "updatedAt" SET DEFAULT now();
+        `;
+        try {
+          await client.query(setDefaultUpdatedAtEventsQuery);
+          console.log("[startup-migration] ✓ portal_events.updatedAt default set to now()");
+        } catch (err) {
+          console.error("[startup-migration] Warning setting portal_events updatedAt default:", err instanceof Error ? err.message : String(err));
+        }
+
+        // 6. Clean up stray duplicate lowercase columns from incomplete migrations
+        // These columns were added but later camelCase versions were preferred.
+        // Drop if they exist (idempotent with IF EXISTS).
+        console.log("[startup-migration] Cleaning up stray lowercase columns on portal_blocked_dates...");
+        const dropStrayColumnsQuery = `
+          ALTER TABLE portal_blocked_dates
+          DROP COLUMN IF EXISTS startat;
+        `;
+        try {
+          await client.query(dropStrayColumnsQuery);
+          console.log("[startup-migration] ✓ Dropped column startat (if it existed)");
+        } catch (err) {
+          console.error("[startup-migration] Warning dropping startat:", err instanceof Error ? err.message : String(err));
+        }
+
+        const dropEndAtQuery = `
+          ALTER TABLE portal_blocked_dates
+          DROP COLUMN IF EXISTS endat;
+        `;
+        try {
+          await client.query(dropEndAtQuery);
+          console.log("[startup-migration] ✓ Dropped column endat (if it existed)");
+        } catch (err) {
+          console.error("[startup-migration] Warning dropping endat:", err instanceof Error ? err.message : String(err));
+        }
+
+        const dropAllDayQuery = `
+          ALTER TABLE portal_blocked_dates
+          DROP COLUMN IF EXISTS allday;
+        `;
+        try {
+          await client.query(dropAllDayQuery);
+          console.log("[startup-migration] ✓ Dropped column allday (if it existed)");
+        } catch (err) {
+          console.error("[startup-migration] Warning dropping allday:", err instanceof Error ? err.message : String(err));
+        }
+
         // DIAGNOSTIC: Query information_schema.columns to verify actual columns exist
         console.log("[startup-migration] DIAGNOSTIC: Querying information_schema for portal_blocked_dates columns...");
         try {
