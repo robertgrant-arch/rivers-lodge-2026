@@ -343,7 +343,7 @@ export default function Contact() {
                   <p className="font-serif text-warm text-lg leading-snug mb-4">La Cygne, KS 66040</p>
                 </address>
                 <a
-                  href="https://maps.google.com/?q=38.5968,-94.6843"
+                  href="https://maps.google.com/?q=38.359978,-94.764369"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="link-arrow text-sm"
