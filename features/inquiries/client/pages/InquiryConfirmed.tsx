@@ -184,7 +184,7 @@ export default function InquiryConfirmed() {
                 </>
               ) : (
                 <>
-                  <Link href="/estate" className="btn-primary">The Lodge</Link>
+                  <Link href="/lodging" className="btn-primary">Explore Lodging</Link>
                   <Link href="/gallery" className="btn-ghost">View Gallery</Link>
                 </>
               )}
