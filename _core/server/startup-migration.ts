@@ -28,8 +28,21 @@ export async function runStartupMigration() {
 
     try {
       console.log("[startup-migration] Connecting to database...");
+      console.log(`[startup-migration] DATABASE_URL: ${process.env.DATABASE_URL?.replace(/:.+@/, ':***@')}`);
       const client = await pool.connect();
       console.log("[startup-migration] ✓ Database connection established");
+
+      // DIAGNOSTIC: Log which database and schema we're connected to
+      try {
+        const connInfoResult = await client.query(`
+          SELECT current_database() as db, current_schema() as schema, current_user as user, version() as version;
+        `);
+        const connInfo = connInfoResult.rows[0];
+        console.log(`[startup-migration] ✓ Connected to: db=${connInfo.db}, schema=${connInfo.schema}, user=${connInfo.user}`);
+        console.log(`[startup-migration] PostgreSQL: ${connInfo.version.split(',')[0]}`);
+      } catch (err) {
+        console.warn("[startup-migration] Could not log connection info:", err instanceof Error ? err.message : String(err));
+      }
 
       try {
         console.log("[startup-migration] running idempotent ALTER TABLE ADD COLUMN IF NOT EXISTS...");
@@ -311,6 +324,35 @@ export async function runStartupMigration() {
           } else {
             console.error("[startup-migration] Warning setting updatedAt NOT NULL:", err instanceof Error ? err.message : String(err));
           }
+        }
+
+        // DIAGNOSTIC: Query information_schema.columns to verify actual columns exist
+        console.log("[startup-migration] DIAGNOSTIC: Querying information_schema for portal_blocked_dates columns...");
+        try {
+          const columnsResult = await client.query(`
+            SELECT column_name, data_type, is_nullable
+            FROM information_schema.columns
+            WHERE table_schema = 'public' AND table_name = 'portal_blocked_dates'
+            ORDER BY ordinal_position;
+          `);
+          console.log(`[startup-migration] ✓ portal_blocked_dates has ${columnsResult.rowCount} columns:`);
+          columnsResult.rows.forEach((col: any) => {
+            console.log(`  - ${col.column_name}: ${col.data_type} (nullable: ${col.is_nullable})`);
+          });
+
+          // Check for expected columns
+          const columnNames = new Set(columnsResult.rows.map((col: any) => col.column_name));
+          const expectedCols = ["startAt", "endAt", "startTime", "endTime", "hiddenFromMembers", "updatedAt"];
+          const missingCols = expectedCols.filter(col => !columnNames.has(col));
+
+          if (missingCols.length > 0) {
+            console.error(`[startup-migration] ❌ MISSING COLUMNS IN production_blocked_dates: ${missingCols.join(", ")}`);
+            console.error("[startup-migration] This explains why inserts are failing with 'Unknown column' errors");
+          } else {
+            console.log("[startup-migration] ✓ All expected columns present in portal_blocked_dates");
+          }
+        } catch (err) {
+          console.error("[startup-migration] Failed to query information_schema:", err instanceof Error ? err.message : String(err));
         }
 
         // Clean up orphan test properties from failed create attempts
