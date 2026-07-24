@@ -22,7 +22,7 @@ export default function InquiryConfirmed() {
         "We'll schedule a private Lodge tour at your convenience.",
         "Your dedicated coordinator will guide you through every detail from there.",
       ],
-      contact: "events@riverslodge.com",
+      contact: "info@theriverslodge.com",
     },
     corporate: {
       label: "Corporate Event Inquiry",
@@ -33,7 +33,7 @@ export default function InquiryConfirmed() {
         "A site visit can be arranged at your convenience.",
         "Your dedicated events manager will coordinate all logistics.",
       ],
-      contact: "events@riverslodge.com",
+      contact: "info@theriverslodge.com",
     },
     event: {
       label: "Event Inquiry",
@@ -43,7 +43,7 @@ export default function InquiryConfirmed() {
         "We'll follow up with availability and a customized proposal.",
         "A site visit can be arranged at your convenience.",
       ],
-      contact: "events@riverslodge.com",
+      contact: "info@theriverslodge.com",
     },
     membership: {
       label: "Membership Inquiry",
@@ -54,7 +54,7 @@ export default function InquiryConfirmed() {
         "We'll arrange a private Lodge introduction at your convenience.",
         "Membership is extended by invitation — we look forward to learning more about you.",
       ],
-      contact: "membership@riverslodge.com",
+      contact: "info@theriverslodge.com",
     },
     lodging: {
       label: "Lodging Inquiry",
@@ -64,7 +64,7 @@ export default function InquiryConfirmed() {
         "You'll receive availability confirmation within 24 hours.",
         "We'll send a detailed lodging proposal for your stay.",
       ],
-      contact: "membership@riverslodge.com",
+      contact: "info@theriverslodge.com",
     },
     tour: {
       label: "Tour Request",

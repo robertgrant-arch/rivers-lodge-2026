@@ -231,7 +231,7 @@ function CorporateInquiryForm() {
       {submit.isError && (
         <p className="text-sm font-sans text-red-600" role="alert">
           Something went wrong. Please try again or email us at{" "}
-          <a href="mailto:events@riverslodge.com" className="underline">events@riverslodge.com</a>.
+          <a href="mailto:info@theriverslodge.com" className="underline">info@theriverslodge.com</a>.
         </p>
       )}
 
@@ -329,8 +329,8 @@ export default function Contact() {
                 <p className="eyebrow text-muted-brand mb-4">Response Time</p>
                 <p className="font-sans text-muted-brand text-sm leading-relaxed">
                   We respond to all inquiries within 24 hours. For time-sensitive requests, email us directly at{" "}
-                  <a href="mailto:events@riverslodge.com" className="text-warm hover:text-gold transition-colors">
-                    events@riverslodge.com
+                  <a href="mailto:info@theriverslodge.com" className="text-warm hover:text-gold transition-colors">
+                    info@theriverslodge.com
                   </a>
                   .
                 </p>
@@ -343,7 +343,7 @@ export default function Contact() {
                   <p className="font-serif text-warm text-lg leading-snug mb-4">La Cygne, KS 66040</p>
                 </address>
                 <a
-                  href="https://maps.google.com/?q=18103+E+2300+Ln,+La+Cygne,+KS+66040"
+                  href="https://maps.google.com/?q=38.359978,-94.764369"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="link-arrow text-sm"
@@ -367,15 +367,9 @@ export default function Contact() {
                 <p className="eyebrow text-muted-brand mb-4">Inquiries</p>
                 <div className="space-y-4">
                   <div>
-                    <p className="eyebrow text-muted-brand mb-1" style={{ fontSize: "9px" }}>Weddings &amp; Events</p>
-                    <a href="mailto:events@riverslodge.com" className="font-sans text-warm text-sm hover:text-gold transition-colors">
-                      events@riverslodge.com
-                    </a>
-                  </div>
-                  <div>
-                    <p className="eyebrow text-muted-brand mb-1" style={{ fontSize: "9px" }}>Membership &amp; Outdoors</p>
-                    <a href="mailto:membership@riverslodge.com" className="font-sans text-warm text-sm hover:text-gold transition-colors">
-                      membership@riverslodge.com
+                    <p className="eyebrow text-muted-brand mb-1" style={{ fontSize: "9px" }}>All Inquiries</p>
+                    <a href="mailto:info@theriverslodge.com" className="font-sans text-warm text-sm hover:text-gold transition-colors">
+                      info@theriverslodge.com
                     </a>
                   </div>
                 </div>

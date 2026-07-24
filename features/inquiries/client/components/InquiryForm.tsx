@@ -327,7 +327,7 @@ export default function InquiryForm({ defaultType = "general", track, allowedTyp
       {submit.isError && (
         <p className="mt-3 text-xs font-sans text-red-400/80" role="alert">
           Something went wrong. Please try again or email us directly at{" "}
-          <a href="mailto:events@riverslodge.com" className="underline">events@riverslodge.com</a>.
+          <a href="mailto:info@theriverslodge.com" className="underline">info@theriverslodge.com</a>.
         </p>
       )}
     </div>
