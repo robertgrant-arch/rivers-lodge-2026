@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@shared/ui/dia
 import { Button } from "@shared/ui/button";
 
 const MONTH_NAMES = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 interface CalendarEvent {
   id: number;
@@ -21,107 +22,74 @@ interface CalendarEvent {
   kind: 'member_event' | 'blocked';
 }
 
-interface DateEntry {
+interface DayEntry {
   events: CalendarEvent[];
-  blockLabel?: string;
-  isBlocked: boolean;
 }
 
-function MiniCalendar({
-  dateMap,
-  onEventClick
-}: {
-  dateMap: Map<string, DateEntry>;
-  onEventClick: (event: CalendarEvent) => void;
-}) {
-  const today = new Date();
-  const [year, setYear] = useState(today.getFullYear());
-  const [month, setMonth] = useState(today.getMonth());
+// Event type config with colors
+const EVENT_CONFIG: Record<'member_event' | 'blocked', { label: string; dot: string; text: string }> = {
+  member_event: { label: 'Member Event', dot: '#BABAAE', text: 'text-[#BABAAE]' },
+  blocked:      { label: 'Blocked', dot: '#57544E', text: 'text-[#BABAAE]' },
+};
 
-  const firstDay = new Date(year, month, 1).getDay();
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const cells: (number | null)[] = [...Array(firstDay).fill(null), ...Array.from({ length: daysInMonth }, (_, i) => i + 1)];
+// Helper: safely parse YYYY-MM-DD string without timezone conversion
+const parseYYYYMMDD = (dateStr: string): Date => {
+  const [year, month, day] = dateStr.split('-').map(Number);
+  return new Date(year, month - 1, day);
+};
 
-  const getDateEntry = (day: number) => {
-    const ds = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-    return dateMap.get(ds);
-  };
+// Helper: format Date as YYYY-MM-DD
+const formatYYYYMMDD = (date: Date): string => {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+};
 
-  const isToday = (day: number) => day === today.getDate() && month === today.getMonth() && year === today.getFullYear();
-  const prev = () => { if (month === 0) { setMonth(11); setYear(y => y - 1); } else setMonth(m => m - 1); };
-  const next = () => { if (month === 11) { setMonth(0); setYear(y => y + 1); } else setMonth(m => m + 1); };
+// Helper: iterate from start to end date (inclusive), yielding YYYY-MM-DD strings
+const dateRange = (startStr: string, endStr: string): string[] => {
+  const dates: string[] = [];
+  const start = parseYYYYMMDD(startStr);
+  const end = parseYYYYMMDD(endStr);
+  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+    dates.push(formatYYYYMMDD(d));
+  }
+  return dates;
+};
 
-  return (
-    <div className="bg-[#2B2823] border border-white/8 p-6">
-      <div className="flex items-center justify-between mb-5">
-        <button onClick={prev} className="w-8 h-8 flex items-center justify-center text-white/40 hover:text-white transition-colors">‹</button>
-        <span className="font-serif text-lg text-white">{MONTH_NAMES[month]} {year}</span>
-        <button onClick={next} className="w-8 h-8 flex items-center justify-center text-white/40 hover:text-white transition-colors">›</button>
-      </div>
-      <div className="grid grid-cols-7 gap-1 mb-2">
-        {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map(d => (
-          <div key={d} className="text-center text-[9px] tracking-[0.12em] uppercase font-sans text-white/30 py-1">{d}</div>
-        ))}
-      </div>
-      <div className="grid grid-cols-7 gap-1">
-        {cells.map((day, i) => {
-          if (day === null) {
-            return <div key={`empty-${i}`} className="aspect-square" />;
-          }
+// Helper: format time for display
+const formatTime = (startTime?: string, endTime?: string): string => {
+  if (!startTime && !endTime) return '';
+  if (startTime && endTime) return `${startTime}–${endTime}`;
+  if (startTime) return `from ${startTime}`;
+  return `until ${endTime}`;
+};
 
-          const entry = getDateEntry(day);
-          const hasEvents = entry?.events && entry.events.length > 0;
-          const isBlocked = entry?.isBlocked;
-          const blockLabel = entry?.blockLabel;
-          const today_flag = isToday(day);
-
-          return (
-            <div
-              key={day}
-              className={`aspect-square flex flex-col items-center justify-center text-xs font-sans rounded-sm transition-colors p-1 ${
-                isBlocked
-                  ? "bg-red-900/40 text-red-400"
-                  : today_flag
-                  ? "bg-white text-black font-semibold"
-                  : hasEvents
-                  ? "bg-white/10"
-                  : "text-white/70 hover:bg-white/10"
-              }`}
-            >
-              <span className="font-medium text-[10px]">{day}</span>
-              {blockLabel && (
-                <span className="text-[7px] text-red-300 text-center leading-tight mt-0.5 line-clamp-2">
-                  {blockLabel}
-                </span>
-              )}
-              {hasEvents && (
-                <div className="text-[7px] text-white/60 text-center leading-tight mt-0.5 line-clamp-1">
-                  {entry.events[0].title}
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
-      <div className="mt-4 flex items-center gap-4 text-[10px] font-sans text-white/40">
-        <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-red-900/40 border border-red-800" />Unavailable</div>
-        <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-white/20" />Events</div>
-        <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-white" />Today</div>
-      </div>
-    </div>
-  );
-}
+// Helper: get month days for calendar grid
+const getMonthDays = (year: number, month: number): (Date | null)[] => {
+  const firstDay = new Date(year, month, 1);
+  const lastDay = new Date(year, month + 1, 0);
+  const startPad = firstDay.getDay();
+  const days: (Date | null)[] = [];
+  for (let i = 0; i < startPad; i++) days.push(null);
+  for (let d = 1; d <= lastDay.getDate(); d++) days.push(new Date(year, month, d));
+  return days;
+};
 
 function EventDetailModal({ event, onClose }: { event: CalendarEvent | null; onClose: () => void }) {
   if (!event) return null;
+
+  const cfg = EVENT_CONFIG[event.kind];
+  const timeStr = !event.allDay ? formatTime(event.startTime, event.endTime) : '';
 
   return (
     <Dialog open={!!event} onOpenChange={(open) => { if (!open) onClose(); }}>
       <DialogContent className="bg-[#363330] border border-[#57544E] rounded-none text-[#E0D3BD] max-w-sm">
         <DialogHeader>
           <div className="flex items-center gap-2 mb-1">
+            <span
+              className="inline-block w-2 h-2 rounded-full flex-shrink-0"
+              style={{ backgroundColor: cfg.dot }}
+            />
             <span className="font-sans text-[10px] tracking-[0.14em] uppercase text-[#BABAAE]">
-              {event.kind === 'member_event' ? 'Event' : 'Unavailable'}
+              {cfg.label}
             </span>
           </div>
           <DialogTitle className="font-sans text-base font-medium text-[#E0D3BD]">
@@ -138,16 +106,10 @@ function EventDetailModal({ event, onClose }: { event: CalendarEvent | null; onC
                 : `${event.startDate} — ${event.endDate}`}
             </span>
           </div>
-          {!event.allDay && (event.startTime || event.endTime) && (
+          {timeStr && (
             <div>
               <span className="font-sans text-[10px] tracking-[0.12em] uppercase text-[#BABAAE] block mb-0.5">Time</span>
-              <span>
-                {event.startTime && event.endTime
-                  ? `${event.startTime} — ${event.endTime}`
-                  : event.startTime
-                  ? `From ${event.startTime}`
-                  : `Until ${event.endTime}`}
-              </span>
+              <span>{timeStr}</span>
             </div>
           )}
           {event.type && event.kind === 'member_event' && (
@@ -178,30 +140,11 @@ function EventDetailModal({ event, onClose }: { event: CalendarEvent | null; onC
   );
 }
 
-// Helper: safely parse YYYY-MM-DD string without timezone conversion
-const parseYYYYMMDD = (dateStr: string): Date => {
-  const [year, month, day] = dateStr.split('-').map(Number);
-  return new Date(year, month - 1, day);
-};
-
-// Helper: format Date as YYYY-MM-DD
-const formatYYYYMMDD = (date: Date): string => {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
-};
-
-// Helper: iterate from start to end date (inclusive), yielding YYYY-MM-DD strings
-const dateRange = (startStr: string, endStr: string): string[] => {
-  const dates: string[] = [];
-  const start = parseYYYYMMDD(startStr);
-  const end = parseYYYYMMDD(endStr);
-  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-    dates.push(formatYYYYMMDD(d));
-  }
-  return dates;
-};
-
 export default function CalendarMaster() {
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
+  const today = new Date();
+  const [year, setYear] = useState(today.getFullYear());
+  const [month, setMonth] = useState(today.getMonth());
 
   const { user, isAuthenticated, loading } = useAuth({
     redirectOnUnauthenticated: true,
@@ -222,8 +165,6 @@ export default function CalendarMaster() {
   const memberStatus = trpc.membership.myStatus.useQuery(undefined, { enabled: isAuthenticated });
   const skillGroupsQuery = trpc.membership.listSkillGroupsForPreview.useQuery();
 
-  const today = new Date();
-  const year = today.getFullYear();
   const calendarEvents = trpc.portal.calendar.events.useQuery({
     startDate: `${year}-01-01`,
     endDate: `${year}-12-31`,
@@ -242,10 +183,9 @@ export default function CalendarMaster() {
 
   const canViewMasterCalendar = !previewSkillGroup || canViewMasterCalendarQuery.data;
 
-  // CRITICAL FIX: Move useMemo BEFORE early returns to avoid React hooks violation (#310)
-  // This ensures the number of hooks is stable across all render paths
-  const dateMap: Map<string, DateEntry> = useMemo(() => {
-    const map = new Map<string, DateEntry>();
+  // Build map of dates to events and blocks
+  const eventsByDate: Map<string, CalendarEvent[]> = useMemo(() => {
+    const map = new Map<string, CalendarEvent[]>();
     const data = calendarEvents.data;
     if (!data) return map;
 
@@ -255,10 +195,9 @@ export default function CalendarMaster() {
       const datesInRange = dateRange(e.startDate, e.endDate);
       datesInRange.forEach((dateStr) => {
         if (!map.has(dateStr)) {
-          map.set(dateStr, { events: [], isBlocked: false });
+          map.set(dateStr, []);
         }
-        const entry = map.get(dateStr)!;
-        entry.events.push({
+        map.get(dateStr)!.push({
           id: e.id,
           title: e.title,
           type: e.type,
@@ -276,32 +215,53 @@ export default function CalendarMaster() {
 
     // Add blocks (pure blocks = no title)
     data.blocked?.forEach((b: any) => {
-      // Only show blocks that are not hidden (pure blocks always have no title and are always visible)
+      // Only show blocks that are not hidden
       if (b.hiddenFromMembers && b.title) return;
 
       const datesInRange = dateRange(b.startDate, b.endDate);
-      datesInRange.forEach((dateStr, idx) => {
+      datesInRange.forEach((dateStr) => {
         if (!map.has(dateStr)) {
-          map.set(dateStr, { events: [], isBlocked: true });
+          map.set(dateStr, []);
         }
-        const entry = map.get(dateStr)!;
-        entry.isBlocked = true;
-
-        // For the first date, generate block label if partial-time
-        if (idx === 0 && !b.allDay && (b.startTime || b.endTime)) {
-          if (b.startTime && b.endTime) {
-            entry.blockLabel = `Unavailable ${b.startTime}–${b.endTime}`;
-          } else if (b.startTime) {
-            entry.blockLabel = `Unavailable from ${b.startTime}`;
-          } else if (b.endTime) {
-            entry.blockLabel = `Unavailable until ${b.endTime}`;
-          }
-        }
+        map.get(dateStr)!.push({
+          id: b.id,
+          title: 'Blocked',
+          type: '',
+          startDate: b.startDate,
+          endDate: b.endDate,
+          startTime: b.startTime,
+          endTime: b.endTime,
+          allDay: b.allDay ?? true,
+          notes: b.reasonNotes,
+          hiddenFromMembers: b.hiddenFromMembers,
+          kind: 'blocked',
+        });
       });
     });
 
     return map;
   }, [calendarEvents.data]);
+
+  const days = getMonthDays(year, month);
+  const todayStr = formatYYYYMMDD(today);
+
+  const prevMonth = () => {
+    if (month === 0) {
+      setMonth(11);
+      setYear(y => y - 1);
+    } else {
+      setMonth(m => m - 1);
+    }
+  };
+
+  const nextMonth = () => {
+    if (month === 11) {
+      setMonth(0);
+      setYear(y => y + 1);
+    } else {
+      setMonth(m => m + 1);
+    }
+  };
 
   if (loading) {
     return (
@@ -343,10 +303,31 @@ export default function CalendarMaster() {
     );
   }
 
+  if (previewSkillGroup && !canViewMasterCalendar) {
+    return (
+      <PublicLayout>
+        <section className="min-h-screen flex items-center justify-center bg-background">
+          <div className="max-w-md w-full mx-auto px-6 text-center">
+            <div className="w-16 h-px bg-white/20 mx-auto mb-8" />
+            <p className="eyebrow text-white/40 mb-4">Access Denied</p>
+            <h1 className="font-serif text-4xl text-white mb-5">403 — Forbidden</h1>
+            <p className="text-base font-sans text-white/50 leading-relaxed mb-8">
+              The skill group "{previewSkillGroup.name}" does not have permission to view the Master Calendar.
+            </p>
+            <a href="/portal" className="btn-primary inline-flex items-center justify-center px-8 py-3.5">
+              Return to Portal
+            </a>
+          </div>
+        </section>
+      </PublicLayout>
+    );
+  }
+
   return (
     <PublicLayout>
       <section className="bg-background py-12 px-6">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-6xl mx-auto">
+          {/* Header */}
           <div className="flex items-center justify-between mb-8">
             <div>
               <p className="eyebrow text-white/40 mb-2">Portal</p>
@@ -360,57 +341,127 @@ export default function CalendarMaster() {
             )}
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-            <div className="lg:col-span-1">
-              <MiniCalendar
-                dateMap={dateMap}
-                onEventClick={(event) => setSelectedEvent(event)}
-              />
+          {/* Calendar Container */}
+          <div className="bg-[#363330] border border-[#57544E]">
+            {/* Month navigation */}
+            <div className="flex items-center justify-between px-5 py-4 border-b border-[#57544E]">
+              <button
+                onClick={prevMonth}
+                className="font-sans text-xs tracking-[0.1em] uppercase text-[#BABAAE] hover:text-[#E0D3BD] transition-colors px-2 py-1"
+              >
+                ← Prev
+              </button>
+              <span className="font-sans text-sm font-medium tracking-[0.1em] uppercase text-[#E0D3BD]">
+                {MONTH_NAMES[month]} {year}
+              </span>
+              <button
+                onClick={nextMonth}
+                className="font-sans text-xs tracking-[0.1em] uppercase text-[#BABAAE] hover:text-[#E0D3BD] transition-colors px-2 py-1"
+              >
+                Next →
+              </button>
             </div>
 
-            <div className="lg:col-span-3 space-y-4">
-              {dateMap.size === 0 ? (
-                <div className="text-white/40 text-center py-12 font-sans">
-                  <p>No events or blocks scheduled</p>
+            {/* Day-of-week headers */}
+            <div className="grid grid-cols-7 border-b border-[#57544E]">
+              {DAY_NAMES.map((d) => (
+                <div key={d} className="py-2 text-center font-sans text-[10px] tracking-[0.12em] uppercase text-[#BABAAE]">
+                  {d}
                 </div>
-              ) : (
-                Array.from(dateMap.entries())
-                  .sort(([dateA], [dateB]) => dateA.localeCompare(dateB))
-                  .map(([date, entry]) => (
-                    <div key={date} className="bg-surface border border-white/10 p-4 rounded-sm">
-                      <p className="font-sans text-xs tracking-[0.12em] uppercase text-white/40 mb-2">{date}</p>
-                      {entry.isBlocked && (
-                        <p className="font-serif text-base text-red-300 mb-2">
-                          {entry.blockLabel || 'Unavailable'}
-                        </p>
-                      )}
-                      {entry.events.map((evt) => (
-                        <div
-                          key={`${evt.id}-${evt.startDate}`}
-                          className="cursor-pointer hover:opacity-75 transition-opacity mb-3 last:mb-0"
-                          onClick={() => setSelectedEvent(evt)}
-                        >
-                          <p className="font-serif text-base text-white hover:underline">{evt.title}</p>
-                          {evt.type && <p className="text-xs font-sans text-white/50 capitalize">{evt.type.replace('_', ' ')}</p>}
-                          {!evt.allDay && (evt.startTime || evt.endTime) && (
-                            <p className="text-xs font-sans text-white/40 mt-1">
-                              {evt.startTime && evt.endTime
-                                ? `${evt.startTime} — ${evt.endTime}`
-                                : evt.startTime
-                                ? `From ${evt.startTime}`
-                                : `Until ${evt.endTime}`}
-                            </p>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  ))
-              )}
+              ))}
             </div>
+
+            {/* Grid cells */}
+            {calendarEvents.isLoading ? (
+              <div className="flex items-center justify-center h-64 text-[#BABAAE] font-sans text-xs tracking-[0.1em] uppercase">
+                Loading...
+              </div>
+            ) : (
+              <div className="grid grid-cols-7">
+                {days.map((day, idx) => {
+                  if (!day) {
+                    return (
+                      <div
+                        key={`empty-${idx}`}
+                        className="min-h-[100px] border-b border-r border-[#57544E] bg-[#2B2823]/40"
+                      />
+                    );
+                  }
+
+                  const dateStr = formatYYYYMMDD(day);
+                  const isToday = dateStr === todayStr;
+                  const dayEventsList = eventsByDate.get(dateStr) ?? [];
+                  const shown = dayEventsList.slice(0, 2);
+                  const overflow = dayEventsList.length - shown.length;
+
+                  return (
+                    <div
+                      key={dateStr}
+                      className="min-h-[100px] border-b border-r border-[#57544E] p-2 hover:bg-[#423F3B]/50 transition-colors"
+                    >
+                      {/* Date number */}
+                      <div className="mb-1.5">
+                        <span
+                          className={[
+                            'font-sans text-xs font-medium w-6 h-6 flex items-center justify-center',
+                            isToday
+                              ? 'rounded-full bg-[#9B4D19] text-[#E0D3BD]'
+                              : 'text-[#BABAAE]',
+                          ].join(' ')}
+                        >
+                          {day.getDate()}
+                        </span>
+                      </div>
+
+                      {/* Event/Block chips */}
+                      <div className="space-y-0.5">
+                        {shown.map((ev, i) => {
+                          const cfg = EVENT_CONFIG[ev.kind];
+                          return (
+                            <button
+                              key={`${ev.id}-${i}`}
+                              onClick={() => setSelectedEvent(ev)}
+                              className="flex items-center gap-1 w-full text-left hover:opacity-80 transition-opacity"
+                            >
+                              <span
+                                className="inline-block w-1.5 h-1.5 rounded-full flex-shrink-0"
+                                style={{ backgroundColor: cfg.dot }}
+                              />
+                              <span className="font-sans text-[10px] text-[#BABAAE] truncate leading-tight">
+                                {ev.title}
+                                {ev.kind === 'member_event' && !ev.allDay && ev.startTime && ev.endTime && (
+                                  <span className="text-[#57544E]"> {ev.startTime}–{ev.endTime}</span>
+                                )}
+                              </span>
+                            </button>
+                          );
+                        })}
+                        {overflow > 0 && (
+                          <span className="font-sans text-[10px] text-[#57544E] pl-2.5">
+                            +{overflow} more
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Legend */}
+          <div className="flex flex-wrap gap-5 mt-8">
+            {(Object.entries(EVENT_CONFIG) as Array<[keyof typeof EVENT_CONFIG, typeof EVENT_CONFIG[keyof typeof EVENT_CONFIG]]>).map(([kind, cfg]) => (
+              <div key={kind} className="flex items-center gap-1.5">
+                <span className="inline-block w-2 h-2 rounded-full" style={{ backgroundColor: cfg.dot }} />
+                <span className="font-sans text-[10px] tracking-[0.1em] uppercase text-[#BABAAE]">{cfg.label}</span>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
+      {/* Event Detail Modal */}
       <EventDetailModal event={selectedEvent} onClose={() => setSelectedEvent(null)} />
     </PublicLayout>
   );
