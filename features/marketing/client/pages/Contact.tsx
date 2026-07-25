@@ -343,7 +343,7 @@ export default function Contact() {
                   <p className="font-serif text-warm text-lg leading-snug mb-4">La Cygne, KS 66040</p>
                 </address>
                 <a
-                  href="https://maps.google.com/?q=38.359978,-94.764369"
+                  href="https://www.google.com/maps/search/?api=1&query=38.359944,-94.768592"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="link-arrow text-sm"
@@ -365,14 +365,10 @@ export default function Contact() {
 
               <div>
                 <p className="eyebrow text-muted-brand mb-4">Inquiries</p>
-                <div className="space-y-4">
-                  <div>
-                    <p className="eyebrow text-muted-brand mb-1" style={{ fontSize: "9px" }}>All Inquiries</p>
-                    <a href="mailto:info@theriverslodge.com" className="font-sans text-warm text-sm hover:text-gold transition-colors">
-                      info@theriverslodge.com
-                    </a>
-                  </div>
-                </div>
+                <p className="eyebrow text-muted-brand mb-1" style={{ fontSize: "9px" }}>All Inquiries</p>
+                <a href="mailto:info@theriverslodge.com" className="font-sans text-warm text-sm hover:text-gold transition-colors">
+                  info@theriverslodge.com
+                </a>
               </div>
 
             </div>

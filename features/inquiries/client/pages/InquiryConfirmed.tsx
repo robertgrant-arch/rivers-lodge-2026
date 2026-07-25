@@ -74,7 +74,7 @@ export default function InquiryConfirmed() {
         "A member of our team will reach out to schedule your visit.",
         "Private tours are available Tuesday through Saturday.",
       ],
-      contact: "info@riverslodge.com",
+      contact: "info@theriverslodge.com",
     },
     general: {
       label: "General Inquiry",
@@ -83,7 +83,7 @@ export default function InquiryConfirmed() {
         "We've received your message and will respond within 24 hours.",
         "For urgent matters, you can reach us directly by phone.",
       ],
-      contact: "info@riverslodge.com",
+      contact: "info@theriverslodge.com",
     },
   };
 
@@ -184,7 +184,7 @@ export default function InquiryConfirmed() {
                 </>
               ) : (
                 <>
-                  <Link href="/lodging" className="btn-primary">Explore Lodging</Link>
+                  <Link href="/lodging" className="btn-primary">The Lodge</Link>
                   <Link href="/gallery" className="btn-ghost">View Gallery</Link>
                 </>
               )}
