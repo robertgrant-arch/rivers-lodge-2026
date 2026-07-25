@@ -17,9 +17,10 @@ import {
 } from '@shared/ui/select';
 import { Textarea } from '@shared/ui/textarea';
 import { trpc } from '@shared/lib/trpc';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { toast } from 'sonner';
 import { Settings } from 'lucide-react';
+import { format12HourTime } from '@features/portal/client/utils/timeFormat';
 import MasterCalendarSettingsPanel from '../components/MasterCalendarSettingsPanel';
 
 // ---------------------------------------------------------------------------
@@ -101,6 +102,13 @@ interface CalEvent {
 interface CreateModalProps {
   open: boolean;
   defaultDate?: string;
+  onClose: () => void;
+  onSuccess: () => void;
+}
+
+interface EditModalProps {
+  open: boolean;
+  event: CalEvent | null;
   onClose: () => void;
   onSuccess: () => void;
 }
@@ -379,6 +387,230 @@ function CreateEventModal({ open, defaultDate, onClose, onSuccess }: CreateModal
 }
 
 // ---------------------------------------------------------------------------
+// Edit Event Modal
+// ---------------------------------------------------------------------------
+
+function EditEventModal({ open, event, onClose, onSuccess }: EditModalProps) {
+  const [title, setTitle] = useState(event?.title || '');
+  const [type, setType] = useState('member_event');
+  const [startDate, setStartDate] = useState(event?.startDate || '');
+  const [endDate, setEndDate] = useState(event?.endDate || '');
+  const [startTime, setStartTime] = useState('09:00');
+  const [endTime, setEndTime] = useState('17:00');
+  const [allDay, setAllDay] = useState(true);
+  const [notes, setNotes] = useState(event?.notes || '');
+  const [hiddenFromMembers, setHiddenFromMembers] = useState(false);
+  const [error, setError] = useState('');
+
+  // Update state when event changes
+  useEffect(() => {
+    if (event && open) {
+      setTitle(event.title || '');
+      setStartDate(event.startDate);
+      setEndDate(event.endDate);
+      setNotes(event.notes || '');
+      setError('');
+    }
+  }, [event, open]);
+
+  const updateEventMutation = trpc.portal.calendar.updateEvent.useMutation({
+    onSuccess: () => {
+      toast.success('Event updated successfully');
+      onSuccess();
+      onClose();
+    },
+    onError: (err) => {
+      const message = err.message || 'Failed to update event';
+      setError(message);
+      toast.error(`Update failed: ${message}`);
+    },
+  });
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError('');
+
+    if (!startDate || !endDate) {
+      setError('Start and end dates are required');
+      return;
+    }
+
+    if (endDate < startDate) {
+      setError('End date must be on or after start date');
+      return;
+    }
+
+    if (!title.trim()) {
+      setError('Title is required');
+      return;
+    }
+
+    if (!event?.id) {
+      setError('Event ID missing');
+      return;
+    }
+
+    updateEventMutation.mutate({
+      id: Number(event.id),
+      title: title.trim(),
+      type,
+      startDate,
+      endDate,
+      startTime: allDay || !startTime ? null : startTime,
+      endTime: allDay || !endTime ? null : endTime,
+      allDay,
+      notes: notes?.trim() || null,
+      hiddenFromMembers,
+    });
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
+      <DialogContent className="bg-[#363330] border border-[#57544E] rounded-none text-[#E0D3BD] max-w-md">
+        <DialogHeader>
+          <DialogTitle className="font-sans text-base font-medium tracking-[0.08em] uppercase text-[#E0D3BD]">
+            Edit Event
+          </DialogTitle>
+        </DialogHeader>
+
+        <form onSubmit={handleSubmit} className="space-y-5 pt-2">
+          {error && (
+            <div className="text-xs text-red-400 bg-red-900/20 border border-red-800 px-3 py-2 rounded-none">
+              {error}
+            </div>
+          )}
+
+          <div className="space-y-1.5">
+            <Label className="font-sans text-xs tracking-[0.1em] uppercase text-[#BABAAE]">Title *</Label>
+            <Input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Event name"
+              className="bg-[#2B2823] border-[#57544E] text-[#E0D3BD] placeholder:text-[#57544E] rounded-none focus-visible:ring-[#9B4D19] focus-visible:ring-1 focus-visible:border-[#9B4D19]"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="font-sans text-xs tracking-[0.1em] uppercase text-[#BABAAE]">Type</Label>
+            <Select value={type} onValueChange={setType}>
+              <SelectTrigger className="bg-[#2B2823] border-[#57544E] text-[#E0D3BD] rounded-none focus:ring-[#9B4D19]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-[#363330] border-[#57544E] rounded-none text-[#E0D3BD]">
+                <SelectItem value="member_event">Member Event</SelectItem>
+                <SelectItem value="meeting">Meeting</SelectItem>
+                <SelectItem value="maintenance">Maintenance</SelectItem>
+                <SelectItem value="private_hold">Private Hold</SelectItem>
+                <SelectItem value="other">Other</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label className="font-sans text-xs tracking-[0.1em] uppercase text-[#BABAAE]">Start Date *</Label>
+              <Input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="bg-[#2B2823] border-[#57544E] text-[#E0D3BD] rounded-none focus-visible:ring-[#9B4D19] focus-visible:ring-1 focus-visible:border-[#9B4D19] [color-scheme:dark]"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="font-sans text-xs tracking-[0.1em] uppercase text-[#BABAAE]">End Date *</Label>
+              <Input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="bg-[#2B2823] border-[#57544E] text-[#E0D3BD] rounded-none focus-visible:ring-[#9B4D19] focus-visible:ring-1 focus-visible:border-[#9B4D19] [color-scheme:dark]"
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="allday_edit"
+              checked={allDay}
+              onChange={(e) => setAllDay(e.target.checked)}
+              className="w-4 h-4 rounded border-[#57544E] bg-[#2B2823]"
+            />
+            <Label htmlFor="allday_edit" className="font-sans text-xs tracking-[0.1em] uppercase text-[#BABAAE] cursor-pointer">
+              All day
+            </Label>
+          </div>
+
+          {!allDay && (
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="font-sans text-xs tracking-[0.1em] uppercase text-[#BABAAE]">Start Time</Label>
+                <Input
+                  type="time"
+                  value={startTime}
+                  onChange={(e) => setStartTime(e.target.value)}
+                  className="bg-[#2B2823] border-[#57544E] text-[#E0D3BD] rounded-none focus-visible:ring-[#9B4D19] focus-visible:ring-1 focus-visible:border-[#9B4D19]"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="font-sans text-xs tracking-[0.1em] uppercase text-[#BABAAE]">End Time</Label>
+                <Input
+                  type="time"
+                  value={endTime}
+                  onChange={(e) => setEndTime(e.target.value)}
+                  className="bg-[#2B2823] border-[#57544E] text-[#E0D3BD] rounded-none focus-visible:ring-[#9B4D19] focus-visible:ring-1 focus-visible:border-[#9B4D19]"
+                />
+              </div>
+            </div>
+          )}
+
+          <div className="space-y-1.5">
+            <Label className="font-sans text-xs tracking-[0.1em] uppercase text-[#BABAAE]">Notes</Label>
+            <Textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              rows={3}
+              placeholder="Optional details"
+              className="bg-[#2B2823] border-[#57544E] text-[#E0D3BD] placeholder:text-[#57544E] rounded-none focus-visible:ring-[#9B4D19] focus-visible:ring-1 focus-visible:border-[#9B4D19] resize-none"
+            />
+          </div>
+
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="hidefrom_edit"
+              checked={hiddenFromMembers}
+              onChange={(e) => setHiddenFromMembers(e.target.checked)}
+              className="w-4 h-4 rounded border-[#57544E] bg-[#2B2823]"
+            />
+            <Label htmlFor="hidefrom_edit" className="font-sans text-xs tracking-[0.1em] uppercase text-[#BABAAE] cursor-pointer">
+              Hide from members
+            </Label>
+          </div>
+
+          <DialogFooter className="pt-2 gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onClose}
+              className="border-[#57544E] text-[#E0D3BD] hover:border-[#9B4D19] hover:text-[#9B4D19] rounded-none bg-transparent font-sans text-xs tracking-[0.1em] uppercase"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              disabled={updateEventMutation.isPending}
+              className="bg-[#9B4D19] hover:bg-[#7a3c14] text-[#E0D3BD] rounded-none font-sans text-xs tracking-[0.1em] uppercase"
+            >
+              {updateEventMutation.isPending ? 'Saving...' : 'Save Changes'}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Event Detail / Unblock Modal
 // ---------------------------------------------------------------------------
 
@@ -386,6 +618,7 @@ interface DetailModalProps {
   event: CalEvent | null;
   onClose: () => void;
   onUnblocked: () => void;
+  onEdit?: (event: CalEvent) => void;
 }
 
 function EventDetailModal({ event, onClose, onUnblocked }: DetailModalProps) {
@@ -462,6 +695,15 @@ function EventDetailModal({ event, onClose, onUnblocked }: DetailModalProps) {
               >
                 Close
               </Button>
+              {isEvent && onEdit && (
+                <Button
+                  variant="outline"
+                  onClick={() => onEdit(event!)}
+                  className="border-[#9B4D19] text-[#9B4D19] hover:bg-[#9B4D19]/10 rounded-none bg-transparent font-sans text-xs tracking-[0.1em] uppercase"
+                >
+                  Edit Event
+                </Button>
+              )}
               <Button
                 variant="outline"
                 onClick={() => setConfirming(true)}
@@ -513,6 +755,8 @@ export default function PortalCalendar() {
   const [createOpen, setCreateOpen] = useState(false);
   const [createDefaultDate, setCreateDefaultDate] = useState<string | undefined>();
   const [selectedEvent, setSelectedEvent] = useState<CalEvent | null>(null);
+  const [editingEvent, setEditingEvent] = useState<CalEvent | null>(null);
+  const [editOpen, setEditOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
 
   const startDate = toDateStr(new Date(year, month, 1));
@@ -827,6 +1071,24 @@ export default function PortalCalendar() {
         event={selectedEvent}
         onClose={() => setSelectedEvent(null)}
         onUnblocked={() => refetch()}
+        onEdit={(event) => {
+          setEditingEvent(event);
+          setEditOpen(true);
+          setSelectedEvent(null);
+        }}
+      />
+      <EditEventModal
+        open={editOpen}
+        event={editingEvent}
+        onClose={() => {
+          setEditOpen(false);
+          setEditingEvent(null);
+        }}
+        onSuccess={() => {
+          refetch();
+          setEditOpen(false);
+          setEditingEvent(null);
+        }}
       />
 
       {/* Master Calendar Settings Modal */}
