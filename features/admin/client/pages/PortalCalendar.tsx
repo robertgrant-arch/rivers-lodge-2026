@@ -621,7 +621,7 @@ interface DetailModalProps {
   onEdit?: (event: CalEvent) => void;
 }
 
-function EventDetailModal({ event, onClose, onUnblocked }: DetailModalProps) {
+function EventDetailModal({ event, onClose, onUnblocked, onEdit }: DetailModalProps) {
   const [confirming, setConfirming] = useState(false);
 
   const deleteEventMutation = trpc.portal.calendar.deleteEvent.useMutation({
