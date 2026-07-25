@@ -344,6 +344,10 @@ export type WaiverTemplateVersion = typeof waiverTemplateVersions.$inferSelect;
 
 // ─── Portal Waivers ───────────────────────────────────────────────────────────
 
+export const waiverSignatoryTypeEnum = pgEnum("waiver_signatory_type", [
+  "booker", "party_member", "guardian",
+]);
+
 export const portalWaivers = pgTable("portal_waivers", {
   id: integer("id").generatedAlwaysAsIdentity().primaryKey(),
   templateId: integer("templateId"),
@@ -357,6 +361,8 @@ export const portalWaivers = pgTable("portal_waivers", {
   linkedBookingType: varchar("linkedBookingType", { length: 50 }),
   linkedBookingId: integer("linkedBookingId"),
   linkedMemberId: integer("linkedMemberId"),
+  propertyId: integer("propertyId"), // Property this booking is for
+  signatoryType: waiverSignatoryTypeEnum("signatoryType").default("booker"), // Who is signing
   status: portalWaiverStatusEnum("status").notNull().default("sent"),
   signingToken: varchar("signingToken", { length: 128 }).unique(),
   senderUserId: varchar("senderUserId", { length: 36 }),
@@ -384,9 +390,26 @@ export const portalWaivers = pgTable("portal_waivers", {
   index("pw_linked_booking_idx").on(t.linkedBookingType, t.linkedBookingId),
   index("pw_email_idx").on(t.signatoryEmail),
   index("pw_template_idx").on(t.templateId),
+  index("pw_property_idx").on(t.propertyId),
   index("pw_created_at_idx").on(t.createdAt),
 ]);
 export type PortalWaiver = typeof portalWaivers.$inferSelect;
+
+// ─── Property Waiver Mappings ─────────────────────────────────────────────────
+
+export const propertyWaiverMappings = pgTable("property_waiver_mappings", {
+  id: integer("id").generatedAlwaysAsIdentity().primaryKey(),
+  propertyId: integer("propertyId").notNull(),
+  waiverTemplateId: integer("waiverTemplateId").notNull(),
+  active: boolean("active").notNull().default(true),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().$onUpdate(() => new Date()).notNull(),
+}, (t) => [
+  index("pwm_property_idx").on(t.propertyId),
+  index("pwm_template_idx").on(t.waiverTemplateId),
+]);
+export type PropertyWaiverMapping = typeof propertyWaiverMappings.$inferSelect;
+export type InsertPropertyWaiverMapping = typeof propertyWaiverMappings.$inferInsert;
 
 // ─── Portal Audit Log ─────────────────────────────────────────────────────────
 

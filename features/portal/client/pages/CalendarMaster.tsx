@@ -4,6 +4,7 @@ import { trpc } from "@shared/lib/trpc";
 import PublicLayout from "@/components/PublicLayout";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@shared/ui/dialog";
 import { Button } from "@shared/ui/button";
+import { formatTimeRange } from "@features/portal/client/utils/timeFormat";
 
 const MONTH_NAMES = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -54,12 +55,9 @@ const dateRange = (startStr: string, endStr: string): string[] => {
   return dates;
 };
 
-// Helper: format time for display
+// Helper: format time for display (uses 12-hour format)
 const formatTime = (startTime?: string, endTime?: string): string => {
-  if (!startTime && !endTime) return '';
-  if (startTime && endTime) return `${startTime}–${endTime}`;
-  if (startTime) return `from ${startTime}`;
-  return `until ${endTime}`;
+  return formatTimeRange(startTime, endTime);
 };
 
 // Helper: get month days for calendar grid

@@ -26,6 +26,7 @@ import {
   Loader2, ChevronLeft, ChevronRight, Clock, Info,
 } from "lucide-react";
 import { toast } from "sonner";
+import WaiverSigningForm from "@features/portal/client/components/WaiverSigningForm";
 // idempotencyKey uses native crypto.randomUUID (produces a valid UUID v4)
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -268,6 +269,8 @@ function BookingDialog({
   const [huntingLicense, setHuntingLicense] = useState(false);
   const [fishingLicense, setFishingLicense] = useState(false);
   const [notes, setNotes] = useState("");
+  const [showWaiverForm, setShowWaiverForm] = useState(false);
+  const [waiverSignatures, setWaiverSignatures] = useState<any[]>([]);
 
   const totalDays = daysBetween(startDate, endDate);
   const isHunting = ["deer","duck","turkey","quail","dove","hog","mixed_hunt","hunt_and_fish","scouting"].includes(activity);
@@ -290,7 +293,7 @@ function BookingDialog({
     },
   });
 
-  const handleSubmit = () => {
+  const handleInitialSubmit = () => {
     if (isHunting && !huntingLicense) {
       toast.error("Please confirm you have a valid hunting license.");
       return;
@@ -299,6 +302,13 @@ function BookingDialog({
       toast.error("Please confirm you have a valid fishing license.");
       return;
     }
+
+    // Show waiver form before booking
+    setShowWaiverForm(true);
+  };
+
+  const handleWaiverComplete = (signatures: any[]) => {
+    setWaiverSignatures(signatures);
 
     const slotLabel = slot === "AllDay" ? "All Day" : slot;
     const slotPrefix = `[Slot: ${slotLabel}] `;
@@ -316,6 +326,32 @@ function BookingDialog({
       idempotencyKey: crypto.randomUUID(),
     });
   };
+
+  if (showWaiverForm) {
+    // Build party members list for waiver form
+    const partyMembers = [
+      { name: "You (Booker)", isMinor: false },
+      ...guestNames.filter(Boolean).map((name) => ({ name, isMinor: hasMinors })),
+    ];
+
+    return (
+      <Dialog open={open} onOpenChange={onClose}>
+        <DialogContent className="bg-stone-900 border-stone-700 text-stone-100 max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-stone-100">Waiver — {property?.name}</DialogTitle>
+          </DialogHeader>
+          <WaiverSigningForm
+            propertyName={property?.name || "Property"}
+            waiverTitle="Liability Release & Assumption of Risk"
+            waiverBody="By signing this waiver, you acknowledge that you have read and understand the risks associated with your visit and activity at this property. You assume all risks and release the property owners, managers, and staff from any liability for injury, death, or property damage."
+            partyMembers={partyMembers}
+            onComplete={handleWaiverComplete}
+            isLoading={createBooking.isPending}
+          />
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -488,14 +524,14 @@ function BookingDialog({
             Cancel
           </Button>
           <Button
-            onClick={handleSubmit}
+            onClick={handleInitialSubmit}
             disabled={createBooking.isPending}
             className="bg-amber-700 hover:bg-amber-600 text-white"
           >
             {createBooking.isPending ? (
               <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Booking…</>
             ) : (
-              "Confirm Booking"
+              "Continue to Waiver"
             )}
           </Button>
         </DialogFooter>

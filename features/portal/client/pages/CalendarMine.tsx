@@ -170,7 +170,7 @@ export default function CalendarMine() {
         <div className="max-w-[1440px] mx-auto px-6 lg:px-16 py-10">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2">
-              <h2 className="font-serif text-3xl text-white mb-2">Estate Calendar</h2>
+              <h2 className="font-serif text-3xl text-white mb-2">My Calendar</h2>
               <p className="text-sm font-sans text-white/40 mb-6">Red dates indicate estate events or private closures. Contact concierge for availability.</p>
               <MiniCalendar blockedDates={blockedDateStrings} />
             </div>
