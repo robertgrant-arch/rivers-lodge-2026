@@ -119,7 +119,6 @@ export const cmsRouter = router({
     }))
     .mutation(async ({ input }) => {
       const { id, ...data } = input;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await db.updateCmsLodgingUnit(id, data as any);
       return { success: true };
     }),
@@ -141,7 +140,6 @@ export const cmsRouter = router({
     }))
     .mutation(async ({ input }) => {
       const { id, ...data } = input;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await db.updateCmsEventSpace(id, data as any);
       return { success: true };
     }),
@@ -163,7 +161,6 @@ export const cmsRouter = router({
       status: z.enum(["draft", "published", "archived"]).optional(),
     }))
     .mutation(async ({ input }) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await db.upsertCmsTestimonial(input as any);
       return { success: true };
     }),
@@ -178,7 +175,6 @@ export const cmsRouter = router({
     }))
     .mutation(async ({ input }) => {
       const { id, ...data } = input;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await db.updateCmsTestimonial(id, data as any);
       return { success: true };
     }),
@@ -204,7 +200,6 @@ export const cmsRouter = router({
       status: z.enum(["draft", "published", "archived"]).optional(),
     }))
     .mutation(async ({ input }) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await db.upsertCmsFaq(input as any);
       return { success: true };
     }),
@@ -219,7 +214,6 @@ export const cmsRouter = router({
     }))
     .mutation(async ({ input }) => {
       const { id, ...data } = input;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await db.updateCmsFaq(id, data as any);
       return { success: true };
     }),
@@ -247,7 +241,6 @@ export const cmsRouter = router({
       status: z.enum(["draft", "published", "archived"]).optional(),
     }))
     .mutation(async ({ input }) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await db.upsertCmsAnnouncement(input as any);
       return { success: true };
     }),
@@ -262,7 +255,6 @@ export const cmsRouter = router({
     }))
     .mutation(async ({ input }) => {
       const { id, ...data } = input;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await db.updateCmsAnnouncement(id, data as any);
       return { success: true };
     }),
@@ -294,7 +286,6 @@ export const cmsRouter = router({
       status: z.enum(["draft", "published", "archived"]).optional(),
     }))
     .mutation(async ({ input }) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await db.upsertCmsMemberContent(input as any);
       return { success: true };
     }),
@@ -309,7 +300,6 @@ export const cmsRouter = router({
     }))
     .mutation(async ({ input }) => {
       const { id, ...data } = input;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await db.updateCmsMemberContent(id, data as any);
       return { success: true };
     }),

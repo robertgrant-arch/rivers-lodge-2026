@@ -67,7 +67,6 @@ async function sendViaSMTP(opts: {
   html: string;
 }): Promise<boolean> {
   try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-explicit-any
     const nodemailer = require("nodemailer") as any;
     const transport = nodemailer.createTransport({
       host: process.env.SMTP_HOST,
