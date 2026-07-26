@@ -571,11 +571,27 @@ export const propertyBookingRouter = router({
           // Tier-based access checks removed; use skill group membership to determine property access.
 
           // ── Party size ────────────────────────────────────────────────────
-          if (input.partySize > property.maxHunters) {
-            throw new TRPCError({
-              code: "BAD_REQUEST",
-              message: `This property allows a maximum of ${property.maxHunters} hunters.`,
-            });
+          // Activity-aware validation: hunting activities check maxHunters,
+          // non-hunting activities check maxGuests
+          const huntingActivities = ["deer", "duck", "turkey", "quail", "dove", "hog", "mixed_hunt", "hunt_and_fish", "scouting"];
+          const isHuntingActivity = huntingActivities.includes(input.activity);
+
+          if (isHuntingActivity) {
+            const maxCapacity = property.maxHunters ?? 0;
+            if (input.partySize > maxCapacity) {
+              throw new TRPCError({
+                code: "BAD_REQUEST",
+                message: `This property allows a maximum of ${maxCapacity} hunter${maxCapacity === 1 ? '' : 's'}.`,
+              });
+            }
+          } else {
+            const maxCapacity = property.maxGuests ?? 0;
+            if (input.partySize > maxCapacity) {
+              throw new TRPCError({
+                code: "BAD_REQUEST",
+                message: `This property allows a maximum of ${maxCapacity} guest${maxCapacity === 1 ? '' : 's'}.`,
+              });
+            }
           }
 
           // ── Blocked dates ─────────────────────────────────────────────────
