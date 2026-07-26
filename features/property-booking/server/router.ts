@@ -706,9 +706,15 @@ export const propertyBookingRouter = router({
             memberNotes: input.memberNotes ?? null,
             createdAt: now(),
             updatedAt: now(),
-          } as any);
+          } as any).returning({ id: propertyBookings.id });
 
-          const bookingId = Number((insertResult as any)[0]?.insertId ?? (insertResult as any).insertId);
+          if (!insertResult[0]?.id) {
+            throw new TRPCError({
+              code: "INTERNAL_SERVER_ERROR",
+              message: "Failed to retrieve booking ID after insertion",
+            });
+          }
+          const bookingId = insertResult[0].id;
 
           if (input.addOns?.length) {
             await tx.insert(bookingAddOns).values(
