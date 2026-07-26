@@ -97,7 +97,6 @@ export async function applySqlMigrations(): Promise<void> {
   // The build copies _core/db → dist/db, so migrations are at dist/db/migrations.
   let migrationsDir: string;
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const here = dirname(fileURLToPath((import.meta as any).url));
     // In bundled context, 'here' is the directory containing the compiled app.js.
     // Resolve relative to that directory (e.g., /dist → /dist/db/migrations).
