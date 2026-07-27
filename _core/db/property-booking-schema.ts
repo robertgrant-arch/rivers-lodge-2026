@@ -46,6 +46,10 @@ export const propertyBookingStatusEnum = pgEnum("property_booking_status", [
   "completed", "cancelled", "no_show", "declined",
 ]);
 
+export const bookingTimeSlotEnum = pgEnum("booking_time_slot", [
+  "AM", "PM", "ALL_DAY", "OVERNIGHT",
+]);
+
 export const memberTierPricingEnum = pgEnum("member_tier_pricing", [
   "founding", "standard", "associate", "day",
 ]);
@@ -251,6 +255,10 @@ export const propertyDateInventory = pgTable("property_date_inventory", {
   date: date("date").notNull(),
   capacity: integer("capacity").notNull(),
   bookedCount: integer("bookedCount").notNull().default(0),
+  amBookedCount: integer("amBookedCount").notNull().default(0),
+  pmBookedCount: integer("pmBookedCount").notNull().default(0),
+  allDayBookedCount: integer("allDayBookedCount").notNull().default(0),
+  overnightBookedCount: integer("overnightBookedCount").notNull().default(0),
   status: inventoryStatusEnum("status").notNull().default("open"),
   version: integer("version").notNull().default(0),
   updatedAt: bigint("updatedAt", { mode: "number" }).notNull(),
@@ -280,6 +288,7 @@ export const propertyBookings = pgTable("property_bookings", {
   guestNames: json("guestNames"),
   hasMinors: boolean("hasMinors").default(false),
   activity: propertyBookingActivityEnum("activity").notNull(),
+  timeSlot: bookingTimeSlotEnum("timeSlot").notNull().default("ALL_DAY"),
   huntingLicenseConfirmed: boolean("huntingLicenseConfirmed").default(false),
   fishingLicenseConfirmed: boolean("fishingLicenseConfirmed").default(false),
   waiverSignedAt: bigint("waiverSignedAt", { mode: "number" }),

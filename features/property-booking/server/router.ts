@@ -75,39 +75,91 @@ async function auditLog(
   } as any);
 }
 
-/** Update the property_date_inventory counter atomically */
+/** Update the property_date_inventory counter atomically (slot-aware) */
 async function updateInventory(
   db: any,
   propertyId: number,
   date: string,
+  timeSlot: "AM" | "PM" | "ALL_DAY" | "OVERNIGHT",
   delta: number, // +1 for booking, -1 for cancellation
 ) {
-  // Read current capacity + booked count, compute the new state, then upsert.
-  // (Was raw MySQL `ON DUPLICATE KEY UPDATE` with unquoted camelCase columns —
-  // invalid on Postgres. Uses the (propertyId, date) unique index for conflict.)
+  // Slot-aware inventory update:
+  // - Increment the appropriate slot counter (amBookedCount, pmBookedCount, allDayBookedCount, overnightBookedCount)
+  // - Recalculate status:
+  //   - 'full' ONLY if: ALL_DAY or OVERNIGHT exists, OR both AM and PM are at capacity
+  //   - 'partial' if: any booking exists (AM or PM alone, without the other being full)
+  //   - 'open' if: no bookings
+  // - Keep bookedCount as sum of all slot counts for backward compat
+
   const [prop] = await db!
     .select({ maxHunters: huntingProperties.maxHunters })
     .from(huntingProperties)
     .where(eq(huntingProperties.id, propertyId))
     .limit(1);
   const capacity = prop?.maxHunters ?? 2;
+
   const [existing] = await db!
-    .select({ bookedCount: propertyDateInventory.bookedCount })
+    .select({
+      amBookedCount: propertyDateInventory.amBookedCount,
+      pmBookedCount: propertyDateInventory.pmBookedCount,
+      allDayBookedCount: propertyDateInventory.allDayBookedCount,
+      overnightBookedCount: propertyDateInventory.overnightBookedCount,
+    })
     .from(propertyDateInventory)
     .where(and(eq(propertyDateInventory.propertyId, propertyId), eq(propertyDateInventory.date, date)))
     .limit(1);
-  const newBooked = Math.max(0, (existing?.bookedCount ?? 0) + delta);
-  const status: "open" | "full" | "partial" =
-    newBooked === 0 ? "open"
-      : newBooked >= capacity ? "full"
-        : newBooked >= Math.floor(capacity * 0.75) ? "partial"
-          : "open";
+
+  // Calculate new slot counts
+  const amCount = Math.max(0, (existing?.amBookedCount ?? 0) + (timeSlot === "AM" ? delta : 0));
+  const pmCount = Math.max(0, (existing?.pmBookedCount ?? 0) + (timeSlot === "PM" ? delta : 0));
+  const allDayCount = Math.max(0, (existing?.allDayBookedCount ?? 0) + (timeSlot === "ALL_DAY" ? delta : 0));
+  const overnightCount = Math.max(0, (existing?.overnightBookedCount ?? 0) + (timeSlot === "OVERNIGHT" ? delta : 0));
+  const totalBooked = amCount + pmCount + allDayCount + overnightCount;
+
+  // Determine status based on the FULL rule
+  let status: "open" | "full" | "partial";
+  if (allDayCount > 0 || overnightCount > 0) {
+    // ALL_DAY or OVERNIGHT exists = full
+    status = "full";
+  } else if (amCount >= capacity && pmCount >= capacity) {
+    // Both AM and PM at capacity = full
+    status = "full";
+  } else if (amCount > 0 || pmCount > 0) {
+    // Any AM or PM booking (without meeting the full condition) = partial
+    status = "partial";
+  } else {
+    // No bookings = open
+    status = "open";
+  }
+
   await db!
     .insert(propertyDateInventory)
-    .values({ propertyId, date, capacity, bookedCount: newBooked, status, version: 0, updatedAt: now() })
+    .values({
+      propertyId,
+      date,
+      capacity,
+      bookedCount: totalBooked,
+      amBookedCount: amCount,
+      pmBookedCount: pmCount,
+      allDayBookedCount: allDayCount,
+      overnightBookedCount: overnightCount,
+      status,
+      version: 0,
+      updatedAt: now(),
+    })
     .onConflictDoUpdate({
       target: [propertyDateInventory.propertyId, propertyDateInventory.date],
-      set: { capacity, bookedCount: newBooked, status, version: sql`${propertyDateInventory.version} + 1`, updatedAt: now() },
+      set: {
+        capacity,
+        bookedCount: totalBooked,
+        amBookedCount: amCount,
+        pmBookedCount: pmCount,
+        allDayBookedCount: allDayCount,
+        overnightBookedCount: overnightCount,
+        status,
+        version: sql`${propertyDateInventory.version} + 1`,
+        updatedAt: now(),
+      },
     });
 }
 
@@ -185,6 +237,7 @@ const createBookingInput = z.object({
     "deer", "duck", "turkey", "quail", "dove", "hog",
     "bass", "catfish", "crappie", "mixed_hunt", "mixed_fish", "hunt_and_fish", "scouting",
   ]),
+  timeSlot: z.enum(["AM", "PM", "ALL_DAY", "OVERNIGHT"]).optional(),
   guestNames: z.array(z.string().max(100)).optional(),
   hasMinors: z.boolean().optional(),
   huntingLicenseConfirmed: z.boolean().optional(),
@@ -421,10 +474,22 @@ export const propertyBookingRouter = router({
           row,
         ]));
 
-        // Generate a day-by-day availability array
+        // Helper: compute per-slot status
+        function getSlotStatus(inv: any, slotKey: "amBookedCount" | "pmBookedCount" | "allDayBookedCount" | "overnightBookedCount", capacity: number): "open" | "full" {
+          if (slotKey === "allDayBookedCount" || slotKey === "overnightBookedCount") {
+            return (inv?.[slotKey] ?? 0) > 0 ? "full" : "open";
+          }
+          return (inv?.[slotKey] ?? 0) >= capacity ? "full" : "open";
+        }
+
+        // Generate a day-by-day availability array with per-slot status
         const result: Array<{
           date: string;
           status: "open" | "partial" | "full" | "blocked" | "closed";
+          amStatus: "open" | "full";
+          pmStatus: "open" | "full";
+          allDayStatus: "open" | "full";
+          overnightStatus: "open" | "full";
           capacity: number;
           bookedCount: number;
           availableSpots: number;
@@ -440,16 +505,49 @@ export const propertyBookingRouter = router({
           const isBlocked = blockedDates.has(dateStr);
           const isInSeason = !hasSeasons || inSeasonDates.has(dateStr);
           const seasonName = seasonByDate.get(dateStr);
+          const cap = inv?.capacity ?? property.maxHunters;
 
           if (!isInSeason) {
             // Out of season — closed, not bookable
-            result.push({ date: dateStr, status: "closed", capacity: 0, bookedCount: 0, availableSpots: 0 });
+            result.push({
+              date: dateStr,
+              status: "closed",
+              amStatus: "open",
+              pmStatus: "open",
+              allDayStatus: "open",
+              overnightStatus: "open",
+              capacity: 0,
+              bookedCount: 0,
+              availableSpots: 0,
+            });
           } else if (isBlocked) {
-            result.push({ date: dateStr, status: "blocked", capacity: 0, bookedCount: 0, availableSpots: 0, seasonName });
+            // Blocked — all slots blocked
+            result.push({
+              date: dateStr,
+              status: "blocked",
+              amStatus: "open",
+              pmStatus: "open",
+              allDayStatus: "open",
+              overnightStatus: "open",
+              capacity: 0,
+              bookedCount: 0,
+              availableSpots: 0,
+              seasonName,
+            });
           } else if (inv) {
+            // Compute per-slot status
+            const amStatus = getSlotStatus(inv, "amBookedCount", cap);
+            const pmStatus = getSlotStatus(inv, "pmBookedCount", cap);
+            const allDayStatus = getSlotStatus(inv, "allDayBookedCount", cap);
+            const overnightStatus = getSlotStatus(inv, "overnightBookedCount", cap);
+
             result.push({
               date: dateStr,
               status: inv.status as any,
+              amStatus,
+              pmStatus,
+              allDayStatus,
+              overnightStatus,
               capacity: inv.capacity,
               bookedCount: inv.bookedCount,
               availableSpots: Math.max(0, inv.capacity - inv.bookedCount),
@@ -460,6 +558,10 @@ export const propertyBookingRouter = router({
             result.push({
               date: dateStr,
               status: "open",
+              amStatus: "open",
+              pmStatus: "open",
+              allDayStatus: "open",
+              overnightStatus: "open",
               capacity: property.maxHunters,
               bookedCount: 0,
               availableSpots: property.maxHunters,
@@ -569,6 +671,29 @@ export const propertyBookingRouter = router({
 
           // NOTE: Property access control now driven by propertySkillGroupAccess table.
           // Tier-based access checks removed; use skill group membership to determine property access.
+
+          // ── Time slot validation ──────────────────────────────────────────
+          const bookingModes = Array.isArray(property.bookingModes) ? property.bookingModes : ["AM", "PM"];
+          const overnightEnabled = property.overnightEnabled ?? true;
+          let timeSlot = input.timeSlot ?? "ALL_DAY";
+
+          // Validate requested timeSlot against property's allowed modes
+          if (timeSlot === "OVERNIGHT") {
+            if (!overnightEnabled) {
+              throw new TRPCError({
+                code: "BAD_REQUEST",
+                message: "This property does not support overnight bookings.",
+              });
+            }
+          } else if (timeSlot === "AM" || timeSlot === "PM") {
+            if (!bookingModes.includes(timeSlot)) {
+              throw new TRPCError({
+                code: "BAD_REQUEST",
+                message: `This property does not support ${timeSlot} bookings. Available slots: ${bookingModes.join(", ")}.`,
+              });
+            }
+          }
+          // ALL_DAY is always allowed if bookingModes includes AM and PM
 
           // ── Party size ────────────────────────────────────────────────────
           // Activity-aware validation: hunting activities check maxHunters,
@@ -695,6 +820,7 @@ export const propertyBookingRouter = router({
             guestNames: input.guestNames ?? null,
             hasMinors: input.hasMinors ?? false,
             activity: input.activity,
+            timeSlot: timeSlot as any,
             huntingLicenseConfirmed: input.huntingLicenseConfirmed ?? false,
             fishingLicenseConfirmed: input.fishingLicenseConfirmed ?? false,
             status,
@@ -734,7 +860,7 @@ export const propertyBookingRouter = router({
             let d = new Date(input.startDate);
             const e = new Date(input.endDate);
             while (d <= e) {
-              await updateInventory(tx, input.propertyId, d.toISOString().split("T")[0], 1);
+              await updateInventory(tx, input.propertyId, d.toISOString().split("T")[0], timeSlot as any, 1);
               d.setDate(d.getDate() + 1);
             }
           }
@@ -861,7 +987,7 @@ export const propertyBookingRouter = router({
           let d = new Date(booking.startDate);
           const e = new Date(booking.endDate);
           while (d <= e) {
-            await updateInventory(db, booking.propertyId, d.toISOString().split("T")[0], -1);
+            await updateInventory(db, booking.propertyId, d.toISOString().split("T")[0], booking.timeSlot as any, -1);
             d.setDate(d.getDate() + 1);
           }
         }
@@ -1428,7 +1554,7 @@ export const propertyBookingRouter = router({
           let d = new Date(booking.startDate);
           const e = new Date(booking.endDate);
           while (d <= e) {
-            await updateInventory(db, booking.propertyId, d.toISOString().split("T")[0], 1);
+            await updateInventory(db, booking.propertyId, d.toISOString().split("T")[0], booking.timeSlot as any, 1);
             d.setDate(d.getDate() + 1);
           }
 
