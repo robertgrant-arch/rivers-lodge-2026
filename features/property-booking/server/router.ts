@@ -982,12 +982,16 @@ export const propertyBookingRouter = router({
           } as any)
           .where(eq(propertyBookings.id, input.id));
 
-        // Release inventory
-        if (prevStatus === "confirmed" || prevStatus === "checked_in") {
+        // Release inventory — decrement slot counts for all dates in the booking
+        // Only for statuses where inventory was incremented (confirmed, checked_in)
+        // All other cancellations (pending_approval, declined) never reserved inventory
+        const statusesWithReservedInventory = ["confirmed", "checked_in"];
+        if (statusesWithReservedInventory.includes(prevStatus)) {
           let d = new Date(booking.startDate);
           const e = new Date(booking.endDate);
           while (d <= e) {
-            await updateInventory(db, booking.propertyId, d.toISOString().split("T")[0], booking.timeSlot as any, -1);
+            const dateStr = d.toISOString().split("T")[0];
+            await updateInventory(db, booking.propertyId, dateStr, booking.timeSlot as any, -1);
             d.setDate(d.getDate() + 1);
           }
         }
