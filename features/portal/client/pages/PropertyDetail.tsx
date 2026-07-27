@@ -329,7 +329,7 @@ function BookingDialog({
       hasMinors,
       huntingLicenseConfirmed: huntingLicense,
       fishingLicenseConfirmed: fishingLicense,
-      memberNotes: notes || null,
+      memberNotes: notes || undefined,
       idempotencyKey: crypto.randomUUID(),
     });
   };

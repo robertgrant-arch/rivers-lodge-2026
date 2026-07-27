@@ -987,7 +987,7 @@ export const propertyBookingRouter = router({
           let d = new Date(booking.startDate);
           const e = new Date(booking.endDate);
           while (d <= e) {
-            await updateInventory(db, booking.propertyId, d.toISOString().split("T")[0], -1);
+            await updateInventory(db, booking.propertyId, d.toISOString().split("T")[0], booking.timeSlot as any, -1);
             d.setDate(d.getDate() + 1);
           }
         }
@@ -1554,7 +1554,7 @@ export const propertyBookingRouter = router({
           let d = new Date(booking.startDate);
           const e = new Date(booking.endDate);
           while (d <= e) {
-            await updateInventory(db, booking.propertyId, d.toISOString().split("T")[0], 1);
+            await updateInventory(db, booking.propertyId, d.toISOString().split("T")[0], booking.timeSlot as any, 1);
             d.setDate(d.getDate() + 1);
           }
 
