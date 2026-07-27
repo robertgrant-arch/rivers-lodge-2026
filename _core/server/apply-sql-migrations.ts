@@ -5,6 +5,10 @@
  * applies any that have not yet been recorded in the _migrations_applied
  * tracking table.
  *
+ * CRITICAL: Fails hard on unexpected migration errors to prevent silent boot failures.
+ * Known-superseded migrations are allowed to fail and logged separately.
+ * Any other migration failure causes process.exit(1) immediately — boot does NOT continue.
+ *
  * Runs AFTER runStartupMigration() so idempotent DDL from hunting_properties
  * still executes, but this is the authoritative source of truth for all
  * additive schema changes going forward (portal_blocked_dates, enums, etc.).
@@ -14,6 +18,11 @@
 import { readdir, readFile } from "node:fs/promises";
 import { join, dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+
+// Migrations known to be superseded by later fixes
+// These are allowed to fail during execution without aborting boot
+// 0028: missing ::inventory_status ENUM casts on status assignments — fixed by 0029
+const KNOWN_SUPERSEDED_MIGRATIONS = new Set(["0028_fix_slot_tracking_backfill.sql"]);
 
 export async function applySqlMigrations(): Promise<void> {
   if (!process.env.DATABASE_URL) {
@@ -147,12 +156,18 @@ export async function applySqlMigrations(): Promise<void> {
       );
       const applied = new Set(appliedRes.rows.map((r) => r.filename));
 
+      let succeeded = 0;
+      let superseded = 0;
+      let failed = 0;
+
       for (const file of files) {
         if (applied.has(file)) {
           continue;
         }
         const fullPath = join(migrationsDir, file);
         const sql = await readFile(fullPath, "utf8");
+        const isSuperseded = KNOWN_SUPERSEDED_MIGRATIONS.has(file);
+
         console.log(`[apply-sql-migrations] applying ${file}...`);
         try {
           await client.query("BEGIN");
@@ -164,18 +179,52 @@ export async function applySqlMigrations(): Promise<void> {
           );
           await client.query("COMMIT");
           console.log(`[apply-sql-migrations] \u2705 ${file}`);
+          succeeded++;
         } catch (err) {
           await client.query("ROLLBACK").catch(() => undefined);
-          console.error(
-            `[apply-sql-migrations:error] failed on ${file}: ${
-              err instanceof Error ? err.message : String(err)
-            }`
-          );
-          if (err instanceof Error && (err as any).code) {
-            console.error(`  pg code: ${(err as any).code}`);
+          if (isSuperseded) {
+            console.warn(
+              `[apply-sql-migrations] \u26a0\ufe0f  ${file} failed (known to be superseded, continuing)`
+            );
+            console.warn(
+              `[apply-sql-migrations]    ${
+                err instanceof Error ? err.message : String(err)
+              }`
+            );
+            if (err instanceof Error && (err as any).code) {
+              console.warn(`[apply-sql-migrations]    pg code: ${(err as any).code}`);
+            }
+            superseded++;
+          } else {
+            console.error(
+              `[apply-sql-migrations:error] unexpected migration failure on ${file}:`
+            );
+            console.error(
+              `  ${err instanceof Error ? err.message : String(err)}`
+            );
+            if (err instanceof Error && (err as any).code) {
+              console.error(`  pg code: ${(err as any).code}`);
+            }
+            failed++;
           }
-          // Continue to next file rather than aborting boot.
         }
+      }
+
+      console.log(
+        `[apply-sql-migrations] results: ${succeeded} succeeded, ${superseded} superseded, ${failed} failed`
+      );
+
+      if (failed > 0) {
+        console.error(
+          `[apply-sql-migrations] ABORT: ${failed} unexpected migration failure(s) \u2014 boot aborted`
+        );
+        process.exit(1);
+      }
+
+      if (superseded > 0) {
+        console.warn(
+          `[apply-sql-migrations] \u26a0\ufe0f  ${superseded} superseded migration(s) skipped \u2014 proceeding with caution`
+        );
       }
 
       console.log("[apply-sql-migrations] done");
