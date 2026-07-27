@@ -10,10 +10,11 @@ ALTER TABLE property_date_inventory
 
 -- Backfill slot counts from property_bookings
 -- For each date in each booking, increment the appropriate slot counter based on timeSlot
+-- CRITICAL: Uses loop_date (not reserved current_date) and properly casts status to ::inventory_status
 DO $$
 DECLARE
   booking RECORD;
-  current_date DATE;
+  loop_date DATE;
 BEGIN
   -- Iterate over all bookings with confirmed or pending_approval status
   FOR booking IN
@@ -22,8 +23,8 @@ BEGIN
     WHERE status IN ('confirmed', 'pending_approval')
   LOOP
     -- For each date in the booking range
-    current_date := booking."startDate";
-    WHILE current_date <= booking."endDate" LOOP
+    loop_date := booking."startDate";
+    WHILE loop_date <= booking."endDate" LOOP
       -- Upsert inventory row and increment the correct slot counter
       INSERT INTO property_date_inventory (
         "propertyId",
@@ -40,14 +41,14 @@ BEGIN
       )
       VALUES (
         booking."propertyId",
-        current_date,
+        loop_date,
         0, -- capacity will be set later; we only increment counters here
         0,
         CASE WHEN booking."timeSlot" = 'AM' THEN 1 ELSE 0 END,
         CASE WHEN booking."timeSlot" = 'PM' THEN 1 ELSE 0 END,
         CASE WHEN booking."timeSlot" = 'ALL_DAY' THEN 1 ELSE 0 END,
         CASE WHEN booking."timeSlot" = 'OVERNIGHT' THEN 1 ELSE 0 END,
-        'open',
+        'open'::inventory_status,
         0,
         EXTRACT(EPOCH FROM NOW())::bigint
       )
@@ -64,21 +65,22 @@ BEGIN
         version = property_date_inventory.version + 1,
         "updatedAt" = EXTRACT(EPOCH FROM NOW())::bigint;
 
-      current_date := current_date + INTERVAL '1 day';
+      loop_date := loop_date + INTERVAL '1 day';
     END LOOP;
   END LOOP;
 END $$;
 
 -- Recalculate status for all inventory rows based on new slot-aware logic
+-- CRITICAL: Cast all status values to ::inventory_status ENUM type
 UPDATE property_date_inventory
 SET status = CASE
   -- Full: ALL_DAY or OVERNIGHT exists, OR both AM and PM are at capacity
-  WHEN "allDayBookedCount" > 0 OR "overnightBookedCount" > 0 THEN 'full'
-  WHEN "amBookedCount" >= capacity AND "pmBookedCount" >= capacity THEN 'full'
+  WHEN "allDayBookedCount" > 0 OR "overnightBookedCount" > 0 THEN 'full'::inventory_status
+  WHEN capacity > 0 AND "amBookedCount" >= capacity AND "pmBookedCount" >= capacity THEN 'full'::inventory_status
   -- Partial: any booking exists
-  WHEN "amBookedCount" > 0 OR "pmBookedCount" > 0 THEN 'partial'
+  WHEN "amBookedCount" > 0 OR "pmBookedCount" > 0 THEN 'partial'::inventory_status
   -- Open: no bookings
-  ELSE 'open'
+  ELSE 'open'::inventory_status
 END,
 version = version + 1,
 "updatedAt" = EXTRACT(EPOCH FROM NOW())::bigint;
