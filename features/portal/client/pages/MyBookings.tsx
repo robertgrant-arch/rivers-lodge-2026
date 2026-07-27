@@ -80,6 +80,13 @@ const ACTIVITY_LABELS: Record<string, string> = {
   scouting: "Scouting",
 };
 
+const TIME_SLOT_LABELS: Record<string, string> = {
+  AM: "AM",
+  PM: "PM",
+  ALL_DAY: "All Day",
+  OVERNIGHT: "Overnight",
+};
+
 // ─── Cancel Dialog ────────────────────────────────────────────────────────────
 
 function CancelDialog({
@@ -188,9 +195,15 @@ function BookingCard({ booking, onCancel }: { booking: any; onCancel: () => void
               )}
             </div>
 
-            {/* Activity + party */}
+            {/* Activity + time slot + party */}
             <div className="flex flex-wrap gap-3 text-xs text-stone-400">
               <span>{ACTIVITY_LABELS[booking.activity] ?? booking.activity}</span>
+              {booking.timeSlot && (
+                <span>·</span>
+              )}
+              {booking.timeSlot && (
+                <span>{TIME_SLOT_LABELS[booking.timeSlot] ?? booking.timeSlot}</span>
+              )}
               <span className="flex items-center gap-1">
                 <Users className="w-3 h-3" />
                 {booking.partySize} {booking.partySize === 1 ? "person" : "people"}

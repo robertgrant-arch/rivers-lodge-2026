@@ -310,19 +310,26 @@ function BookingDialog({
   const handleWaiverComplete = (signatures: any[]) => {
     setWaiverSignatures(signatures);
 
-    const slotLabel = slot === "AllDay" ? "All Day" : slot;
-    const slotPrefix = `[Slot: ${slotLabel}] `;
+    // Map slot names: "AllDay" → "ALL_DAY", others uppercase
+    const timeSlotMap: Record<string, "AM" | "PM" | "ALL_DAY" | "OVERNIGHT"> = {
+      AM: "AM",
+      PM: "PM",
+      AllDay: "ALL_DAY",
+      Overnight: "OVERNIGHT",
+    };
+
     createBooking.mutate({
       propertyId: property.id,
       startDate,
       endDate,
       partySize,
       activity: activity as any,
+      timeSlot: timeSlotMap[slot] || "ALL_DAY",
       guestNames: guestNames.filter(Boolean),
       hasMinors,
       huntingLicenseConfirmed: huntingLicense,
       fishingLicenseConfirmed: fishingLicense,
-      memberNotes: notes ? slotPrefix + notes : slotPrefix.trim(),
+      memberNotes: notes || null,
       idempotencyKey: crypto.randomUUID(),
     });
   };
