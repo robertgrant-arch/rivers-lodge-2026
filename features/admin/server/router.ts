@@ -41,6 +41,7 @@ import { sendInviteEmail, sendPasswordResetNotification, sendWaiverEmail } from 
 import { storagePut, storageGetSignedUrl } from "@core/server/storage";
 import { ENV } from "@core/server/env";
 import { getPortalDb } from "@core/server/db";
+import { propertyDateInventory } from "@core/db/property-booking-schema";
 
 const getDb = getPortalDb;
 
