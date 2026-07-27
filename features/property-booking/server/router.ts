@@ -121,8 +121,8 @@ async function updateInventory(
   if (allDayCount > 0 || overnightCount > 0) {
     // ALL_DAY or OVERNIGHT exists = full
     status = "full";
-  } else if (amCount >= capacity && pmCount >= capacity) {
-    // Both AM and PM at capacity = full
+  } else if (capacity > 0 && amCount >= capacity && pmCount >= capacity) {
+    // Both AM and PM at capacity = full (only if capacity is known, not 0)
     status = "full";
   } else if (amCount > 0 || pmCount > 0) {
     // Any AM or PM booking (without meeting the full condition) = partial
