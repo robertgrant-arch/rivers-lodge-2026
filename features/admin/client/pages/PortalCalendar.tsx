@@ -814,6 +814,17 @@ export default function PortalCalendar() {
     return map;
   }, [visibleEvents]);
 
+  // Build a map: dateStr → aggregated inventory status (open/partial/full across all properties)
+  const inventoryByDate = useMemo(() => {
+    const map = new Map<string, string>();
+    (data?.inventories ?? []).forEach((inv: any) => {
+      if (inv.date && inv.aggregatedStatus) {
+        map.set(inv.date, inv.aggregatedStatus);
+      }
+    });
+    return map;
+  }, [data?.inventories]);
+
   function prevMonth() {
     if (month === 0) { setMonth(11); setYear((y) => y - 1); }
     else setMonth((m) => m - 1);
@@ -938,11 +949,19 @@ export default function PortalCalendar() {
               const dayEvents = eventsByDate.get(dateStr) ?? [];
               const shown = dayEvents.slice(0, 2);
               const overflow = dayEvents.length - shown.length;
+              const inventoryStatus = inventoryByDate.get(dateStr);
+
+              // Shading CSS classes based on aggregated inventory status
+              const shadingClass = inventoryStatus === 'full'
+                ? 'bg-[#57544E]/60'  // Solid shade: 60% opacity of border color
+                : inventoryStatus === 'partial'
+                ? 'bg-[#57544E]/25'  // Light shade: 25% opacity of border color
+                : '';                 // Open: no background
 
               return (
                 <div
                   key={dateStr}
-                  className="min-h-[100px] border-b border-r border-[#57544E] p-2 hover:bg-[#423F3B]/50 transition-colors cursor-default group"
+                  className={`min-h-[100px] border-b border-r border-[#57544E] p-2 hover:bg-[#423F3B]/50 transition-colors cursor-default group ${shadingClass}`}
                   onClick={() => {
                     if (dayEvents.length === 0) {
                       setCreateDefaultDate(dateStr);

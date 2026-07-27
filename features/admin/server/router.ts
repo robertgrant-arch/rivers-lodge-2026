@@ -275,7 +275,7 @@ const calendarRouter = router({
       const startTime = Date.now();
 
       // All ranges are independent — fetch concurrently.
-      const [weddings, corporate, huntFish, blocked, events] = await Promise.all([
+      const [weddings, corporate, huntFish, blocked, events, rawInventories] = await Promise.all([
         db.select().from(weddingBookings)
           .where(and(
             sql`${weddingBookings.weddingDate} >= ${input.startDate}`,
@@ -301,7 +301,65 @@ const calendarRouter = router({
             sql`${portalEvents.startDate} <= ${input.endDate}`,
             sql`${portalEvents.endDate} >= ${input.startDate}`
           )),
+        // Fetch slot inventory for all properties in date range
+        db.select({
+          propertyId: propertyDateInventory.propertyId,
+          date: propertyDateInventory.date,
+          capacity: propertyDateInventory.capacity,
+          amBookedCount: propertyDateInventory.amBookedCount,
+          pmBookedCount: propertyDateInventory.pmBookedCount,
+          allDayBookedCount: propertyDateInventory.allDayBookedCount,
+          overnightBookedCount: propertyDateInventory.overnightBookedCount,
+          status: propertyDateInventory.status,
+        })
+          .from(propertyDateInventory)
+          .where(and(
+            sql`${propertyDateInventory.date} >= ${input.startDate}`,
+            sql`${propertyDateInventory.date} <= ${input.endDate}`
+          )),
       ]);
+
+      // Aggregate inventory by date across all properties
+      // FULL rule: a day is 'full' only if EVERY property is full
+      // OPEN rule: a day is 'open' only if NO property has any bookings
+      // PARTIAL rule: everything else (some bookings exist but not all full)
+      const inventoriesByDate = new Map<string, typeof rawInventories>();
+      rawInventories.forEach((inv) => {
+        if (!inventoriesByDate.has(inv.date)) {
+          inventoriesByDate.set(inv.date, []);
+        }
+        inventoriesByDate.get(inv.date)!.push(inv);
+      });
+
+      const inventories = Array.from(inventoriesByDate.entries()).map(([date, invs]) => {
+        // Check if any property has bookings for this date
+        const hasAnyBookings = invs.some(
+          (inv) =>
+            inv.amBookedCount > 0 ||
+            inv.pmBookedCount > 0 ||
+            inv.allDayBookedCount > 0 ||
+            inv.overnightBookedCount > 0
+        );
+
+        // Check if all properties are 'full' for this date
+        const allPropertiesFull = invs.length > 0 && invs.every((inv) => inv.status === "full");
+
+        // Aggregate status: prioritize constraint (full > partial > open)
+        let aggregatedStatus: "open" | "partial" | "full";
+        if (allPropertiesFull) {
+          aggregatedStatus = "full";
+        } else if (!hasAnyBookings) {
+          aggregatedStatus = "open";
+        } else {
+          aggregatedStatus = "partial";
+        }
+
+        return {
+          date,
+          aggregatedStatus,
+          properties: invs,
+        };
+      });
 
       const result = {
         weddings: weddings.map(w => ({
@@ -348,6 +406,7 @@ const calendarRouter = router({
           startAt: e.startTime ? `${e.startDate}T${e.startTime}:00Z` : null,
           endAt: e.endTime ? `${e.endDate}T${e.endTime}:00Z` : null,
         })),
+        inventories,
       };
 
       const duration = Date.now() - startTime;
@@ -357,6 +416,7 @@ const calendarRouter = router({
         huntFish: huntFish.length,
         blocked: blocked.length,
         events: events.length,
+        inventoryDates: inventories.length,
         blockedTitles: blocked.map(b => b.title).slice(0, 5),
       });
       return result;
