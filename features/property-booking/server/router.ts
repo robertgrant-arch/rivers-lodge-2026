@@ -475,7 +475,9 @@ export const propertyBookingRouter = router({
         ]));
 
         // Helper: compute per-slot status
+        // Guard: capacity <= 0 always returns "open" (capacity missing or invalid)
         function getSlotStatus(inv: any, slotKey: "amBookedCount" | "pmBookedCount" | "allDayBookedCount" | "overnightBookedCount", capacity: number): "open" | "full" {
+          if (capacity <= 0) return "open"; // Capacity missing/invalid → always open
           if (slotKey === "allDayBookedCount" || slotKey === "overnightBookedCount") {
             return (inv?.[slotKey] ?? 0) > 0 ? "full" : "open";
           }
@@ -505,7 +507,8 @@ export const propertyBookingRouter = router({
           const isBlocked = blockedDates.has(dateStr);
           const isInSeason = !hasSeasons || inSeasonDates.has(dateStr);
           const seasonName = seasonByDate.get(dateStr);
-          const cap = inv?.capacity ?? property.maxHunters;
+          // Use inventory capacity if valid (> 0), otherwise fall back to property's maxHunters
+          const cap = (inv?.capacity && inv.capacity > 0) ? inv.capacity : property.maxHunters;
 
           if (!isInSeason) {
             // Out of season — closed, not bookable
@@ -541,16 +544,23 @@ export const propertyBookingRouter = router({
             const allDayStatus = getSlotStatus(inv, "allDayBookedCount", cap);
             const overnightStatus = getSlotStatus(inv, "overnightBookedCount", cap);
 
+            // Compute aggregate status: full only if all slots are full or all_day/overnight exists
+            let aggregateStatus: "open" | "partial" | "full" | "blocked" | "closed" = inv.status as any;
+            // Override if capacity was invalid (0 or null) and all slots are empty
+            if ((inv.capacity == null || inv.capacity <= 0) && inv.bookedCount === 0) {
+              aggregateStatus = "open";
+            }
+
             result.push({
               date: dateStr,
-              status: inv.status as any,
+              status: aggregateStatus,
               amStatus,
               pmStatus,
               allDayStatus,
               overnightStatus,
-              capacity: inv.capacity,
+              capacity: cap, // Use effective capacity (maxHunters if inv capacity is invalid)
               bookedCount: inv.bookedCount,
-              availableSpots: Math.max(0, inv.capacity - inv.bookedCount),
+              availableSpots: Math.max(0, cap - inv.bookedCount),
               seasonName,
             });
           } else {
