@@ -475,12 +475,16 @@ export const propertyBookingRouter = router({
         ]));
 
         // Helper: compute per-slot status
-        // Guard: capacity <= 0 always returns "open" (capacity missing or invalid)
+        // Compute per-slot status
+        // Note: capacity <= 0 is valid for non-hunting properties (lodging, weddings, etc)
+        // For AM/PM slots with no hunting capacity, return "open" (zero slots to fill)
+        // For ALL_DAY/OVERNIGHT, check actual bookings regardless of capacity
         function getSlotStatus(inv: any, slotKey: "amBookedCount" | "pmBookedCount" | "allDayBookedCount" | "overnightBookedCount", capacity: number): "open" | "full" {
-          if (capacity <= 0) return "open"; // Capacity missing/invalid → always open
           if (slotKey === "allDayBookedCount" || slotKey === "overnightBookedCount") {
             return (inv?.[slotKey] ?? 0) > 0 ? "full" : "open";
           }
+          // AM/PM slots: capacity <= 0 means no hunting slots → always open
+          if (capacity <= 0) return "open";
           return (inv?.[slotKey] ?? 0) >= capacity ? "full" : "open";
         }
 
