@@ -27,7 +27,7 @@ SET
     -- No bookings = 'open'
     ELSE 'open'::inventory_status
   END,
-  "updatedAt" = now()
+  "updatedAt" = EXTRACT(EPOCH FROM NOW())::bigint
 FROM hunting_properties hp
 WHERE
   inv."propertyId" = hp.id
