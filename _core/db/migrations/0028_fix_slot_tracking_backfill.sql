@@ -69,7 +69,7 @@ BEGIN
         CASE WHEN booking."timeSlot" = 'PM' THEN 1 ELSE 0 END,
         CASE WHEN booking."timeSlot" = 'ALL_DAY' THEN 1 ELSE 0 END,
         CASE WHEN booking."timeSlot" = 'OVERNIGHT' THEN 1 ELSE 0 END,
-        'open',
+        'open'::inventory_status,
         0,
         EXTRACT(EPOCH FROM NOW())::bigint
       )
@@ -98,13 +98,13 @@ END $$;
 UPDATE property_date_inventory
 SET status = CASE
   -- Full: ALL_DAY or OVERNIGHT exists
-  WHEN "allDayBookedCount" > 0 OR "overnightBookedCount" > 0 THEN 'full'
+  WHEN "allDayBookedCount" > 0 OR "overnightBookedCount" > 0 THEN 'full'::inventory_status
   -- Full: both AM and PM at capacity (but NOT if capacity is 0/unknown)
-  WHEN capacity > 0 AND "amBookedCount" >= capacity AND "pmBookedCount" >= capacity THEN 'full'
+  WHEN capacity > 0 AND "amBookedCount" >= capacity AND "pmBookedCount" >= capacity THEN 'full'::inventory_status
   -- Partial: any slot booking exists
-  WHEN "amBookedCount" > 0 OR "pmBookedCount" > 0 THEN 'partial'
+  WHEN "amBookedCount" > 0 OR "pmBookedCount" > 0 THEN 'partial'::inventory_status
   -- Open: no bookings
-  ELSE 'open'
+  ELSE 'open'::inventory_status
 END,
 version = version + 1,
 "updatedAt" = EXTRACT(EPOCH FROM NOW())::bigint;

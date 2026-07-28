@@ -21,8 +21,8 @@ import { fileURLToPath } from "node:url";
 
 // Migrations known to be superseded by later fixes
 // These are allowed to fail during execution without aborting boot
-// 0028: missing ::inventory_status ENUM casts on status assignments — fixed by 0029
-const KNOWN_SUPERSEDED_MIGRATIONS = new Set(["0028_fix_slot_tracking_backfill.sql"]);
+// (Empty: all migrations now fail-fast on real errors, no exceptions)
+const KNOWN_SUPERSEDED_MIGRATIONS = new Set<string>();
 
 export async function applySqlMigrations(): Promise<void> {
   if (!process.env.DATABASE_URL) {
