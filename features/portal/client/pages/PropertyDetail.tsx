@@ -36,7 +36,6 @@ const DAYS = ["Su","Mo","Tu","We","Th","Fr","Sa"];
 
 const STATUS_COLORS: Record<string, string> = {
   open: "bg-emerald-600 hover:bg-emerald-500 cursor-pointer",
-  partial: "bg-amber-500 hover:bg-amber-400 cursor-pointer",
   full: "bg-red-700 cursor-not-allowed opacity-60",
   blocked: "bg-stone-700 cursor-not-allowed opacity-50",
   // closed = out of season: visually distinct from blocked
@@ -45,7 +44,6 @@ const STATUS_COLORS: Record<string, string> = {
 
 const STATUS_LABELS: Record<string, string> = {
   open: "Available",
-  partial: "Limited spots",
   full: "Fully booked",
   blocked: "Blocked",
   closed: "Out of season",
@@ -194,7 +192,7 @@ function AvailabilityCalendar({
                 title={
                   status === "closed" && !isPast
                     ? `${cell.date}: Out of season`
-                    : (status === "open" || status === "partial")
+                    : status === "open"
                       ? `${cell.date}: ${STATUS_LABELS[status]}${
                           avail?.availableSpots != null
                             ? ` (${avail.availableSpots} spot${avail.availableSpots !== 1 ? "s" : ""})`
@@ -223,7 +221,6 @@ function AvailabilityCalendar({
       <div className="flex flex-wrap gap-3 pt-1 border-t border-stone-800">
         {[
           { color: "bg-emerald-600", label: "Available" },
-          { color: "bg-amber-500", label: "Limited" },
           { color: "bg-red-700 opacity-60", label: "Full" },
           { color: "bg-stone-700 opacity-50", label: "Blocked" },
           { color: "bg-stone-950 opacity-30 border border-stone-700", label: "Out of season" },
@@ -610,9 +607,9 @@ export default function PropertyDetail() {
           <AlertCircle className="w-5 h-5 shrink-0" />
           <span className="text-sm">Property not found or unavailable.</span>
         </div>
-        <Link href="/portal/properties">
+        <Link href="/portal">
           <Button variant="ghost" className="mt-4 text-stone-400">
-            <ArrowLeft className="w-4 h-4 mr-2" /> Back to Properties
+            <ArrowLeft className="w-4 h-4 mr-2" /> Back to Dashboard
           </Button>
         </Link>
       </div>
@@ -628,10 +625,10 @@ export default function PropertyDetail() {
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">
       {/* Back link */}
-      <Link href="/portal/properties">
+      <Link href="/portal">
         <button className="flex items-center gap-1.5 text-sm text-stone-400 hover:text-stone-100 transition-colors">
           <ArrowLeft className="w-4 h-4" />
-          All Properties
+          Back to Dashboard
         </button>
       </Link>
 

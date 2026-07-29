@@ -37,7 +37,7 @@ async function getMemberForUser(userId: string) {
 
 const slotsRouter = router({
   /**
-   * Public availability calendar — returns open/partial/full slots for a date range.
+   * Public availability calendar — returns open/full slots for a date range.
    * Used by the Hunt and Fish public pages.
    */
   publicAvailability: publicProcedure
@@ -86,8 +86,6 @@ const slotsRouter = router({
         availabilityStatus:
           s.bookedCount >= s.totalCapacity
             ? ("full" as const)
-            : s.bookedCount >= s.totalCapacity * 0.75
-            ? ("limited" as const)
             : ("open" as const),
         season: s.season,
         pricePerPerson: s.pricePerPerson,
