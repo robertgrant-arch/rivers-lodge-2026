@@ -14,7 +14,7 @@ import { Badge } from '@shared/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@shared/ui/card';
 import {
   MapPin, Users, TreePine, Waves, Zap, Wifi, Truck, Thermometer,
-  Calendar, ChevronRight, Filter, Search, AlertCircle, Loader2,
+  Calendar, ChevronRight, Filter, Search, AlertCircle, Loader2, ArrowLeft,
 } from "lucide-react";
 import { Input } from '@shared/ui/input';
 
@@ -184,6 +184,14 @@ export default function PropertyBrowser() {
 
   return (
     <div className="space-y-6 px-4 py-8 sm:px-6 lg:px-8" data-build="20260706-1000">
+      {/* Back link */}
+      <Link href="/portal">
+        <button className="flex items-center gap-1.5 text-sm text-stone-400 hover:text-stone-100 transition-colors">
+          <ArrowLeft className="w-4 h-4" />
+          Back to Dashboard
+        </button>
+      </Link>
+
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold text-white mb-2">Properties</h1>
