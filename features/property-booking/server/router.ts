@@ -115,16 +115,17 @@ async function updateInventory(
   const overnightCount = Math.max(0, (existing?.overnightBookedCount ?? 0) + (timeSlot === "OVERNIGHT" ? delta : 0));
   const totalBooked = amCount + pmCount + allDayCount + overnightCount;
 
-  // Determine status based on the FULL rule
+  // Determine status based on exclusive slot model:
+  // Full only if: (1) ALL_DAY or OVERNIGHT booking exists, OR (2) both AM and PM have bookings
   let status: "open" | "full";
   if (allDayCount > 0 || overnightCount > 0) {
-    // ALL_DAY or OVERNIGHT exists = full
+    // ALL_DAY or OVERNIGHT exists = entire day full
     status = "full";
-  } else if (capacity > 0 && amCount >= capacity && pmCount >= capacity) {
-    // Both AM and PM at capacity = full (only if capacity is known, not 0)
+  } else if (amCount > 0 && pmCount > 0) {
+    // Both AM and PM booked = entire day full (exclusive slots)
     status = "full";
   } else {
-    // No full condition met = open
+    // One or both half-day slots open = day still bookable
     status = "open";
   }
 
@@ -472,16 +473,12 @@ export const propertyBookingRouter = router({
 
         // Helper: compute per-slot status
         // Compute per-slot status
-        // Note: capacity <= 0 is valid for non-hunting properties (lodging, weddings, etc)
-        // For AM/PM slots with no hunting capacity, return "open" (zero slots to fill)
-        // For ALL_DAY/OVERNIGHT, check actual bookings regardless of capacity
-        function getSlotStatus(inv: any, slotKey: "amBookedCount" | "pmBookedCount" | "allDayBookedCount" | "overnightBookedCount", capacity: number): "open" | "full" {
-          if (slotKey === "allDayBookedCount" || slotKey === "overnightBookedCount") {
-            return (inv?.[slotKey] ?? 0) > 0 ? "full" : "open";
-          }
-          // AM/PM slots: capacity <= 0 means no hunting slots → always open
-          if (capacity <= 0) return "open";
-          return (inv?.[slotKey] ?? 0) >= capacity ? "full" : "open";
+        // Exclusive slot model: each slot can accommodate at most ONE booking group.
+        // Capacity (maxHunters) only limits headcount within that one group, NOT slot occupancy.
+        // So any confirmed booking marks the slot as 'full', regardless of capacity.
+        function getSlotStatus(inv: any, slotKey: "amBookedCount" | "pmBookedCount" | "allDayBookedCount" | "overnightBookedCount"): "open" | "full" {
+          // If any booking exists for this slot, it's full (exclusive to that group)
+          return (inv?.[slotKey] ?? 0) > 0 ? "full" : "open";
         }
 
         // Generate a day-by-day availability array with per-slot status
@@ -538,11 +535,11 @@ export const propertyBookingRouter = router({
               seasonName,
             });
           } else if (inv) {
-            // Compute per-slot status
-            const amStatus = getSlotStatus(inv, "amBookedCount", cap);
-            const pmStatus = getSlotStatus(inv, "pmBookedCount", cap);
-            const allDayStatus = getSlotStatus(inv, "allDayBookedCount", cap);
-            const overnightStatus = getSlotStatus(inv, "overnightBookedCount", cap);
+            // Compute per-slot status (exclusive model: any booking → full)
+            const amStatus = getSlotStatus(inv, "amBookedCount");
+            const pmStatus = getSlotStatus(inv, "pmBookedCount");
+            const allDayStatus = getSlotStatus(inv, "allDayBookedCount");
+            const overnightStatus = getSlotStatus(inv, "overnightBookedCount");
 
             // Compute aggregate status: use per-slot status directly (no legacy "partial" tier)
             let aggregateStatus: "open" | "full" | "blocked" | "closed";

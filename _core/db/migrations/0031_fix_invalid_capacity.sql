@@ -9,7 +9,8 @@
  *
  * Fix: For any inventory row where capacity IS NULL, set capacity to the
  * owning property's maxHunters (defaulting to 2 if also NULL).
- * Also recalculate status for affected rows to ensure consistency.
+ * Also recalculate status using exclusive-slot model: slots are 'full' if
+ * ANY booking exists (since each slot accommodates one group only).
  *
  * This migration is idempotent: running multiple times has no additional effect.
  */
@@ -20,16 +21,13 @@ UPDATE property_date_inventory inv
 SET
   capacity = COALESCE(hp."maxHunters", 2),
   status = CASE
-    -- If capacity was missing (NULL) and bookedCount=0, set status to 'open'
+    -- If capacity was missing (NULL) and no bookings, mark 'open'
     WHEN inv.capacity IS NULL AND inv."bookedCount" = 0 THEN 'open'::inventory_status
-    -- If ALL_DAY or OVERNIGHT exists, keep as 'full'
+    -- If ALL_DAY or OVERNIGHT exists, mark 'full' (entire day taken)
     WHEN inv."allDayBookedCount" > 0 OR inv."overnightBookedCount" > 0 THEN 'full'::inventory_status
-    -- If both AM and PM are at capacity, mark as 'full'
-    -- Note: capacity=0 properties treated as zero hunting slots (always open for AM/PM, via router guard)
-    WHEN COALESCE(hp."maxHunters", 2) > 0 AND inv."amBookedCount" >= COALESCE(hp."maxHunters", 2) AND inv."pmBookedCount" >= COALESCE(hp."maxHunters", 2) THEN 'full'::inventory_status
-    -- If any AM or PM booking exists (without full condition), mark as 'partial'
-    WHEN inv."amBookedCount" > 0 OR inv."pmBookedCount" > 0 THEN 'partial'::inventory_status
-    -- No bookings = 'open'
+    -- If both AM and PM have bookings, mark 'full' (both half-day slots taken)
+    WHEN inv."amBookedCount" > 0 AND inv."pmBookedCount" > 0 THEN 'full'::inventory_status
+    -- One or both half-day slots open = 'open' (day still bookable)
     ELSE 'open'::inventory_status
   END,
   "updatedAt" = EXTRACT(EPOCH FROM NOW())::bigint
