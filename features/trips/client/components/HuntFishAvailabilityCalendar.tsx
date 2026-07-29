@@ -4,7 +4,6 @@
  *
  * Shows a 3-month rolling calendar with color-coded slot availability:
  *   - Green  = open spots available
- *   - Amber  = limited (≥75% booked)
  *   - Red    = full
  *   - Gray   = blocked / no slots
  *
@@ -41,7 +40,7 @@ type ActivityFilter =
   | "bass" | "catfish" | "crappie"
   | "general_hunt" | "general_fish" | "hunt_and_fish";
 
-type AvailabilityStatus = "open" | "limited" | "full";
+type AvailabilityStatus = "open" | "full";
 
 interface SlotSummary {
   id: number;
@@ -87,19 +86,16 @@ function parseDate(val: string | Date): Date {
 
 function statusColor(status: AvailabilityStatus): string {
   if (status === "open") return "bg-emerald-500";
-  if (status === "limited") return "bg-amber-400";
   return "bg-red-500";
 }
 
 function statusLabel(status: AvailabilityStatus): string {
   if (status === "open") return "Open";
-  if (status === "limited") return "Limited";
   return "Full";
 }
 
 function statusBadgeVariant(status: AvailabilityStatus): "default" | "secondary" | "destructive" | "outline" {
   if (status === "open") return "default";
-  if (status === "limited") return "secondary";
   return "destructive";
 }
 
@@ -141,11 +137,10 @@ function MonthGrid({
           const isPast = dateStr < today;
           const hasSlots = slots.length > 0;
 
-          // Determine the "best" status for this day (open > limited > full)
+          // Determine the "best" status for this day (open > full)
           let dayStatus: AvailabilityStatus | null = null;
           if (hasSlots) {
             if (slots.some((s) => s.availabilityStatus === "open")) dayStatus = "open";
-            else if (slots.some((s) => s.availabilityStatus === "limited")) dayStatus = "limited";
             else dayStatus = "full";
           }
 
@@ -473,7 +468,7 @@ export function HuntFishAvailabilityCalendar({
 
         {/* Legend */}
         <div className="flex items-center gap-5 mb-6 text-xs text-muted-foreground">
-          {(["open","limited","full"] as AvailabilityStatus[]).map((s) => (
+          {(["open","full"] as AvailabilityStatus[]).map((s) => (
             <span key={s} className="flex items-center gap-1.5">
               <span className={`w-2.5 h-2.5 rounded-full ${statusColor(s)}`} />
               {statusLabel(s)}

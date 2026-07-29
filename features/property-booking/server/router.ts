@@ -87,8 +87,7 @@ async function updateInventory(
   // - Increment the appropriate slot counter (amBookedCount, pmBookedCount, allDayBookedCount, overnightBookedCount)
   // - Recalculate status:
   //   - 'full' ONLY if: ALL_DAY or OVERNIGHT exists, OR both AM and PM are at capacity
-  //   - 'partial' if: any booking exists (AM or PM alone, without the other being full)
-  //   - 'open' if: no bookings
+  //   - 'open' otherwise (no legacy 'partial' tier)
   // - Keep bookedCount as sum of all slot counts for backward compat
 
   const [prop] = await db!
@@ -117,18 +116,15 @@ async function updateInventory(
   const totalBooked = amCount + pmCount + allDayCount + overnightCount;
 
   // Determine status based on the FULL rule
-  let status: "open" | "full" | "partial";
+  let status: "open" | "full";
   if (allDayCount > 0 || overnightCount > 0) {
     // ALL_DAY or OVERNIGHT exists = full
     status = "full";
   } else if (capacity > 0 && amCount >= capacity && pmCount >= capacity) {
     // Both AM and PM at capacity = full (only if capacity is known, not 0)
     status = "full";
-  } else if (amCount > 0 || pmCount > 0) {
-    // Any AM or PM booking (without meeting the full condition) = partial
-    status = "partial";
   } else {
-    // No bookings = open
+    // No full condition met = open
     status = "open";
   }
 
@@ -491,7 +487,7 @@ export const propertyBookingRouter = router({
         // Generate a day-by-day availability array with per-slot status
         const result: Array<{
           date: string;
-          status: "open" | "partial" | "full" | "blocked" | "closed";
+          status: "open" | "full" | "blocked" | "closed";
           amStatus: "open" | "full";
           pmStatus: "open" | "full";
           allDayStatus: "open" | "full";
@@ -548,10 +544,15 @@ export const propertyBookingRouter = router({
             const allDayStatus = getSlotStatus(inv, "allDayBookedCount", cap);
             const overnightStatus = getSlotStatus(inv, "overnightBookedCount", cap);
 
-            // Compute aggregate status: full only if all slots are full or all_day/overnight exists
-            let aggregateStatus: "open" | "partial" | "full" | "blocked" | "closed" = inv.status as any;
-            // Override if capacity was invalid (0 or null) and all slots are empty
-            if ((inv.capacity == null || inv.capacity <= 0) && inv.bookedCount === 0) {
+            // Compute aggregate status: use per-slot status directly (no legacy "partial" tier)
+            let aggregateStatus: "open" | "full" | "blocked" | "closed";
+            if (inv.status === "blocked" || inv.status === "closed") {
+              aggregateStatus = inv.status;
+            } else if ((inv.capacity == null || inv.capacity <= 0) && inv.bookedCount === 0) {
+              aggregateStatus = "open";
+            } else if (inv.status === "full") {
+              aggregateStatus = "full";
+            } else {
               aggregateStatus = "open";
             }
 

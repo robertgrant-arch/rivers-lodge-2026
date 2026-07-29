@@ -133,7 +133,7 @@ booking_waitlist            ← Waitlist entries when property is full
 | date | date NOT NULL | |
 | capacity | int NOT NULL | Max hunters for this date |
 | bookedCount | int DEFAULT 0 | Confirmed + pending bookings |
-| status | enum('open','partial','full','blocked','closed') DEFAULT 'open' | |
+| status | enum('open','full','blocked','closed') DEFAULT 'open' | |
 | UNIQUE(propertyId, date) | | |
 
 ### `property_bookings`
