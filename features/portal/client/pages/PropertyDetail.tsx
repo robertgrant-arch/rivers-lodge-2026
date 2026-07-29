@@ -182,7 +182,38 @@ function AvailabilityCalendar({
             const isStart = cell.date === selectedStart;
             const isEnd = cell.date === selectedEnd;
 
-            const canSelect = !isPast && status !== "full" && status !== "blocked" && status !== "closed";
+            // Slot-aware logic: determine if day is bookable (at least one slot available)
+            const amStatus = avail?.amStatus ?? "open";
+            const pmStatus = avail?.pmStatus ?? "open";
+            const allDayStatus = avail?.allDayStatus ?? "open";
+            const overnightStatus = avail?.overnightStatus ?? "open";
+            const anySlotOpen = amStatus === "open" || pmStatus === "open" || allDayStatus === "open" || overnightStatus === "open";
+            const canSelect = !isPast && status !== "blocked" && status !== "closed" && anySlotOpen;
+
+            // Determine background: solid or half-shaded based on per-slot availability
+            let bgClass = "bg-stone-700";
+            if (!isPast) {
+              if (allDayStatus === "full" || overnightStatus === "full") {
+                // All Day or Overnight blocks entire day
+                bgClass = "bg-red-700 opacity-60";
+              } else if (amStatus === "full" && pmStatus === "full") {
+                // Both half-day slots full = day full
+                bgClass = "bg-red-700 opacity-60";
+              } else if (amStatus === "full" && pmStatus === "open") {
+                // AM full, PM open = half-shaded (bottom red, top green)
+                bgClass = "bg-gradient-to-b from-emerald-600 to-red-700 opacity-80";
+              } else if (amStatus === "open" && pmStatus === "full") {
+                // AM open, PM full = half-shaded (top red, bottom green)
+                bgClass = "bg-gradient-to-b from-red-700 to-emerald-600 opacity-80";
+              } else if (status === "closed") {
+                bgClass = "bg-stone-950 opacity-30 border border-stone-700";
+              } else if (status === "blocked") {
+                bgClass = "bg-stone-700 opacity-50";
+              } else {
+                // Both open or no booking data = available
+                bgClass = "bg-emerald-600";
+              }
+            }
 
             return (
               <button
@@ -204,8 +235,8 @@ function AvailabilityCalendar({
                   relative aspect-square rounded-lg text-xs font-medium flex items-center justify-center
                   transition-all duration-100
                   ${isPast ? "text-stone-600 bg-transparent cursor-not-allowed" : ""}
-                  ${!isPast && canSelect ? STATUS_COLORS[status] ?? "bg-stone-700" : ""}
-                  ${!isPast && !canSelect ? STATUS_COLORS[status] ?? "bg-stone-700 cursor-not-allowed opacity-50" : ""}
+                  ${!isPast && canSelect ? bgClass : ""}
+                  ${!isPast && !canSelect ? "bg-stone-700 cursor-not-allowed opacity-50" : ""}
                   ${isSelected && !isStart && !isEnd ? "ring-1 ring-amber-500 bg-amber-900/40" : ""}
                   ${isStart || isEnd ? "ring-2 ring-amber-400 bg-amber-700 text-white" : ""}
                 `}
