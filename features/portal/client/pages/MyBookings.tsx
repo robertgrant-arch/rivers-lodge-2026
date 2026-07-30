@@ -255,10 +255,22 @@ export default function MyBookings() {
     { staleTime: 60 * 1000 },
   );
 
-  const today = new Date().toISOString().split("T")[0];
+  // Get today's date in local timezone (YYYY-MM-DD, date-only, no time)
+  const todayDate = new Date();
+  const today = `${todayDate.getFullYear()}-${String(todayDate.getMonth() + 1).padStart(2, "0")}-${String(todayDate.getDate()).padStart(2, "0")}`;
 
   const filtered = (data ?? []).filter((b: any) => {
-    const bEnd = b.endDate instanceof Date ? b.endDate.toISOString().split("T")[0] : String(b.endDate ?? "");
+    // Get booking end date in local timezone (YYYY-MM-DD, date-only, no time)
+    let bEnd: string;
+    if (b.endDate instanceof Date) {
+      // Extract local date from Date object
+      const d = b.endDate;
+      bEnd = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    } else {
+      // String: strip time component ("2026-07-29T09:00:00Z" -> "2026-07-29")
+      bEnd = String(b.endDate ?? "").split("T")[0];
+    }
+
     if (tab === "upcoming") return bEnd >= today;
     if (tab === "past") return bEnd < today;
     return true;
