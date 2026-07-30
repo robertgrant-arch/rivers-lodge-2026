@@ -15,7 +15,7 @@
 DO $$
 DECLARE
   booking RECORD;
-  current_date DATE;
+  v_current_date DATE;
   day_count INTEGER;
   total_days INTEGER;
   slot_type TEXT;
@@ -28,11 +28,11 @@ BEGIN
     FROM property_bookings
     WHERE "propertyId" = 1 AND status = 'cancelled'
   LOOP
-    current_date := booking.start_date;
+    v_current_date := booking.start_date;
     day_count := 0;
     total_days := (booking.end_date - booking.start_date) + 1;
 
-    WHILE current_date <= booking.end_date LOOP
+    WHILE v_current_date <= booking.end_date LOOP
       -- Determine slot type for this date
       IF booking."timeSlot" = 'OVERNIGHT' AND total_days > 1 THEN
         IF day_count = 0 THEN
@@ -54,9 +54,9 @@ BEGIN
         "allDayBookedCount" = GREATEST(0, "allDayBookedCount" - CASE WHEN slot_type = 'ALL_DAY' THEN 1 ELSE 0 END),
         "overnightBookedCount" = GREATEST(0, "overnightBookedCount" - CASE WHEN slot_type = 'OVERNIGHT' THEN 1 ELSE 0 END),
         "updatedAt" = EXTRACT(EPOCH FROM NOW())::bigint
-      WHERE "propertyId" = 1 AND date = current_date;
+      WHERE "propertyId" = 1 AND date = v_current_date;
 
-      current_date := current_date + INTERVAL '1 day';
+      v_current_date := v_current_date + INTERVAL '1 day';
       day_count := day_count + 1;
     END LOOP;
   END LOOP;
