@@ -30,7 +30,7 @@ import {
   bookingStateTransitions,
 } from '@core/db/booking-schema';
 import { bookings, users, blockedDates } from '@core/db/schema';
-import { propertyBookings, huntingProperties } from '@core/db/property-booking-schema';
+import { propertyBookings, huntingProperties, propertyBlockedDates } from '@core/db/property-booking-schema';
 import { calendarAccessSettings } from '@features/admin/schema';
 import { members, memberSkillGroups, skillGroups } from '@features/membership/public';
 import { gte, lte } from "drizzle-orm";
@@ -686,11 +686,21 @@ const bookingsRouter = router({
         throw new TRPCError({ code: "FORBIDDEN", message: "Master Calendar access denied" });
       }
 
-      // Return all property bookings
-      return db
-        .select()
-        .from(propertyBookings)
-        .orderBy(propertyBookings.startDate);
+      // Return ops-managed events: weddings, corporate, hunt-fish + property blocks/holds
+      // Member property reservations explicitly excluded (use myBookings/propertyCalendarView instead)
+      const [opsBookings, propertyBlocks] = await Promise.all([
+        db
+          .select()
+          .from(bookings)
+          .where(inArray(bookings.type, ["wedding", "corporate", "hunt_fish"]))
+          .orderBy(bookings.startDate),
+        db
+          .select()
+          .from(propertyBlockedDates)
+          .orderBy(propertyBlockedDates.startDate),
+      ]);
+
+      return [...opsBookings, ...propertyBlocks];
     }),
 
   propertyCalendarView: protectedProcedure
