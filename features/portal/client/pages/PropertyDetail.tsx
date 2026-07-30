@@ -167,24 +167,7 @@ function AvailabilityCalendar({
           {days.map((cell, i) => {
             if (!cell.date) return <div key={i} />;
 
-            const lookupKey = toDateStr(cell.date);
-            const avail = availMap.get(lookupKey);
-
-            // DEBUG: Log specific date
-            if (cell.date === '2026-08-01') {
-              console.debug('[AvailabilityCalendar] Cell 2026-08-01:', {
-                lookupKey,
-                availMapSize: availMap.size,
-                foundInMap: !!avail,
-                availObject: avail,
-                amStatus: avail?.amStatus,
-                pmStatus: avail?.pmStatus,
-                availableSpots: avail?.availableSpots,
-                bookedCount: avail?.bookedCount,
-                status: avail?.status,
-              });
-            }
-
+            const avail = availMap.get(cell.date);
             const status = avail?.status ?? (cell.date < todayStr ? "closed" : "open");
             const isPast = cell.date < todayStr;
             const isSelected =
@@ -657,20 +640,26 @@ export default function PropertyDetail() {
 
   const availMap = useMemo(() => {
     const m = new Map<string, any>();
-    availability?.forEach((d: any) => m.set(toDateStr(d.date), d));
-
-    // DEBUG: Log availability data
     if (availability) {
-      console.debug('[PropertyDetail] availMap built:', {
-        availLength: availability.length,
-        mapSize: m.size,
-        mapKeys: Array.from(m.keys()),
-        availRecord_20260801: availability.find((d: any) => toDateStr(d.date) === '2026-08-01'),
-        firstRecord: availability[0],
-        sampleRecord: availability.find((d: any) => toDateStr(d.date) > '2026-07-31') // first Aug record
+      availability.forEach((d: any) => {
+        // Normalize d.date to YYYY-MM-DD string, handling both string and Date inputs
+        // This prevents timezone shift bugs: Date("2026-08-01") in UTC-5 becomes 2026-07-31 locally
+        let dateKey: string;
+        if (typeof d.date === 'string') {
+          dateKey = d.date.split('T')[0];  // Remove time component if present
+        } else if (d.date instanceof Date) {
+          // Extract local date components (not UTC)
+          const year = d.date.getFullYear();
+          const month = String(d.date.getMonth() + 1).padStart(2, "0");
+          const day = String(d.date.getDate()).padStart(2, "0");
+          dateKey = `${year}-${month}-${day}`;
+        } else {
+          // Fallback for unknown types
+          dateKey = String(d.date).split('T')[0];
+        }
+        m.set(dateKey, d);
       });
     }
-
     return m;
   }, [availability]);
 
@@ -997,7 +986,7 @@ export default function PropertyDetail() {
                   const statusKey = slotMap[activeSlot];
 
                   while (d <= e) {
-                    const dateStr = toDateStr(d);
+                    const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
                     const avail = availMap.get(dateStr);
                     if (avail && (avail as any)[statusKey] === "full") {
                       hasUnavailableSlot = true;
@@ -1056,7 +1045,7 @@ export default function PropertyDetail() {
                       const statusKey = slotMap[activeSlot];
 
                       while (d <= e) {
-                        const dateStr = toDateStr(d);
+                        const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
                         const avail = availMap.get(dateStr);
                         if (avail && (avail as any)[statusKey] === "full") {
                           isBookable = false;
