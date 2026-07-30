@@ -1043,7 +1043,33 @@ export const propertyBookingRouter = router({
               }
             }
 
-            await updateInventory(db, booking.propertyId, dateStr, slotToRelease, -1);
+            // For backward-compatibility: check if old booking has overnightBookedCount but slot-specific counts are 0
+            // If so, decrement overnightBookedCount instead of the slot-specific count
+            const [inv] = await db
+              .select({
+                amBookedCount: propertyDateInventory.amBookedCount,
+                pmBookedCount: propertyDateInventory.pmBookedCount,
+                allDayBookedCount: propertyDateInventory.allDayBookedCount,
+                overnightBookedCount: propertyDateInventory.overnightBookedCount,
+              })
+              .from(propertyDateInventory)
+              .where(and(eq(propertyDateInventory.propertyId, booking.propertyId), eq(propertyDateInventory.date, dateStr)))
+              .limit(1);
+
+            let finalSlotToRelease = slotToRelease;
+            if (booking.timeSlot === "OVERNIGHT" && inv) {
+              // Check if this is an old booking: overnightBookedCount > 0 and the slot we're trying to decrement is 0
+              const slotCount =
+                (slotToRelease === "PM" ? inv.pmBookedCount : 0) ||
+                (slotToRelease === "AM" ? inv.amBookedCount : 0) ||
+                (slotToRelease === "ALL_DAY" ? inv.allDayBookedCount : 0) ||
+                0;
+              if (slotCount === 0 && inv.overnightBookedCount > 0) {
+                finalSlotToRelease = "OVERNIGHT";
+              }
+            }
+
+            await updateInventory(db, booking.propertyId, dateStr, finalSlotToRelease, -1);
             d.setDate(d.getDate() + 1);
             dayCount++;
           }
