@@ -33,18 +33,9 @@ BEGIN
     total_days := (booking.end_date - booking.start_date) + 1;
 
     WHILE v_current_date <= booking.end_date LOOP
-      -- Determine slot type for this date
-      IF booking."timeSlot" = 'OVERNIGHT' AND total_days > 1 THEN
-        IF day_count = 0 THEN
-          slot_type := 'PM';
-        ELSIF day_count = (total_days - 1) THEN
-          slot_type := 'AM';
-        ELSE
-          slot_type := 'ALL_DAY';
-        END IF;
-      ELSE
-        slot_type := booking."timeSlot";
-      END IF;
+      -- Use the booking's timeSlot directly (no day-based expansion)
+      -- OVERNIGHT bookings store as overnightBookedCount on every date in range
+      slot_type := booking."timeSlot";
 
       -- Decrement the appropriate counter (with idempotency guard)
       UPDATE property_date_inventory
