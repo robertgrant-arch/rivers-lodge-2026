@@ -7,8 +7,8 @@
  *
  * Scope: Property 1 only. Idempotent (safe to re-run).
  *
- * Logic: For each cancelled booking in property 1, decrement the appropriate slot
- * counter for each date in its range. Then recalculate status using exclusive-slot model.
+ * Logic: For each cancelled booking in property 1, decrement the appropriate per-slot
+ * counter for each date in its range. Then recalculate bookedCount and status fields.
  */
 
 -- Step 1: Decrement per-slot counts for all cancelled bookings (property 1 only)
@@ -53,6 +53,7 @@ BEGIN
         "pmBookedCount" = GREATEST(0, "pmBookedCount" - CASE WHEN slot_type = 'PM' THEN 1 ELSE 0 END),
         "allDayBookedCount" = GREATEST(0, "allDayBookedCount" - CASE WHEN slot_type = 'ALL_DAY' THEN 1 ELSE 0 END),
         "overnightBookedCount" = GREATEST(0, "overnightBookedCount" - CASE WHEN slot_type = 'OVERNIGHT' THEN 1 ELSE 0 END),
+        version = version + 1,
         "updatedAt" = EXTRACT(EPOCH FROM NOW())::bigint
       WHERE "propertyId" = 1 AND date = v_current_date;
 
@@ -62,31 +63,15 @@ BEGIN
   END LOOP;
 END $$;
 
--- Step 2: Recalculate bookedCount and all status fields (property 1 only)
+-- Step 2: Recalculate bookedCount and status for property 1 (exclusive-slot model)
 UPDATE property_date_inventory
 SET
   "bookedCount" = "amBookedCount" + "pmBookedCount" + "allDayBookedCount" + "overnightBookedCount",
   status = CASE
+    -- Full: ALL_DAY or OVERNIGHT exist, OR both AM and PM are booked
     WHEN "allDayBookedCount" > 0 OR "overnightBookedCount" > 0 THEN 'full'::inventory_status
     WHEN "amBookedCount" > 0 AND "pmBookedCount" > 0 THEN 'full'::inventory_status
-    ELSE 'open'::inventory_status
-  END,
-  "amStatus" = CASE
-    WHEN "allDayBookedCount" > 0 OR "overnightBookedCount" > 0 THEN 'full'::inventory_status
-    WHEN "amBookedCount" > 0 THEN 'full'::inventory_status
-    ELSE 'open'::inventory_status
-  END,
-  "pmStatus" = CASE
-    WHEN "allDayBookedCount" > 0 OR "overnightBookedCount" > 0 THEN 'full'::inventory_status
-    WHEN "pmBookedCount" > 0 THEN 'full'::inventory_status
-    ELSE 'open'::inventory_status
-  END,
-  "allDayStatus" = CASE
-    WHEN "allDayBookedCount" > 0 THEN 'full'::inventory_status
-    ELSE 'open'::inventory_status
-  END,
-  "overnightStatus" = CASE
-    WHEN "overnightBookedCount" > 0 THEN 'full'::inventory_status
+    -- Open: no blockage
     ELSE 'open'::inventory_status
   END,
   version = version + 1,
