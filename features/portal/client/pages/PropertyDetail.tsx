@@ -179,42 +179,41 @@ function AvailabilityCalendar({
             const canSelect = !isPast && status !== "blocked" && status !== "closed" && anySlotOpen;
 
             // Determine background: solid or hard-split half-shaded based on per-slot availability
+            // Render per-slot shading for ALL dates (including past/today), independent of isPast
             let bgClass = "bg-stone-700";
             let bgStyle: React.CSSProperties = {};
 
-            if (!isPast) {
-              if (allDayStatus === "full" || overnightStatus === "full") {
-                // All Day or Overnight blocks entire day
-                bgClass = "bg-red-700";
-                bgStyle = { opacity: 0.6 };
-              } else if (amStatus === "full" && pmStatus === "full") {
-                // Both half-day slots full = day full
-                bgClass = "bg-red-700";
-                bgStyle = { opacity: 0.6 };
-              } else if (amStatus === "full" && pmStatus === "open") {
-                // AM full, PM open = hard split: top green, bottom red
-                bgClass = "";
-                bgStyle = {
-                  backgroundImage: "linear-gradient(to bottom, rgb(5 150 105) 0%, rgb(5 150 105) 50%, rgb(185 28 28) 50%, rgb(185 28 28) 100%)",
-                  opacity: 0.8
-                };
-              } else if (amStatus === "open" && pmStatus === "full") {
-                // PM full, AM open = hard split: top red, bottom green
-                bgClass = "";
-                bgStyle = {
-                  backgroundImage: "linear-gradient(to bottom, rgb(185 28 28) 0%, rgb(185 28 28) 50%, rgb(5 150 105) 50%, rgb(5 150 105) 100%)",
-                  opacity: 0.8
-                };
-              } else if (status === "closed") {
-                bgClass = "bg-stone-950";
-                bgStyle = { opacity: 0.3, borderWidth: "1px", borderColor: "rgb(55 65 81)" };
-              } else if (status === "blocked") {
-                bgClass = "bg-stone-700";
-                bgStyle = { opacity: 0.5 };
-              } else {
-                // Both open or no booking data = available
-                bgClass = "bg-emerald-600";
-              }
+            if (allDayStatus === "full" || overnightStatus === "full") {
+              // All Day or Overnight blocks entire day
+              bgClass = "bg-red-700";
+              bgStyle = { opacity: 0.6 };
+            } else if (amStatus === "full" && pmStatus === "full") {
+              // Both half-day slots full = day full
+              bgClass = "bg-red-700";
+              bgStyle = { opacity: 0.6 };
+            } else if (amStatus === "full" && pmStatus === "open") {
+              // AM full, PM open = hard split: top green, bottom red
+              bgClass = "";
+              bgStyle = {
+                backgroundImage: "linear-gradient(to bottom, rgb(5 150 105) 0%, rgb(5 150 105) 50%, rgb(185 28 28) 50%, rgb(185 28 28) 100%)",
+                opacity: 0.8
+              };
+            } else if (amStatus === "open" && pmStatus === "full") {
+              // PM full, AM open = hard split: top red, bottom green
+              bgClass = "";
+              bgStyle = {
+                backgroundImage: "linear-gradient(to bottom, rgb(185 28 28) 0%, rgb(185 28 28) 50%, rgb(5 150 105) 50%, rgb(5 150 105) 100%)",
+                opacity: 0.8
+              };
+            } else if (status === "closed") {
+              bgClass = "bg-stone-950";
+              bgStyle = { opacity: 0.3, borderWidth: "1px", borderColor: "rgb(55 65 81)" };
+            } else if (status === "blocked") {
+              bgClass = "bg-stone-700";
+              bgStyle = { opacity: 0.5 };
+            } else if (!isPast) {
+              // Both open or no booking data = available (only apply emerald for future dates)
+              bgClass = "bg-emerald-600";
             }
 
             return (
@@ -222,7 +221,7 @@ function AvailabilityCalendar({
                 key={cell.date}
                 disabled={!canSelect}
                 onClick={() => canSelect && onSelectDate(cell.date!)}
-                style={!isPast && canSelect ? bgStyle : undefined}
+                style={bgStyle}
                 title={
                   status === "closed" && !isPast
                     ? `${cell.date}: Out of season`
