@@ -258,9 +258,9 @@ export default function MyBookings() {
   const today = new Date().toISOString().split("T")[0];
 
   const filtered = (data ?? []).filter((b: any) => {
-    const bStart = b.startDate instanceof Date ? b.startDate.toISOString().split("T")[0] : String(b.startDate ?? "");
-    if (tab === "upcoming") return bStart >= today && b.status !== "cancelled";
-    if (tab === "past") return bStart < today || b.status === "completed" || b.status === "cancelled";
+    const bEnd = b.endDate instanceof Date ? b.endDate.toISOString().split("T")[0] : String(b.endDate ?? "");
+    if (tab === "upcoming") return bEnd >= today;
+    if (tab === "past") return bEnd < today;
     return true;
   });
 
