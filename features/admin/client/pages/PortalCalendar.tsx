@@ -20,7 +20,6 @@ import { trpc } from '@shared/lib/trpc';
 import { useState, useMemo, useEffect } from 'react';
 import { toast } from 'sonner';
 import { Settings } from 'lucide-react';
-import { format12HourTime } from '@features/portal/client/utils/timeFormat';
 import MasterCalendarSettingsPanel from '../components/MasterCalendarSettingsPanel';
 
 // ---------------------------------------------------------------------------
@@ -32,12 +31,6 @@ function toDateStr(d: Date): string {
   const m = String(d.getMonth() + 1).padStart(2, '0');
   const day = String(d.getDate()).padStart(2, '0');
   return `${y}-${m}-${day}`;
-}
-
-// Parse YYYY-MM-DD safely without timezone conversion
-function parseYYYYMMDD(dateStr: string): Date {
-  const [year, month, day] = dateStr.split('-').map(Number);
-  return new Date(year, month - 1, day);
 }
 
 function getMonthDays(year: number, month: number): (Date | null)[] {
@@ -57,68 +50,27 @@ const MONTH_NAMES = [
 ];
 const DAY_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
-const TIME_SLOT_LABELS: Record<string, string> = {
-  AM: 'AM',
-  PM: 'PM',
-  ALL_DAY: 'All Day',
-  OVERNIGHT: 'Overnight',
-};
-
-// Helper to determine overnight span position and build booking label (FIX 3)
-function getBookingLabel(booking: any, dateStr: string): string {
-  const propertyName = booking.property?.name ?? booking.propertyName ?? 'Property';
-  const timeSlot = booking.timeSlot || 'AM';
-
-  // If not an overnight booking, use simple format
-  if (timeSlot !== 'OVERNIGHT') {
-    const slotLabel = TIME_SLOT_LABELS[timeSlot] || timeSlot;
-    return `${propertyName} ${slotLabel} Reserved`;
-  }
-
-  // For OVERNIGHT bookings, determine position in span
-  const start = booking.startDate instanceof Date
-    ? booking.startDate.toISOString().split('T')[0]
-    : String(booking.startDate).split('T')[0];
-  const end = booking.endDate instanceof Date
-    ? booking.endDate.toISOString().split('T')[0]
-    : String(booking.endDate).split('T')[0];
-
-  if (dateStr === start && start === end) {
-    // Single-day overnight (rare, but possible)
-    return `${propertyName} All Day Reserved`;
-  } else if (dateStr === start) {
-    return `${propertyName} PM and Overnight`;
-  } else if (dateStr === end) {
-    return `${propertyName} AM and Checkout`;
-  } else {
-    // Middle days
-    return `${propertyName} All Day and Overnight`;
-  }
-}
-
 // ---------------------------------------------------------------------------
 // Event type config
 // ---------------------------------------------------------------------------
 
-type EventKind = 'wedding' | 'corporate' | 'hunt_fish' | 'blocked' | 'member_event';
+type EventKind = 'wedding' | 'corporate' | 'hunt_fish' | 'blocked';
 
 const EVENT_CONFIG: Record<EventKind, { label: string; dot: string; text: string }> = {
-  wedding:       { label: 'Wedding',    dot: '#9B4D19', text: 'text-[#9B4D19]' },
-  corporate:     { label: 'Corporate',  dot: '#576276', text: 'text-[#576276]' },
-  hunt_fish:     { label: 'Hunt/Fish',  dot: '#6B7250', text: 'text-[#6B7250]' },
-  blocked:       { label: 'Hold/Block', dot: '#57544E', text: 'text-[#BABAAE]' },
-  member_event:  { label: 'Member Event', dot: '#BABAAE', text: 'text-[#BABAAE]' },
+  wedding:    { label: 'Wedding',    dot: '#9B4D19', text: 'text-[#9B4D19]' },
+  corporate:  { label: 'Corporate',  dot: '#576276', text: 'text-[#576276]' },
+  hunt_fish:  { label: 'Hunt/Fish',  dot: '#6B7250', text: 'text-[#6B7250]' },
+  blocked:    { label: 'Hold/Block', dot: '#57544E', text: 'text-[#BABAAE]' },
 };
 
 type FilterKey = EventKind | 'all';
 
 const FILTER_CHIPS: { key: FilterKey; label: string }[] = [
-  { key: 'all',           label: 'All' },
-  { key: 'wedding',       label: 'Weddings' },
-  { key: 'corporate',     label: 'Corporate' },
-  { key: 'hunt_fish',     label: 'Hunt/Fish' },
-  { key: 'member_event',  label: 'Member Events' },
-  { key: 'blocked',       label: 'Blocks/Holds' },
+  { key: 'all',       label: 'All' },
+  { key: 'wedding',   label: 'Weddings' },
+  { key: 'corporate', label: 'Corporate' },
+  { key: 'hunt_fish', label: 'Hunt/Fish' },
+  { key: 'blocked',   label: 'Blocks/Holds' },
 ];
 
 // ---------------------------------------------------------------------------
@@ -806,12 +758,6 @@ export default function PortalCalendar() {
     { staleTime: 30_000 }, // Keep data fresh for 30 seconds, prevent aggressive refetch on window focus
   );
 
-  // Query member bookings (FIX 2)
-  const { data: memberBookingsData } = trpc.propertyBooking.bookings.myBookings.useQuery(
-    {},
-    { staleTime: 30_000 },
-  );
-
   // Normalise API data into flat CalEvent[]
   const allEvents: CalEvent[] = useMemo(() => {
     if (!data) return [];
@@ -829,9 +775,6 @@ export default function PortalCalendar() {
     (data.blocked ?? []).forEach((e: any) =>
       result.push({ id: e.id, title: e.title ?? e.reasonNotes ?? (e.reason && e.reason !== 'other' ? e.reason : 'Hold'), startDate: e.startDate, endDate: e.endDate ?? e.startDate, kind: 'blocked', notes: e.reasonNotes }),
     );
-    (data.events ?? []).forEach((e: any) =>
-      result.push({ id: e.id, title: e.title, startDate: e.startDate, endDate: e.endDate, kind: 'member_event', notes: e.notes }),
-    );
 
     return result;
   }, [data]);
@@ -845,9 +788,8 @@ export default function PortalCalendar() {
   const eventsByDate = useMemo(() => {
     const map = new Map<string, CalEvent[]>();
     visibleEvents.forEach((ev) => {
-      // Use safe date parsing to avoid timezone issues
-      const start = parseYYYYMMDD(ev.startDate);
-      const end = parseYYYYMMDD(ev.endDate);
+      const start = new Date(ev.startDate + 'T00:00:00');
+      const end = new Date(ev.endDate + 'T00:00:00');
       const cur = new Date(start);
       while (cur <= end) {
         const key = toDateStr(cur);
@@ -859,7 +801,7 @@ export default function PortalCalendar() {
     return map;
   }, [visibleEvents]);
 
-  // Build a map: dateStr → inventory object with per-slot statuses (FIX 1)
+  // Build a map: dateStr → inventory object with per-slot statuses
   const inventoryByDate = useMemo(() => {
     const map = new Map<string, any>();
     (data?.inventories ?? []).forEach((inv: any) => {
@@ -869,29 +811,6 @@ export default function PortalCalendar() {
     });
     return map;
   }, [data?.inventories]);
-
-  // Build a map: dateStr → member bookings (confirmed/checked_in only, FIX 2)
-  const bookingsByDate = useMemo(() => {
-    const map = new Map<string, any[]>();
-    (memberBookingsData ?? []).forEach((booking: any) => {
-      // Skip cancelled bookings
-      if (booking.status === 'cancelled') return;
-      // Include confirmed and checked_in
-      if (!['confirmed', 'checked_in'].includes(booking.status)) return;
-
-      const start = parseYYYYMMDD(booking.startDate instanceof Date ? booking.startDate.toISOString().split('T')[0] : String(booking.startDate).split('T')[0]);
-      const end = parseYYYYMMDD(booking.endDate instanceof Date ? booking.endDate.toISOString().split('T')[0] : String(booking.endDate).split('T')[0]);
-
-      const cur = new Date(start);
-      while (cur <= end) {
-        const key = toDateStr(cur);
-        if (!map.has(key)) map.set(key, []);
-        map.get(key)!.push(booking);
-        cur.setDate(cur.getDate() + 1);
-      }
-    });
-    return map;
-  }, [memberBookingsData]);
 
   function prevMonth() {
     if (month === 0) { setMonth(11); setYear((y) => y - 1); }
@@ -1018,7 +937,6 @@ export default function PortalCalendar() {
               const shown = dayEvents.slice(0, 2);
               const overflow = dayEvents.length - shown.length;
               const inventory = inventoryByDate.get(dateStr);
-              const dayBookings = bookingsByDate.get(dateStr) ?? [];
 
               // FIX 1: Per-slot half shading (hard split, no gradient)
               const renderInventoryShading = () => {
@@ -1085,32 +1003,12 @@ export default function PortalCalendar() {
                       >
                         {day.getDate()}
                       </span>
-                      {dayEvents.length === 0 && dayBookings.length === 0 && (
+                      {dayEvents.length === 0 && (
                         <span className="opacity-0 group-hover:opacity-100 font-sans text-[9px] tracking-[0.1em] uppercase text-[#57544E] transition-opacity">
                           + add
                         </span>
                       )}
                     </div>
-
-                    {/* Member booking chips (FIX 2) */}
-                    {dayBookings.length > 0 && (
-                      <div className="space-y-0.5 mb-1">
-                        {dayBookings.slice(0, 1).map((booking, i) => (
-                          <div
-                            key={`booking-${booking.id}-${i}`}
-                            className="flex items-center gap-1 px-1.5 py-0.5 bg-[#9B4D19]/40 border border-[#9B4D19]/60 rounded text-left text-[9px] text-[#E0D3BD] truncate leading-tight"
-                            title={getBookingLabel(booking, dateStr)}
-                          >
-                            <span className="truncate">{getBookingLabel(booking, dateStr)}</span>
-                          </div>
-                        ))}
-                        {dayBookings.length > 1 && (
-                          <span className="font-sans text-[9px] text-[#9B4D19] pl-1.5">
-                            +{dayBookings.length - 1} booking{dayBookings.length > 2 ? 's' : ''}
-                          </span>
-                        )}
-                      </div>
-                    )}
 
                     {/* Event dots */}
                     <div className="space-y-0.5">
