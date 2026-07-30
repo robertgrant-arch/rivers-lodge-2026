@@ -930,6 +930,36 @@ export default function PropertyDetail() {
           {selectedStart && (
             <Card className="bg-stone-800 border-stone-700">
               <CardContent className="pt-4">
+                {/* Check if selected slot is actually available for the selected date(s) */}
+                {canBook && (() => {
+                  // Validate that selected slot is available
+                  let hasUnavailableSlot = false;
+                  let d = new Date(selectedStart!);
+                  const e = new Date(selectedEnd!);
+                  const slotMap: Record<string, string> = { AM: "amStatus", PM: "pmStatus", AllDay: "allDayStatus", Overnight: "overnightStatus" };
+                  const statusKey = slotMap[activeSlot];
+
+                  while (d <= e) {
+                    const dateStr = d.toISOString().split("T")[0];
+                    const avail = availMap.get(dateStr);
+                    if (avail && (avail as any)[statusKey] === "full") {
+                      hasUnavailableSlot = true;
+                      break;
+                    }
+                    d.setDate(d.getDate() + 1);
+                  }
+
+                  return hasUnavailableSlot && (
+                    <div className="mb-4 flex items-start gap-3 p-3 bg-red-900/20 border border-red-800 rounded-lg text-red-300">
+                      <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
+                      <div className="text-sm">
+                        <p className="font-medium">This slot is not available for the selected date(s).</p>
+                        <p className="text-xs text-red-400 mt-1">Please select a different date or time slot.</p>
+                      </div>
+                    </div>
+                  );
+                })()}
+
                 <div className="flex items-center justify-between gap-4">
                   <div className="space-y-0.5">
                     <p className="text-sm text-stone-300">
@@ -961,15 +991,34 @@ export default function PropertyDetail() {
                     >
                       Clear
                     </Button>
-                    {canBook && (
-                      <Button
-                        size="sm"
-                        onClick={() => setBookingOpen(true)}
-                        className="bg-amber-700 hover:bg-amber-600 text-white"
-                      >
-                        Book {activeSlot === "AllDay" ? "All Day" : activeSlot}
-                      </Button>
-                    )}
+                    {canBook && (() => {
+                      let isBookable = true;
+                      let d = new Date(selectedStart!);
+                      const e = new Date(selectedEnd!);
+                      const slotMap: Record<string, string> = { AM: "amStatus", PM: "pmStatus", AllDay: "allDayStatus", Overnight: "overnightStatus" };
+                      const statusKey = slotMap[activeSlot];
+
+                      while (d <= e) {
+                        const dateStr = d.toISOString().split("T")[0];
+                        const avail = availMap.get(dateStr);
+                        if (avail && (avail as any)[statusKey] === "full") {
+                          isBookable = false;
+                          break;
+                        }
+                        d.setDate(d.getDate() + 1);
+                      }
+
+                      return (
+                        <Button
+                          size="sm"
+                          onClick={() => setBookingOpen(true)}
+                          disabled={!isBookable}
+                          className="bg-amber-700 hover:bg-amber-600 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          Book {activeSlot === "AllDay" ? "All Day" : activeSlot}
+                        </Button>
+                      );
+                    })()}
                   </div>
                 </div>
               </CardContent>
