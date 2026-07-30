@@ -167,7 +167,7 @@ function AvailabilityCalendar({
           {days.map((cell, i) => {
             if (!cell.date) return <div key={i} />;
 
-            const avail = availMap.get(cell.date);
+            const avail = availMap.get(toDateStr(cell.date));
             const status = avail?.status ?? (cell.date < todayStr ? "closed" : "open");
             const isPast = cell.date < todayStr;
             const isSelected =
@@ -640,7 +640,7 @@ export default function PropertyDetail() {
 
   const availMap = useMemo(() => {
     const m = new Map<string, any>();
-    availability?.forEach((d: any) => m.set(d.date, d));
+    availability?.forEach((d: any) => m.set(toDateStr(d.date), d));
     return m;
   }, [availability]);
 
