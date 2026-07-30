@@ -167,7 +167,24 @@ function AvailabilityCalendar({
           {days.map((cell, i) => {
             if (!cell.date) return <div key={i} />;
 
-            const avail = availMap.get(toDateStr(cell.date));
+            const lookupKey = toDateStr(cell.date);
+            const avail = availMap.get(lookupKey);
+
+            // DEBUG: Log specific date
+            if (cell.date === '2026-08-01') {
+              console.debug('[AvailabilityCalendar] Cell 2026-08-01:', {
+                lookupKey,
+                availMapSize: availMap.size,
+                foundInMap: !!avail,
+                availObject: avail,
+                amStatus: avail?.amStatus,
+                pmStatus: avail?.pmStatus,
+                availableSpots: avail?.availableSpots,
+                bookedCount: avail?.bookedCount,
+                status: avail?.status,
+              });
+            }
+
             const status = avail?.status ?? (cell.date < todayStr ? "closed" : "open");
             const isPast = cell.date < todayStr;
             const isSelected =
@@ -641,6 +658,19 @@ export default function PropertyDetail() {
   const availMap = useMemo(() => {
     const m = new Map<string, any>();
     availability?.forEach((d: any) => m.set(toDateStr(d.date), d));
+
+    // DEBUG: Log availability data
+    if (availability) {
+      console.debug('[PropertyDetail] availMap built:', {
+        availLength: availability.length,
+        mapSize: m.size,
+        mapKeys: Array.from(m.keys()),
+        availRecord_20260801: availability.find((d: any) => toDateStr(d.date) === '2026-08-01'),
+        firstRecord: availability[0],
+        sampleRecord: availability.find((d: any) => toDateStr(d.date) > '2026-07-31') // first Aug record
+      });
+    }
+
     return m;
   }, [availability]);
 
