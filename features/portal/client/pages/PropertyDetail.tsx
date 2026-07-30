@@ -97,30 +97,17 @@ function AvailabilityCalendar({
   selectedStart,
   selectedEnd,
   onSelectDate,
+  availMap,
 }: {
   propertyId: number;
   selectedStart: string | null;
   selectedEnd: string | null;
   onSelectDate: (date: string) => void;
+  availMap: Map<string, any>;
 }) {
   const today = new Date();
   const [viewYear, setViewYear] = useState(today.getFullYear());
   const [viewMonth, setViewMonth] = useState(today.getMonth());
-
-  const monthStart = `${viewYear}-${String(viewMonth + 1).padStart(2, "0")}-01`;
-  const lastDay = new Date(viewYear, viewMonth + 1, 0).getDate();
-  const monthEnd = `${viewYear}-${String(viewMonth + 1).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
-
-  const { data: availability, isLoading } = trpc.propertyBooking.properties.availability.useQuery(
-    { propertyId, startDate: monthStart, endDate: monthEnd },
-    { staleTime: 2 * 60 * 1000 },
-  );
-
-  const availMap = useMemo(() => {
-    const m = new Map<string, any>();
-    availability?.forEach((d: any) => m.set(d.date, d));
-    return m;
-  }, [availability]);
 
   const firstDayOfWeek = new Date(viewYear, viewMonth, 1).getDay();
   const days: Array<{ date: string | null; day: number | null }> = [];
@@ -164,7 +151,7 @@ function AvailabilityCalendar({
       </div>
 
       {/* Day cells */}
-      {isLoading ? (
+      {availMap.size === 0 ? (
         <div className="flex justify-center py-8">
           <Loader2 className="w-5 h-5 text-amber-500 animate-spin" />
         </div>
@@ -514,11 +501,28 @@ export default function PropertyDetail() {
   const [selectedEnd, setSelectedEnd] = useState<string | null>(null);
   const [bookingOpen, setBookingOpen] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<"AM" | "PM" | "AllDay" | "Overnight">("AM");
+  const [viewYear, setViewYear] = useState(new Date().getFullYear());
+  const [viewMonth, setViewMonth] = useState(new Date().getMonth());
 
   const { data, isLoading, error } = trpc.propertyBooking.properties.detail.useQuery(
     { id: propertyId },
     { enabled: propertyId > 0 },
   );
+
+  const monthStart = `${viewYear}-${String(viewMonth + 1).padStart(2, "0")}-01`;
+  const lastDay = new Date(viewYear, viewMonth + 1, 0).getDate();
+  const monthEnd = `${viewYear}-${String(viewMonth + 1).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
+
+  const { data: availability } = trpc.propertyBooking.properties.availability.useQuery(
+    { propertyId, startDate: monthStart, endDate: monthEnd },
+    { staleTime: 2 * 60 * 1000, enabled: propertyId > 0 },
+  );
+
+  const availMap = useMemo(() => {
+    const m = new Map<string, any>();
+    availability?.forEach((d: any) => m.set(d.date, d));
+    return m;
+  }, [availability]);
 
   const availableModes = useMemo(() => {
     if (!data) return ["AM", "PM", "AllDay"];
@@ -824,6 +828,7 @@ export default function PropertyDetail() {
               selectedStart={selectedStart}
               selectedEnd={selectedEnd}
               onSelectDate={handleDateSelect}
+              availMap={availMap}
             />
           </div>
 
