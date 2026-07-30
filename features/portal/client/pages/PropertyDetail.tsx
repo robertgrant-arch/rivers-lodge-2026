@@ -169,7 +169,10 @@ function AvailabilityCalendar({
 
             const lookupKey = String(cell.date).slice(0, 10);
             const avail = availMap.get(lookupKey);
-            if (cell.date === '2026-08-01') console.debug('CELL LOOKUP', lookupKey);
+            if (cell.date === '2026-08-01') {
+              console.debug('CELL LOOKUP', lookupKey);
+              console.debug('8/1 AVAIL OBJECT', avail);
+            }
             const status = avail?.status ?? (cell.date < todayStr ? "closed" : "open");
             const isPast = cell.date < todayStr;
             const isSelected =
@@ -185,6 +188,10 @@ function AvailabilityCalendar({
             const allDayStatus = avail?.allDayStatus ?? "open";
             const overnightStatus = avail?.overnightStatus ?? "open";
 
+            if (cell.date === '2026-08-01') {
+              console.debug('8/1 SLOT STATUSES', { amStatus, pmStatus, allDayStatus, overnightStatus });
+            }
+
             // Derive activeStatus from selectedSlot
             const slotStatusMap: Record<string, string> = {
               AM: amStatus,
@@ -193,6 +200,11 @@ function AvailabilityCalendar({
               Overnight: overnightStatus,
             };
             const activeStatus = slotStatusMap[selectedSlot] ?? "open";
+
+            if (cell.date === '2026-08-01') {
+              console.debug('8/1 SELECTED SLOT', selectedSlot);
+              console.debug('8/1 ACTIVE STATUS', activeStatus);
+            }
 
             // canSelect uses ONLY the selected slot's status
             const canSelect = !isPast && status !== "blocked" && status !== "closed" && activeStatus === "open";
@@ -239,6 +251,12 @@ function AvailabilityCalendar({
               bgStyle = { opacity: 0.6 };
             }
 
+            if (cell.date === '2026-08-01') {
+              console.debug('8/1 bgClass', bgClass);
+              console.debug('8/1 bgStyle', bgStyle);
+              console.debug('8/1 canSelect', canSelect);
+            }
+
             return (
               <button
                 key={cell.date}
@@ -260,8 +278,9 @@ function AvailabilityCalendar({
                   relative aspect-square rounded-lg text-xs font-medium flex items-center justify-center
                   transition-all duration-100
                   ${isPast ? "text-stone-600 bg-transparent cursor-not-allowed" : ""}
-                  ${!isPast && canSelect ? bgClass : ""}
-                  ${!isPast && !canSelect ? "bg-stone-700 cursor-not-allowed" : ""}
+                  ${!isPast && bgClass ? bgClass : ""}
+                  ${!isPast && !bgClass ? "bg-stone-700" : ""}
+                  ${!isPast && !canSelect ? "cursor-not-allowed" : ""}
                   ${isSelected && !isStart && !isEnd ? "ring-1 ring-amber-500" : ""}
                   ${isStart || isEnd ? "ring-2 ring-amber-400 bg-amber-700 text-white" : ""}
                 `}
@@ -651,6 +670,12 @@ export default function PropertyDetail() {
       });
     }
     console.debug('AVAILMAP KEYS', Array.from(m.keys()));
+    const val8_1 = m.get('2026-08-01');
+    if (val8_1) {
+      console.debug('AVAILMAP 8/1 FULL RECORD', val8_1);
+      console.debug('AVAILMAP 8/1 pmStatus', val8_1.pmStatus);
+      console.debug('AVAILMAP 8/1 amStatus', val8_1.amStatus);
+    }
     return m;
   }, [availability]);
 
