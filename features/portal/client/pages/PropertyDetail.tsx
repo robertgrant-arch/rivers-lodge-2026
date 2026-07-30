@@ -67,7 +67,12 @@ const ACTIVITY_OPTIONS = [
 
 /** Normalise a date value (Date object, ISO string, or YYYY-MM-DD string) to a YYYY-MM-DD string */
 function toDateStr(d: string | Date | unknown): string {
-  if (d instanceof Date) return d.toISOString().split("T")[0];
+  if (d instanceof Date) {
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  }
   if (typeof d === "string") return d.split("T")[0]; // handles ISO strings too
   return String(d).split("T")[0];
 }
@@ -128,7 +133,7 @@ function AvailabilityCalendar({
     else setViewMonth(m => m + 1);
   };
 
-  const todayStr = today.toISOString().split("T")[0];
+  const todayStr = toDateStr(today);
 
   return (
     <div className="bg-stone-900 border border-stone-700 rounded-xl p-4 space-y-3">
@@ -962,7 +967,7 @@ export default function PropertyDetail() {
                   const statusKey = slotMap[activeSlot];
 
                   while (d <= e) {
-                    const dateStr = d.toISOString().split("T")[0];
+                    const dateStr = toDateStr(d);
                     const avail = availMap.get(dateStr);
                     if (avail && (avail as any)[statusKey] === "full") {
                       hasUnavailableSlot = true;
@@ -1021,7 +1026,7 @@ export default function PropertyDetail() {
                       const statusKey = slotMap[activeSlot];
 
                       while (d <= e) {
-                        const dateStr = d.toISOString().split("T")[0];
+                        const dateStr = toDateStr(d);
                         const avail = availMap.get(dateStr);
                         if (avail && (avail as any)[statusKey] === "full") {
                           isBookable = false;
