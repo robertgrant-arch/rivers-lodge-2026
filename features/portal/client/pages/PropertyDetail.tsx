@@ -190,25 +190,39 @@ function AvailabilityCalendar({
             const anySlotOpen = amStatus === "open" || pmStatus === "open" || allDayStatus === "open" || overnightStatus === "open";
             const canSelect = !isPast && status !== "blocked" && status !== "closed" && anySlotOpen;
 
-            // Determine background: solid or half-shaded based on per-slot availability
+            // Determine background: solid or hard-split half-shaded based on per-slot availability
             let bgClass = "bg-stone-700";
+            let bgStyle: React.CSSProperties = {};
+
             if (!isPast) {
               if (allDayStatus === "full" || overnightStatus === "full") {
                 // All Day or Overnight blocks entire day
-                bgClass = "bg-red-700 opacity-60";
+                bgClass = "bg-red-700";
+                bgStyle = { opacity: 0.6 };
               } else if (amStatus === "full" && pmStatus === "full") {
                 // Both half-day slots full = day full
-                bgClass = "bg-red-700 opacity-60";
+                bgClass = "bg-red-700";
+                bgStyle = { opacity: 0.6 };
               } else if (amStatus === "full" && pmStatus === "open") {
-                // AM full, PM open = half-shaded (bottom red, top green)
-                bgClass = "bg-gradient-to-b from-emerald-600 to-red-700 opacity-80";
+                // AM full, PM open = hard split: top green, bottom red
+                bgClass = "";
+                bgStyle = {
+                  backgroundImage: "linear-gradient(to bottom, rgb(5 150 105) 0%, rgb(5 150 105) 50%, rgb(185 28 28) 50%, rgb(185 28 28) 100%)",
+                  opacity: 0.8
+                };
               } else if (amStatus === "open" && pmStatus === "full") {
-                // AM open, PM full = half-shaded (top red, bottom green)
-                bgClass = "bg-gradient-to-b from-red-700 to-emerald-600 opacity-80";
+                // PM full, AM open = hard split: top red, bottom green
+                bgClass = "";
+                bgStyle = {
+                  backgroundImage: "linear-gradient(to bottom, rgb(185 28 28) 0%, rgb(185 28 28) 50%, rgb(5 150 105) 50%, rgb(5 150 105) 100%)",
+                  opacity: 0.8
+                };
               } else if (status === "closed") {
-                bgClass = "bg-stone-950 opacity-30 border border-stone-700";
+                bgClass = "bg-stone-950";
+                bgStyle = { opacity: 0.3, borderWidth: "1px", borderColor: "rgb(55 65 81)" };
               } else if (status === "blocked") {
-                bgClass = "bg-stone-700 opacity-50";
+                bgClass = "bg-stone-700";
+                bgStyle = { opacity: 0.5 };
               } else {
                 // Both open or no booking data = available
                 bgClass = "bg-emerald-600";
@@ -220,6 +234,7 @@ function AvailabilityCalendar({
                 key={cell.date}
                 disabled={!canSelect}
                 onClick={() => canSelect && onSelectDate(cell.date!)}
+                style={!isPast && canSelect ? bgStyle : undefined}
                 title={
                   status === "closed" && !isPast
                     ? `${cell.date}: Out of season`
@@ -236,8 +251,8 @@ function AvailabilityCalendar({
                   transition-all duration-100
                   ${isPast ? "text-stone-600 bg-transparent cursor-not-allowed" : ""}
                   ${!isPast && canSelect ? bgClass : ""}
-                  ${!isPast && !canSelect ? "bg-stone-700 cursor-not-allowed opacity-50" : ""}
-                  ${isSelected && !isStart && !isEnd ? "ring-1 ring-amber-500 bg-amber-900/40" : ""}
+                  ${!isPast && !canSelect ? "bg-stone-700 cursor-not-allowed" : ""}
+                  ${isSelected && !isStart && !isEnd ? "ring-1 ring-amber-500" : ""}
                   ${isStart || isEnd ? "ring-2 ring-amber-400 bg-amber-700 text-white" : ""}
                 `}
               >
@@ -250,17 +265,30 @@ function AvailabilityCalendar({
 
       {/* Legend */}
       <div className="flex flex-wrap gap-3 pt-1 border-t border-stone-800">
-        {[
-          { color: "bg-emerald-600", label: "Available" },
-          { color: "bg-red-700 opacity-60", label: "Full" },
-          { color: "bg-stone-700 opacity-50", label: "Blocked" },
-          { color: "bg-stone-950 opacity-30 border border-stone-700", label: "Out of season" },
-        ].map((item) => (
-          <span key={item.label} className="flex items-center gap-1 text-xs text-stone-400">
-            <span className={`w-3 h-3 rounded ${item.color}`} />
-            {item.label}
-          </span>
-        ))}
+        <span className="flex items-center gap-1 text-xs text-stone-400">
+          <span className="w-3 h-3 rounded bg-emerald-600" />
+          Available
+        </span>
+        <span className="flex items-center gap-1 text-xs text-stone-400">
+          <div className="w-3 h-3 rounded" style={{backgroundImage: "linear-gradient(to bottom, rgb(5 150 105) 0%, rgb(5 150 105) 50%, rgb(185 28 28) 50%, rgb(185 28 28) 100%)"}} />
+          AM Full, PM Open
+        </span>
+        <span className="flex items-center gap-1 text-xs text-stone-400">
+          <div className="w-3 h-3 rounded" style={{backgroundImage: "linear-gradient(to bottom, rgb(185 28 28) 0%, rgb(185 28 28) 50%, rgb(5 150 105) 50%, rgb(5 150 105) 100%)"}} />
+          PM Full, AM Open
+        </span>
+        <span className="flex items-center gap-1 text-xs text-stone-400">
+          <span className="w-3 h-3 rounded bg-red-700 opacity-60" />
+          Full
+        </span>
+        <span className="flex items-center gap-1 text-xs text-stone-400">
+          <span className="w-3 h-3 rounded bg-stone-700 opacity-50" />
+          Blocked
+        </span>
+        <span className="flex items-center gap-1 text-xs text-stone-400">
+          <span className="w-3 h-3 rounded bg-stone-950 opacity-30 border border-stone-700" />
+          Out of season
+        </span>
       </div>
     </div>
   );

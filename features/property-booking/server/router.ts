@@ -871,9 +871,30 @@ export const propertyBookingRouter = router({
           if (status === "confirmed") {
             let d = new Date(input.startDate);
             const e = new Date(input.endDate);
+            let dayCount = 0;
+            const totalRangeDays = Math.round((e.getTime() - new Date(input.startDate).getTime()) / (1000 * 60 * 60 * 24)) + 1;
+
             while (d <= e) {
-              await updateInventory(tx, input.propertyId, d.toISOString().split("T")[0], timeSlot as any, 1);
+              const dateStr = d.toISOString().split("T")[0];
+              let slotToUpdate = timeSlot as any;
+
+              // For overnight bookings spanning multiple dates, differentiate first/last/middle dates
+              if (timeSlot === "OVERNIGHT" && totalRangeDays > 1) {
+                if (dayCount === 0) {
+                  // First date: overnight takes the PM slot
+                  slotToUpdate = "PM";
+                } else if (dayCount === totalRangeDays - 1) {
+                  // Last date: overnight takes the AM slot
+                  slotToUpdate = "AM";
+                } else {
+                  // Middle dates: overnight takes the entire day
+                  slotToUpdate = "ALL_DAY";
+                }
+              }
+
+              await updateInventory(tx, input.propertyId, dateStr, slotToUpdate, 1);
               d.setDate(d.getDate() + 1);
+              dayCount++;
             }
           }
 
@@ -1001,10 +1022,30 @@ export const propertyBookingRouter = router({
         if (statusesWithReservedInventory.includes(prevStatus)) {
           let d = new Date(booking.startDate);
           const e = new Date(booking.endDate);
+          let dayCount = 0;
+          const totalRangeDays = Math.round((e.getTime() - new Date(booking.startDate).getTime()) / (1000 * 60 * 60 * 24)) + 1;
+
           while (d <= e) {
             const dateStr = d.toISOString().split("T")[0];
-            await updateInventory(db, booking.propertyId, dateStr, booking.timeSlot as any, -1);
+            let slotToRelease = booking.timeSlot as any;
+
+            // For overnight bookings spanning multiple dates, use matching slot logic from creation
+            if (booking.timeSlot === "OVERNIGHT" && totalRangeDays > 1) {
+              if (dayCount === 0) {
+                // First date: overnight took the PM slot
+                slotToRelease = "PM";
+              } else if (dayCount === totalRangeDays - 1) {
+                // Last date: overnight took the AM slot
+                slotToRelease = "AM";
+              } else {
+                // Middle dates: overnight took the entire day
+                slotToRelease = "ALL_DAY";
+              }
+            }
+
+            await updateInventory(db, booking.propertyId, dateStr, slotToRelease, -1);
             d.setDate(d.getDate() + 1);
+            dayCount++;
           }
         }
 
