@@ -108,6 +108,7 @@ function AvailabilityCalendar({
   const [viewYear, setViewYear] = useState(today.getFullYear());
   const [viewMonth, setViewMonth] = useState(today.getMonth());
 
+  const lastDay = new Date(viewYear, viewMonth + 1, 0).getDate();
   const firstDayOfWeek = new Date(viewYear, viewMonth, 1).getDay();
   const days: Array<{ date: string | null; day: number | null }> = [];
   for (let i = 0; i < firstDayOfWeek; i++) days.push({ date: null, day: null });
