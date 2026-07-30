@@ -57,6 +57,45 @@ const MONTH_NAMES = [
 ];
 const DAY_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
+const TIME_SLOT_LABELS: Record<string, string> = {
+  AM: 'AM',
+  PM: 'PM',
+  ALL_DAY: 'All Day',
+  OVERNIGHT: 'Overnight',
+};
+
+// Helper to determine overnight span position and build booking label (FIX 3)
+function getBookingLabel(booking: any, dateStr: string): string {
+  const propertyName = booking.property?.name ?? booking.propertyName ?? 'Property';
+  const timeSlot = booking.timeSlot || 'AM';
+
+  // If not an overnight booking, use simple format
+  if (timeSlot !== 'OVERNIGHT') {
+    const slotLabel = TIME_SLOT_LABELS[timeSlot] || timeSlot;
+    return `${propertyName} ${slotLabel} Reserved`;
+  }
+
+  // For OVERNIGHT bookings, determine position in span
+  const start = booking.startDate instanceof Date
+    ? booking.startDate.toISOString().split('T')[0]
+    : String(booking.startDate).split('T')[0];
+  const end = booking.endDate instanceof Date
+    ? booking.endDate.toISOString().split('T')[0]
+    : String(booking.endDate).split('T')[0];
+
+  if (dateStr === start && start === end) {
+    // Single-day overnight (rare, but possible)
+    return `${propertyName} All Day Reserved`;
+  } else if (dateStr === start) {
+    return `${propertyName} PM and Overnight`;
+  } else if (dateStr === end) {
+    return `${propertyName} AM and Checkout`;
+  } else {
+    // Middle days
+    return `${propertyName} All Day and Overnight`;
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Event type config
 // ---------------------------------------------------------------------------
@@ -767,6 +806,12 @@ export default function PortalCalendar() {
     { staleTime: 30_000 }, // Keep data fresh for 30 seconds, prevent aggressive refetch on window focus
   );
 
+  // Query member bookings (FIX 2)
+  const { data: memberBookingsData } = trpc.propertyBooking.bookings.myBookings.useQuery(
+    {},
+    { staleTime: 30_000 },
+  );
+
   // Normalise API data into flat CalEvent[]
   const allEvents: CalEvent[] = useMemo(() => {
     if (!data) return [];
@@ -814,16 +859,39 @@ export default function PortalCalendar() {
     return map;
   }, [visibleEvents]);
 
-  // Build a map: dateStr → aggregated inventory status (open/partial/full across all properties)
+  // Build a map: dateStr → inventory object with per-slot statuses (FIX 1)
   const inventoryByDate = useMemo(() => {
-    const map = new Map<string, string>();
+    const map = new Map<string, any>();
     (data?.inventories ?? []).forEach((inv: any) => {
-      if (inv.date && inv.aggregatedStatus) {
-        map.set(inv.date, inv.aggregatedStatus);
+      if (inv.date) {
+        map.set(inv.date, inv);
       }
     });
     return map;
   }, [data?.inventories]);
+
+  // Build a map: dateStr → member bookings (confirmed/checked_in only, FIX 2)
+  const bookingsByDate = useMemo(() => {
+    const map = new Map<string, any[]>();
+    (memberBookingsData ?? []).forEach((booking: any) => {
+      // Skip cancelled bookings
+      if (booking.status === 'cancelled') return;
+      // Include confirmed and checked_in
+      if (!['confirmed', 'checked_in'].includes(booking.status)) return;
+
+      const start = parseYYYYMMDD(booking.startDate instanceof Date ? booking.startDate.toISOString().split('T')[0] : String(booking.startDate).split('T')[0]);
+      const end = parseYYYYMMDD(booking.endDate instanceof Date ? booking.endDate.toISOString().split('T')[0] : String(booking.endDate).split('T')[0]);
+
+      const cur = new Date(start);
+      while (cur <= end) {
+        const key = toDateStr(cur);
+        if (!map.has(key)) map.set(key, []);
+        map.get(key)!.push(booking);
+        cur.setDate(cur.getDate() + 1);
+      }
+    });
+    return map;
+  }, [memberBookingsData]);
 
   function prevMonth() {
     if (month === 0) { setMonth(11); setYear((y) => y - 1); }
@@ -949,19 +1017,51 @@ export default function PortalCalendar() {
               const dayEvents = eventsByDate.get(dateStr) ?? [];
               const shown = dayEvents.slice(0, 2);
               const overflow = dayEvents.length - shown.length;
-              const inventoryStatus = inventoryByDate.get(dateStr);
+              const inventory = inventoryByDate.get(dateStr);
+              const dayBookings = bookingsByDate.get(dateStr) ?? [];
 
-              // Shading CSS classes based on aggregated inventory status
-              const shadingClass = inventoryStatus === 'full'
-                ? 'bg-[#57544E]/60'  // Solid shade: 60% opacity of border color
-                : inventoryStatus === 'partial'
-                ? 'bg-[#57544E]/25'  // Light shade: 25% opacity of border color
-                : '';                 // Open: no background
+              // FIX 1: Per-slot half shading (hard split, no gradient)
+              const renderInventoryShading = () => {
+                if (!inventory) return null;
+
+                const amStatus = inventory.amStatus ?? 'open';
+                const pmStatus = inventory.pmStatus ?? 'open';
+                const allDayStatus = inventory.allDayStatus ?? 'open';
+                const overnightStatus = inventory.overnightStatus ?? 'open';
+
+                // If ANY slot is full, show both halves as red; otherwise green
+                const anyFull = [amStatus, pmStatus, allDayStatus, overnightStatus].includes('full');
+                if (anyFull) {
+                  // Determine split: TOP = PM/ALL_DAY/OVERNIGHT, BOTTOM = AM
+                  const topFull = [pmStatus, allDayStatus, overnightStatus].includes('full');
+                  const bottomFull = amStatus === 'full' || [allDayStatus, overnightStatus].includes('full');
+
+                  return (
+                    <div className="absolute inset-0 pointer-events-none">
+                      {/* Top half */}
+                      <div
+                        className="absolute top-0 left-0 right-0 h-1/2"
+                        style={{
+                          backgroundColor: topFull ? 'rgb(220, 38, 38)' : 'rgb(34, 197, 94)',
+                        }}
+                      />
+                      {/* Bottom half */}
+                      <div
+                        className="absolute bottom-0 left-0 right-0 h-1/2"
+                        style={{
+                          backgroundColor: bottomFull ? 'rgb(220, 38, 38)' : 'rgb(34, 197, 94)',
+                        }}
+                      />
+                    </div>
+                  );
+                }
+                return null;
+              };
 
               return (
                 <div
                   key={dateStr}
-                  className={`min-h-[100px] border-b border-r border-[#57544E] p-2 hover:bg-[#423F3B]/50 transition-colors cursor-default group ${shadingClass}`}
+                  className="relative min-h-[100px] border-b border-r border-[#57544E] p-2 hover:bg-[#423F3B]/50 transition-colors cursor-default group"
                   onClick={() => {
                     if (dayEvents.length === 0) {
                       setCreateDefaultDate(dateStr);
@@ -969,50 +1069,75 @@ export default function PortalCalendar() {
                     }
                   }}
                 >
-                  {/* Date number */}
-                  <div className="flex items-center justify-between mb-1.5">
-                    <span
-                      className={[
-                        'font-sans text-xs font-medium w-6 h-6 flex items-center justify-center',
-                        isToday
-                          ? 'rounded-full bg-[#9B4D19] text-[#E0D3BD]'
-                          : 'text-[#BABAAE]',
-                      ].join(' ')}
-                    >
-                      {day.getDate()}
-                    </span>
-                    {dayEvents.length === 0 && (
-                      <span className="opacity-0 group-hover:opacity-100 font-sans text-[9px] tracking-[0.1em] uppercase text-[#57544E] transition-opacity">
-                        + add
-                      </span>
-                    )}
-                  </div>
+                  {renderInventoryShading()}
 
-                  {/* Event dots */}
-                  <div className="space-y-0.5">
-                    {shown.map((ev, i) => {
-                      const cfg = EVENT_CONFIG[ev.kind];
-                      return (
-                        <button
-                          key={`${ev.id}-${i}`}
-                          onClick={(e) => { e.stopPropagation(); setSelectedEvent(ev); }}
-                          className="flex items-center gap-1 w-full text-left hover:opacity-80 transition-opacity"
-                        >
-                          <span
-                            className="inline-block w-1.5 h-1.5 rounded-full flex-shrink-0"
-                            style={{ backgroundColor: cfg.dot }}
-                          />
-                          <span className="font-sans text-[10px] text-[#BABAAE] truncate leading-tight">
-                            {ev.title}
-                          </span>
-                        </button>
-                      );
-                    })}
-                    {overflow > 0 && (
-                      <span className="font-sans text-[10px] text-[#57544E] pl-2.5">
-                        +{overflow} more
+                  {/* Content (relative so it sits above shading) */}
+                  <div className="relative z-10">
+                    {/* Date number */}
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span
+                        className={[
+                          'font-sans text-xs font-medium w-6 h-6 flex items-center justify-center',
+                          isToday
+                            ? 'rounded-full bg-[#9B4D19] text-[#E0D3BD]'
+                            : 'text-[#BABAAE]',
+                        ].join(' ')}
+                      >
+                        {day.getDate()}
                       </span>
+                      {dayEvents.length === 0 && dayBookings.length === 0 && (
+                        <span className="opacity-0 group-hover:opacity-100 font-sans text-[9px] tracking-[0.1em] uppercase text-[#57544E] transition-opacity">
+                          + add
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Member booking chips (FIX 2) */}
+                    {dayBookings.length > 0 && (
+                      <div className="space-y-0.5 mb-1">
+                        {dayBookings.slice(0, 1).map((booking, i) => (
+                          <div
+                            key={`booking-${booking.id}-${i}`}
+                            className="flex items-center gap-1 px-1.5 py-0.5 bg-[#9B4D19]/40 border border-[#9B4D19]/60 rounded text-left text-[9px] text-[#E0D3BD] truncate leading-tight"
+                            title={getBookingLabel(booking, dateStr)}
+                          >
+                            <span className="truncate">{getBookingLabel(booking, dateStr)}</span>
+                          </div>
+                        ))}
+                        {dayBookings.length > 1 && (
+                          <span className="font-sans text-[9px] text-[#9B4D19] pl-1.5">
+                            +{dayBookings.length - 1} booking{dayBookings.length > 2 ? 's' : ''}
+                          </span>
+                        )}
+                      </div>
                     )}
+
+                    {/* Event dots */}
+                    <div className="space-y-0.5">
+                      {shown.map((ev, i) => {
+                        const cfg = EVENT_CONFIG[ev.kind];
+                        return (
+                          <button
+                            key={`${ev.id}-${i}`}
+                            onClick={(e) => { e.stopPropagation(); setSelectedEvent(ev); }}
+                            className="flex items-center gap-1 w-full text-left hover:opacity-80 transition-opacity"
+                          >
+                            <span
+                              className="inline-block w-1.5 h-1.5 rounded-full flex-shrink-0"
+                              style={{ backgroundColor: cfg.dot }}
+                            />
+                            <span className="font-sans text-[10px] text-[#BABAAE] truncate leading-tight">
+                              {ev.title}
+                            </span>
+                          </button>
+                        );
+                      })}
+                      {overflow > 0 && (
+                        <span className="font-sans text-[10px] text-[#57544E] pl-2.5">
+                          +{overflow} more
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
               );
@@ -1029,6 +1154,21 @@ export default function PortalCalendar() {
             <span className="font-sans text-[10px] tracking-[0.1em] uppercase text-[#BABAAE]">{cfg.label}</span>
           </div>
         ))}
+        {/* Inventory status indicators */}
+        <div className="flex items-center gap-1.5">
+          <div className="w-3 h-3 flex flex-col">
+            <div className="flex-1 bg-red-600" />
+            <div className="flex-1 bg-green-500" />
+          </div>
+          <span className="font-sans text-[10px] tracking-[0.1em] uppercase text-[#BABAAE]">AM Full</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <div className="w-3 h-3 flex flex-col">
+            <div className="flex-1 bg-red-600" />
+            <div className="flex-1 bg-green-500" />
+          </div>
+          <span className="font-sans text-[10px] tracking-[0.1em] uppercase text-[#BABAAE]">PM Full</span>
+        </div>
       </div>
 
       {/* Upcoming events list */}
