@@ -169,10 +169,15 @@ function AvailabilityCalendar({
 
             const lookupKey = String(cell.date).slice(0, 10);
             const avail = availMap.get(lookupKey);
+
             if (cell.date === '2026-08-01') {
-              console.debug('CELL LOOKUP', lookupKey);
-              console.debug('8/1 AVAIL OBJECT', avail);
+              console.log('===== 8/1 RUNTIME DEBUG =====');
+              console.log('lookupKey:', lookupKey);
+              console.log('availMap.size:', availMap.size);
+              console.log('availMap.has(lookupKey):', availMap.has(lookupKey));
+              console.log('avail object:', avail);
             }
+
             const status = avail?.status ?? (cell.date < todayStr ? "closed" : "open");
             const isPast = cell.date < todayStr;
             const isSelected =
@@ -188,10 +193,6 @@ function AvailabilityCalendar({
             const allDayStatus = avail?.allDayStatus ?? "open";
             const overnightStatus = avail?.overnightStatus ?? "open";
 
-            if (cell.date === '2026-08-01') {
-              console.debug('8/1 SLOT STATUSES', { amStatus, pmStatus, allDayStatus, overnightStatus });
-            }
-
             // Derive activeStatus from selectedSlot
             const slotStatusMap: Record<string, string> = {
               AM: amStatus,
@@ -202,12 +203,19 @@ function AvailabilityCalendar({
             const activeStatus = slotStatusMap[selectedSlot] ?? "open";
 
             if (cell.date === '2026-08-01') {
-              console.debug('8/1 SELECTED SLOT', selectedSlot);
-              console.debug('8/1 ACTIVE STATUS', activeStatus);
+              console.log('pmStatus:', pmStatus);
+              console.log('selectedSlot:', selectedSlot);
+              console.log('activeStatus:', activeStatus);
             }
 
             // canSelect uses ONLY the selected slot's status
             const canSelect = !isPast && status !== "blocked" && status !== "closed" && activeStatus === "open";
+
+            if (cell.date === '2026-08-01') {
+              console.log('canSelect:', canSelect);
+              console.log('bgClass will be:', !isPast && activeStatus === "full" ? "bg-red-700" : (!isPast && activeStatus === "open" ? "bg-emerald-600" : "bg-stone-700"));
+              console.log('===== END 8/1 DEBUG =====');
+            }
 
             // Determine background color based on SELECTED SLOT's status (activeStatus)
             // activeStatus is: PM tab → pmStatus, AM tab → amStatus, etc.
@@ -642,6 +650,12 @@ export default function PropertyDetail() {
 
   const availMap = useMemo(() => {
     const m = new Map<string, any>();
+    console.log('===== AVAILMAP BUILD START =====');
+    console.log('availability type:', typeof availability);
+    console.log('availability is array:', Array.isArray(availability));
+    console.log('availability length:', availability?.length);
+    console.log('availability[0]:', availability?.[0]);
+
     if (availability) {
       availability.forEach((d: any) => {
         // Pure string extraction: first 10 chars of d.date (YYYY-MM-DD)
@@ -650,13 +664,17 @@ export default function PropertyDetail() {
         m.set(dateKey, d);
       });
     }
-    console.debug('AVAILMAP KEYS', Array.from(m.keys()));
+
+    console.log('Map size after forEach:', m.size);
+    console.log('Map has 2026-08-01:', m.has('2026-08-01'));
     const val8_1 = m.get('2026-08-01');
+    console.log('Map value for 2026-08-01:', val8_1);
     if (val8_1) {
-      console.debug('AVAILMAP 8/1 FULL RECORD', val8_1);
-      console.debug('AVAILMAP 8/1 pmStatus', val8_1.pmStatus);
-      console.debug('AVAILMAP 8/1 amStatus', val8_1.amStatus);
+      console.log('  - pmStatus:', val8_1.pmStatus);
+      console.log('  - amStatus:', val8_1.amStatus);
+      console.log('  - date field:', val8_1.date);
     }
+    console.log('===== AVAILMAP BUILD END =====');
     return m;
   }, [availability]);
 
