@@ -97,12 +97,14 @@ function AvailabilityCalendar({
   selectedEnd,
   onSelectDate,
   availMap,
+  selectedSlot,
 }: {
   propertyId: number;
   selectedStart: string | null;
   selectedEnd: string | null;
   onSelectDate: (date: string) => void;
   availMap: Map<string, any>;
+  selectedSlot: "AM" | "PM" | "AllDay" | "Overnight";
 }) {
   const today = new Date();
   const [viewYear, setViewYear] = useState(today.getFullYear());
@@ -170,13 +172,23 @@ function AvailabilityCalendar({
             const isStart = cell.date === selectedStart;
             const isEnd = cell.date === selectedEnd;
 
-            // Slot-aware logic: determine if day is bookable (at least one slot available)
+            // Slot-aware logic: determine if day is bookable based on SELECTED slot only (FIX)
             const amStatus = avail?.amStatus ?? "open";
             const pmStatus = avail?.pmStatus ?? "open";
             const allDayStatus = avail?.allDayStatus ?? "open";
             const overnightStatus = avail?.overnightStatus ?? "open";
-            const anySlotOpen = amStatus === "open" || pmStatus === "open" || allDayStatus === "open" || overnightStatus === "open";
-            const canSelect = !isPast && status !== "blocked" && status !== "closed" && anySlotOpen;
+
+            // Derive activeStatus from selectedSlot
+            const slotStatusMap: Record<string, string> = {
+              AM: amStatus,
+              PM: pmStatus,
+              AllDay: allDayStatus,
+              Overnight: overnightStatus,
+            };
+            const activeStatus = slotStatusMap[selectedSlot] ?? "open";
+
+            // canSelect uses ONLY the selected slot's status
+            const canSelect = !isPast && status !== "blocked" && status !== "closed" && activeStatus === "open";
 
             // Determine background: solid or hard-split half-shaded based on per-slot availability
             // Render per-slot shading for ALL dates (including past/today), independent of isPast
@@ -184,7 +196,7 @@ function AvailabilityCalendar({
             let bgStyle: React.CSSProperties = {};
 
             if (allDayStatus === "full" || overnightStatus === "full") {
-              // All Day or Overnight blocks entire day
+              // All Day or Overnight blocks entire day (solid red for all tabs)
               bgClass = "bg-red-700";
               bgStyle = { opacity: 0.6 };
             } else if (amStatus === "full" && pmStatus === "full") {
@@ -192,14 +204,14 @@ function AvailabilityCalendar({
               bgClass = "bg-red-700";
               bgStyle = { opacity: 0.6 };
             } else if (amStatus === "full" && pmStatus === "open") {
-              // AM full, PM open = hard split: top green, bottom red
+              // AM full, PM open = hard split: TOP green (PM), BOTTOM red (AM)
               bgClass = "";
               bgStyle = {
                 backgroundImage: "linear-gradient(to bottom, rgb(5 150 105) 0%, rgb(5 150 105) 50%, rgb(185 28 28) 50%, rgb(185 28 28) 100%)",
                 opacity: 0.8
               };
             } else if (amStatus === "open" && pmStatus === "full") {
-              // PM full, AM open = hard split: top red, bottom green
+              // PM full, AM open = hard split: TOP red (PM), BOTTOM green (AM)
               bgClass = "";
               bgStyle = {
                 backgroundImage: "linear-gradient(to bottom, rgb(185 28 28) 0%, rgb(185 28 28) 50%, rgb(5 150 105) 50%, rgb(5 150 105) 100%)",
@@ -211,9 +223,13 @@ function AvailabilityCalendar({
             } else if (status === "blocked") {
               bgClass = "bg-stone-700";
               bgStyle = { opacity: 0.5 };
-            } else if (!isPast) {
-              // Both open or no booking data = available (only apply emerald for future dates)
+            } else if (!isPast && activeStatus === "open") {
+              // Selected slot is open = available (only apply emerald for future dates)
               bgClass = "bg-emerald-600";
+            } else if (!isPast && activeStatus === "full") {
+              // Selected slot is full = not available (red)
+              bgClass = "bg-red-700";
+              bgStyle = { opacity: 0.6 };
             }
 
             return (
@@ -928,6 +944,7 @@ export default function PropertyDetail() {
               selectedEnd={selectedEnd}
               onSelectDate={handleDateSelect}
               availMap={availMap}
+              selectedSlot={activeSlot}
             />
           </div>
 
