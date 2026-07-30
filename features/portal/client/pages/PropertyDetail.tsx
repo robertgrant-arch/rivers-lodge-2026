@@ -209,46 +209,27 @@ function AvailabilityCalendar({
             // canSelect uses ONLY the selected slot's status
             const canSelect = !isPast && status !== "blocked" && status !== "closed" && activeStatus === "open";
 
-            // Determine background: solid or hard-split half-shaded based on per-slot availability
-            // Render per-slot shading for ALL dates (including past/today), independent of isPast
+            // Determine background color based on SELECTED SLOT's status (activeStatus)
+            // activeStatus is: PM tab → pmStatus, AM tab → amStatus, etc.
+            // This ensures the grid reflects the selected tab's actual booking availability
             let bgClass = "bg-stone-700";
             let bgStyle: React.CSSProperties = {};
 
-            if (allDayStatus === "full" || overnightStatus === "full") {
-              // All Day or Overnight blocks entire day (solid red for all tabs)
-              bgClass = "bg-red-700";
-              bgStyle = { opacity: 0.6 };
-            } else if (amStatus === "full" && pmStatus === "full") {
-              // Both half-day slots full = day full
-              bgClass = "bg-red-700";
-              bgStyle = { opacity: 0.6 };
-            } else if (amStatus === "full" && pmStatus === "open") {
-              // AM full, PM open = hard split: TOP green (PM), BOTTOM red (AM)
-              bgClass = "";
-              bgStyle = {
-                backgroundImage: "linear-gradient(to bottom, rgb(5 150 105) 0%, rgb(5 150 105) 50%, rgb(185 28 28) 50%, rgb(185 28 28) 100%)",
-                opacity: 0.8
-              };
-            } else if (amStatus === "open" && pmStatus === "full") {
-              // PM full, AM open = hard split: TOP red (PM), BOTTOM green (AM)
-              bgClass = "";
-              bgStyle = {
-                backgroundImage: "linear-gradient(to bottom, rgb(185 28 28) 0%, rgb(185 28 28) 50%, rgb(5 150 105) 50%, rgb(5 150 105) 100%)",
-                opacity: 0.8
-              };
-            } else if (status === "closed") {
+            if (status === "closed") {
+              // Out of season — independent of slot
               bgClass = "bg-stone-950";
               bgStyle = { opacity: 0.3, borderWidth: "1px", borderColor: "rgb(55 65 81)" };
             } else if (status === "blocked") {
+              // Blocked — independent of slot
               bgClass = "bg-stone-700";
               bgStyle = { opacity: 0.5 };
-            } else if (!isPast && activeStatus === "open") {
-              // Selected slot is open = available (only apply emerald for future dates)
-              bgClass = "bg-emerald-600";
             } else if (!isPast && activeStatus === "full") {
-              // Selected slot is full = not available (red)
+              // Selected slot is FULL — render red, NOT clickable
               bgClass = "bg-red-700";
               bgStyle = { opacity: 0.6 };
+            } else if (!isPast && activeStatus === "open") {
+              // Selected slot is OPEN — render green, clickable
+              bgClass = "bg-emerald-600";
             }
 
             if (cell.date === '2026-08-01') {
