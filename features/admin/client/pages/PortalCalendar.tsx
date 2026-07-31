@@ -801,12 +801,27 @@ export default function PortalCalendar() {
     return map;
   }, [visibleEvents]);
 
-  // Build a map: dateStr → inventory object with per-slot statuses
+  // Build a map: dateStr → inventory object with derived per-slot statuses
+  // API returns: { date, aggregatedStatus, properties: [{ propertyId, amBookedCount, pmBookedCount, ... }] }
+  // Derive per-slot status by checking if any property has bookings in that slot
   const inventoryByDate = useMemo(() => {
     const map = new Map<string, any>();
     (data?.inventories ?? []).forEach((inv: any) => {
       if (inv.date) {
-        map.set(inv.date, inv);
+        // Derive per-slot statuses from properties array
+        const properties = inv.properties ?? [];
+        const amStatus = properties.some((p: any) => (p.amBookedCount ?? 0) > 0) ? 'full' : 'open';
+        const pmStatus = properties.some((p: any) => (p.pmBookedCount ?? 0) > 0) ? 'full' : 'open';
+        const allDayStatus = properties.some((p: any) => (p.allDayBookedCount ?? 0) > 0) ? 'full' : 'open';
+        const overnightStatus = properties.some((p: any) => (p.overnightBookedCount ?? 0) > 0) ? 'full' : 'open';
+
+        map.set(inv.date, {
+          ...inv,
+          amStatus,
+          pmStatus,
+          allDayStatus,
+          overnightStatus,
+        });
       }
     });
     return map;
