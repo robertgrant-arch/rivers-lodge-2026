@@ -801,36 +801,6 @@ export default function PortalCalendar() {
     return map;
   }, [visibleEvents]);
 
-  // Build a map: dateStr → inventory object with derived per-slot statuses
-  // API returns: { date, aggregatedStatus, properties: [{ propertyId, amBookedCount, pmBookedCount, ... }] }
-  // Derive per-slot status by checking if any property has bookings in that slot
-  const inventoryByDate = useMemo(() => {
-    const map = new Map<string, any>();
-    (data?.inventories ?? []).forEach((inv: any) => {
-      if (inv.date) {
-        // Derive per-slot statuses from properties array
-        const properties = inv.properties ?? [];
-        const amStatus = properties.some((p: any) =>
-          (p.amBookedCount ?? 0) > 0 || (p.allDayBookedCount ?? 0) > 0 || (p.overnightBookedCount ?? 0) > 0
-        ) ? 'full' : 'open';
-        const pmStatus = properties.some((p: any) =>
-          (p.pmBookedCount ?? 0) > 0 || (p.allDayBookedCount ?? 0) > 0 || (p.overnightBookedCount ?? 0) > 0
-        ) ? 'full' : 'open';
-        const allDayStatus = properties.some((p: any) => (p.allDayBookedCount ?? 0) > 0) ? 'full' : 'open';
-        const overnightStatus = properties.some((p: any) => (p.overnightBookedCount ?? 0) > 0) ? 'full' : 'open';
-
-        map.set(inv.date, {
-          ...inv,
-          amStatus,
-          pmStatus,
-          allDayStatus,
-          overnightStatus,
-        });
-      }
-    });
-    return map;
-  }, [data?.inventories]);
-
   function prevMonth() {
     if (month === 0) { setMonth(11); setYear((y) => y - 1); }
     else setMonth((m) => m - 1);
@@ -955,45 +925,6 @@ export default function PortalCalendar() {
               const dayEvents = eventsByDate.get(dateStr) ?? [];
               const shown = dayEvents.slice(0, 2);
               const overflow = dayEvents.length - shown.length;
-              const inventory = inventoryByDate.get(dateStr);
-
-              // FIX 1: Per-slot half shading (hard split, no gradient)
-              const renderInventoryShading = () => {
-                if (!inventory) return null;
-
-                const amStatus = inventory.amStatus ?? 'open';
-                const pmStatus = inventory.pmStatus ?? 'open';
-                const allDayStatus = inventory.allDayStatus ?? 'open';
-                const overnightStatus = inventory.overnightStatus ?? 'open';
-
-                // If ANY slot is full, show both halves as red; otherwise green
-                const anyFull = [amStatus, pmStatus, allDayStatus, overnightStatus].includes('full');
-                if (anyFull) {
-                  // Convention: TOP half = AM (morning), BOTTOM half = PM (afternoon)
-                  const topFull = amStatus === 'full' || allDayStatus === 'full' || overnightStatus === 'full';
-                  const bottomFull = pmStatus === 'full' || allDayStatus === 'full' || overnightStatus === 'full';
-
-                  return (
-                    <div className="absolute inset-0 pointer-events-none">
-                      {/* Top half */}
-                      <div
-                        className="absolute top-0 left-0 right-0 h-1/2"
-                        style={{
-                          backgroundColor: topFull ? 'rgb(220, 38, 38)' : 'rgb(34, 197, 94)',
-                        }}
-                      />
-                      {/* Bottom half */}
-                      <div
-                        className="absolute bottom-0 left-0 right-0 h-1/2"
-                        style={{
-                          backgroundColor: bottomFull ? 'rgb(220, 38, 38)' : 'rgb(34, 197, 94)',
-                        }}
-                      />
-                    </div>
-                  );
-                }
-                return null;
-              };
 
               return (
                 <div
@@ -1006,9 +937,6 @@ export default function PortalCalendar() {
                     }
                   }}
                 >
-                  {renderInventoryShading()}
-
-                  {/* Content (relative so it sits above shading) */}
                   <div className="relative z-10">
                     {/* Date number */}
                     <div className="flex items-center justify-between mb-1.5">
@@ -1071,21 +999,6 @@ export default function PortalCalendar() {
             <span className="font-sans text-[10px] tracking-[0.1em] uppercase text-[#BABAAE]">{cfg.label}</span>
           </div>
         ))}
-        {/* Inventory status indicators */}
-        <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 flex flex-col">
-            <div className="flex-1 bg-red-600" />
-            <div className="flex-1 bg-green-500" />
-          </div>
-          <span className="font-sans text-[10px] tracking-[0.1em] uppercase text-[#BABAAE]">AM Full</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 flex flex-col">
-            <div className="flex-1 bg-red-600" />
-            <div className="flex-1 bg-green-500" />
-          </div>
-          <span className="font-sans text-[10px] tracking-[0.1em] uppercase text-[#BABAAE]">PM Full</span>
-        </div>
       </div>
 
       {/* Upcoming events list */}
