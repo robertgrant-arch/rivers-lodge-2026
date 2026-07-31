@@ -810,8 +810,12 @@ export default function PortalCalendar() {
       if (inv.date) {
         // Derive per-slot statuses from properties array
         const properties = inv.properties ?? [];
-        const amStatus = properties.some((p: any) => (p.amBookedCount ?? 0) > 0) ? 'full' : 'open';
-        const pmStatus = properties.some((p: any) => (p.pmBookedCount ?? 0) > 0) ? 'full' : 'open';
+        const amStatus = properties.some((p: any) =>
+          (p.amBookedCount ?? 0) > 0 || (p.allDayBookedCount ?? 0) > 0 || (p.overnightBookedCount ?? 0) > 0
+        ) ? 'full' : 'open';
+        const pmStatus = properties.some((p: any) =>
+          (p.pmBookedCount ?? 0) > 0 || (p.allDayBookedCount ?? 0) > 0 || (p.overnightBookedCount ?? 0) > 0
+        ) ? 'full' : 'open';
         const allDayStatus = properties.some((p: any) => (p.allDayBookedCount ?? 0) > 0) ? 'full' : 'open';
         const overnightStatus = properties.some((p: any) => (p.overnightBookedCount ?? 0) > 0) ? 'full' : 'open';
 
@@ -965,9 +969,9 @@ export default function PortalCalendar() {
                 // If ANY slot is full, show both halves as red; otherwise green
                 const anyFull = [amStatus, pmStatus, allDayStatus, overnightStatus].includes('full');
                 if (anyFull) {
-                  // Determine split: TOP = PM/ALL_DAY/OVERNIGHT, BOTTOM = AM
-                  const topFull = [pmStatus, allDayStatus, overnightStatus].includes('full');
-                  const bottomFull = amStatus === 'full' || [allDayStatus, overnightStatus].includes('full');
+                  // Convention: TOP half = AM (morning), BOTTOM half = PM (afternoon)
+                  const topFull = amStatus === 'full' || allDayStatus === 'full' || overnightStatus === 'full';
+                  const bottomFull = pmStatus === 'full' || allDayStatus === 'full' || overnightStatus === 'full';
 
                   return (
                     <div className="absolute inset-0 pointer-events-none">
