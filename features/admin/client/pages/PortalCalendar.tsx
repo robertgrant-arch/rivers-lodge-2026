@@ -86,6 +86,11 @@ interface CalEvent {
   endDate: string;
   kind: EventKind;
   notes?: string;
+  type?: string;
+  startTime?: string;
+  endTime?: string;
+  allDay?: boolean;
+  hiddenFromMembers?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -399,9 +404,14 @@ function EditEventModal({ open, event, onClose, onSuccess }: EditModalProps) {
   useEffect(() => {
     if (event && open) {
       setTitle(event.title || '');
+      setType(event.type || 'member_event');
       setStartDate(event.startDate);
       setEndDate(event.endDate);
+      setStartTime(event.startTime || '09:00');
+      setEndTime(event.endTime || '17:00');
+      setAllDay(event.allDay ?? true);
       setNotes(event.notes || '');
+      setHiddenFromMembers(event.hiddenFromMembers ?? false);
       setError('');
     }
   }, [event, open]);
@@ -778,7 +788,19 @@ export default function PortalCalendar() {
       result.push({ id: e.id, title: e.title ?? e.reasonNotes ?? (e.reason && e.reason !== 'other' ? e.reason : 'Hold'), startDate: e.startDate, endDate: e.endDate ?? e.startDate, kind: 'blocked', notes: e.reasonNotes }),
     );
     (data.events ?? []).forEach((e: any) =>
-      result.push({ id: e.id, title: e.title ?? 'Admin Event', startDate: e.startDate, endDate: e.endDate ?? e.startDate, kind: 'member_event', notes: e.notes }),
+      result.push({
+        id: e.id,
+        title: e.title ?? 'Admin Event',
+        startDate: e.startDate,
+        endDate: e.endDate ?? e.startDate,
+        kind: 'member_event',
+        notes: e.notes,
+        type: e.type,
+        startTime: e.startTime,
+        endTime: e.endTime,
+        allDay: e.allDay ?? true,
+        hiddenFromMembers: e.hiddenFromMembers ?? false,
+      }),
     );
 
     return result;
