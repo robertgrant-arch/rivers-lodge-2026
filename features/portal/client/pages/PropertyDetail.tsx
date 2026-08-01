@@ -175,14 +175,6 @@ function AvailabilityCalendar({
             const lookupKey = String(cell.date).slice(0, 10);
             const avail = availMap.get(lookupKey);
 
-            if (cell.date === '2026-08-01') {
-              console.log('===== 8/1 RUNTIME DEBUG =====');
-              console.log('lookupKey:', lookupKey);
-              console.log('availMap.size:', availMap.size);
-              console.log('availMap.has(lookupKey):', availMap.has(lookupKey));
-              console.log('avail object:', avail);
-            }
-
             const status = avail?.status ?? (cell.date < todayStr ? "closed" : "open");
             const isPast = cell.date < todayStr;
             const isSelected =
@@ -207,20 +199,8 @@ function AvailabilityCalendar({
             };
             const activeStatus = slotStatusMap[selectedSlot] ?? "open";
 
-            if (cell.date === '2026-08-01') {
-              console.log('pmStatus:', pmStatus);
-              console.log('selectedSlot:', selectedSlot);
-              console.log('activeStatus:', activeStatus);
-            }
-
             // canSelect uses ONLY the selected slot's status
             const canSelect = !isPast && status !== "blocked" && status !== "closed" && activeStatus === "open";
-
-            if (cell.date === '2026-08-01') {
-              console.log('canSelect:', canSelect);
-              console.log('bgClass will be:', !isPast && activeStatus === "full" ? "bg-red-700" : (!isPast && activeStatus === "open" ? "bg-emerald-600" : "bg-stone-700"));
-              console.log('===== END 8/1 DEBUG =====');
-            }
 
             // Determine background color based on SELECTED SLOT's status (activeStatus)
             // activeStatus is: PM tab → pmStatus, AM tab → amStatus, etc.
@@ -655,38 +635,14 @@ export default function PropertyDetail() {
 
   const availMap = useMemo(() => {
     const m = new Map<string, any>();
-    console.log('===== AVAILMAP BUILD DIAGNOSTIC =====');
-    console.log('propertyId:', propertyId);
-    console.log('monthStart:', monthStart, 'monthEnd:', monthEnd);
-    console.log('availability query status:', { isLoading: availLoading, hasError: !!availError, isUndefined: availability === undefined, isNull: availability === null });
-    console.log('availability type:', typeof availability);
-    console.log('availability is array:', Array.isArray(availability));
-    console.log('availability length:', availability?.length);
-    console.log('availability[0]:', availability?.[0]);
-    console.log('availability[0].date:', availability?.[0]?.date);
-    console.log('first few items:', availability?.slice(0, 3));
-
     if (availability && Array.isArray(availability)) {
-      console.log('✓ availability is an array, iterating...');
-      availability.forEach((d: any, i: number) => {
+      availability.forEach((d: any) => {
         const dateKey = String(d.date).slice(0, 10);
         m.set(dateKey, d);
-        if (i === 0 || i === 30) {
-          console.log(`  [${i}] dateKey="${dateKey}", amStatus="${d.amStatus}", pmStatus="${d.pmStatus}"`);
-        }
       });
-      console.log('✓ forEach completed, map size:', m.size);
-    } else {
-      console.warn('✗ availability is NOT an array or is falsy:', availability);
     }
-
-    console.log('Final map size:', m.size);
-    console.log('Map has 2026-08-01:', m.has('2026-08-01'));
-    const val8_1 = m.get('2026-08-01');
-    console.log('availability[2026-08-01]:', val8_1 ? { amStatus: val8_1.amStatus, pmStatus: val8_1.pmStatus, date: val8_1.date } : 'NOT FOUND');
-    console.log('===== END DIAGNOSTIC =====');
     return m;
-  }, [availability, availLoading, availError]);
+  }, [availability]);
 
   const availableModes = useMemo(() => {
     if (!data) return ["AM", "PM", "AllDay"];
