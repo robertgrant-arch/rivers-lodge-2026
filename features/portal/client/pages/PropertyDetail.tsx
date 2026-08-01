@@ -203,9 +203,12 @@ function AvailabilityCalendar({
             // canSelect uses ONLY the selected slot's status
             const canSelect = !isPast && status !== "blocked" && status !== "closed" && activeStatus === "open";
 
-            // Determine background color based on SELECTED SLOT's status (activeStatus)
-            // activeStatus is: PM tab → pmStatus, AM tab → amStatus, etc.
-            // This ensures the grid reflects the selected tab's actual booking availability
+            // Determine if this is a split-state day (AM and PM differ, and neither is blocked/closed)
+            const isMixedState = !isPast && status !== "blocked" && status !== "closed" && amStatus !== pmStatus;
+
+            // Determine background color/style based on availability state
+            // For mixed-state days, render split cells showing both AM and PM status
+            // For other days, color based on the selected slot
             let bgClass = "bg-stone-700";
             let bgStyle: React.CSSProperties = {};
 
@@ -217,19 +220,31 @@ function AvailabilityCalendar({
               // Blocked — independent of slot
               bgClass = "bg-stone-700";
               bgStyle = { opacity: 0.5 };
-            } else if (!isPast && activeStatus === "full") {
-              // Selected slot is FULL — render red, NOT clickable
+            } else if (isMixedState) {
+              // Split state: AM and PM have different availability
+              // Render as a split cell with gradient showing both statuses
+              if (amStatus === "full" && pmStatus === "open") {
+                // Top half green (AM available), bottom half red (PM full)
+                // Actually reversed: AM Full means top red, PM Open means bottom green
+                bgStyle = {
+                  backgroundImage: "linear-gradient(to bottom, rgb(185 28 28) 0%, rgb(185 28 28) 50%, rgb(5 150 105) 50%, rgb(5 150 105) 100%)",
+                  opacity: 0.7,
+                };
+              } else if (pmStatus === "full" && amStatus === "open") {
+                // Top half red (AM open), bottom half green (PM full)
+                // Actually: AM Open means top green, PM Full means bottom red
+                bgStyle = {
+                  backgroundImage: "linear-gradient(to bottom, rgb(5 150 105) 0%, rgb(5 150 105) 50%, rgb(185 28 28) 50%, rgb(185 28 28) 100%)",
+                  opacity: 0.7,
+                };
+              }
+            } else if (!isPast && amStatus === "full" && pmStatus === "full") {
+              // Both slots full — solid red
               bgClass = "bg-red-700";
               bgStyle = { opacity: 0.6 };
-            } else if (!isPast && activeStatus === "open") {
-              // Selected slot is OPEN — render green, clickable
+            } else if (!isPast && amStatus === "open" && pmStatus === "open") {
+              // Both slots open — solid green
               bgClass = "bg-emerald-600";
-            }
-
-            if (cell.date === '2026-08-01') {
-              console.debug('8/1 bgClass', bgClass);
-              console.debug('8/1 bgStyle', bgStyle);
-              console.debug('8/1 canSelect', canSelect);
             }
 
             return (
@@ -241,13 +256,15 @@ function AvailabilityCalendar({
                 title={
                   status === "closed" && !isPast
                     ? `${cell.date}: Out of season`
-                    : status === "open"
-                      ? `${cell.date}: ${STATUS_LABELS[status]}${
+                    : isMixedState
+                      ? `${cell.date}: ${amStatus === "full" ? "AM Full" : "AM Open"} / ${pmStatus === "full" ? "PM Full" : "PM Open"}`
+                      : status === "open" || (amStatus === "open" && pmStatus === "open")
+                      ? `${cell.date}: Available${
                           avail?.availableSpots != null
                             ? ` (${avail.availableSpots} spot${avail.availableSpots !== 1 ? "s" : ""})`
                             : ""
                         }${ avail?.seasonName ? ` — ${avail.seasonName}` : ""}`
-                      : `${cell.date}: ${STATUS_LABELS[status] ?? status}`
+                      : `${cell.date}: ${amStatus === "full" && pmStatus === "full" ? "Full" : STATUS_LABELS[status] ?? status}`
                 }
                 className={`
                   relative aspect-square rounded-lg text-xs font-medium flex items-center justify-center
