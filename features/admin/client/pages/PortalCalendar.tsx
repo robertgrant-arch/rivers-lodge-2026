@@ -54,13 +54,14 @@ const DAY_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 // Event type config
 // ---------------------------------------------------------------------------
 
-type EventKind = 'wedding' | 'corporate' | 'hunt_fish' | 'blocked';
+type EventKind = 'wedding' | 'corporate' | 'hunt_fish' | 'blocked' | 'member_event';
 
 const EVENT_CONFIG: Record<EventKind, { label: string; dot: string; text: string }> = {
   wedding:    { label: 'Wedding',    dot: '#9B4D19', text: 'text-[#9B4D19]' },
   corporate:  { label: 'Corporate',  dot: '#576276', text: 'text-[#576276]' },
   hunt_fish:  { label: 'Hunt/Fish',  dot: '#6B7250', text: 'text-[#6B7250]' },
   blocked:    { label: 'Hold/Block', dot: '#57544E', text: 'text-[#BABAAE]' },
+  member_event: { label: 'Admin Event', dot: '#8B6F47', text: 'text-[#8B6F47]' },
 };
 
 type FilterKey = EventKind | 'all';
@@ -70,6 +71,7 @@ const FILTER_CHIPS: { key: FilterKey; label: string }[] = [
   { key: 'wedding',   label: 'Weddings' },
   { key: 'corporate', label: 'Corporate' },
   { key: 'hunt_fish', label: 'Hunt/Fish' },
+  { key: 'member_event', label: 'Admin Events' },
   { key: 'blocked',   label: 'Blocks/Holds' },
 ];
 
@@ -774,6 +776,9 @@ export default function PortalCalendar() {
     );
     (data.blocked ?? []).forEach((e: any) =>
       result.push({ id: e.id, title: e.title ?? e.reasonNotes ?? (e.reason && e.reason !== 'other' ? e.reason : 'Hold'), startDate: e.startDate, endDate: e.endDate ?? e.startDate, kind: 'blocked', notes: e.reasonNotes }),
+    );
+    (data.events ?? []).forEach((e: any) =>
+      result.push({ id: e.id, title: e.title ?? 'Admin Event', startDate: e.startDate, endDate: e.endDate ?? e.startDate, kind: 'member_event', notes: e.notes }),
     );
 
     return result;
