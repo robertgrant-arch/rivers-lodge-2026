@@ -5,7 +5,7 @@
  * dates, and the ability to cancel upcoming bookings.
  */
 
-import { useState } from "react";
+import { useState, ReactNode } from "react";
 import { Link } from "wouter";
 import { trpc } from '@shared/lib/trpc';
 import { Button } from '@shared/ui/button';
@@ -39,7 +39,7 @@ function formatDate(d: string | Date | null | undefined) {
   return `${MONTHS[parseInt(m) - 1]} ${parseInt(day)}, ${y}`;
 }
 
-const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
+const STATUS_CONFIG: Record<string, { label: string; color: string; icon: ReactNode }> = {
   pending_approval: {
     label: "Pending Approval",
     color: "bg-amber-900/30 text-amber-300 border-amber-700",
