@@ -119,6 +119,7 @@ function AvailabilityCalendar({
   onViewYearChange: (year: number) => void;
   onViewMonthChange: (month: number) => void;
 }) {
+  const today = new Date();
 
   const lastDay = new Date(viewYear, viewMonth + 1, 0).getDate();
   const firstDayOfWeek = new Date(viewYear, viewMonth, 1).getDay();
