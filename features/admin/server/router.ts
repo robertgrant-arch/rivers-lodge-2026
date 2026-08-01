@@ -271,9 +271,10 @@ const calendarRouter = router({
       endDate: z.string(),
       types: z.array(z.string()).optional(),
     }))
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
       const db = getDb();
       const startTime = Date.now();
+      const isStaff = STAFF_ROLES.includes(ctx.user.role as StaffRole);
 
       // All ranges are independent — fetch concurrently.
       const [weddings, corporate, huntFish, blocked, events, rawInventories] = await Promise.all([
@@ -300,7 +301,9 @@ const calendarRouter = router({
         db.select().from(portalEvents)
           .where(and(
             sql`${portalEvents.startDate} <= ${input.endDate}`,
-            sql`${portalEvents.endDate} >= ${input.startDate}`
+            sql`${portalEvents.endDate} >= ${input.startDate}`,
+            // Hide events from non-staff users (members) based on hiddenFromMembers flag
+            !isStaff ? eq(portalEvents.hiddenFromMembers, false) : undefined
           )),
         // Fetch slot inventory for all properties in date range
         db.select({
