@@ -166,14 +166,41 @@ export default function CalendarMine() {
 
     const dates = new Set<string>();
 
+    // Helper: create a Date object that represents LOCAL midnight (not UTC-interpreted)
+    // This ensures date string extraction matches the calendar's local date keys
+    const createLocalDate = (dateStr: string): Date => {
+      const [y, m, d] = dateStr.split('-').map(Number);
+      return new Date(y, m - 1, d);
+    };
+
     // Add confirmed/active bookings to the calendar
     bookings.forEach((booking: any) => {
       // Show: confirmed, pending_payment, checked_in, completed
       // Hide: pending_approval, cancelled, declined, no_show
       const activeStatuses = ["pending_payment", "confirmed", "checked_in", "completed"];
       if (activeStatuses.includes(booking.status)) {
-        const start = new Date(booking.startDate);
-        const end = new Date(booking.endDate);
+        // Extract date strings from booking data (handles both string and Date object inputs)
+        let startStr = booking.startDate;
+        let endStr = booking.endDate;
+
+        // Ensure we have ISO date strings (YYYY-MM-DD format)
+        if (startStr instanceof Date || typeof startStr === 'object') {
+          startStr = startStr.toISOString ? startStr.toISOString().split('T')[0] : String(startStr).substring(0, 10);
+        } else {
+          startStr = String(startStr).substring(0, 10);
+        }
+
+        if (endStr instanceof Date || typeof endStr === 'object') {
+          endStr = endStr.toISOString ? endStr.toISOString().split('T')[0] : String(endStr).substring(0, 10);
+        } else {
+          endStr = String(endStr).substring(0, 10);
+        }
+
+        // Create LOCAL date objects (not UTC-interpreted) to match calendar's local date keys
+        const start = createLocalDate(startStr);
+        const end = createLocalDate(endStr);
+
+        // Iterate using local date methods to generate date strings in local calendar format
         for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
           const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
           dates.add(dateStr);
