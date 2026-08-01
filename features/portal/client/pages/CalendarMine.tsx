@@ -5,7 +5,7 @@ import PublicLayout from "@/components/PublicLayout";
 
 const MONTH_NAMES = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
-function MiniCalendar({ blockedDates }: { blockedDates: string[] }) {
+function MiniCalendar({ blockedDates, bookingDates }: { blockedDates: string[]; bookingDates: string[] }) {
   const today = new Date();
   const [year, setYear] = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth());
@@ -17,6 +17,10 @@ function MiniCalendar({ blockedDates }: { blockedDates: string[] }) {
   const isBlocked = (day: number) => {
     const ds = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
     return blockedDates.includes(ds);
+  };
+  const isBooked = (day: number) => {
+    const ds = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+    return bookingDates.includes(ds);
   };
   const isToday = (day: number) => day === today.getDate() && month === today.getMonth() && year === today.getFullYear();
   const prev = () => { if (month === 0) { setMonth(11); setYear(y => y - 1); } else setMonth(m => m - 1); };
@@ -39,6 +43,7 @@ function MiniCalendar({ blockedDates }: { blockedDates: string[] }) {
           <div key={i} className={`aspect-square flex items-center justify-center text-xs font-sans rounded-sm transition-colors ${
             day === null ? "" :
             isBlocked(day) ? "bg-red-900/40 text-red-400 line-through cursor-not-allowed" :
+            isBooked(day) ? "bg-amber-900/40 text-amber-300" :
             isToday(day) ? "bg-white text-black font-semibold" :
             "text-white/70 hover:bg-white/10 cursor-pointer"
           }`}>
@@ -48,6 +53,7 @@ function MiniCalendar({ blockedDates }: { blockedDates: string[] }) {
       </div>
       <div className="mt-4 flex items-center gap-4 text-[10px] font-sans text-white/40">
         <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-red-900/40 border border-red-800" />Unavailable</div>
+        <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-amber-900/40 border border-amber-800" />My Booking</div>
         <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-white" />Today</div>
       </div>
     </div>
@@ -66,6 +72,10 @@ export default function CalendarMine() {
     startDate: `${year}-01-01`,
     endDate: `${year}-12-31`,
   });
+  const myBookings = trpc.propertyBooking.bookings.myBookings.useQuery(
+    undefined,
+    { enabled: isAuthenticated }
+  );
 
   if (loading) {
     return (
@@ -150,6 +160,30 @@ export default function CalendarMine() {
     return Array.from(dates);
   })();
 
+  const bookingDateStrings: string[] = (() => {
+    const bookings = myBookings.data;
+    if (!bookings) return [];
+
+    const dates = new Set<string>();
+
+    // Add confirmed/active bookings to the calendar
+    bookings.forEach((booking: any) => {
+      // Show: confirmed, pending_payment, checked_in, completed
+      // Hide: pending_approval, cancelled, declined, no_show
+      const activeStatuses = ["pending_payment", "confirmed", "checked_in", "completed"];
+      if (activeStatuses.includes(booking.status)) {
+        const start = new Date(booking.startDate);
+        const end = new Date(booking.endDate);
+        for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+          const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+          dates.add(dateStr);
+        }
+      }
+    });
+
+    return Array.from(dates);
+  })();
+
   return (
     <PublicLayout>
       <div className="min-h-screen bg-background">
@@ -171,8 +205,8 @@ export default function CalendarMine() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2">
               <h2 className="font-serif text-3xl text-white mb-2">My Calendar</h2>
-              <p className="text-sm font-sans text-white/40 mb-6">Red dates indicate estate events or private closures. Contact concierge for availability.</p>
-              <MiniCalendar blockedDates={blockedDateStrings} />
+              <p className="text-sm font-sans text-white/40 mb-6">Red dates indicate estate events or private closures. Amber dates show your confirmed bookings. Contact concierge for availability.</p>
+              <MiniCalendar blockedDates={blockedDateStrings} bookingDates={bookingDateStrings} />
             </div>
             <div>
               <h3 className="font-serif text-xl text-white mb-5">Activity Status</h3>
