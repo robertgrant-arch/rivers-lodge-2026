@@ -1,11 +1,113 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useAuth } from "@features/auth/public";
 import { trpc } from "@shared/lib/trpc";
 import PublicLayout from "@/components/PublicLayout";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@shared/ui/dialog";
+import { X } from "lucide-react";
 
 const MONTH_NAMES = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
-function MiniCalendar({ blockedDates, bookingDates }: { blockedDates: string[]; bookingDates: string[] }) {
+const TIME_SLOT_LABELS: Record<string, string> = {
+  AM: "AM",
+  PM: "PM",
+  ALL_DAY: "All Day",
+  OVERNIGHT: "Overnight",
+};
+
+interface BookingForDay {
+  id: number;
+  propertyName: string;
+  shortName: string;
+  timeSlot: string;
+  startDate: string;
+  endDate: string;
+  status: string;
+  activity: string;
+}
+
+function getMiniLabel(bookings: BookingForDay[], dateStr: string): string | null {
+  if (bookings.length === 0) return null;
+
+  // Show most inclusive label
+  const hasAllDay = bookings.some(b => b.timeSlot === "ALL_DAY");
+  const hasOvernight = bookings.some(b => b.timeSlot === "OVERNIGHT");
+
+  if (hasAllDay) {
+    const b = bookings.find(b => b.timeSlot === "ALL_DAY");
+    return `${b?.shortName || b?.propertyName} - All Day`;
+  }
+
+  if (hasOvernight) {
+    const b = bookings.find(b => b.timeSlot === "OVERNIGHT");
+    if (!b) return null;
+
+    const [startY, startM, startD] = b.startDate.split('-').map(Number);
+    const [endY, endM, endD] = b.endDate.split('-').map(Number);
+    const [currY, currM, currD] = dateStr.split('-').map(Number);
+
+    const start = new Date(startY, startM - 1, startD);
+    const end = new Date(endY, endM - 1, endD);
+    const curr = new Date(currY, currM - 1, currD);
+
+    if (curr.getTime() === start.getTime()) {
+      return `${b.shortName || b.propertyName} - Check-in`;
+    } else if (curr.getTime() === end.getTime()) {
+      return `${b.shortName || b.propertyName} - Check-out`;
+    } else {
+      return `${b.shortName || b.propertyName} - Full Day`;
+    }
+  }
+
+  const hasAM = bookings.some(b => b.timeSlot === "AM");
+  const hasPM = bookings.some(b => b.timeSlot === "PM");
+
+  if (hasAM && hasPM) {
+    const b = bookings[0];
+    return `${b.shortName || b.propertyName} - AM & PM`;
+  }
+
+  if (hasAM) {
+    const b = bookings.find(b => b.timeSlot === "AM");
+    return `${b?.shortName || b?.propertyName} - AM`;
+  }
+
+  if (hasPM) {
+    const b = bookings.find(b => b.timeSlot === "PM");
+    return `${b?.shortName || b?.propertyName} - PM`;
+  }
+
+  return null;
+}
+
+function BookingDetail({ booking }: { booking: BookingForDay }) {
+  const slotLabel = TIME_SLOT_LABELS[booking.timeSlot] || booking.timeSlot;
+  let description = `${booking.propertyName} - ${slotLabel}`;
+
+  return (
+    <div className="space-y-2">
+      <p className="text-white font-medium">{description}</p>
+      <p className="text-white/60 text-sm">
+        {booking.startDate}{booking.endDate !== booking.startDate ? ` – ${booking.endDate}` : ""}
+      </p>
+      <p className="text-white/50 text-xs">Status: {booking.status}</p>
+    </div>
+  );
+}
+
+function MiniCalendar({
+  blockedDates,
+  bookingsByDate,
+  onBookingClick,
+}: {
+  blockedDates: string[];
+  bookingsByDate: Map<string, BookingForDay[]>;
+  onBookingClick: (booking: BookingForDay) => void;
+}) {
   const today = new Date();
   const [year, setYear] = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth());
@@ -18,10 +120,16 @@ function MiniCalendar({ blockedDates, bookingDates }: { blockedDates: string[]; 
     const ds = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
     return blockedDates.includes(ds);
   };
-  const isBooked = (day: number) => {
+
+  const getBookingsForDay = (day: number) => {
     const ds = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-    return bookingDates.includes(ds);
+    return bookingsByDate.get(ds) || [];
   };
+
+  const isBooked = (day: number) => {
+    return getBookingsForDay(day).length > 0;
+  };
+
   const isToday = (day: number) => day === today.getDate() && month === today.getMonth() && year === today.getFullYear();
   const prev = () => { if (month === 0) { setMonth(11); setYear(y => y - 1); } else setMonth(m => m - 1); };
   const next = () => { if (month === 11) { setMonth(0); setYear(y => y + 1); } else setMonth(m => m + 1); };
@@ -39,17 +147,42 @@ function MiniCalendar({ blockedDates, bookingDates }: { blockedDates: string[]; 
         ))}
       </div>
       <div className="grid grid-cols-7 gap-1">
-        {cells.map((day, i) => (
-          <div key={i} className={`aspect-square flex items-center justify-center text-xs font-sans rounded-sm transition-colors ${
-            day === null ? "" :
-            isBlocked(day) ? "bg-red-900/40 text-red-400 line-through cursor-not-allowed" :
-            isBooked(day) ? "bg-amber-900/40 text-amber-300" :
-            isToday(day) ? "bg-white text-black font-semibold" :
-            "text-white/70 hover:bg-white/10 cursor-pointer"
-          }`}>
-            {day}
-          </div>
-        ))}
+        {cells.map((day, i) => {
+          const bookings = day ? getBookingsForDay(day) : [];
+          const miniLabel = day ? getMiniLabel(bookings, `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`) : null;
+          const blocked = day ? isBlocked(day) : false;
+          const booked = day ? isBooked(day) : false;
+          const today_ = day ? isToday(day) : false;
+
+          return (
+            <div
+              key={i}
+              onClick={() => {
+                if (booked && bookings.length > 0) {
+                  onBookingClick(bookings[0]);
+                }
+              }}
+              className={`aspect-square flex flex-col items-center justify-center text-[10px] font-sans rounded-sm transition-colors ${
+                day === null
+                  ? ""
+                  : blocked
+                  ? "bg-red-900/40 text-red-400 line-through cursor-not-allowed"
+                  : booked
+                  ? "bg-amber-900/40 text-amber-300 cursor-pointer hover:bg-amber-900/60"
+                  : today_
+                  ? "bg-white text-black font-semibold"
+                  : "text-white/70 hover:bg-white/10 cursor-pointer"
+              }`}
+            >
+              <span className="font-semibold">{day}</span>
+              {miniLabel && (
+                <span className="text-[8px] text-amber-300 truncate px-1 w-full text-center leading-tight mt-0.5">
+                  {miniLabel}
+                </span>
+              )}
+            </div>
+          );
+        })}
       </div>
       <div className="mt-4 flex items-center gap-4 text-[10px] font-sans text-white/40">
         <div className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-red-900/40 border border-red-800" />Unavailable</div>
@@ -64,6 +197,7 @@ export default function CalendarMine() {
   const { user, isAuthenticated, loading } = useAuth({
     redirectOnUnauthenticated: true,
   });
+  const [selectedBooking, setSelectedBooking] = useState<BookingForDay | null>(null);
 
   const memberStatus = trpc.membership.myStatus.useQuery(undefined, { enabled: isAuthenticated });
   const today = new Date();
@@ -160,30 +294,22 @@ export default function CalendarMine() {
     return Array.from(dates);
   })();
 
-  const bookingDateStrings: string[] = (() => {
+  const bookingsByDate: Map<string, BookingForDay[]> = useMemo(() => {
+    const map = new Map<string, BookingForDay[]>();
     const bookings = myBookings.data;
-    if (!bookings) return [];
+    if (!bookings) return map;
 
-    const dates = new Set<string>();
-
-    // Helper: create a Date object that represents LOCAL midnight (not UTC-interpreted)
-    // This ensures date string extraction matches the calendar's local date keys
     const createLocalDate = (dateStr: string): Date => {
       const [y, m, d] = dateStr.split('-').map(Number);
       return new Date(y, m - 1, d);
     };
 
-    // Add confirmed/active bookings to the calendar
     bookings.forEach((booking: any) => {
-      // Show: confirmed, pending_payment, checked_in, completed
-      // Hide: pending_approval, cancelled, declined, no_show
       const activeStatuses = ["pending_payment", "confirmed", "checked_in", "completed"];
       if (activeStatuses.includes(booking.status)) {
-        // Extract date strings from booking data (handles both string and Date object inputs)
         let startStr = booking.startDate;
         let endStr = booking.endDate;
 
-        // Ensure we have ISO date strings (YYYY-MM-DD format)
         if (startStr instanceof Date || typeof startStr === 'object') {
           startStr = startStr.toISOString ? startStr.toISOString().split('T')[0] : String(startStr).substring(0, 10);
         } else {
@@ -196,20 +322,32 @@ export default function CalendarMine() {
           endStr = String(endStr).substring(0, 10);
         }
 
-        // Create LOCAL date objects (not UTC-interpreted) to match calendar's local date keys
         const start = createLocalDate(startStr);
         const end = createLocalDate(endStr);
 
-        // Iterate using local date methods to generate date strings in local calendar format
         for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
           const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-          dates.add(dateStr);
+          const bookingForDay: BookingForDay = {
+            id: booking.id,
+            propertyName: booking.property?.name || "Property",
+            shortName: booking.property?.shortName || booking.property?.name || "Property",
+            timeSlot: booking.timeSlot,
+            startDate: startStr,
+            endDate: endStr,
+            status: booking.status,
+            activity: booking.activity,
+          };
+
+          if (!map.has(dateStr)) {
+            map.set(dateStr, []);
+          }
+          map.get(dateStr)!.push(bookingForDay);
         }
       }
     });
 
-    return Array.from(dates);
-  })();
+    return map;
+  }, [myBookings.data]);
 
   return (
     <PublicLayout>
@@ -233,7 +371,11 @@ export default function CalendarMine() {
             <div className="lg:col-span-2">
               <h2 className="font-serif text-3xl text-white mb-2">My Calendar</h2>
               <p className="text-sm font-sans text-white/40 mb-6">Red dates indicate estate events or private closures. Amber dates show your confirmed bookings. Contact concierge for availability.</p>
-              <MiniCalendar blockedDates={blockedDateStrings} bookingDates={bookingDateStrings} />
+              <MiniCalendar
+                blockedDates={blockedDateStrings}
+                bookingsByDate={bookingsByDate}
+                onBookingClick={(booking) => setSelectedBooking(booking)}
+              />
             </div>
             <div>
               <h3 className="font-serif text-xl text-white mb-5">Activity Status</h3>
@@ -265,6 +407,24 @@ export default function CalendarMine() {
             </div>
           </div>
         </div>
+
+        {/* ── Booking Detail Modal ─────────────────────────────────── */}
+        {selectedBooking && (
+          <Dialog open={!!selectedBooking} onOpenChange={() => setSelectedBooking(null)}>
+            <DialogContent className="bg-stone-900 border-stone-700 text-stone-100">
+              <DialogHeader className="flex items-center justify-between">
+                <DialogTitle className="text-stone-100">Booking Details</DialogTitle>
+                <button
+                  onClick={() => setSelectedBooking(null)}
+                  className="text-stone-400 hover:text-stone-200"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </DialogHeader>
+              <BookingDetail booking={selectedBooking} />
+            </DialogContent>
+          </Dialog>
+        )}
       </div>
     </PublicLayout>
   );
