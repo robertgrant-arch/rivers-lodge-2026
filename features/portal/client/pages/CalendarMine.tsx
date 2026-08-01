@@ -211,6 +211,61 @@ export default function CalendarMine() {
     { enabled: isAuthenticated }
   );
 
+  const bookingsByDate: Map<string, BookingForDay[]> = useMemo(() => {
+    const map = new Map<string, BookingForDay[]>();
+    const bookings = myBookings.data;
+    if (!bookings) return map;
+
+    const createLocalDate = (dateStr: string): Date => {
+      const [y, m, d] = dateStr.split('-').map(Number);
+      return new Date(y, m - 1, d);
+    };
+
+    bookings.forEach((booking: any) => {
+      const activeStatuses = ["pending_payment", "confirmed", "checked_in", "completed"];
+      if (activeStatuses.includes(booking.status)) {
+        let startStr = booking.startDate;
+        let endStr = booking.endDate;
+
+        if (startStr instanceof Date || typeof startStr === 'object') {
+          startStr = startStr.toISOString ? startStr.toISOString().split('T')[0] : String(startStr).substring(0, 10);
+        } else {
+          startStr = String(startStr).substring(0, 10);
+        }
+
+        if (endStr instanceof Date || typeof endStr === 'object') {
+          endStr = endStr.toISOString ? endStr.toISOString().split('T')[0] : String(endStr).substring(0, 10);
+        } else {
+          endStr = String(endStr).substring(0, 10);
+        }
+
+        const start = createLocalDate(startStr);
+        const end = createLocalDate(endStr);
+
+        for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+          const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+          const bookingForDay: BookingForDay = {
+            id: booking.id,
+            propertyName: booking.property?.name || "Property",
+            shortName: booking.property?.shortName || booking.property?.name || "Property",
+            timeSlot: booking.timeSlot,
+            startDate: startStr,
+            endDate: endStr,
+            status: booking.status,
+            activity: booking.activity,
+          };
+
+          if (!map.has(dateStr)) {
+            map.set(dateStr, []);
+          }
+          map.get(dateStr)!.push(bookingForDay);
+        }
+      }
+    });
+
+    return map;
+  }, [myBookings.data]);
+
   if (loading) {
     return (
       <PublicLayout>
@@ -293,61 +348,6 @@ export default function CalendarMine() {
 
     return Array.from(dates);
   })();
-
-  const bookingsByDate: Map<string, BookingForDay[]> = useMemo(() => {
-    const map = new Map<string, BookingForDay[]>();
-    const bookings = myBookings.data;
-    if (!bookings) return map;
-
-    const createLocalDate = (dateStr: string): Date => {
-      const [y, m, d] = dateStr.split('-').map(Number);
-      return new Date(y, m - 1, d);
-    };
-
-    bookings.forEach((booking: any) => {
-      const activeStatuses = ["pending_payment", "confirmed", "checked_in", "completed"];
-      if (activeStatuses.includes(booking.status)) {
-        let startStr = booking.startDate;
-        let endStr = booking.endDate;
-
-        if (startStr instanceof Date || typeof startStr === 'object') {
-          startStr = startStr.toISOString ? startStr.toISOString().split('T')[0] : String(startStr).substring(0, 10);
-        } else {
-          startStr = String(startStr).substring(0, 10);
-        }
-
-        if (endStr instanceof Date || typeof endStr === 'object') {
-          endStr = endStr.toISOString ? endStr.toISOString().split('T')[0] : String(endStr).substring(0, 10);
-        } else {
-          endStr = String(endStr).substring(0, 10);
-        }
-
-        const start = createLocalDate(startStr);
-        const end = createLocalDate(endStr);
-
-        for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-          const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-          const bookingForDay: BookingForDay = {
-            id: booking.id,
-            propertyName: booking.property?.name || "Property",
-            shortName: booking.property?.shortName || booking.property?.name || "Property",
-            timeSlot: booking.timeSlot,
-            startDate: startStr,
-            endDate: endStr,
-            status: booking.status,
-            activity: booking.activity,
-          };
-
-          if (!map.has(dateStr)) {
-            map.set(dateStr, []);
-          }
-          map.get(dateStr)!.push(bookingForDay);
-        }
-      }
-    });
-
-    return map;
-  }, [myBookings.data]);
 
   return (
     <PublicLayout>
