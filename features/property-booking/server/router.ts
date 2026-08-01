@@ -476,9 +476,23 @@ export const propertyBookingRouter = router({
         // Exclusive slot model: each slot can accommodate at most ONE booking group.
         // Capacity (maxHunters) only limits headcount within that one group, NOT slot occupancy.
         // So any confirmed booking marks the slot as 'full', regardless of capacity.
+        // AllDay bookings block ALL slots (AM, PM, AllDay, Overnight).
+        // Overnight bookings block Overnight and also AM/PM (they occupy the full 24h).
         function getSlotStatus(inv: any, slotKey: "amBookedCount" | "pmBookedCount" | "allDayBookedCount" | "overnightBookedCount"): "open" | "full" {
-          // If any booking exists for this slot, it's full (exclusive to that group)
-          return (inv?.[slotKey] ?? 0) > 0 ? "full" : "open";
+          const slotCount = inv?.[slotKey] ?? 0;
+          const allDayCount = inv?.allDayBookedCount ?? 0;
+          const overnightCount = inv?.overnightBookedCount ?? 0;
+
+          // Slot is full if there's a booking in this specific slot
+          if (slotCount > 0) return "full";
+
+          // AllDay bookings block all slots
+          if (allDayCount > 0) return "full";
+
+          // Overnight bookings block AM, PM, and Overnight slots (24-hour booking)
+          if (overnightCount > 0) return "full";
+
+          return "open";
         }
 
         // Generate a day-by-day availability array with per-slot status

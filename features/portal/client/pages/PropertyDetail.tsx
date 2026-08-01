@@ -203,12 +203,25 @@ function AvailabilityCalendar({
             // canSelect uses ONLY the selected slot's status
             const canSelect = !isPast && status !== "blocked" && status !== "closed" && activeStatus === "open";
 
-            // Determine if this is a split-state day (AM and PM differ, and neither is blocked/closed)
-            const isMixedState = !isPast && status !== "blocked" && status !== "closed" && amStatus !== pmStatus;
+            // Check if the entire day is fully booked (any full slot = entire day full)
+            const isFullDay = !isPast && (
+              status === "full" ||
+              allDayStatus === "full" ||
+              overnightStatus === "full" ||
+              (amStatus === "full" && pmStatus === "full")
+            );
+
+            // Determine if this is a genuine split-state day (AM and PM differ, but no all-day/overnight bookings)
+            // Only render split if both allDay and overnight are open
+            const isMixedState = !isPast &&
+              status !== "blocked" &&
+              status !== "closed" &&
+              allDayStatus === "open" &&
+              overnightStatus === "open" &&
+              amStatus !== pmStatus;
 
             // Determine background color/style based on availability state
-            // For mixed-state days, render split cells showing both AM and PM status
-            // For other days, color based on the selected slot
+            // Priority: (1) fully booked → solid red, (2) mixed AM/PM → split, (3) both open → green
             let bgClass = "bg-stone-700";
             let bgStyle: React.CSSProperties = {};
 
@@ -220,30 +233,28 @@ function AvailabilityCalendar({
               // Blocked — independent of slot
               bgClass = "bg-stone-700";
               bgStyle = { opacity: 0.5 };
+            } else if (isFullDay) {
+              // ANY full status = entire day is SOLID RED (All Day, Overnight, or both AM+PM)
+              bgClass = "bg-red-700";
+              bgStyle = { opacity: 0.6 };
             } else if (isMixedState) {
-              // Split state: AM and PM have different availability
+              // Split state: AM and PM differ, and no all-day/overnight bookings
               // Render as a split cell with gradient showing both statuses
               if (amStatus === "full" && pmStatus === "open") {
-                // Top half green (AM available), bottom half red (PM full)
-                // Actually reversed: AM Full means top red, PM Open means bottom green
+                // AM Full / PM Open: red top, green bottom
                 bgStyle = {
                   backgroundImage: "linear-gradient(to bottom, rgb(185 28 28) 0%, rgb(185 28 28) 50%, rgb(5 150 105) 50%, rgb(5 150 105) 100%)",
                   opacity: 0.7,
                 };
               } else if (pmStatus === "full" && amStatus === "open") {
-                // Top half red (AM open), bottom half green (PM full)
-                // Actually: AM Open means top green, PM Full means bottom red
+                // PM Full / AM Open: green top, red bottom
                 bgStyle = {
                   backgroundImage: "linear-gradient(to bottom, rgb(5 150 105) 0%, rgb(5 150 105) 50%, rgb(185 28 28) 50%, rgb(185 28 28) 100%)",
                   opacity: 0.7,
                 };
               }
-            } else if (!isPast && amStatus === "full" && pmStatus === "full") {
-              // Both slots full — solid red
-              bgClass = "bg-red-700";
-              bgStyle = { opacity: 0.6 };
             } else if (!isPast && amStatus === "open" && pmStatus === "open") {
-              // Both slots open — solid green
+              // Both AM and PM open (all-day and overnight also open) — solid green
               bgClass = "bg-emerald-600";
             }
 
@@ -256,15 +267,17 @@ function AvailabilityCalendar({
                 title={
                   status === "closed" && !isPast
                     ? `${cell.date}: Out of season`
-                    : isMixedState
+                    : isFullDay
+                      ? `${cell.date}: ${allDayStatus === "full" ? "All Day Full" : overnightStatus === "full" ? "Overnight Full" : "Full"}`
+                      : isMixedState
                       ? `${cell.date}: ${amStatus === "full" ? "AM Full" : "AM Open"} / ${pmStatus === "full" ? "PM Full" : "PM Open"}`
-                      : status === "open" || (amStatus === "open" && pmStatus === "open")
+                      : (amStatus === "open" && pmStatus === "open" && allDayStatus === "open" && overnightStatus === "open")
                       ? `${cell.date}: Available${
                           avail?.availableSpots != null
                             ? ` (${avail.availableSpots} spot${avail.availableSpots !== 1 ? "s" : ""})`
                             : ""
                         }${ avail?.seasonName ? ` — ${avail.seasonName}` : ""}`
-                      : `${cell.date}: ${amStatus === "full" && pmStatus === "full" ? "Full" : STATUS_LABELS[status] ?? status}`
+                      : `${cell.date}: ${STATUS_LABELS[status] ?? status}`
                 }
                 className={`
                   relative aspect-square rounded-lg text-xs font-medium flex items-center justify-center
