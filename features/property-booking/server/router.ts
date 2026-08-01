@@ -499,6 +499,8 @@ export const propertyBookingRouter = router({
         const end = new Date(input.endDate);
 
         while (cursor <= end) {
+          // Use UTC methods (getUTCDate, toISOString) to ensure consistent date extraction
+          // regardless of server timezone. This guarantees dates match client-side calendar keys.
           const dateStr = cursor.toISOString().split("T")[0];
           const inv = inventoryMap.get(dateStr);
           const isBlocked = blockedDates.has(dateStr);
@@ -581,7 +583,9 @@ export const propertyBookingRouter = router({
             });
           }
 
-          cursor.setDate(cursor.getDate() + 1);
+          // Increment cursor using UTC methods to ensure consistent date iteration
+          // regardless of server timezone (prevents off-by-one-day bugs)
+          cursor.setUTCDate(cursor.getUTCDate() + 1);
         }
 
         return result;
