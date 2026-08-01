@@ -103,6 +103,10 @@ function AvailabilityCalendar({
   onSelectDate,
   availMap,
   selectedSlot,
+  viewYear,
+  viewMonth,
+  onViewYearChange,
+  onViewMonthChange,
 }: {
   propertyId: number;
   selectedStart: string | null;
@@ -110,10 +114,11 @@ function AvailabilityCalendar({
   onSelectDate: (date: string) => void;
   availMap: Map<string, any>;
   selectedSlot: "AM" | "PM" | "AllDay" | "Overnight";
+  viewYear: number;
+  viewMonth: number;
+  onViewYearChange: (year: number) => void;
+  onViewMonthChange: (month: number) => void;
 }) {
-  const today = new Date();
-  const [viewYear, setViewYear] = useState(today.getFullYear());
-  const [viewMonth, setViewMonth] = useState(today.getMonth());
 
   const lastDay = new Date(viewYear, viewMonth + 1, 0).getDate();
   const firstDayOfWeek = new Date(viewYear, viewMonth, 1).getDay();
@@ -125,12 +130,12 @@ function AvailabilityCalendar({
   }
 
   const prevMonth = () => {
-    if (viewMonth === 0) { setViewYear(y => y - 1); setViewMonth(11); }
-    else setViewMonth(m => m - 1);
+    if (viewMonth === 0) { onViewYearChange(viewYear - 1); onViewMonthChange(11); }
+    else onViewMonthChange(viewMonth - 1);
   };
   const nextMonth = () => {
-    if (viewMonth === 11) { setViewYear(y => y + 1); setViewMonth(0); }
-    else setViewMonth(m => m + 1);
+    if (viewMonth === 11) { onViewYearChange(viewYear + 1); onViewMonthChange(0); }
+    else onViewMonthChange(viewMonth + 1);
   };
 
   const todayStr = toDateStr(today);
@@ -643,40 +648,45 @@ export default function PropertyDetail() {
   const lastDay = new Date(viewYear, viewMonth + 1, 0).getDate();
   const monthEnd = `${viewYear}-${String(viewMonth + 1).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
 
-  const { data: availability } = trpc.propertyBooking.properties.availability.useQuery(
+  const { data: availability, isLoading: availLoading, error: availError } = trpc.propertyBooking.properties.availability.useQuery(
     { propertyId, startDate: monthStart, endDate: monthEnd },
     { staleTime: 2 * 60 * 1000, enabled: propertyId > 0 },
   );
 
   const availMap = useMemo(() => {
     const m = new Map<string, any>();
-    console.log('===== AVAILMAP BUILD START =====');
+    console.log('===== AVAILMAP BUILD DIAGNOSTIC =====');
+    console.log('propertyId:', propertyId);
+    console.log('monthStart:', monthStart, 'monthEnd:', monthEnd);
+    console.log('availability query status:', { isLoading: availLoading, hasError: !!availError, isUndefined: availability === undefined, isNull: availability === null });
     console.log('availability type:', typeof availability);
     console.log('availability is array:', Array.isArray(availability));
     console.log('availability length:', availability?.length);
     console.log('availability[0]:', availability?.[0]);
+    console.log('availability[0].date:', availability?.[0]?.date);
+    console.log('first few items:', availability?.slice(0, 3));
 
-    if (availability) {
-      availability.forEach((d: any) => {
-        // Pure string extraction: first 10 chars of d.date (YYYY-MM-DD)
-        // NO Date objects, NO timezone shifts, byte-identical keys
+    if (availability && Array.isArray(availability)) {
+      console.log('✓ availability is an array, iterating...');
+      availability.forEach((d: any, i: number) => {
         const dateKey = String(d.date).slice(0, 10);
         m.set(dateKey, d);
+        if (i === 0 || i === 30) {
+          console.log(`  [${i}] dateKey="${dateKey}", amStatus="${d.amStatus}", pmStatus="${d.pmStatus}"`);
+        }
       });
+      console.log('✓ forEach completed, map size:', m.size);
+    } else {
+      console.warn('✗ availability is NOT an array or is falsy:', availability);
     }
 
-    console.log('Map size after forEach:', m.size);
+    console.log('Final map size:', m.size);
     console.log('Map has 2026-08-01:', m.has('2026-08-01'));
     const val8_1 = m.get('2026-08-01');
-    console.log('Map value for 2026-08-01:', val8_1);
-    if (val8_1) {
-      console.log('  - pmStatus:', val8_1.pmStatus);
-      console.log('  - amStatus:', val8_1.amStatus);
-      console.log('  - date field:', val8_1.date);
-    }
-    console.log('===== AVAILMAP BUILD END =====');
+    console.log('availability[2026-08-01]:', val8_1 ? { amStatus: val8_1.amStatus, pmStatus: val8_1.pmStatus, date: val8_1.date } : 'NOT FOUND');
+    console.log('===== END DIAGNOSTIC =====');
     return m;
-  }, [availability]);
+  }, [availability, availLoading, availError]);
 
   const availableModes = useMemo(() => {
     if (!data) return ["AM", "PM", "AllDay"];
@@ -984,6 +994,10 @@ export default function PropertyDetail() {
               onSelectDate={handleDateSelect}
               availMap={availMap}
               selectedSlot={activeSlot}
+              viewYear={viewYear}
+              viewMonth={viewMonth}
+              onViewYearChange={setViewYear}
+              onViewMonthChange={setViewMonth}
             />
           </div>
 
