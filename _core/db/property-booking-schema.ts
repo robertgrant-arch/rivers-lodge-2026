@@ -104,10 +104,6 @@ export const waitlistActivityEnum = pgEnum("waitlist_activity", [
   "bass", "catfish", "crappie", "mixed_hunt", "mixed_fish", "hunt_and_fish",
 ]);
 
-export const waiverStatusEnum = pgEnum("waiver_status", [
-  "pending", "sent", "completed", "overdue",
-]);
-
 // ─── Properties ───────────────────────────────────────────────────────
 
 export const huntingProperties = pgTable("hunting_properties", {
@@ -500,44 +496,3 @@ export const propertyAmenities = pgTable("property_amenities", {
 
 export type PropertyAmenity = typeof propertyAmenities.$inferSelect;
 export type InsertPropertyAmenity = typeof propertyAmenities.$inferInsert;
-
-// ─── Booking Party Adults ────────────────────────────────────────────────────
-
-export const bookingPartyAdults = pgTable("booking_party_adults", {
-  id: integer("id").generatedAlwaysAsIdentity().primaryKey(),
-  bookingId: integer("bookingId").notNull(),
-  fullName: varchar("fullName", { length: 255 }).notNull(),
-  phone: varchar("phone", { length: 20 }),
-  email: varchar("email", { length: 255 }).notNull(),
-  isDesignatedMember: boolean("isDesignatedMember").notNull().default(false),
-  waiverStatus: waiverStatusEnum("waiverStatus").notNull().default("pending"),
-  waiverProvider: text("waiverProvider"), // e.g., "docusign"
-  waiverEnvelopeId: varchar("waiverEnvelopeId", { length: 255 }), // DocuSign envelope ID
-  waiverSentAt: bigint("waiverSentAt", { mode: "number" }), // Unix timestamp
-  waiverCompletedAt: bigint("waiverCompletedAt", { mode: "number" }), // Unix timestamp
-  createdAt: bigint("createdAt", { mode: "number" }).notNull(),
-  updatedAt: bigint("updatedAt", { mode: "number" }).notNull(),
-}, (t) => [
-  index("bpa_booking_idx").on(t.bookingId),
-  index("bpa_email_idx").on(t.email),
-  index("bpa_waiver_status_idx").on(t.waiverStatus),
-]);
-
-export type BookingPartyAdult = typeof bookingPartyAdults.$inferSelect;
-export type InsertBookingPartyAdult = typeof bookingPartyAdults.$inferInsert;
-
-// ─── Booking Party Minors ────────────────────────────────────────────────────
-
-export const bookingPartyMinors = pgTable("booking_party_minors", {
-  id: integer("id").generatedAlwaysAsIdentity().primaryKey(),
-  bookingId: integer("bookingId").notNull(),
-  adultId: integer("adultId").notNull(), // FK to booking_party_adults
-  fullName: varchar("fullName", { length: 255 }).notNull(),
-  createdAt: bigint("createdAt", { mode: "number" }).notNull(),
-}, (t) => [
-  index("bpm_booking_idx").on(t.bookingId),
-  index("bpm_adult_idx").on(t.adultId),
-]);
-
-export type BookingPartyMinor = typeof bookingPartyMinors.$inferSelect;
-export type InsertBookingPartyMinor = typeof bookingPartyMinors.$inferInsert;
