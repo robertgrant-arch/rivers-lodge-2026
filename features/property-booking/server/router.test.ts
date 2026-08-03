@@ -6,8 +6,8 @@
 
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { getDb } from "@core/server/db";
-import { huntingProperties, propertyActivities, propertyDateInventory } from "@core/db/property-booking-schema";
-import { eq, and } from "drizzle-orm";
+import { huntingProperties, propertyActivities, propertyDateInventory, propertyBookings } from "@core/db/property-booking-schema";
+import { eq, and, sql } from "drizzle-orm";
 
 describe("Property Booking - Activities", () => {
   let db: any;
@@ -285,6 +285,258 @@ describe("Property Booking - Activities", () => {
 
     // Cleanup
     await db.delete(propertyDateInventory).where(and(eq(propertyDateInventory.propertyId, propertyId), eq(propertyDateInventory.date, "2026-08-15")));
+    await db.delete(huntingProperties).where(eq(huntingProperties.id, propertyId));
+  });
+
+  it("should correctly track OVERNIGHT bookings in inventory counters (increments overnightBookedCount)", async () => {
+    const now = Date.now();
+
+    // Create test property
+    const propResult = await db
+      .insert(huntingProperties)
+      .values({
+        name: "Test Property - OVERNIGHT",
+        slug: `test-overnight-${Date.now()}`,
+        type: "stand",
+        primaryActivity: "deer",
+        active: true,
+        featuredOnPublicSite: true,
+        sortOrder: 0,
+        createdAt: now,
+        updatedAt: now,
+        maxHunters: 2,
+        hasCellService: true,
+        overnightEnabled: true,
+      })
+      .returning({ id: huntingProperties.id });
+
+    const propertyId = propResult[0].id;
+
+    // Create an OVERNIGHT booking spanning 3 days (Aug 4-6, 2026)
+    const bookingResult = await db
+      .insert(propertyBookings)
+      .values({
+        bookingRef: `TEST-OVERNIGHT-${Date.now()}`,
+        idempotencyKey: `overnight-test-${Date.now()}`,
+        memberId: 999, // Dummy member ID
+        userId: "test-user-id",
+        propertyId,
+        seasonId: null,
+        startDate: "2026-08-04",
+        endDate: "2026-08-06",
+        totalDays: 3,
+        partySize: 2,
+        guestNames: null,
+        hasMinors: false,
+        activity: "deer",
+        timeSlot: "OVERNIGHT",
+        huntingLicenseConfirmed: true,
+        fishingLicenseConfirmed: false,
+        waiverSignedAt: null,
+        status: "confirmed",
+        requiresApproval: false,
+        approvedByUserId: null,
+        approvedAt: null,
+        declinedAt: null,
+        declineReason: null,
+        cancelledAt: null,
+        cancellationReason: null,
+        cancelledByUserId: null,
+        isLateCancellation: false,
+        totalAmount: 500,
+        depositAmount: 250,
+        depositPaid: 250,
+        balanceDue: 250,
+        currency: "USD",
+        memberNotes: null,
+        staffNotes: null,
+        confirmationSentAt: null,
+        reminderSentAt: null,
+        createdAt: now,
+        updatedAt: now,
+      })
+      .returning({ id: propertyBookings.id });
+
+    const bookingId = bookingResult[0].id;
+    expect(bookingId).toBeGreaterThan(0);
+
+    // Verify inventory counters for each date in the range
+    // Each date should have overnightBookedCount = 1, other slots = 0
+    const inventoryRows = await db
+      .select()
+      .from(propertyDateInventory)
+      .where(
+        and(
+          eq(propertyDateInventory.propertyId, propertyId),
+        ),
+      );
+
+    const aug4 = inventoryRows.find((row: any) => row.date === "2026-08-04");
+    const aug5 = inventoryRows.find((row: any) => row.date === "2026-08-05");
+    const aug6 = inventoryRows.find((row: any) => row.date === "2026-08-06");
+
+    // Verify Aug 4
+    expect(aug4).toBeDefined();
+    expect(aug4.overnightBookedCount).toBe(1);
+    expect(aug4.amBookedCount).toBe(0);
+    expect(aug4.pmBookedCount).toBe(0);
+    expect(aug4.allDayBookedCount).toBe(0);
+    expect(aug4.status).toBe("full"); // OVERNIGHT marks day as full
+
+    // Verify Aug 5
+    expect(aug5).toBeDefined();
+    expect(aug5.overnightBookedCount).toBe(1);
+    expect(aug5.amBookedCount).toBe(0);
+    expect(aug5.pmBookedCount).toBe(0);
+    expect(aug5.allDayBookedCount).toBe(0);
+    expect(aug5.status).toBe("full"); // OVERNIGHT marks day as full
+
+    // Verify Aug 6
+    expect(aug6).toBeDefined();
+    expect(aug6.overnightBookedCount).toBe(1);
+    expect(aug6.amBookedCount).toBe(0);
+    expect(aug6.pmBookedCount).toBe(0);
+    expect(aug6.allDayBookedCount).toBe(0);
+    expect(aug6.status).toBe("full"); // OVERNIGHT marks day as full
+
+    // Cleanup: delete booking and inventory
+    await db.delete(propertyBookings).where(eq(propertyBookings.id, bookingId));
+    await db.delete(propertyDateInventory).where(eq(propertyDateInventory.propertyId, propertyId));
+    await db.delete(huntingProperties).where(eq(huntingProperties.id, propertyId));
+  });
+
+  it("should correctly decrement OVERNIGHT bookings on cancellation (decrements overnightBookedCount)", async () => {
+    const now = Date.now();
+
+    // Create test property
+    const propResult = await db
+      .insert(huntingProperties)
+      .values({
+        name: "Test Property - OVERNIGHT Cancel",
+        slug: `test-overnight-cancel-${Date.now()}`,
+        type: "stand",
+        primaryActivity: "deer",
+        active: true,
+        featuredOnPublicSite: true,
+        sortOrder: 0,
+        createdAt: now,
+        updatedAt: now,
+        maxHunters: 2,
+        hasCellService: true,
+        overnightEnabled: true,
+      })
+      .returning({ id: huntingProperties.id });
+
+    const propertyId = propResult[0].id;
+
+    // Create pre-existing inventory with OVERNIGHT booking already counted
+    await db.insert(propertyDateInventory).values([
+      {
+        propertyId,
+        date: "2026-08-10",
+        capacity: 2,
+        bookedCount: 1,
+        amBookedCount: 0,
+        pmBookedCount: 0,
+        allDayBookedCount: 0,
+        overnightBookedCount: 1,
+        status: "full",
+        version: 0,
+        updatedAt: now,
+      },
+      {
+        propertyId,
+        date: "2026-08-11",
+        capacity: 2,
+        bookedCount: 1,
+        amBookedCount: 0,
+        pmBookedCount: 0,
+        allDayBookedCount: 0,
+        overnightBookedCount: 1,
+        status: "full",
+        version: 0,
+        updatedAt: now,
+      },
+    ]);
+
+    // Create the OVERNIGHT booking
+    const bookingResult = await db
+      .insert(propertyBookings)
+      .values({
+        bookingRef: `TEST-OVERNIGHT-CANCEL-${Date.now()}`,
+        idempotencyKey: `overnight-cancel-test-${Date.now()}`,
+        memberId: 999,
+        userId: "test-user-id",
+        propertyId,
+        seasonId: null,
+        startDate: "2026-08-10",
+        endDate: "2026-08-11",
+        totalDays: 2,
+        partySize: 1,
+        guestNames: null,
+        hasMinors: false,
+        activity: "deer",
+        timeSlot: "OVERNIGHT",
+        huntingLicenseConfirmed: true,
+        fishingLicenseConfirmed: false,
+        waiverSignedAt: null,
+        status: "confirmed",
+        requiresApproval: false,
+        approvedByUserId: null,
+        approvedAt: null,
+        declinedAt: null,
+        declineReason: null,
+        cancelledAt: null,
+        cancellationReason: null,
+        cancelledByUserId: null,
+        isLateCancellation: false,
+        totalAmount: 300,
+        depositAmount: 150,
+        depositPaid: 150,
+        balanceDue: 150,
+        currency: "USD",
+        memberNotes: null,
+        staffNotes: null,
+        confirmationSentAt: null,
+        reminderSentAt: null,
+        createdAt: now,
+        updatedAt: now,
+      })
+      .returning({ id: propertyBookings.id });
+
+    const bookingId = bookingResult[0].id;
+
+    // Simulate cancellation: decrement overnightBookedCount
+    await db
+      .update(propertyDateInventory)
+      .set({
+        overnightBookedCount: 0,
+        bookedCount: 0,
+        status: "open",
+        version: sql`version + 1`,
+        updatedAt: Math.floor(Date.now() / 1000),
+      })
+      .where(
+        and(
+          eq(propertyDateInventory.propertyId, propertyId),
+        ),
+      );
+
+    // Verify counters are reset
+    const inventoryAfter = await db
+      .select()
+      .from(propertyDateInventory)
+      .where(eq(propertyDateInventory.propertyId, propertyId));
+
+    inventoryAfter.forEach((row: any) => {
+      expect(row.overnightBookedCount).toBe(0);
+      expect(row.bookedCount).toBe(0);
+      expect(row.status).toBe("open");
+    });
+
+    // Cleanup
+    await db.delete(propertyBookings).where(eq(propertyBookings.id, bookingId));
+    await db.delete(propertyDateInventory).where(eq(propertyDateInventory.propertyId, propertyId));
     await db.delete(huntingProperties).where(eq(huntingProperties.id, propertyId));
   });
 });
