@@ -117,14 +117,14 @@ export async function getPartyMembers(
     .where({ bookingId });
 
   const minorsByAdultId = new Map<number, any[]>();
-  allMinors.forEach((minor) => {
+  allMinors.forEach((minor: { adultId: number }) => {
     if (!minorsByAdultId.has(minor.adultId)) {
       minorsByAdultId.set(minor.adultId, []);
     }
     minorsByAdultId.get(minor.adultId)!.push(minor);
   });
 
-  return adults.map((adult) => ({
+  return adults.map((adult: { id: number }) => ({
     ...adult,
     minors: minorsByAdultId.get(adult.id) ?? [],
   }));
