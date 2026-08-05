@@ -504,9 +504,9 @@ function BookingDialog({
     // Build party structure: designated member + additional adults
     const partyAdults = [
       {
-        fullName: user?.fullName || "Booker",
+        fullName: user?.email || "Booker",
         email: user?.email || "",
-        phone: user?.phone || "",
+        phone: "",
         minors: [], // Designated member's minors not captured yet
         isDesignatedMember: true,
       },
@@ -539,7 +539,7 @@ function BookingDialog({
   if (showWaiverForm) {
     // Build party members list from structured data
     const partyMembers = [
-      { name: user?.fullName || "Booker", isMinor: false },
+      { name: user?.email || "Booker", isMinor: false },
       ...adults.flatMap((a) => [
         { name: a.fullName, isMinor: false },
         ...a.minors.map((m) => ({ name: m.fullName, isMinor: true })),
@@ -652,7 +652,7 @@ function BookingDialog({
               <div>
                 <Label className="text-xs text-stone-400">Full Name</Label>
                 <Input
-                  value={user?.fullName || ""}
+                  value={user?.email || ""}
                   disabled
                   className="bg-stone-700 border-stone-600 text-stone-100 cursor-not-allowed opacity-60"
                 />

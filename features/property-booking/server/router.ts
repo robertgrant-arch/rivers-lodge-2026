@@ -940,7 +940,7 @@ export const propertyBookingRouter = router({
                     createdAt: Date.now(),
                     updatedAt: Date.now(),
                   },
-                  minors: (adult.minors ?? []).map((m) => ({
+                  minors: (adult.minors ?? []).map((m: { fullName: string }) => ({
                     id: 0,
                     bookingId: result.bookingId,
                     adultId: 0,
@@ -966,7 +966,7 @@ export const propertyBookingRouter = router({
                     huntingLicenseConfirmed: input.huntingLicenseConfirmed ?? false,
                     fishingLicenseConfirmed: input.fishingLicenseConfirmed ?? false,
                     waiverSignedAt: null,
-                    status: result.status,
+                    status: result.status as any,
                     requiresApproval: false,
                     approvedByUserId: null,
                     approvedAt: null,
@@ -1025,7 +1025,7 @@ export const propertyBookingRouter = router({
                     huntingLicenseConfirmed: input.huntingLicenseConfirmed ?? false,
                     fishingLicenseConfirmed: input.fishingLicenseConfirmed ?? false,
                     waiverSignedAt: null,
-                    status: result.status,
+                    status: result.status as any,
                     requiresApproval: false,
                     approvedByUserId: null,
                     approvedAt: null,
