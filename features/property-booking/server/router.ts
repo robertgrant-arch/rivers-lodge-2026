@@ -36,6 +36,8 @@ import {
 import { members } from '@core/db/schema';
 import { eq, and, gte, lte, sql, desc, asc, or, isNull, ne } from "drizzle-orm";
 import { nanoid } from "nanoid";
+import { getWaiverProvider } from '@features/property-booking/server/waiver-provider';
+import { sendWaiverSigningEmail } from '@features/property-booking/server/waiver-emails';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -245,6 +247,16 @@ const createBookingInput = z.object({
     type: z.enum(["guide", "atv", "dog_handler", "cleaning", "meals", "ammo", "gear_rental", "photography", "other"]),
     description: z.string().max(200).optional(),
     quantity: z.number().int().min(1).default(1),
+  })).optional(),
+  // Slice 2: Structured party data (adults + minors)
+  partyAdults: z.array(z.object({
+    fullName: z.string().max(255),
+    email: z.string().max(255),
+    phone: z.string().max(20),
+    minors: z.array(z.object({
+      fullName: z.string().max(255),
+    })).optional().default([]),
+    isDesignatedMember: z.boolean().optional().default(false),
   })).optional(),
 });
 
@@ -674,7 +686,7 @@ export const propertyBookingRouter = router({
         // a connection from the pool.
         const member = await requireMember(db, ctx.user.id);
 
-        return await db.transaction(async (tx) => {
+        const result = await db.transaction(async (tx) => {
           // ── Idempotency (inside tx so the re-check is serialised) ──────────
           const existing = await tx
             .select({ id: propertyBookings.id, bookingRef: propertyBookings.bookingRef })
@@ -904,6 +916,149 @@ export const propertyBookingRouter = router({
 
           return { bookingId, bookingRef, status, alreadyExisted: false };
         });
+
+        // After transaction completes, call dormant waiver hooks (no-op if not configured)
+        if (!result.alreadyExisted && input.partyAdults && input.partyAdults.length > 0) {
+          try {
+            const waiverProvider = getWaiverProvider();
+            for (const adult of input.partyAdults) {
+              if (!adult.isDesignatedMember) {
+                // Send waiver to each additional adult (designated member email handled separately)
+                await waiverProvider.sendWaiver({
+                  adult: {
+                    id: 0, // Placeholder; real ID will be from DB in Slice 3
+                    bookingId: result.bookingId,
+                    fullName: adult.fullName,
+                    email: adult.email,
+                    phone: adult.phone,
+                    isDesignatedMember: false,
+                    waiverStatus: "pending",
+                    waiverProvider: null,
+                    waiverEnvelopeId: null,
+                    waiverSentAt: null,
+                    waiverCompletedAt: null,
+                    createdAt: Date.now(),
+                    updatedAt: Date.now(),
+                  },
+                  minors: (adult.minors ?? []).map((m: { fullName: string }) => ({
+                    id: 0,
+                    bookingId: result.bookingId,
+                    adultId: 0,
+                    fullName: m.fullName,
+                    createdAt: Date.now(),
+                  })),
+                  booking: {
+                    id: result.bookingId,
+                    bookingRef: result.bookingRef,
+                    idempotencyKey: input.idempotencyKey,
+                    memberId: member.id,
+                    userId: ctx.user.id,
+                    propertyId: input.propertyId,
+                    seasonId: null,
+                    startDate: input.startDate,
+                    endDate: input.endDate,
+                    totalDays: 0,
+                    partySize: input.partySize,
+                    guestNames: input.guestNames ?? null,
+                    hasMinors: input.hasMinors ?? false,
+                    activity: input.activity,
+                    timeSlot: input.timeSlot ?? "ALL_DAY",
+                    huntingLicenseConfirmed: input.huntingLicenseConfirmed ?? false,
+                    fishingLicenseConfirmed: input.fishingLicenseConfirmed ?? false,
+                    waiverSignedAt: null,
+                    status: result.status as any,
+                    requiresApproval: false,
+                    approvedByUserId: null,
+                    approvedAt: null,
+                    declinedAt: null,
+                    declineReason: null,
+                    cancelledAt: null,
+                    cancellationReason: null,
+                    cancelledByUserId: null,
+                    isLateCancellation: false,
+                    totalAmount: "0",
+                    depositAmount: "0",
+                    depositPaid: "0",
+                    balanceDue: "0",
+                    currency: "USD",
+                    memberNotes: input.memberNotes ?? null,
+                    staffNotes: null,
+                    confirmationSentAt: null,
+                    reminderSentAt: null,
+                    createdAt: Date.now(),
+                    updatedAt: Date.now(),
+                  },
+                });
+                // Send signing email (dormant)
+                await sendWaiverSigningEmail(
+                  {
+                    id: 0,
+                    bookingId: result.bookingId,
+                    fullName: adult.fullName,
+                    email: adult.email,
+                    phone: adult.phone,
+                    isDesignatedMember: false,
+                    waiverStatus: "pending",
+                    waiverProvider: null,
+                    waiverEnvelopeId: null,
+                    waiverSentAt: null,
+                    waiverCompletedAt: null,
+                    createdAt: Date.now(),
+                    updatedAt: Date.now(),
+                  },
+                  {
+                    id: result.bookingId,
+                    bookingRef: result.bookingRef,
+                    idempotencyKey: input.idempotencyKey,
+                    memberId: member.id,
+                    userId: ctx.user.id,
+                    propertyId: input.propertyId,
+                    seasonId: null,
+                    startDate: input.startDate,
+                    endDate: input.endDate,
+                    totalDays: 0,
+                    partySize: input.partySize,
+                    guestNames: input.guestNames ?? null,
+                    hasMinors: input.hasMinors ?? false,
+                    activity: input.activity,
+                    timeSlot: input.timeSlot ?? "ALL_DAY",
+                    huntingLicenseConfirmed: input.huntingLicenseConfirmed ?? false,
+                    fishingLicenseConfirmed: input.fishingLicenseConfirmed ?? false,
+                    waiverSignedAt: null,
+                    status: result.status as any,
+                    requiresApproval: false,
+                    approvedByUserId: null,
+                    approvedAt: null,
+                    declinedAt: null,
+                    declineReason: null,
+                    cancelledAt: null,
+                    cancellationReason: null,
+                    cancelledByUserId: null,
+                    isLateCancellation: false,
+                    totalAmount: "0",
+                    depositAmount: "0",
+                    depositPaid: "0",
+                    balanceDue: "0",
+                    currency: "USD",
+                    memberNotes: input.memberNotes ?? null,
+                    staffNotes: null,
+                    confirmationSentAt: null,
+                    reminderSentAt: null,
+                    createdAt: Date.now(),
+                    updatedAt: Date.now(),
+                  },
+                  `https://riverslodgehunt.com/portal/properties/${input.propertyId}`,
+                  "Rivers Lodge"
+                );
+              }
+            }
+          } catch (err) {
+            console.error("[property-booking] Failed to call waiver hooks:", err);
+            // Don't fail the booking if waiver hooks fail (they're dormant anyway)
+          }
+        }
+
+        return result;
       }),
 
     /** List the current member's bookings */
