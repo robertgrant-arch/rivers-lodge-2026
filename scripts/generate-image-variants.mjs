@@ -5,11 +5,12 @@
  * client/public/brand/ at 480/768/1200/1920w.  Originals are never modified.
  * Output files live beside originals; already-generated files are skipped.
  *
+ * Generates variants-manifest.json listing all successfully created variants.
+ * Picture.tsx uses this manifest to only load variants known to exist, avoiding
+ * 404 errors when variants aren't deployed (e.g., on Render's build host).
+ *
  * Concurrency is capped at MAX_CONCURRENT Sharp jobs to prevent OOM on
  * memory-constrained CI/build hosts (e.g. Render Starter at 512 MB).
- *
- * Graceful degradation: if variant generation fails, build continues without variants.
- * Fallback mechanism in Picture.tsx ensures original images still load.
  */
 
 import { createRequire } from "module";
@@ -34,6 +35,9 @@ const MAX_CONCURRENT = parseInt(process.env.IMAGE_VARIANT_CONCURRENCY || "2");
 const SOURCE_EXTS = new Set([".jpg", ".jpeg", ".png", ".webp", ".tiff", ".tif"]);
 // Extensions we never overwrite (don't re-process generated variants)
 const VARIANT_RE = /-\d+w\.(avif|webp)$/i;
+
+// Track successfully generated variants for manifest
+const generatedVariants = new Map(); // Map<relativePath, Set<widths>>
 
 // Simple semaphore: at most MAX_CONCURRENT thunks run at once.
 function makeSemaphore(limit) {
@@ -62,6 +66,8 @@ async function processFile(filePath) {
 
   const dir = path.dirname(filePath);
   const name = path.basename(filePath, path.extname(filePath));
+  const relDir = path.relative(path.join(ROOT, "client", "public"), dir).replace(/\\/g, "/");
+  const relativeSrc = `/${relDir}/${name}${ext}`.replace(/\\/g, "/");
 
   let meta;
   try {
@@ -82,7 +88,7 @@ async function processFile(filePath) {
 
       tasks.push(
         fs.access(outPath)
-          .then(() => null) // already exists, skip
+          .then(() => w) // already exists, mark as generated
           .catch(() =>
             sem(async () => {
               const s = sharp(filePath).resize(w, null, { withoutEnlargement: true });
@@ -92,7 +98,7 @@ async function processFile(filePath) {
                 s.webp({ quality: 82 });
               }
               await s.toFile(outPath);
-              return outPath;
+              return w; // success
             }).catch((err) => {
               console.warn(`  ⚠ failed: ${path.basename(outPath)} — ${err.message}`);
               return null;
@@ -105,6 +111,12 @@ async function processFile(filePath) {
   const results = await Promise.all(tasks);
   const generated = results.filter(Boolean);
   if (generated.length) {
+    // Track which widths were successfully generated for this file
+    if (!generatedVariants.has(relativeSrc)) {
+      generatedVariants.set(relativeSrc, new Set());
+    }
+    const widths = generatedVariants.get(relativeSrc);
+    generated.forEach(w => widths.add(w));
     console.log(`  ✓ ${path.basename(filePath)} → ${generated.length} variants`);
   }
 }
@@ -132,9 +144,26 @@ console.log(`Generating image variants (concurrency: ${MAX_CONCURRENT})…`);
 
 try {
   await Promise.all(DIRS.map(processDir));
-  console.log("✓ Image variant generation complete.");
+
+  // Write manifest of generated variants so Picture.tsx can use it at runtime
+  const manifestPath = path.join(ROOT, "client", "public", "variants-manifest.json");
+  const manifest = Object.fromEntries(generatedVariants);
+  await fs.writeFile(manifestPath, JSON.stringify(manifest, null, 2));
+
+  const totalSources = generatedVariants.size;
+  console.log(`✓ Image variant generation complete (${totalSources} files with variants).`);
+  console.log(`✓ Manifest written to ${path.relative(ROOT, manifestPath)}`);
 } catch (err) {
   // Log error but don't fail the build—Picture.tsx fallback ensures images still load
   console.error(`⚠ Image variant generation failed: ${err.message}`);
   console.log("  (falling back to original images; variant loading gracefully degraded)");
+
+  // Ensure manifest file exists even if generation fails
+  try {
+    const manifestPath = path.join(ROOT, "client", "public", "variants-manifest.json");
+    await fs.writeFile(manifestPath, JSON.stringify({}, null, 2));
+    console.log("  (empty manifest written; images will load from originals)");
+  } catch {
+    // ignore
+  }
 }
