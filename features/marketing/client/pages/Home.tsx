@@ -158,9 +158,9 @@ export default function Home() {
       </section>
 
       {/* ── 02. Teaser: Our Story ────────────────────────────────────────── */}
-      <section ref={storyRef} className="fade-up relative py-32 lg:py-48 overflow-hidden">
+      <section ref={storyRef} className="fade-up relative py-32 lg:py-48 overflow-hidden min-h-[500px] lg:min-h-[600px]">
         <Picture
-          src="https://riverslodgehunt.com/img/rivers-1-rockhome.jpg"
+          src="/img/rivers-1-rockhome.jpg"
           alt="The rock home at Rivers Lodge & Hunt Club"
           label="Our story"
           className="absolute inset-0 w-full h-full"
@@ -197,7 +197,7 @@ export default function Home() {
       </section>
 
       {/* ── 03. Teaser: Lodging & Venues ─────────────────────────────────── */}
-      <section ref={stayRef} className="fade-up relative py-32 lg:py-48 overflow-hidden">
+      <section ref={stayRef} className="fade-up relative py-32 lg:py-48 overflow-hidden min-h-[500px] lg:min-h-[600px]">
         <Picture
           src="/img/Clubhouse%20Home.jpg"
           alt="Clubhouse interior at Rivers Lodge"
