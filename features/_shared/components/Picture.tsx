@@ -2,17 +2,35 @@
  * <Picture> — responsive image component with AVIF → WebP → original fallback.
  *
  * For local /img/* and /brand/* paths it constructs a srcset referencing
- * pre-generated variants produced by scripts/generate-image-variants.mjs.
+ * pre-generated variants produced by scripts/generate-image-variants.mjs,
+ * checking variants-manifest.json to only use variants known to exist.
  * External URLs (http/https) are rendered as a plain <img> with lazy loading.
  *
- * Graceful fallback: when variants fail to load (404), falls back to original JPG.
+ * Robust fallback: if variants don't exist, the original image src loads.
  * A dark placeholder block is always present; if image load fails, it remains visible.
  *
- * If variants are unavailable in production (e.g., not deployed), the original
- * image in the <img src> will load as a fallback.
+ * Handles case where variants aren't deployed (e.g., on Render) by gracefully
+ * falling back to original image without ever requesting missing variants.
  */
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
+
+// Cache for variants manifest (loaded once from public/variants-manifest.json)
+let variantsManifestCache: Record<string, number[]> | null | undefined;
+
+// Load manifest at module init time
+if (typeof window !== "undefined") {
+  fetch("/variants-manifest.json")
+    .then((r) => r.json())
+    .then((manifest) => {
+      variantsManifestCache = manifest;
+    })
+    .catch(() => {
+      variantsManifestCache = null;
+    });
+} else {
+  variantsManifestCache = null;
+}
 
 /* Tiny 4×4 dark blur data URI — shown behind every image until it decodes */
 const PLACEHOLDER_URI =
@@ -25,18 +43,21 @@ function isLocal(src: string) {
   return src.startsWith("/img/") || src.startsWith("/brand/");
 }
 
+function hasVariants(src: string): boolean {
+  // Check if this image has variants in the cached manifest
+  // Decode URL-encoded src to match manifest keys
+  // If manifest hasn't loaded yet, default to false (safe fallback)
+  if (!variantsManifestCache) return false;
+  const decodedSrc = decodeURIComponent(src);
+  return decodedSrc in variantsManifestCache;
+}
+
 function buildSrcset(src: string, fmt: "avif" | "webp", maxWidth?: number): string {
   // src may be URL-encoded, e.g. "/img/Ohana%20Aerial.jpg"
   const lastDot = src.lastIndexOf(".");
   const base = lastDot >= 0 ? src.slice(0, lastDot) : src;
   const widths = maxWidth ? WIDTHS.filter((w) => w <= maxWidth) : WIDTHS;
   return widths.map((w) => `${base}-${w}w.${fmt} ${w}w`).join(", ");
-}
-
-function buildFallbackSrcset(src: string, fmt: "avif" | "webp", maxWidth?: number): string {
-  // Minimal srcset with just the original as a fallback, no variants
-  // This is used when we detect that variants are missing (404)
-  return src;
 }
 
 function defaultSizes() {
@@ -75,8 +96,6 @@ export default function Picture({
   sizes,
 }: PictureProps) {
   const [errored, setErrored] = useState(false);
-  const [useVariants, setUseVariants] = useState(true);
-  const imgRef = useRef<HTMLImageElement>(null);
 
   const placeholderStyle: React.CSSProperties = {
     backgroundImage: `url("${PLACEHOLDER_URI}")`,
@@ -84,23 +103,11 @@ export default function Picture({
   };
 
   const local = isLocal(src);
-
-  useEffect(() => {
-    // Monitor image load: if it fails and we were using variants, try without variants
-    const img = imgRef.current;
-    if (!img || !local || !useVariants) return;
-
-    const handleError = () => {
-      // Variant srcset failed to load; switch to plain src for fallback
-      setUseVariants(false);
-    };
-
-    img.addEventListener("error", handleError);
-    return () => img.removeEventListener("error", handleError);
-  }, [local, useVariants]);
+  // Only use variants if manifest is loaded and says this file has them
+  const canUseVariants = local && variantsManifestCache && hasVariants(src);
 
   const handleImageError = () => {
-    // Final fallback: even the original image failed to load
+    // Image load failed; show the dark placeholder
     setErrored(true);
   };
 
@@ -122,7 +129,7 @@ export default function Picture({
       {!errored && (
         local ? (
           <picture>
-            {useVariants && (
+            {canUseVariants && (
               <>
                 <source
                   type="image/avif"
@@ -137,7 +144,6 @@ export default function Picture({
               </>
             )}
             <img
-              ref={imgRef}
               src={src}
               alt={alt}
               className={imgClassName}
@@ -152,7 +158,6 @@ export default function Picture({
           </picture>
         ) : (
           <img
-            ref={imgRef}
             src={src}
             alt={alt}
             className={imgClassName}
