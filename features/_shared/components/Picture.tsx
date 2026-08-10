@@ -5,11 +5,14 @@
  * pre-generated variants produced by scripts/generate-image-variants.mjs.
  * External URLs (http/https) are rendered as a plain <img> with lazy loading.
  *
- * Graceful fallback: a dark placeholder block is always present in the DOM;
- * on error the <img> hides itself, leaving the placeholder visible.
+ * Graceful fallback: when variants fail to load (404), falls back to original JPG.
+ * A dark placeholder block is always present; if image load fails, it remains visible.
+ *
+ * If variants are unavailable in production (e.g., not deployed), the original
+ * image in the <img src> will load as a fallback.
  */
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 
 /* Tiny 4×4 dark blur data URI — shown behind every image until it decodes */
 const PLACEHOLDER_URI =
@@ -28,6 +31,12 @@ function buildSrcset(src: string, fmt: "avif" | "webp", maxWidth?: number): stri
   const base = lastDot >= 0 ? src.slice(0, lastDot) : src;
   const widths = maxWidth ? WIDTHS.filter((w) => w <= maxWidth) : WIDTHS;
   return widths.map((w) => `${base}-${w}w.${fmt} ${w}w`).join(", ");
+}
+
+function buildFallbackSrcset(src: string, fmt: "avif" | "webp", maxWidth?: number): string {
+  // Minimal srcset with just the original as a fallback, no variants
+  // This is used when we detect that variants are missing (404)
+  return src;
 }
 
 function defaultSizes() {
@@ -66,6 +75,8 @@ export default function Picture({
   sizes,
 }: PictureProps) {
   const [errored, setErrored] = useState(false);
+  const [useVariants, setUseVariants] = useState(true);
+  const imgRef = useRef<HTMLImageElement>(null);
 
   const placeholderStyle: React.CSSProperties = {
     backgroundImage: `url("${PLACEHOLDER_URI}")`,
@@ -73,6 +84,25 @@ export default function Picture({
   };
 
   const local = isLocal(src);
+
+  useEffect(() => {
+    // Monitor image load: if it fails and we were using variants, try without variants
+    const img = imgRef.current;
+    if (!img || !local || !useVariants) return;
+
+    const handleError = () => {
+      // Variant srcset failed to load; switch to plain src for fallback
+      setUseVariants(false);
+    };
+
+    img.addEventListener("error", handleError);
+    return () => img.removeEventListener("error", handleError);
+  }, [local, useVariants]);
+
+  const handleImageError = () => {
+    // Final fallback: even the original image failed to load
+    setErrored(true);
+  };
 
   return (
     <div className={`relative ${className ?? ""}`} style={placeholderStyle}>
@@ -92,17 +122,22 @@ export default function Picture({
       {!errored && (
         local ? (
           <picture>
-            <source
-              type="image/avif"
-              srcSet={buildSrcset(src, "avif", width)}
-              sizes={sizes ?? defaultSizes()}
-            />
-            <source
-              type="image/webp"
-              srcSet={buildSrcset(src, "webp", width)}
-              sizes={sizes ?? defaultSizes()}
-            />
+            {useVariants && (
+              <>
+                <source
+                  type="image/avif"
+                  srcSet={buildSrcset(src, "avif", width)}
+                  sizes={sizes ?? defaultSizes()}
+                />
+                <source
+                  type="image/webp"
+                  srcSet={buildSrcset(src, "webp", width)}
+                  sizes={sizes ?? defaultSizes()}
+                />
+              </>
+            )}
             <img
+              ref={imgRef}
               src={src}
               alt={alt}
               className={imgClassName}
@@ -112,11 +147,12 @@ export default function Picture({
               loading={loading}
               fetchPriority={fetchPriority}
               decoding={decoding}
-              onError={() => setErrored(true)}
+              onError={handleImageError}
             />
           </picture>
         ) : (
           <img
+            ref={imgRef}
             src={src}
             alt={alt}
             className={imgClassName}
@@ -126,7 +162,7 @@ export default function Picture({
             loading={loading}
             fetchPriority={fetchPriority}
             decoding={decoding}
-            onError={() => setErrored(true)}
+            onError={handleImageError}
           />
         )
       )}

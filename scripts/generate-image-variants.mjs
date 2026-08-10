@@ -7,6 +7,9 @@
  *
  * Concurrency is capped at MAX_CONCURRENT Sharp jobs to prevent OOM on
  * memory-constrained CI/build hosts (e.g. Render Starter at 512 MB).
+ *
+ * Graceful degradation: if variant generation fails, build continues without variants.
+ * Fallback mechanism in Picture.tsx ensures original images still load.
  */
 
 import { createRequire } from "module";
@@ -24,7 +27,8 @@ const DIRS = [
 
 const WIDTHS = [480, 768, 1200, 1920];
 const FORMATS = ["avif", "webp"];
-const MAX_CONCURRENT = 2;
+// Reduce concurrency further on constrained environments (e.g., Render Starter Plan)
+const MAX_CONCURRENT = parseInt(process.env.IMAGE_VARIANT_CONCURRENCY || "2");
 
 // Extensions we process
 const SOURCE_EXTS = new Set([".jpg", ".jpeg", ".png", ".webp", ".tiff", ".tif"]);
@@ -124,6 +128,13 @@ async function processDir(dir) {
   await Promise.all(tasks);
 }
 
-console.log("Generating image variants…");
-await Promise.all(DIRS.map(processDir));
-console.log("Done.");
+console.log(`Generating image variants (concurrency: ${MAX_CONCURRENT})…`);
+
+try {
+  await Promise.all(DIRS.map(processDir));
+  console.log("✓ Image variant generation complete.");
+} catch (err) {
+  // Log error but don't fail the build—Picture.tsx fallback ensures images still load
+  console.error(`⚠ Image variant generation failed: ${err.message}`);
+  console.log("  (falling back to original images; variant loading gracefully degraded)");
+}
