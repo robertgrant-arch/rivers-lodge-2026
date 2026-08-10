@@ -53,7 +53,6 @@ export default function AboutProperty() {
         <section className="section bg-surface">
           <div className="max-w-[1440px] mx-auto px-5 lg:px-14">
             <div className="flex flex-col sm:flex-row gap-4">
-              <Link href="/about" className="btn-ghost">Our Story</Link>
               <Link href="/membership" className="btn-ghost">Explore Membership</Link>
             </div>
           </div>
