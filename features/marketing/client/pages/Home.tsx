@@ -158,8 +158,17 @@ export default function Home() {
         <ScrollIndicator />
       </section>
 
-      {/* ── 02. Teaser: Our Story ────────────────────────────────────────── */}
-      <section className="relative py-32 lg:py-48 overflow-hidden min-h-[600px]">
+      {/* ── 02. Transition Divider: Our Story ───────────────────────────────── */}
+      <section className="relative py-6 lg:py-8 bg-stone-950 border-t border-stone-800">
+        <div className="max-w-[1440px] mx-auto px-5 lg:px-14 flex items-center justify-center gap-6">
+          <div className="flex-1 h-px bg-stone-700" />
+          <p className="text-xs uppercase tracking-widest text-stone-500 whitespace-nowrap">Our Story</p>
+          <div className="flex-1 h-px bg-stone-700" />
+        </div>
+      </section>
+
+      {/* ── 02b. Teaser: Our Story Image with Overlay ──────────────────────────── */}
+      <section className="relative overflow-hidden min-h-[600px]">
         <Picture
           src="/img/rivers-1-rockhome.jpg"
           alt="The rock home at Rivers Lodge & Hunt Club"
@@ -178,21 +187,21 @@ export default function Home() {
           }}
           aria-hidden="true"
         />
-        {/* Content */}
-        <div ref={storyRef} className="fade-up relative z-10 max-w-[1440px] mx-auto px-5 lg:px-14 h-full flex items-center">
-          <div className="max-w-lg">
-            <div className="gold-rule mb-5" />
-            <p className="eyebrow text-white/60 mb-4">Our Story</p>
-            <h2
-              className="font-serif font-light text-white leading-tight mb-6"
-              style={{ fontSize: "clamp(1.875rem,3.5vw,3rem)" }}
-            >
-              The Rivers Lodge<br />
-              <em className="italic">&amp; Hunt Club.</em>
-            </h2>
-            <p className="font-sans text-white/80 leading-relaxed" style={{ fontSize: "0.9375rem" }}>
-              A privately owned luxury lodge located just 45 minutes south of Kansas City. The Main Lodge and Campus was built around a simple idea: give a small number of families and guests exclusive access to thousands of acres of land with high end accommodations and something for everyone to enjoy.
-            </p>
+        {/* Overlaid text at bottom */}
+        <div ref={storyRef} className="fade-up absolute inset-0 z-10 flex flex-col justify-end pointer-events-none">
+          <div className="max-w-[1440px] mx-auto px-5 lg:px-14 w-full pb-12 lg:pb-16 pointer-events-auto">
+            <div className="max-w-lg">
+              <h2
+                className="font-serif font-light text-white leading-tight mb-6"
+                style={{ fontSize: "clamp(1.875rem,3.5vw,3rem)" }}
+              >
+                The Rivers Lodge<br />
+                <em className="italic">&amp; Hunt Club.</em>
+              </h2>
+              <p className="font-sans text-white/80 leading-relaxed" style={{ fontSize: "0.9375rem" }}>
+                A privately owned luxury lodge located just 45 minutes south of Kansas City. The Main Lodge and Campus was built around a simple idea: give a small number of families and guests exclusive access to thousands of acres of land with high end accommodations and something for everyone to enjoy.
+              </p>
+            </div>
           </div>
         </div>
       </section>
