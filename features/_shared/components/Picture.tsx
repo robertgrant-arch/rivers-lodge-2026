@@ -120,7 +120,7 @@ export default function Picture({
       <div
         className="absolute inset-0 bg-[#2B2823] flex items-center justify-center"
         aria-hidden="true"
-        style={{ opacity: errored ? 1 : undefined }}
+        style={{ opacity: errored ? 1 : 0 }}
       >
         {label && (
           <span className="text-[10px] tracking-[0.18em] uppercase font-sans text-white/30 select-none pointer-events-none">
