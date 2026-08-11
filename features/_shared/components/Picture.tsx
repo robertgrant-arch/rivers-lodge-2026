@@ -44,12 +44,15 @@ function isLocal(src: string) {
 }
 
 function hasVariants(src: string): boolean {
-  // Check if this image has variants in the cached manifest
-  // Decode URL-encoded src to match manifest keys
-  // If manifest hasn't loaded yet, default to false (safe fallback)
+  // Check if this image has non-empty variant data in the manifest.
+  // Treat empty objects {} as "no variants" (variants were never generated).
   if (!variantsManifestCache) return false;
   const decodedSrc = decodeURIComponent(src);
-  return decodedSrc in variantsManifestCache;
+  const entry = variantsManifestCache[decodedSrc];
+  if (!entry) return false;
+  // Entry exists; check if it has actual data (non-empty)
+  if (Array.isArray(entry)) return entry.length > 0;
+  return Object.keys(entry).length > 0;
 }
 
 function buildSrcset(src: string, fmt: "avif" | "webp", maxWidth?: number): string {
