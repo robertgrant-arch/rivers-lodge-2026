@@ -159,7 +159,7 @@ export default function Home() {
       </section>
 
       {/* ── 02. Teaser: Our Story ────────────────────────────────────────── */}
-      <section className="relative py-32 lg:py-48 overflow-hidden" style={{ minHeight: "500px" }} data-section="story">
+      <section className="relative py-32 lg:py-48 overflow-hidden min-h-[600px]">
         <Picture
           src="/img/rivers-1-rockhome.jpg"
           alt="The rock home at Rivers Lodge & Hunt Club"
@@ -198,7 +198,7 @@ export default function Home() {
       </section>
 
       {/* ── 03. Teaser: Lodging & Venues ─────────────────────────────────── */}
-      <section className="relative py-32 lg:py-48 overflow-hidden" style={{ minHeight: "500px" }} data-section="lodging">
+      <section className="relative py-32 lg:py-48 overflow-hidden min-h-[600px]">
         <Picture
           src="/img/Clubhouse%20Home.jpg"
           alt="Clubhouse interior at Rivers Lodge"
@@ -237,7 +237,7 @@ export default function Home() {
       </section>
 
       {/* ── 04. Teaser: Explore Membership ──────────────────────────────────── */}
-      <section className="relative py-32 lg:py-48 overflow-hidden min-h-[500px] lg:min-h-[600px]">
+      <section className="relative py-32 lg:py-48 overflow-hidden min-h-[600px]">
         <img
           src="/img/membershiphomepage-1-.jpg"
           alt="Upland bird hunting at Rivers Lodge & Hunt Club"
@@ -274,7 +274,7 @@ export default function Home() {
       </section>
 
             {/* ── 05. Teaser: Outdoor Pursuits ─────────────────────────────────── */}
-<section className="relative py-32 lg:py-48 overflow-hidden min-h-[500px] lg:min-h-[600px]">
+<section className="relative py-32 lg:py-48 overflow-hidden min-h-[600px]">
   <Picture
     src="/img/waterfowldark.jpg"
     alt="Upland bird hunter walking through tall grass at Rivers Lodge"

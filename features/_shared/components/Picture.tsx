@@ -103,8 +103,6 @@ export default function Picture({
   const placeholderStyle: React.CSSProperties = {
     backgroundImage: `url("${PLACEHOLDER_URI}")`,
     backgroundSize: "cover",
-    height: "100%",
-    minHeight: "100%",
     ...(width && height && { aspectRatio: `${width} / ${height}` }),
   };
 
@@ -118,7 +116,7 @@ export default function Picture({
   };
 
   return (
-    <div className={`relative ${className ?? ""}`} style={placeholderStyle}>
+    <div className={className ?? "relative"} style={placeholderStyle}>
       {/* Dark overlay placeholder — always present, hides when img loads */}
       <div
         className="absolute inset-0 bg-[#2B2823] flex items-center justify-center"
