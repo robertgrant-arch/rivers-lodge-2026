@@ -158,7 +158,7 @@ export default function Home() {
       </section>
 
       {/* ── 02. Teaser: Our Story ────────────────────────────────────────── */}
-      <section ref={storyRef} className="fade-up relative py-32 lg:py-48 overflow-hidden min-h-[500px] lg:min-h-[600px]">
+      <section ref={storyRef} className="relative py-32 lg:py-48 overflow-hidden min-h-[500px] lg:min-h-[600px]">
         <Picture
           src="/img/rivers-1-rockhome.jpg"
           alt="The rock home at Rivers Lodge & Hunt Club"
@@ -178,7 +178,7 @@ export default function Home() {
           aria-hidden="true"
         />
         {/* Content */}
-        <div className="relative z-10 max-w-[1440px] mx-auto px-5 lg:px-14 h-full flex items-center">
+        <div className="fade-up relative z-10 max-w-[1440px] mx-auto px-5 lg:px-14 h-full flex items-center">
           <div className="max-w-lg">
             <div className="gold-rule mb-5" />
             <p className="eyebrow text-white/60 mb-4">Our Story</p>
@@ -197,7 +197,7 @@ export default function Home() {
       </section>
 
       {/* ── 03. Teaser: Lodging & Venues ─────────────────────────────────── */}
-      <section ref={stayRef} className="fade-up relative py-32 lg:py-48 overflow-hidden min-h-[500px] lg:min-h-[600px]">
+      <section ref={stayRef} className="relative py-32 lg:py-48 overflow-hidden min-h-[500px] lg:min-h-[600px]">
         <Picture
           src="/img/Clubhouse%20Home.jpg"
           alt="Clubhouse interior at Rivers Lodge"
@@ -217,7 +217,7 @@ export default function Home() {
           aria-hidden="true"
         />
         {/* Content */}
-        <div className="relative z-10 max-w-[1440px] mx-auto px-5 lg:px-14 h-full flex items-center">
+        <div className="fade-up relative z-10 max-w-[1440px] mx-auto px-5 lg:px-14 h-full flex items-center">
           <div className="max-w-lg">
             <div className="h-px w-8 mb-5" style={{ backgroundColor: "#9B4D19" }} />
             <p className="eyebrow text-white/60 mb-4">Lodging &amp; Venues</p>
