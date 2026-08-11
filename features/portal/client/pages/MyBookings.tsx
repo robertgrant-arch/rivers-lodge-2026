@@ -5,7 +5,7 @@
  * dates, and the ability to cancel upcoming bookings.
  */
 
-import { useState, ReactNode } from "react";
+import React, { useState, ReactNode } from "react";
 import { Link } from "wouter";
 import { trpc } from '@shared/lib/trpc';
 import { Button } from '@shared/ui/button';
