@@ -236,7 +236,7 @@ export default function Home() {
       </section>
 
       {/* ── 04. Teaser: Explore Membership ──────────────────────────────────── */}
-      <section className="fade-up relative py-32 lg:py-48 overflow-hidden">
+      <section className="relative py-32 lg:py-48 overflow-hidden">
         <img
           src="/img/membershiphomepage-1-.jpg"
           alt="Upland bird hunting at Rivers Lodge & Hunt Club"
@@ -254,7 +254,7 @@ export default function Home() {
           aria-hidden="true"
         />
         {/* Content */}
-        <div className="relative z-10 max-w-[1440px] mx-auto px-5 lg:px-14 h-full flex items-center">
+        <div className="fade-up relative z-10 max-w-[1440px] mx-auto px-5 lg:px-14 h-full flex items-center">
           <div className="max-w-lg">
             <div className="h-px w-8 mb-5" style={{ backgroundColor: "#6B7250" }} />
             <p className="eyebrow text-white/60 mb-4">Explore Membership</p>
@@ -273,7 +273,7 @@ export default function Home() {
       </section>
 
             {/* ── 05. Teaser: Outdoor Pursuits ─────────────────────────────────── */}
-<section className="fade-up relative py-32 lg:py-48 overflow-hidden">
+<section className="relative py-32 lg:py-48 overflow-hidden">
   <Picture
     src="/img/waterfowldark.jpg"
     alt="Upland bird hunter walking through tall grass at Rivers Lodge"
@@ -293,7 +293,7 @@ export default function Home() {
     aria-hidden="true"
   />
   {/* Content */}
-  <div className="relative z-10 max-w-[1440px] mx-auto px-5 lg:px-14 h-full flex items-center">
+  <div className="fade-up relative z-10 max-w-[1440px] mx-auto px-5 lg:px-14 h-full flex items-center">
     <div className="max-w-lg">
       <div className="gold-rule mb-5" />
       <p className="eyebrow text-white/60 mb-4">Outdoor Pursuits</p>
