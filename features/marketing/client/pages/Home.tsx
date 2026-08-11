@@ -159,7 +159,7 @@ export default function Home() {
       </section>
 
       {/* ── 02. Teaser: Our Story ────────────────────────────────────────── */}
-      <section className="relative py-32 lg:py-48 overflow-hidden min-h-[500px] lg:min-h-[600px]">
+      <section className="relative py-32 lg:py-48 overflow-hidden" style={{ minHeight: "500px" }} data-section="story">
         <Picture
           src="/img/rivers-1-rockhome.jpg"
           alt="The rock home at Rivers Lodge & Hunt Club"
@@ -198,7 +198,7 @@ export default function Home() {
       </section>
 
       {/* ── 03. Teaser: Lodging & Venues ─────────────────────────────────── */}
-      <section className="relative py-32 lg:py-48 overflow-hidden min-h-[500px] lg:min-h-[600px]">
+      <section className="relative py-32 lg:py-48 overflow-hidden" style={{ minHeight: "500px" }} data-section="lodging">
         <Picture
           src="/img/Clubhouse%20Home.jpg"
           alt="Clubhouse interior at Rivers Lodge"

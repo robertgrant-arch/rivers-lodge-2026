@@ -103,7 +103,9 @@ export default function Picture({
   const placeholderStyle: React.CSSProperties = {
     backgroundImage: `url("${PLACEHOLDER_URI}")`,
     backgroundSize: "cover",
+    height: "100%",
     minHeight: "100%",
+    ...(width && height && { aspectRatio: `${width} / ${height}` }),
   };
 
   const local = isLocal(src);
