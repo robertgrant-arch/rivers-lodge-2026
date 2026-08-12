@@ -191,6 +191,7 @@ export default function Home() {
         <div ref={storyRef} className="fade-up absolute inset-0 z-10 flex flex-col justify-end pointer-events-none">
           <div className="max-w-[1440px] mx-auto px-5 lg:px-14 w-full pb-12 lg:pb-16 pointer-events-auto">
             <div className="max-w-lg">
+              <p className="eyebrow text-white/60 mb-4">Our Story</p>
               <h2
                 className="font-serif font-light text-white leading-tight mb-6"
                 style={{ fontSize: "clamp(1.875rem,3.5vw,3rem)" }}
