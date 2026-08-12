@@ -323,9 +323,9 @@ export default function Home() {
           className="absolute inset-0 w-full h-full"
           imgClassName="absolute inset-0 w-full h-full object-cover"
           imgStyle={{
-            objectPosition: "70% 75%",
-            transform: "scale(1.35)",
-            transformOrigin: "70% 75%",
+            objectPosition: "center 55%",
+            transform: "scale(1.1)",
+            transformOrigin: "center 60%",
             opacity: 0.8,
           }}
           width={1920}
