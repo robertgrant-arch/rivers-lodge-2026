@@ -115,8 +115,18 @@ export default function Picture({
     setErrored(true);
   };
 
+  // If className is provided but doesn't include absolute/fixed positioning,
+  // ensure position: relative for absolutely-positioned children
+  const needsRelativePosition = className && !className.includes("absolute") && !className.includes("fixed");
+
   return (
-    <div className={className ?? "relative"} style={placeholderStyle}>
+    <div
+      className={className ?? "relative"}
+      style={{
+        ...placeholderStyle,
+        ...(needsRelativePosition && { position: "relative" })
+      }}
+    >
       {/* Dark overlay placeholder — always present, hides when img loads */}
       <div
         className="absolute inset-0 bg-[#2B2823] flex items-center justify-center"
