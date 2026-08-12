@@ -322,6 +322,12 @@ export default function Home() {
           label="Upland hunt"
           className="absolute inset-0 w-full h-full"
           imgClassName="absolute inset-0 w-full h-full object-cover"
+          imgStyle={{
+            objectPosition: "70% 75%",
+            transform: "scale(1.35)",
+            transformOrigin: "70% 75%",
+            opacity: 0.8,
+          }}
           width={1920}
           height={1080}
           sizes="100vw"
