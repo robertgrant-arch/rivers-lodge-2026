@@ -33,10 +33,10 @@ function useFadeUp(t = 0.12) {
 
 const benefits = [
   { title: "Private Events",         desc: "Exclusive member events throughout the year — concerts, chef tours, lodge parties, and seasonal gatherings." },
-  { title: "Guided Hunting",         desc: "Guided whitetail, waterfowl, turkey, and upland hunts with dedicated hunt managers and full field support." },
-  { title: "DIY Hunting Access",     desc: "Self-guided access to the property's timber, food plots, river bottom, and blinds on your own schedule." },
+  { title: "Guided Hunting",         desc: "Guided waterfowl, whitetail, turkey and upland hunts led by dedicated full-time guides" },
+  { title: "DIY Hunting Access",     desc: "Self-guided access to exclusive member-only properties for waterfowl hunting and limited member-only deer zones" },
   { title: "Guided Fishing",         desc: "Guided trips on our professionally managed private strip pits and lakes or guided trout fishing on our own private stream." },
-  { title: "DIY Fishing Access",     desc: "Unrestricted DIY fishing access on select properties." },
+  { title: "DIY Fishing Access",     desc: "Unrestricted DIY fishing access to exclusive member-only properties, including managed strip pits and ponds alike. Equipped with Jon boats, kayaks, canoes & more" },
   { title: "Lodging Priority",       desc: "Priority booking on The Lodge, Riverhouse Suites, The Annex, and all other lodge accommodations." },
   { title: "Land Access & Updates",  desc: "Year-round land access and seasonal stewardship updates — stay connected to the property between visits." },
   { title: "Guest Privileges",       desc: "Bring guests onto the property for hunting, fishing, sporting days, and member events." },

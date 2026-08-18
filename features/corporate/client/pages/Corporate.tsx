@@ -31,7 +31,7 @@ const eventTypes = [
   { title: "Corporate Retreats",    desc: "Multi-day team retreats with lodging, dining, and curated outdoor programming. From 5 to 300 people Lodge events are custom built for your team's retreat.", img: CORP_RETREAT,   alt: "Corporate retreat at the Clubhouse" },
   { title: "Executive Meetings",    desc: "Private meeting space in the Clubhouse for boards, leadership teams, and strategy sessions — away from the office, on the land.", img: INTERIOR,       alt: "Executive meetings at Rivers Lodge" },
   { title: "Client Entertainment",  desc: "Hunting days, fishing excursions, sporting clays, and private dinners. The most memorable client entertainment is the kind that can't be replicated.", img: CORP_ENTERTAIN, alt: "Client entertainment at Rivers Lodge" },
-  { title: "Team-Building Days",    desc: "Guided outdoor experiences — from clay shooting to river fishing — that build genuine connection without a single trust fall.", img: AERIAL,          alt: "Team-building days at Rivers Lodge" },
+  { title: "Team-Building Days",    desc: "Guided outdoor experiences — from clay shooting to premier fishing opportunities — that build genuine connection without a single trust fall.", img: AERIAL,          alt: "Team-building days at Rivers Lodge" },
 ];
 
 

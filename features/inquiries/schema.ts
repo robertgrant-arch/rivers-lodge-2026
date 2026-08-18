@@ -8,7 +8,7 @@ import {
   varchar,
 } from "drizzle-orm/pg-core";
 
-export const inquiryTypeEnum = pgEnum("inquiry_type", ["wedding", "corporate", "tour", "general", "membership", "lodging", "event"]);
+export const inquiryTypeEnum = pgEnum("inquiry_type", ["wedding", "corporate", "tour", "general", "membership", "lodging", "event", "hunting", "fishing"]);
 export const inquiryStatusEnum = pgEnum("inquiry_status", ["new", "contacted", "booked", "closed"]);
 
 export const inquiries = pgTable("inquiries", {

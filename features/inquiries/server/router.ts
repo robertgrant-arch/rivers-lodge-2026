@@ -20,7 +20,7 @@ export const inquiriesRouter = router({
   submit: publicProcedure
     .input(
       z.object({
-        type: z.enum(["wedding", "corporate", "tour", "general", "membership", "lodging", "event"]),
+        type: z.enum(["wedding", "corporate", "tour", "general", "membership", "lodging", "event", "hunting", "fishing"]),
         name: z.string().min(1),
         email: z.string().email(),
         phone: z.string().optional(),
@@ -44,6 +44,8 @@ export const inquiriesRouter = router({
           membership: "other",
           lodging:    "other",
           event:      "corporate",
+          hunting:    "hunt",
+          fishing:    "fish",
         };
         const businessLine = businessLineMap[input.type] ?? "other";
 

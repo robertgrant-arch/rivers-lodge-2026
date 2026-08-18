@@ -18,13 +18,14 @@ export const PURSUITS: Pursuit[] = [
   {
     slug: "whitetail",
     title: "Whitetail Deer",
-    teaser: "Trophy-managed whitetail across timber, flood plots, and river bottom.",
+    teaser: "Trophy whitetail hunting across CRP, river bottoms, agricultural fields, timber, and intensively managed food plots",
     heroImg: "/deer-1-hero.jpg",
     heroAlt: "Whitetail deer habitat at Rivers Lodge",
     description: [
-      "The Rivers Lodge manages its whitetail population with strict age and antler restrictions, ensuring that each season produces mature, trophy-class bucks. Thousands of acres of river-bottom timber, managed food plots, and natural funnels create ideal habitat for deer that seldom see hunting pressure.",
-      "Elevated tower stands and ground blinds are positioned throughout the property based on prevailing winds and deer movement patterns observed over years of trail camera data. Both guided and member-guided hunts are available, with the guided program providing a dedicated hunt manager, scouting support, and field-to-freezer processing.",
-      "The property holds deer in numbers that surprise first-time visitors. October through late December is the primary season, with the rut typically peaking in early November — one of the most productive windows on the property.",
+      "The Club's whitetail program is managed through extremely low hunting pressure, on thousands of acres of intensively managed ground. Members have select access to member-only DIY deer zones or exclusive fully-guided muzzleloader, rifle and archery rut hunts.",
+      "Elevated tower stands, ground blinds and tree stands are positioned throughout our properties based on prevailing winds and deer movement patterns observed over years of hunting and trail camera data. Fully guided and DIY hunts are available to our members, with the guided program providing dedicated guides, scouting support, transportation, full lodge service, field processing, and more.",
+      "Exclusive DIY deer zones provide members the opportunity to pursue mature whitetails independently on designated private property.",
+      "Our properties hold deer in numbers that surprise many first-time visitors. October through late December provides great opportunities at mature whitetail for our Members.",
     ],
     galleryImgs: [
       { src: "/deer-2-gallery.jpg", alt: "Whitetail deer at Rivers Lodge" },
@@ -50,13 +51,14 @@ export const PURSUITS: Pursuit[] = [
   {
     slug: "waterfowl",
     title: "Waterfowl",
-    teaser: "Duck and goose on the Marais des Cygnes and managed wetlands.",
+    teaser: "Mallard ducks and Canada geese on the Marais des Cygnes river, managed moist soil wetlands and agricultural impoundments.",
     heroImg: "/img/waterfowl.jpg",
     heroAlt: "Waterfowl hunting on the Marais des Cygnes",
     description: [
-      "The Marais des Cygnes river corridor positions Rivers Lodge directly in the Central Flyway — one of the most productive waterfowl migration paths in North America. Early teal season opens in September; the main duck season runs through January with late-season mallards providing some of the most exciting hunting on the property.",
-      "Managed wetlands, flooded corn, and timber sloughs give hunters multiple setups depending on species and conditions. The estate maintains a rotating blind system so pressure on any single location stays minimal throughout the season.",
-      "Canada geese are resident year-round and migrating snows and blues arrive in November. Guided waterfowl hunts include decoy setup, dog retrieval, and an early-morning breakfast at the lodge after the shoot.",
+      "The Marais des Cygnes river valley positions The Club right along the Central and Mississippi Flyways — two of the most productive waterfowl migration corridors in North America. Duck season begins in Mid-November and runs through the end of January, with late-season mallards providing some of the most exciting hunting on our properties.",
+      "Intensively managed moist soil wetlands, flooded corn, milo, buckwheat, japanese and chiwapa millet, flooded green tree reservoirs, oxbow sloughs, dry corn and soybean stubble fields, ponds, lakes, strip pits and sheet water stubble fields on a wet year give our hunters multiple setups and opportunities depending on species and conditions. The Club maintains minimal hunting pressure on each of our properties with a rotating blind system to ensure minimal disturbance throughout the entirety of duck season.",
+      "February late-season Canada goose hunts are offered to members only on a day hunt basis to ensure the best opportunity at a successful hunt. These hunts are mainly done in dry agricultural stubble fields, loaf ponds or out on a ripple on the Marais des Cygne river itself.",
+      "Guided waterfowl hunts include decoy setup, heated blinds, dog retrieval, transportation, first-class lodging, dining and bar service at our main lodge.",
     ],
     galleryImgs: [
       { src: "/img/waterfow-8-gallery.jpg", alt: "River corridor — waterfowl habitat" }, { src: "/img/waterfowl%2067.jpg", alt: "Waterfowl at Rivers Lodge" }, { src: "/img/waterfowl-1-gallery.jpg", alt: "Waterfowl at Rivers Lodge" }, { src: "/img/waterfowl-3-gallery.jpg", alt: "Waterfowl at Rivers Lodge" }, { src: "/img/waterfowl-7-gallery.jpg", alt: "Waterfowl at Rivers Lodge" }, { src: "/img/waterfowl-10-gallery.jpg", alt: "Waterfowl at Rivers Lodge" }, { src: "/img/waterfowl-11-gallery.jpg", alt: "Waterfowl at Rivers Lodge" },       { src: "/img/waterfowl-12-.jpg", alt: "Waterfowl at Rivers Lodge" },
@@ -77,13 +79,13 @@ export const PURSUITS: Pursuit[] = [
   },
   {
     slug: "upland-birds",
-    title: "Upland Birds",
-    teaser: "Quail, pheasant and dove hunting in native Kansas uplands.",
+    title: "Upland Gamebirds",
+    teaser: "Pheasant, quail and chukar hunting on native Kansas uplands.",
     heroImg: "/upland-1-gallery.jpg",
     heroAlt: "Upland bird hunting at Rivers Lodge",
     description: [
-      "Kansas upland hunting at its finest — quail in the native grass corridors, pheasant along the hedgerows, and a private sporting clays course for off-day practice. The estate manages its upland habitat with controlled burns and native grass restoration that produces bird numbers most public ground can only promise.",
-      "Guided upland hunts are available with trained pointing and flushing dogs. The guides are experienced in both wild bird hunting and released-bird programs; they adapt to guest preference and skill level. Half-day and full-day formats available.",
+      "Traditional upland hunting at its finest — The Club manages our upland habitat with rotational controlled burns, herbicide application, forestry mulching and native grass restoration, providing the best habitat and picture perfect settings for traditional upland gamebird hunting in Eastern Kansas.",
+      "Guided traditional upland hunts are available with trained pointing and flushing dogs. The Club's guides are experienced in both wild bird hunting and released controlled bird hunts; they adapt to our member preference and skill level. Half-day and full-day traditional upland hunts are available across our four different controlled shooting areas.",
     ],
     galleryImgs: [
       { src: "/upland-1-gallery.jpg", alt: "Upland birds at Rivers Lodge" },
@@ -111,14 +113,17 @@ export const PURSUITS: Pursuit[] = [
   {
     slug: "turkey",
     title: "Turkey",
-    teaser: "Spring and fall turkey in the river-bottom timber corridor.",
+    teaser: "Spring wild turkey in the Marais des Cygne river-bottoms",
     heroImg: "/img/turkey-1-hero.jpg",
     tileImg: "/img/turkey-1-gallery.jpg",
     heroAlt: "Turkey hunting at Rivers Lodge",
     description: [
-      "The river-bottom timber at Rivers Lodge provides some of the best wild turkey habitat in eastern Kansas. Birds roost in the mature timber along the Marais des Cygnes and feed in the adjacent fields and forest edges — a pattern that makes them huntable but never easy.",
-      "Spring season is the primary draw: gobbling toms respond well to calling in the dense timber, and the Lodge's limited hunting pressure means birds are vocal and aggressive through much of April and May. Fall turkey hunting is available by special arrangement for members.",
-      "Both run-and-gun calling hunts and blind setups are offered depending on conditions and guest preference. The estate's hunt manager provides real-time scouting intel the morning of the hunt based on trail camera activity from the previous 24 hours.",
+      "Miles of the Marais des Cygne river-bottom provide some of the best wild turkey habitat in Eastern Kansas. Birds roost in the mature timber along the river up into our heavily wooded ridges and everywhere in between.",
+      "Hard gobbling, mature Eastern longbeards respond well to calling in the dense timber and winding, secluded fields along the Marais des Cygne. The Club's extremely limited hunting pressure ensures mature longbeards are vocal and territorial throughout the entire spring turkey season.",
+      "Both run-and-gun style hunting and blind setups are offered depending on weather conditions and our member preference. The Club's guides provide real-time scouting intel before your hunt based on daily scouting, previous hunts and trail camera activity.",
+      "Spring turkey hunts are only available to members.",
+      "Currently youth only hunts are available for our properties in Eastern Kansas.",
+      "Membership wide hunts take place across 10,000 prime acres of Flint Hills turkey hunting habitat in Manhattan, KS.",
     ],
     galleryImgs: [
       { src: "/img/turkey-2-gallery.jpg", alt: "Turkey at Rivers Lodge" },
@@ -141,13 +146,15 @@ export const PURSUITS: Pursuit[] = [
   {
     slug: "fishing",
     title: "Fishing",
-    teaser: "World class fishing for trophy Largemouth Bass, Smallmouth Bass, Striped Bass, Musky and more.",
+    teaser: "World class fishing for trophy Largemouth Bass, Smallmouth Bass, Striped Bass, Tiger Musky, Northern Pike, Rainbow Trout, Crappie, Flathead Catfish and more.",
     heroImg: "/img/Fishing%20net.jpg",
     heroAlt: "Fishing on the Marais des Cygnes at Rivers Lodge",
     description: [
-      "The Rivers Lodge fishing program is tightly managed and intentionally exclusive. Private access to the Marais des Cygnes river channel, two stocked lakes, and a series of backwater sloughs produces fishing that is rarely found anywhere in the Midwest — let alone one hour from Kansas City.",
-      "The species list reads like a bucket list: Striped Bass, Largemouth Bass, Walleye, Yellow Perch, Tiger Musky, Crappie, Flathead Catfish, and Channel Catfish. The lake fisheries are managed under a conservation program that restricts harvest of trophy fish to protect the quality of the fishery year over year.",
-      "Guided trips include a knowledgeable river guide, all tackle and bait, and — for full-day bookings — a shore lunch prepared from the morning's catch. Kayak and wade-fishing access is available to members throughout the season without a guide.",
+      "The Club's fishing program is professionally managed and intentionally exclusive. Private access to premium strip pits, lakes, ponds, creeks, oxbow sloughs and the Marais des Cygne river produces fishing opportunities that are rarely found anywhere in the Midwest — let alone one hour from Kansas City.",
+      "The species list reads like a bucket list: Striped Bass, Largemouth & Smallmouth Bass, Tiger Musky, Northern Pike, Rainbow Trout, Crappie and Flathead Catfish. The Club's fisheries are managed under a conservation program that restricts the harvest of any trophy fish to protect the quality of our fisheries year over year. Backed by bait fish stocking, weed control, electro shocking, year-round feeding, intentional fish structure and more.",
+      "Guided trips include a full-time professional guide, tracker boat, all terminal tackle and gear, and — for full-day bookings — a shore lunch prepared by our Private Chef.",
+      "Exclusive DIY fishing properties are available to members year-round",
+      "Member-only fishing tournaments, destination trips, fly fishing classes and more",
     ],
     galleryImgs: [
       { src: "/img/fishing%202.JPG", alt: "Trophy catch from the private fisheries", objectPosition: "center 30%" },
@@ -172,7 +179,7 @@ export const PURSUITS: Pursuit[] = [
       "Members may fish without guide; non-members by guided trip only",
     ],
   },
-  { tileImg: "/img/fivestand-5-gallery.jpg", slug: "five-stand", title: "Five Stand", teaser: "Sporting clays and five-stand shooting for members and guests.", heroImg: "/img/fivestand-hero.jpg", heroAlt: "Five stand sporting clays at Rivers Lodge", description: [ "The Rivers Lodge five-stand course offers a fast, social clay-shooting experience just steps from the lodge. Five shooting stations present a rotating variety of clay targets that simulate flushing upland birds, crossing waterfowl, and incoming doves.", "Whether you are warming up before a hunt or spending an afternoon on the course, five-stand is ideal for shooters of every skill level. Instruction and loaner shotguns are available through the hunt manager." ], galleryImgs: [], season: [ { label: "Availability", value: "Year-round" } ], regulations: [ "Eye and ear protection required at all times", "Shooting only from designated stations", "Follow all range safety officer instructions" ], },
+  { tileImg: "/img/fivestand-5-gallery.jpg", slug: "five-stand", title: "Five Stand", teaser: "Five Stand shooting for members, corporate retreats, hunt add-ons and more", heroImg: "/img/fivestand-hero.jpg", heroAlt: "Five stand sporting clays at Rivers Lodge", description: [ "The Club's five stand course offers a fast paced, social sporting clay shooting experience just steps away from the main lodge. Multiple throwers present a rotating variety of clay targets that simulate natural in-field shot angles.", "Whether you are warming up before a hunt or spending an afternoon on the course, five stand is ideal for shooters of every skill level. One on one instruction, 20 gauge Benelli shotguns and shotgun shells are provided by The Club." ], galleryImgs: [], season: [ { label: "Availability", value: "Year-round" } ], regulations: [ "Eye and ear protection required at all times", "Shooting only from designated stations", "Follow all range safety officer instructions" ], },
 ];
 
 export function getPursuit(slug: string): Pursuit | undefined {

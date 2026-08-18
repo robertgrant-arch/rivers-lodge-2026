@@ -27,7 +27,7 @@ function useFadeUp(t = 0.12) {
   return ref;
 }
 
-type InquiryType = "wedding" | "corporate" | "membership" | "lodging" | "tour" | "event" | "general";
+type InquiryType = "wedding" | "corporate" | "membership" | "lodging" | "tour" | "event" | "general" | "hunting" | "fishing";
 const validTypes: InquiryType[] = ["general", "wedding", "corporate", "tour", "membership", "lodging", "event"];
 
 function CorporateInquiryForm() {
