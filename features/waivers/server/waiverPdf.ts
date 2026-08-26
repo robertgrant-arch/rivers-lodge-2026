@@ -31,7 +31,7 @@ function generateWaiverPdfBuffer(data: WaiverPdfData): Promise<Buffer> {
     doc
       .fontSize(20)
       .font("Helvetica-Bold")
-      .text("Rivers Lodge & Hunt Club", { align: "center" });
+      .text("Rivers Lodge", { align: "center" });
 
     doc
       .fontSize(10)
@@ -136,7 +136,7 @@ function generateWaiverPdfBuffer(data: WaiverPdfData): Promise<Buffer> {
       .font("Helvetica")
       .fillColor("#888888")
       .text(
-        "This document constitutes a legally binding electronic signature under the Electronic Signatures in Global and National Commerce Act (E-SIGN) and the Uniform Electronic Transactions Act (UETA). The electronic signature above is legally equivalent to a handwritten signature. This record is maintained by Rivers Lodge & Hunt Club for compliance purposes.",
+        "This document constitutes a legally binding electronic signature under the Electronic Signatures in Global and National Commerce Act (E-SIGN) and the Uniform Electronic Transactions Act (UETA). The electronic signature above is legally equivalent to a handwritten signature. This record is maintained by Rivers Lodge for compliance purposes.",
         { align: "justify", lineGap: 2 }
       );
 

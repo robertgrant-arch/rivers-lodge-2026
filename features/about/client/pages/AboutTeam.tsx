@@ -9,7 +9,7 @@ export default function AboutTeam() {
     <PublicLayout>
       <SEOHead
         title="Meet the Team"
-        description="The people behind The Rivers Lodge & Hunt Club."
+        description="The people behind Rivers Lodge."
         url="/about/team"
       />
       <div style={{ "--track-accent": ACCENT } as React.CSSProperties}>

@@ -9,7 +9,7 @@ export default function MembershipBenefits() {
     <PublicLayout>
       <SEOHead
         title="Member Benefits"
-        description="Explore the full range of benefits available to members of The Rivers Lodge & Hunt Club."
+        description="Explore the full range of benefits available to members of Rivers Lodge."
         url="/membership/benefits"
       />
       <div style={{ "--track-accent": ACCENT } as React.CSSProperties}>

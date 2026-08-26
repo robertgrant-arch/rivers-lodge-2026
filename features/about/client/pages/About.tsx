@@ -9,7 +9,7 @@ export default function About() {
     <PublicLayout>
       <SEOHead
         title="Our Story"
-        description="Learn about The Rivers Lodge & Hunt Club — a private Lodge on the Marais des Cygnes in La Cygne, Kansas."
+        description="Learn about Rivers Lodge — a private lodge on the Marais des Cygnes in La Cygne, Kansas."
         url="/about"
       />
       <div style={{ "--track-accent": ACCENT } as React.CSSProperties}>
@@ -40,7 +40,7 @@ export default function About() {
               <div style={{ height: "1px", width: "2rem", backgroundColor: ACCENT, marginBottom: "1.25rem" }} />
               <p className="eyebrow text-muted-brand mb-4">Our Story</p>
               <h2 className="font-serif font-light text-warm leading-tight mb-8" style={{ fontSize: "clamp(1.875rem,3.5vw,3rem)" }}>
-                The Rivers Lodge &amp; Hunt Club.
+                Rivers Lodge.
               </h2>
               <p className="font-sans text-muted-brand leading-relaxed italic text-[#7A766F]" style={{ fontSize: "0.9375rem" }}>
                 [Story content — to be provided.]

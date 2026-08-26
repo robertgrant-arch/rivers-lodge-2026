@@ -39,7 +39,7 @@ export default function OutdoorActivities() {
         <div className="absolute inset-0">
           <Picture
             src="/img/3C0A0165.jpg"
-            alt="Outdoor pursuits at Rivers Lodge & Hunt Club"
+            alt="Outdoor pursuits at Rivers Lodge"
             label="Outdoor Activities"
             className="absolute inset-0 w-full h-full"
             imgClassName="absolute inset-0 w-full h-full object-cover"

@@ -46,7 +46,7 @@ export default function FoodAndWine() {
     <PublicLayout>
       <SEOHead
         title="Food & Wine"
-        description="Chef-driven, land-to-table dining at The Rivers Lodge & Hunt Club — locally sourced pork, beef, and venison from the Lodge's own fields and garden."
+        description="Chef-driven, land-to-table dining at Rivers Lodge — locally sourced pork, beef, and venison from the Lodge's own fields and garden."
         url="/food-and-wine"
       />
       <div style={{ "--track-accent": ACCENT } as React.CSSProperties}>

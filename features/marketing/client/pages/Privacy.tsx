@@ -15,7 +15,7 @@ export default function Privacy() {
             <section>
               <h2 className="font-serif font-light text-[#D8CCBA] text-2xl mb-4">1. Information We Collect</h2>
               <p>
-                The Rivers Lodge &amp; Hunt Club ("we," "us," or "our") collects information you provide directly when you submit an inquiry, apply for membership, or contact us. This includes your name, email address, phone number, and the details of your inquiry or application.
+                Rivers Lodge ("we," "us," or "our") collects information you provide directly when you submit an inquiry, apply for membership, or contact us. This includes your name, email address, phone number, and the details of your inquiry or application.
               </p>
               <p className="mt-4">
                 We may also collect limited technical information such as browser type and IP address through standard server logs when you visit our website.
@@ -74,7 +74,7 @@ export default function Privacy() {
                 Questions about this policy may be directed to:
               </p>
               <address className="not-italic mt-4 text-[#A8A29A] space-y-1">
-                <p>The Rivers Lodge &amp; Hunt Club</p>
+                <p>Rivers Lodge</p>
                 <p>18103 E 2300 Ln, La Cygne, KS 66040</p>
                 <p>
                   <a href="mailto:info@theriverslodge.com" className="text-[#9B4D19] hover:underline">

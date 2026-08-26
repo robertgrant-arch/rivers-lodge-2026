@@ -155,7 +155,7 @@ export default function Gallery() {
     <PublicLayout>
       <SEOHead
   title="Gallery"
-  description="Photo gallery of The Rivers Lodge & Hunt Club — Lodge grounds, venue spaces, weddings, hunting, fishing, and luxury lodging."
+  description="Photo gallery of Rivers Lodge — Lodge grounds, venue spaces, weddings, hunting, fishing, and luxury lodging."
   url="/gallery"
 />
       {/* ── Hero header ─────────────────────────────────────────────── */}

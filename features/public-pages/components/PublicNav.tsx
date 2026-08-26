@@ -146,7 +146,6 @@ export default function PublicNav() {
           {/* ── Wordmark ─────────────────────────────────────────────────── */}
           <Link href="/" className="flex flex-col leading-none text-[#E0D3BD] hover:opacity-80 transition-opacity shrink-0 z-10">
             <span className="font-serif text-xl md:text-[1.375rem] tracking-wide">Rivers Lodge</span>
-            <span className="text-[9px] tracking-[0.24em] uppercase opacity-60 font-sans font-light mt-0.5">&amp; Hunt Club</span>
           </Link>
 
           {/* ── Desktop Nav ──────────────────────────────────────────────── */}

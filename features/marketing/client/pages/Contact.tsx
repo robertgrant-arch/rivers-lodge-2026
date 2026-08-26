@@ -279,7 +279,7 @@ export default function Contact() {
     <PublicLayout>
       <SEOHead
         title="Contact"
-        description="Get in touch with The Rivers Lodge & Hunt Club — inquire about weddings, events, membership, lodging, or schedule a property tour."
+        description="Get in touch with Rivers Lodge — inquire about weddings, events, membership, lodging, or schedule a property tour."
         url="/contact"
       />
 

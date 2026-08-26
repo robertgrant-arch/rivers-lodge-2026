@@ -305,7 +305,7 @@ export default function Membership() {
     <PublicLayout>
       <SEOHead
   title="Membership"
-  description="Apply for an exclusive sporting membership at The Rivers Lodge & Hunt Club — hunting, fishing, lodging, and a private community in Kansas."
+  description="Apply for an exclusive sporting membership at Rivers Lodge — hunting, fishing, lodging, and a private community in Kansas."
   url="/membership"
   structuredData={structuredData.membershipClub()}
 />

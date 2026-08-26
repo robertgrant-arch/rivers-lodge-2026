@@ -298,7 +298,7 @@ heroImg: "/img/Clubhouse%20Hero.jpg",
 heroAlt: "The Clubhouse at Rivers Lodge",
 group: "gather",
 description: [
-"The Clubhouse is the dedicated gathering space for Rivers Lodge & Hunt Club members. A comfortable, well-appointed space for pre-dawn hunting briefings, post-trip debriefs, member social events, and informal gatherings throughout the season.",
+"The Clubhouse is the dedicated gathering space for Rivers Lodge members. A comfortable, well-appointed space for pre-dawn hunting briefings, post-trip debriefs, member social events, and informal gatherings throughout the season.",
 "Available to members for private use by arrangement. Equipped with a lounge area and bar.",
 ],
 features: [
