@@ -92,7 +92,7 @@ export default function SignWaiver() {
             Thank you, <strong className="text-[#E0D3BD]">{signatoryName}</strong>. Your waiver has been recorded and is now a permanent, read-only record. A confirmation is on file with the Rivers Lodge team.
           </p>
           <a href="/" className="inline-block font-sans text-xs tracking-[0.08em] uppercase text-[#BABAAE] underline underline-offset-4 hover:text-[#E0D3BD]">
-            Return to Rivers Lodge &amp; Hunt Club
+            Return to Rivers Lodge
           </a>
         </div>
       </div>
@@ -110,7 +110,7 @@ export default function SignWaiver() {
           <div className="flex items-center justify-center gap-2">
             <FileText className="w-5 h-5 text-[#9B4D19]" />
             <span className="font-sans text-xs font-semibold tracking-[0.16em] uppercase text-[#9B4D19]">
-              Rivers Lodge &amp; Hunt Club
+              Rivers Lodge
             </span>
           </div>
           <h1 className="font-sans text-2xl font-medium tracking-tight text-[#E0D3BD]">{title}</h1>

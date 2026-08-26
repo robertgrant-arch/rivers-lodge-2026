@@ -51,7 +51,7 @@ export default function WeddingsLanding() {
     <PublicLayout>
       <SEOHead
   title="Weddings & Events"
-  description="Plan your wedding or private event at The Rivers Lodge — a stunning private Lodge in Kansas with ceremony lawns, barn, and clubhouse for up to 250 guests."
+  description="Plan your wedding or private event at Rivers Lodge — a stunning private lodge in Kansas with ceremony lawns, barn, and clubhouse for up to 250 guests."
   url="/events"
   structuredData={structuredData.weddingVenue()}
 />
@@ -84,7 +84,7 @@ export default function WeddingsLanding() {
               Where every celebration<br />is exclusively yours.
             </h1>
             <p className="text-[#E0D3BD/75] font-sans text-base max-w-lg mb-10 leading-relaxed">
-              The Rivers Lodge &amp; Hunt Club is a private Lodge. When you book, every space on the property is reserved for your celebration alone — from arrival to the last goodbye.
+              Rivers Lodge is a private lodge. When you book, every space on the property is reserved for your celebration alone — from arrival to the last goodbye.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               <Link href="/weddings" className="btn-primary">

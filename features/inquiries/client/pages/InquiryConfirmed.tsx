@@ -96,7 +96,7 @@ export default function InquiryConfirmed() {
   return (
     <PublicLayout>
       <SEOHead
-        title="Inquiry Received — The Rivers Lodge & Hunt Club"
+        title="Inquiry Received — Rivers Lodge"
         description="Thank you for your inquiry. Our team will be in touch shortly."
       />
 
@@ -174,7 +174,7 @@ export default function InquiryConfirmed() {
               While you wait, explore the Lodge.
             </h2>
             <p className="font-sans text-[#BABAAE] text-sm leading-relaxed mb-8">
-              Discover the spaces, accommodations, and experiences that make Rivers Lodge & Hunt Club unlike any other destination in the region.
+              Discover the spaces, accommodations, and experiences that make Rivers Lodge unlike any other destination in the region.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               {type === "wedding" || type === "corporate" || type === "event" ? (

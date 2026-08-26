@@ -7,8 +7,8 @@ import Picture from "@shared/components/Picture";
 /* ── Hero slideshow ──────────────────────────────────────────────────────── */
 const HERO_SLIDES: { src: string; alt: string; label: string; pos?: string }[] = [
   { src: "/img/Clubhouse%20Home.jpg", alt: "Timber Edge Clubhouse bar and lounge interior", label: "Hero Image 1" },
-  { src: "/img/hero%203.jpg", alt: "Rivers Lodge & Hunt Club barn at sunset", label: "Hero Image 2", pos: "center 68%" },
-  { src: "/brand/clubhouse%20exterior.jpg", alt: "Rivers Lodge & Hunt Club exterior at sunset", label: "Hero Image 3" },
+  { src: "/img/hero%203.jpg", alt: "Rivers Lodge barn at sunset", label: "Hero Image 2", pos: "center 68%" },
+  { src: "/brand/clubhouse%20exterior.jpg", alt: "Rivers Lodge exterior at sunset", label: "Hero Image 3" },
 ];
 
 function HeroSlideshow() {
@@ -124,8 +124,8 @@ export default function Home() {
   return (
     <PublicLayout>
       <SEOHead
-        title="Rivers Lodge & Hunt Club"
-        description="Rivers Lodge & Hunt Club — a private Lodge on the Marais des Cygnes in La Cygne, Kansas. Destination weddings, private events, hunting, fishing, and membership."
+        title="Rivers Lodge"
+        description="Rivers Lodge — a private lodge on the Marais des Cygnes in La Cygne, Kansas. Destination weddings, private events, hunting, fishing, and membership."
         url="/"
         image="/img/Ohana%20Aerial.jpg"
       />
@@ -141,8 +141,6 @@ export default function Home() {
             style={{ fontSize: "clamp(3.25rem,8.5vw,7.5rem)" }}
           >
             Rivers Lodge
-            <br />
-            <em className="italic font-light">&amp; Hunt Club</em>
           </h1>
           <p
             className="font-sans text-white/70 max-w-lg mb-10 leading-relaxed"
@@ -171,7 +169,7 @@ export default function Home() {
       <section className="relative overflow-hidden min-h-[600px]">
         <Picture
           src="/img/rivers-1-rockhome.jpg"
-          alt="The rock home at Rivers Lodge & Hunt Club"
+          alt="The rock home at Rivers Lodge"
           label="Our story"
           className="absolute inset-0 w-full h-full"
           imgClassName="absolute inset-0 w-full h-full object-cover"
@@ -196,8 +194,7 @@ export default function Home() {
                 className="font-serif font-light text-white leading-tight mb-6"
                 style={{ fontSize: "clamp(1.875rem,3.5vw,3rem)" }}
               >
-                The Rivers Lodge<br />
-                <em className="italic">&amp; Hunt Club.</em>
+                Rivers Lodge.
               </h2>
               <p className="font-sans text-white/80 leading-relaxed" style={{ fontSize: "0.9375rem" }}>
                 A privately owned luxury lodge located just 45 minutes south of Kansas City. The Main Lodge and Campus was built around a simple idea: give a small number of families and guests exclusive access to thousands of acres of land with high end accommodations and something for everyone to enjoy.
@@ -270,7 +267,7 @@ export default function Home() {
       <section className="relative overflow-hidden min-h-[600px]">
         <img
           src="/img/membershiphomepage-1-.jpg"
-          alt="Upland bird hunting at Rivers Lodge & Hunt Club"
+          alt="Upland bird hunting at Rivers Lodge"
           className="absolute inset-0 w-full h-full object-cover"
           width={1920}
           height={1080}

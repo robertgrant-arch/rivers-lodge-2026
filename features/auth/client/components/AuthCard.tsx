@@ -22,7 +22,7 @@ export function AuthCard({ heading, subheading, children }: AuthCardProps) {
           className="text-center font-sans tracking-[0.25em] uppercase mb-6"
           style={{ fontSize: "10px", color: "oklch(0.72 0.095 78)" }}
         >
-          Rivers Lodge &amp; Hunt Club
+          Rivers Lodge
         </p>
 
         {/* Heading */}

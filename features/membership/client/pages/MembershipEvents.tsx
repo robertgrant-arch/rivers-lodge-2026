@@ -7,7 +7,7 @@ export default function MembershipEvents() {
     <PublicLayout>
       <SEOHead
         title="Member Events"
-        description="Upcoming member events at Rivers Lodge & Hunt Club — exclusive dinners, lodge shoots, member nights, and seasonal gatherings."
+        description="Upcoming member events at Rivers Lodge — exclusive dinners, lodge shoots, member nights, and seasonal gatherings."
         url="/membership/events"
       />
       <section className="pt-32 pb-16 md:pt-44 md:pb-24 bg-background">

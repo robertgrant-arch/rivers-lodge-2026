@@ -37,7 +37,7 @@ export default function PursuitDetail({ slug }: Props) {
     <PublicLayout>
       <SEOHead
         title={pursuit.title}
-        description={`${pursuit.teaser} Exclusive access at Rivers Lodge & Hunt Club, La Cygne, Kansas.`}
+        description={`${pursuit.teaser} Exclusive access at Rivers Lodge, La Cygne, Kansas.`}
         url={`/outdoor-activities/${pursuit.slug}`}
         image={pursuit.heroImg || undefined}
       />

@@ -161,7 +161,7 @@ export const PURSUITS: Pursuit[] = [
       { src: "/img/Fishing%20net.jpg", alt: "Netting the catch on the water at Rivers Lodge" },
       { src: "/img/fishing-01-gallery.jpg", alt: "Fishing the Marais des Cygnes at Rivers Lodge" },
       { src: "/img/fishing-02-gallery.jpg", alt: "Trophy catch on the private fisheries at Rivers Lodge" },
-      { src: "/img/fishing-03-gallery.jpg", alt: "Guided fishing trip at Rivers Lodge & Hunt Club" },
+      { src: "/img/fishing-03-gallery.jpg", alt: "Guided fishing trip at Rivers Lodge" },
       { src: "", alt: "03" },
     ],
     season: [

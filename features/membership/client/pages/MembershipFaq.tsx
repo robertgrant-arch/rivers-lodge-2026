@@ -9,7 +9,7 @@ export default function MembershipFaq() {
     <PublicLayout>
       <SEOHead
         title="Membership FAQ"
-        description="Frequently asked questions about membership at The Rivers Lodge & Hunt Club."
+        description="Frequently asked questions about membership at Rivers Lodge."
         url="/membership/faq"
       />
       <div style={{ "--track-accent": ACCENT } as React.CSSProperties}>

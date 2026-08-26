@@ -16,12 +16,9 @@ export default function PublicFooter() {
               <div className="font-serif text-[1.375rem] text-[#E0D3BD] leading-tight tracking-wide">
                 Rivers Lodge
               </div>
-              <div className="text-[9px] tracking-[0.24em] uppercase font-sans font-light opacity-50 mt-1">
-                &amp; Hunt Club
-              </div>
             </div>
             <p className="text-[12px] font-sans leading-relaxed opacity-70 max-w-[280px] mb-6">
-              A private Lodge on the Marais des Cygnes. Exclusive membership, destination weddings, and the finest private hunting and fishing in the Midwest.
+              A private lodge on the Marais des Cygnes. Exclusive membership, destination weddings, private events, and exceptional outdoor experiences in the Midwest.
             </p>
             <address className="not-italic text-[11px] font-sans leading-relaxed opacity-50 mb-6">
               18103 E 2300 Ln<br />
@@ -73,7 +70,7 @@ export default function PublicFooter() {
         {/* ── Copyright bar ──────────────────────────────────────────────── */}
         <div className="pt-8 flex flex-col md:flex-row items-center justify-between gap-3">
           <p className="text-[11px] font-sans opacity-35 tracking-wide">
-            © {new Date().getFullYear()} The Rivers Lodge &amp; Hunt Club. All rights reserved.
+            © {new Date().getFullYear()} Rivers Lodge. All rights reserved.
           </p>
           <p className="text-[11px] font-sans opacity-35 tracking-wide">
             La Cygne, Kansas
