@@ -25,13 +25,19 @@ obs.observe(el); return () => obs.disconnect();
 return ref;
 }
 
-const venues = [
-  { name: "River Lawn", img: "/img/riverlawn.jpg", desc: "An open lawn between the Lodge and the Marais des Cygnes — the Lodge's most dramatic outdoor ceremony site. Seats up to 200." },
+const ALL_VENUES = [
+  // HIDDEN: River Lawn (may be restored later)
+  // { name: "River Lawn", img: "/img/riverlawn.jpg", desc: "An open lawn between the Lodge and the Marais des Cygnes — the Lodge's most dramatic outdoor ceremony site. Seats up to 200." },
   { name: "Rivers Barn", img: "/img/barnwedding.jpg", desc: "6,000 sq ft of open timber-frame space. Accommodates up to 300 guests for ceremonies and receptions. Full catering kitchen." },
-  { name: "Timber Edge", img: "/img/timberedge.jpg", desc: "A ceremony space framed by old-growth timber on the river corridor. Intimate, shaded, and unlike anything else in the region." },
+  // HIDDEN: Timber Edge (may be restored later)
+  // { name: "Timber Edge", img: "/img/timberedge.jpg", desc: "A ceremony space framed by old-growth timber on the river corridor. Intimate, shaded, and unlike anything else in the region." },
   { name: "The Clubhouse", img: "/img/clubhousewedding.jpg", desc: "A refined indoor gathering space for wedding weekend hosting, cocktail hours, private dinners, and smaller celebrations." },
-{ name: "The Pavilion", img: "", desc: "An open-air setting that adds flexibility for ceremonies, cocktail hours, dinners, or relaxed outdoor receptions." },
+  // HIDDEN: The Pavilion (may be restored later)
+  // { name: "The Pavilion", img: "", desc: "An open-air setting that adds flexibility for ceremonies, cocktail hours, dinners, or relaxed outdoor receptions." },
 ];
+
+// Filter to show only available venues
+const venues = ALL_VENUES.filter(v => !v.name.includes("River Lawn") && !v.name.includes("Timber Edge") && !v.name.includes("Pavilion"));
 
 const ACCENT = "#9B4D19";
 
@@ -161,7 +167,7 @@ From intimate ceremonies to grand receptions- every wedding at the Lodge is excl
 Not a venue. <br /><em className="italic">A private Lodge.</em>
 </h2>
 <div className="space-y-5 font-sans text-white/70 leading-relaxed" style={{ fontSize: "0.9375rem" }}>
-<p>When you book a wedding at Rivers Lodge, you book the entire Lodge. Your guests are the only guests. The ceremony lawns, Rivers Barn, Timber Edge, and your reserved lodging are all exclusively yours for the weekend.</p>
+<p>When you book a wedding at Rivers Lodge, you book the entire Lodge. Your guests are the only guests. Rivers Barn, the Clubhouse, and your reserved lodging are all exclusively yours for the weekend.</p>
 <p>We work with a limited number of couples each year to ensure every wedding receives the full attention of our team. We will never have multiple weddings going on at one time and the result is a totally private all weekend celebration with friends and family.</p>
 </div>
 </div>
@@ -178,8 +184,7 @@ Every space is yours.
 </h2>
 </div>
 <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-border">
-{venues.map((v, i) => {
-const venuePlaceholderId = String(i + 1).padStart(2, '0');
+{venues.map((v) => {
 return v.img ? (
 <div key={v.name} className="relative bg-[#2B2823] aspect-[4/3] overflow-hidden group">
 <div className="absolute inset-0 flex items-center justify-center">
@@ -194,11 +199,10 @@ return v.img ? (
 </div>
 </div>
 ) : (
-<div key={v.name} className={`bg-background p-8 flex flex-col ${i === venues.length - 1 && venues.length % 2 === 1 ? 'md:col-span-2' : ''}`}>
+<div key={v.name} className="bg-background p-8 flex flex-col">
 <div style={{ height: "1px", width: "1.5rem", backgroundColor: "#9B4D19", marginBottom: "0.75rem" }} />
 <h3 className="font-serif text-warm text-2xl mb-3">{v.name}</h3>
 <p className="font-sans text-muted-brand text-sm leading-relaxed flex-1">{v.desc}</p>
-<p className="text-[10px] text-muted-brand mt-4 uppercase tracking-wide" data-placeholder-id={venuePlaceholderId}>Slot {venuePlaceholderId}</p>
 </div>
 );
 })}
