@@ -117,7 +117,7 @@ const venuesRef = useFadeUp();
 const ctaRef = useFadeUp();
 return (
 <PublicLayout>
-<SEOHead title="Weddings" description="Intimate, cinematic weddings on a private Kansas Lodge. Ceremony lawns, the Rivers Barn, and the Timber Edge Clubhouse — all exclusively yours." url="/weddings" structuredData={structuredData.weddingVenue()} />
+<SEOHead title="Weddings" description="Intimate, cinematic weddings on a private Kansas Lodge. Rivers Barn, the Clubhouse, and your reserved lodging — all exclusively yours." url="/weddings" structuredData={structuredData.weddingVenue()} />
 <div style={{ "--track-accent": "#9B4D19" } as React.CSSProperties}>
 {/* Hero */}
 <section className="relative hero-full flex items-end pb-24 overflow-hidden">
