@@ -54,6 +54,15 @@ export default function PublicFooter() {
 
           {/* ── Right: Utility Links ────────────────────────────────────── */}
           <div className="flex flex-col md:items-end gap-3">
+            <Link href="/lodging" className="text-[12px] font-sans hover:text-[#9B4D19] transition-colors">
+              Lodging
+            </Link>
+            <Link href="/gallery" className="text-[12px] font-sans hover:text-[#9B4D19] transition-colors">
+              Gallery
+            </Link>
+            <Link href="/about" className="text-[12px] font-sans hover:text-[#9B4D19] transition-colors">
+              About Us
+            </Link>
             <Link href="/contact" className="text-[12px] font-sans hover:text-[#9B4D19] transition-colors">
               Contact
             </Link>
