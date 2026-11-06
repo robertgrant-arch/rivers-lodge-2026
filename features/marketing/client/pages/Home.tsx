@@ -248,7 +248,7 @@ export default function Home() {
               <p className="font-sans text-white/80 leading-relaxed mb-10" style={{ fontSize: "0.9375rem" }}>
                 When you book Rivers for any event the property is exclusively yours. You will have the full attention of our staff and our team will make your event exactly what you want. All of our events are curated specifically for your group. No overlapping events, no shared grounds.
               </p>
-              <Link href="/lodging" className="btn-ghost" style={{ borderColor: "#9B4D19", color: "#9B4D19" }}>Plan Your Stay</Link>
+              <Link href="/lodging" className="btn-outline">Plan Your Stay</Link>
             </div>
           </div>
         </div>

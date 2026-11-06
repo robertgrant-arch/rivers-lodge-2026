@@ -185,7 +185,7 @@ export default function WeddingsEvents() {
               Whether you're planning a wedding weekend, a corporate retreat, or a private hunt — reach out and we'll arrange a private tour of the estate.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
-              <Link href="/contact" className="btn-outline" style={{ borderColor: ACCENT, color: ACCENT }}>
+              <Link href="/contact" className="btn-outline">
                 Get in Touch
               </Link>
               <Link href="/membership" className="btn-ghost">Explore Membership</Link>

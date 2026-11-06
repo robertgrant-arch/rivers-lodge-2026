@@ -38,8 +38,14 @@ function getPortalLabel(role?: string): string {
   return role === "admin" ? "Admin Portal" : "Member Portal";
 }
 
-const ORANGE = "#9B4D19";
 const SAGE   = "#6B7250";
+
+// River (#576276) is too low-contrast for text on the dark nav (~2.4:1), so
+// hover/active nav links stay Sand and show a River underline instead.
+const riverLinkCls = (active: boolean) =>
+  `text-[#E0D3BD] underline-offset-[6px] decoration-2 ${
+    active ? "underline decoration-rl-river" : "hover:underline hover:decoration-rl-river"
+  }`;
 
 const chevronCls = (open: boolean) =>
   `transition-transform duration-200 ${open ? "rotate-180" : ""}`;
@@ -145,10 +151,7 @@ export default function PublicNav() {
                 onClick={() => { setEventsOpen(!eventsOpen); setMembershipOpen(false); }}
                 aria-expanded={eventsOpen}
                 aria-haspopup="true"
-                className="flex items-center gap-1 px-2 py-2 text-[11px] tracking-[0.09em] uppercase font-sans font-medium whitespace-nowrap transition-colors"
-                style={{ color: activeColor(track === "events", ORANGE) }}
-                onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = ORANGE; }}
-                onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = activeColor(track === "events", ORANGE); }}
+                className={`flex items-center gap-1 px-2 py-2 text-[11px] tracking-[0.09em] uppercase font-sans font-medium whitespace-nowrap transition-colors ${riverLinkCls(track === "events")}`}
               >
                 Weddings &amp; Events
                 <ChevronDown size={11} className={chevronCls(eventsOpen)} />
@@ -156,8 +159,8 @@ export default function PublicNav() {
               {eventsOpen && (
                 <div className="absolute top-full left-0 mt-1 w-64 bg-[#363330] border border-[#57544E] shadow-2xl py-2 z-50">
                   {eventsDropdown.map((item) => (
-                    <Link key={item.href} href={item.href} className="flex flex-col px-5 py-3 hover:bg-[#423F3B] transition-colors group">
-                      <span className="text-[11px] tracking-[0.12em] uppercase font-sans font-medium text-[#E0D3BD] group-hover:text-[#9B4D19] transition-colors">{item.label}</span>
+                    <Link key={item.href} href={item.href} className="flex flex-col px-5 py-3 border-l-2 border-transparent hover:border-rl-river hover:bg-[#423F3B] transition-colors group">
+                      <span className="text-[11px] tracking-[0.12em] uppercase font-sans font-medium text-[#E0D3BD] transition-colors">{item.label}</span>
                       <span className="text-[11px] font-sans text-[#908B82] mt-0.5 normal-case tracking-normal">{item.desc}</span>
                     </Link>
                   ))}
@@ -204,10 +207,7 @@ export default function PublicNav() {
             {/* 3. Food & Wine */}
             <Link
               href="/food-and-wine"
-              className="px-2 py-2 text-[11px] tracking-[0.09em] uppercase font-sans font-medium whitespace-nowrap transition-colors"
-              style={{ color: activeColor(track === "food", ORANGE) }}
-              onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = ORANGE; }}
-              onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.color = activeColor(track === "food", ORANGE); }}
+              className={`px-2 py-2 text-[11px] tracking-[0.09em] uppercase font-sans font-medium whitespace-nowrap transition-colors ${riverLinkCls(track === "food")}`}
             >
               Food &amp; Wine
             </Link>
@@ -231,7 +231,7 @@ export default function PublicNav() {
               <div className="relative" ref={userMenuRef}>
                 <button
                   onClick={() => setUserMenuOpen(!userMenuOpen)}
-                  className="flex items-center gap-2 text-[11px] tracking-[0.15em] uppercase font-sans font-medium border border-[#9B4D19] text-[#9B4D19] px-4 py-2.5 hover:bg-[#9B4D19] hover:text-[#2B2823] transition-all duration-200"
+                  className="flex items-center gap-2 text-[11px] tracking-[0.15em] uppercase font-sans font-medium border border-rl-river text-[#E0D3BD] px-4 py-2.5 hover:bg-rl-river transition-all duration-200"
                 >
                   <User size={13} />
                   <span>{user?.email?.split("@")[0] ?? getPortalLabel(user?.role)}</span>
@@ -250,7 +250,7 @@ export default function PublicNav() {
                     <div className="border-t border-[#57544E]" />
                     <button
                       onClick={() => { setUserMenuOpen(false); logout(); }}
-                      className="w-full flex items-center gap-2.5 px-4 py-3 text-[11px] tracking-[0.12em] uppercase font-sans text-[#9B4D19] hover:bg-[#363330] transition-colors"
+                      className="w-full flex items-center gap-2.5 px-4 py-3 text-[11px] tracking-[0.12em] uppercase font-sans text-[#E0D3BD] hover:bg-[#423F3B] transition-colors"
                     >
                       <LogOut size={13} />
                       Sign Out
@@ -261,7 +261,7 @@ export default function PublicNav() {
             ) : (
               <a
                 href={getLoginUrl()}
-                className="text-[11px] tracking-[0.15em] uppercase font-sans font-medium border border-[#9B4D19] text-[#9B4D19] px-5 py-2.5 hover:bg-[#9B4D19] hover:text-[#2B2823] transition-all duration-200"
+                className="text-[11px] tracking-[0.15em] uppercase font-sans font-medium border border-rl-river text-[#E0D3BD] px-5 py-2.5 hover:bg-rl-river transition-all duration-200"
               >
                 Member Login
               </a>
@@ -299,14 +299,14 @@ export default function PublicNav() {
                 <Link
                   href={getPortalHref(user?.role)}
                   onClick={() => setMobileOpen(false)}
-                  className="inline-flex items-center justify-center gap-2 w-full py-3.5 border border-[#9B4D19] text-[#9B4D19] text-[11px] tracking-[0.18em] uppercase font-sans font-medium"
+                  className="inline-flex items-center justify-center gap-2 w-full py-3.5 border border-rl-river text-[#E0D3BD] text-[11px] tracking-[0.18em] uppercase font-sans font-medium"
                 >
                   <User size={13} />
                   {getPortalLabel(user?.role)}
                 </Link>
                 <button
                   onClick={() => { setMobileOpen(false); logout(); }}
-                  className="inline-flex items-center justify-center gap-2 w-full py-3 text-[11px] tracking-[0.16em] uppercase font-sans font-medium text-[#9B4D19] hover:opacity-70 transition-opacity"
+                  className="inline-flex items-center justify-center gap-2 w-full py-3 text-[11px] tracking-[0.16em] uppercase font-sans font-medium text-[#E0D3BD] hover:opacity-70 transition-opacity"
                 >
                   <LogOut size={13} />
                   Sign Out
@@ -315,7 +315,7 @@ export default function PublicNav() {
             ) : (
               <a
                 href={getLoginUrl()}
-                className="inline-flex items-center justify-center w-full py-3.5 border border-[#9B4D19] text-[#9B4D19] text-[11px] tracking-[0.18em] uppercase font-sans font-medium"
+                className="inline-flex items-center justify-center w-full py-3.5 border border-rl-river text-[#E0D3BD] text-[11px] tracking-[0.18em] uppercase font-sans font-medium"
               >
                 Member Login
               </a>
@@ -325,7 +325,7 @@ export default function PublicNav() {
           {/* 1. Weddings & Events */}
           <div className="mb-2">
             <div className="flex items-center justify-between py-3">
-              <span className="text-[11px] tracking-[0.18em] uppercase font-sans font-medium text-[#9B4D19]">
+              <span className={`text-[11px] tracking-[0.18em] uppercase font-sans font-medium ${riverLinkCls(track === "events")}`}>
                 Weddings &amp; Events
               </span>
               <button
@@ -337,13 +337,13 @@ export default function PublicNav() {
               </button>
             </div>
             {mobileEventsOpen && (
-              <div className="pl-4 mt-1 flex flex-col gap-0 border-l border-[#9B4D19]/30">
+              <div className="pl-4 mt-1 flex flex-col gap-0 border-l border-rl-river">
                 {eventsDropdown.map((item) => (
                   <Link
                     key={item.href}
                     href={item.href}
                     onClick={() => setMobileOpen(false)}
-                    className="py-3 text-[#E0D3BD] font-serif text-xl italic hover:text-[#9B4D19] transition-colors"
+                    className={`py-3 font-serif text-xl italic transition-colors ${riverLinkCls(location === item.href)}`}
                   >
                     {item.label}
                   </Link>
@@ -390,7 +390,7 @@ export default function PublicNav() {
           <Link
             href="/food-and-wine"
             onClick={() => setMobileOpen(false)}
-            className="py-3 text-[11px] tracking-[0.18em] uppercase font-sans font-medium text-[#9B4D19] hover:text-[#B4591E] transition-colors"
+            className={`py-3 text-[11px] tracking-[0.18em] uppercase font-sans font-medium transition-colors ${riverLinkCls(track === "food")}`}
           >
             Food &amp; Wine
           </Link>

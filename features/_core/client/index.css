@@ -63,6 +63,7 @@
   --color-rl-grass: var(--rl-grass);
   --color-rl-sand:  var(--rl-sand);
   --color-rl-river: var(--rl-river);
+  --color-rl-river-dark: var(--rl-river-dark);
   --color-rl-sage:  var(--rl-sage);
   --color-rl-clay:  var(--rl-clay);
 }
@@ -75,9 +76,17 @@
   --rl-night:  #2B2823;   /* warm near-black   — primary background */
   --rl-grass:  #6B7250;   /* olive green        — primary brand / membership */
   --rl-sand:   #E0D3BD;   /* warm cream         — primary text on dark */
-  --rl-river:  #576276;   /* slate blue         — secondary accent */
+  --rl-river:  #576276;   /* slate blue         — primary button / interactive accent */
+  --rl-river-dark: #4A5364; /* River ~15% darker  — button hover state */
   --rl-sage:   #BABAAE;   /* muted sage gray    — tertiary / muted text */
-  --rl-clay:   #9B4D19;   /* rust / orange      — CTA / hunter accent */
+  --rl-clay:   #9B4D19;   /* rust / orange      — decorative accent (eyebrows, rules) */
+
+  /* ── Button tokens (public site = River; portal overrides below) ────────── */
+  --btn-primary-bg:       var(--rl-river);
+  --btn-primary-bg-hover: var(--rl-river-dark);
+  --btn-primary-text:     var(--rl-sand);
+  --btn-outline-border:   var(--rl-river);
+  --btn-outline-text:     var(--rl-sand);
 
   /* ── Semantic aliases ───────────────────────────────────────────────────── */
   --color-bg:             var(--rl-night);
@@ -182,6 +191,18 @@
   --chart-3: #BABAAE;
   --chart-4: #E0D3BD;
   --chart-5: #57544E;
+}
+
+/* Member portal pages keep the original Clay buttons. PublicLayout sets
+   data-site-area="portal" on /portal routes. */
+[data-site-area="portal"] {
+  --btn-primary-bg:       var(--rl-clay);
+  --btn-primary-bg-hover: var(--rl-clay);
+  --btn-outline-border:   var(--rl-clay);
+  --btn-outline-text:     var(--rl-clay);
+}
+[data-site-area="portal"] .btn-primary:hover {
+  opacity: 0.88; /* original portal hover treatment */
 }
 
 /* ─── Track Accent System ───────────────────────────────────────────────────── */
@@ -326,46 +347,47 @@
 
   /* ── CTA Button Styles ──────────────────────────────────────────────────── */
 
-  /* Primary clay-fill button */
+  /* Primary River-fill button */
   .btn-primary {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     padding: 0.875rem 2.25rem;
-    background-color: var(--gold);
-    color: #E0D3BD;
+    background-color: var(--btn-primary-bg);
+    color: var(--btn-primary-text);
     font-family: 'Montserrat', system-ui, sans-serif;
     font-size: 0.6875rem;
     font-weight: 500;
     letter-spacing: 0.16em;
     text-transform: uppercase;
-    border: 1px solid var(--gold);
-    transition: opacity 200ms ease, background-color 200ms ease;
+    border: 1px solid var(--btn-primary-bg);
+    transition: background-color 200ms ease, border-color 200ms ease;
     white-space: nowrap;
   }
   .btn-primary:hover {
-    opacity: 0.88;
+    background-color: var(--btn-primary-bg-hover);
+    border-color: var(--btn-primary-bg-hover);
   }
 
-  /* Outlined clay button */
+  /* Outlined River button — Sand text for contrast on the dark background */
   .btn-outline {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     padding: 0.875rem 2.25rem;
     background-color: transparent;
-    color: var(--gold);
+    color: var(--btn-outline-text);
     font-family: 'Montserrat', system-ui, sans-serif;
     font-size: 0.6875rem;
     font-weight: 500;
     letter-spacing: 0.16em;
     text-transform: uppercase;
-    border: 1px solid var(--gold);
+    border: 1px solid var(--btn-outline-border);
     transition: background-color 200ms ease, color 200ms ease;
     white-space: nowrap;
   }
   .btn-outline:hover {
-    background-color: var(--gold);
+    background-color: var(--btn-outline-border);
     color: #E0D3BD;
   }
 

@@ -1,3 +1,4 @@
+import { useLocation } from "wouter";
 import PublicNav from "./PublicNav";
 import PublicFooter from "./PublicFooter";
 
@@ -8,8 +9,12 @@ interface PublicLayoutProps {
 }
 
 export default function PublicLayout({ children, hideNav }: PublicLayoutProps) {
+  const [location] = useLocation();
+  // Member portal pages reuse this layout; they keep the original Clay button
+  // tokens (see [data-site-area="portal"] in index.css).
+  const siteArea = location.startsWith("/portal") ? "portal" : "public";
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="min-h-screen flex flex-col bg-background" data-site-area={siteArea}>
       {/* Skip-to-content for keyboard / screen reader users */}
       <a
         href="#main-content"

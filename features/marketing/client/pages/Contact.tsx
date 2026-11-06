@@ -239,7 +239,6 @@ function CorporateInquiryForm() {
         type="submit"
         disabled={!canSubmit}
         className="btn-outline disabled:opacity-40 disabled:cursor-not-allowed"
-        style={{ borderColor: CORPORATE_ACCENT, color: CORPORATE_ACCENT }}
       >
         {submit.isPending ? "Sending…" : "Submit Inquiry"}
       </button>
