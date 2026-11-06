@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import PublicLayout from "@shared/components/PublicLayout";
 import { trpc } from '@shared/lib/trpc';
+import { WEDDING_GALLERY } from '@features/weddings/public';
 import SEOHead from '@shared/components/SEOHead';
 
 
@@ -26,10 +27,40 @@ const CMS_CATEGORY_MAP: Record<string, Category> = {
   fish: "outdoors",
 };
 
-type Photo = { src: string; alt: string; category: Category };
+type Photo = { src: string; alt: string; category: Category; width?: number; height?: number };
 const photos: Photo[] = [
   // Photos cleared — repopulate via CMS or this array when ready
 ];
+
+// Weddings & Events fallback: the wedding gallery photos (shared with /weddings).
+// Shown only while the CMS has no published "weddings" gallery images; see
+// weddingPhotosFrom() below.
+const WEDDING_FALLBACK: Photo[] = WEDDING_GALLERY.map((p) => ({ ...p, category: "weddings" }));
+
+type CmsGalleryWithImages = {
+  category: string;
+  images: { url: string; altText: string | null; width: number | null; height: number | null }[];
+};
+
+/**
+ * Weddings & Events photos: published CMS galleries with category "weddings" take
+ * over as soon as they contain at least one image; otherwise the hardcoded
+ * WEDDING_FALLBACK list is used. Other categories are not affected.
+ */
+function weddingPhotosFrom(cmsGalleries: CmsGalleryWithImages[] | undefined): Photo[] {
+  const cms: Photo[] = (cmsGalleries ?? [])
+    .filter((g) => CMS_CATEGORY_MAP[g.category] === "weddings")
+    .flatMap((g) => g.images)
+    .filter((img) => !!img.url)
+    .map((img) => ({
+      src: img.url,
+      alt: img.altText || "Wedding at Rivers Lodge",
+      category: "weddings" as const,
+      width: img.width ?? undefined,
+      height: img.height ?? undefined,
+    }));
+  return cms.length > 0 ? cms : WEDDING_FALLBACK;
+}
 
 // ─── Lightbox ─────────────────────────────────────────────────────────────────
 
@@ -141,7 +172,7 @@ export default function Gallery() {
     setTimeout(() => setVisible(true), 50);
   };
 
-  const allPhotos: Photo[] = photos;
+  const allPhotos: Photo[] = [...photos, ...weddingPhotosFrom(cmsGalleries)];
 
   const filtered = active === "all" ? allPhotos : allPhotos.filter((p) => p.category === active);
   const activeCat = categories.find((c) => c.key === active);
@@ -218,8 +249,11 @@ export default function Gallery() {
                   <img
                     src={photo.src}
                     alt={photo.alt}
-                    className="w-full object-cover transition-transform duration-700 group-hover:scale-[1.02]"
+                    width={photo.width}
+                    height={photo.height}
+                    className="w-full h-auto object-cover transition-transform duration-700 group-hover:scale-[1.02]"
                     loading="lazy"
+                    decoding="async"
                   />
                   {/* Hover overlay */}
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300 flex items-center justify-center">
