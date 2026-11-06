@@ -28,7 +28,6 @@ export default function MembershipEvents() {
             <Link
               href="/contact"
               className="btn-outline"
-              style={{ borderColor: "#9B4D19", color: "#9B4D19" }}
             >
               Get in Touch
             </Link>

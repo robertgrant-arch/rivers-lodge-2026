@@ -77,7 +77,6 @@ export default function FoodAndWine() {
           <Link
             href="/contact?type=dining"
             className="btn-primary"
-            style={{ backgroundColor: ACCENT, borderColor: ACCENT, color: "#2B2823" }}
           >
             Inquire About Dining
           </Link>
@@ -287,7 +286,6 @@ export default function FoodAndWine() {
               <Link
                 href="/contact?type=dining"
                 className="btn-primary"
-                style={{ backgroundColor: ACCENT, borderColor: ACCENT, color: "#2B2823" }}
               >
                 Inquire About Dining
               </Link>

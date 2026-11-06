@@ -273,7 +273,7 @@ function MembershipInquiryForm({ initialTier }: { initialTier: MembershipTier | 
       <button
         type="submit"
         disabled={!canSubmit}
-        className="inline-flex items-center justify-center rounded-md bg-[#9B4D19] hover:bg-[#B4591E] disabled:opacity-50 disabled:cursor-not-allowed text-white uppercase tracking-widest text-sm px-8 py-3 transition"
+        className="inline-flex items-center justify-center rounded-md bg-rl-river hover:bg-rl-river-dark disabled:opacity-50 disabled:cursor-not-allowed text-white uppercase tracking-widest text-sm px-8 py-3 transition"
       >
         {submit.isPending ? "Sending…" : "SUBMIT MEMBERSHIP INQUIRY"}
       </button>
@@ -319,7 +319,7 @@ export default function Membership() {
           </p>
           <Link
             href="/portal"
-            className="text-[11px] tracking-[0.14em] uppercase font-sans font-medium border border-[#9B4D19] text-[#9B4D19] px-4 py-1.5 hover:bg-[#9B4D19] hover:text-[#2B2823] transition-all duration-200 shrink-0"
+            className="text-[11px] tracking-[0.14em] uppercase font-sans font-medium border border-rl-river text-[#E0D3BD] px-4 py-1.5 hover:bg-rl-river transition-all duration-200 shrink-0"
           >
             Go to Member Portal →
           </Link>

@@ -30,7 +30,7 @@ export default function PublicFooter() {
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Instagram"
-                className="text-[#908B82] hover:text-[#9B4D19] transition-colors"
+                className="text-[#908B82] hover:text-rl-sand transition-colors"
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                   <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
@@ -43,7 +43,7 @@ export default function PublicFooter() {
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Facebook"
-                className="text-[#908B82] hover:text-[#9B4D19] transition-colors"
+                className="text-[#908B82] hover:text-rl-sand transition-colors"
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>
@@ -54,22 +54,22 @@ export default function PublicFooter() {
 
           {/* ── Right: Utility Links ────────────────────────────────────── */}
           <div className="flex flex-col md:items-end gap-3">
-            <Link href="/lodging" className="text-[12px] font-sans hover:text-[#9B4D19] transition-colors">
+            <Link href="/lodging" className="text-[12px] font-sans hover:text-rl-sand transition-colors">
               Lodging
             </Link>
-            <Link href="/gallery" className="text-[12px] font-sans hover:text-[#9B4D19] transition-colors">
+            <Link href="/gallery" className="text-[12px] font-sans hover:text-rl-sand transition-colors">
               Gallery
             </Link>
-            <Link href="/about" className="text-[12px] font-sans hover:text-[#9B4D19] transition-colors">
+            <Link href="/about" className="text-[12px] font-sans hover:text-rl-sand transition-colors">
               About Us
             </Link>
-            <Link href="/contact" className="text-[12px] font-sans hover:text-[#9B4D19] transition-colors">
+            <Link href="/contact" className="text-[12px] font-sans hover:text-rl-sand transition-colors">
               Contact
             </Link>
-            <a href={getLoginUrl()} className="text-[12px] font-sans hover:text-[#9B4D19] transition-colors">
+            <a href={getLoginUrl()} className="text-[12px] font-sans hover:text-rl-sand transition-colors">
               Member Login
             </a>
-            <Link href="/privacy" className="text-[12px] font-sans hover:text-[#9B4D19] transition-colors">
+            <Link href="/privacy" className="text-[12px] font-sans hover:text-rl-sand transition-colors">
               Privacy Policy
             </Link>
           </div>

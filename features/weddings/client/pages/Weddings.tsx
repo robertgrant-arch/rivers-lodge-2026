@@ -104,7 +104,7 @@ return (
   {submit.error?.message || "Something went wrong. Please try again or email us at info@riverslodge.com"}
 </p>
 )}
-<button type="submit" disabled={!canSubmit} className="inline-flex items-center justify-center rounded-md bg-[#9B4D19] hover:bg-[#B4591E] disabled:opacity-50 disabled:cursor-not-allowed text-white uppercase tracking-widest text-sm px-8 py-3 transition">
+<button type="submit" disabled={!canSubmit} className="inline-flex items-center justify-center rounded-md bg-rl-river hover:bg-rl-river-dark disabled:opacity-50 disabled:cursor-not-allowed text-white uppercase tracking-widest text-sm px-8 py-3 transition">
 {submit.isPending ? "Sending…" : "SUBMIT WEDDING INQUIRY"}
 </button>
 </form>
@@ -135,7 +135,7 @@ Your wedding weekend. <br /><em className="italic font-light">Entirely private.<
 From intimate ceremonies to grand receptions- every wedding at the Lodge is exclusively yours. No other groups, no shared access.
 </p>
 <div className="flex flex-col sm:flex-row gap-4">
-<a href="#inquire" className="btn-primary" style={{ backgroundColor: ACCENT, borderColor: ACCENT, color: "#2B2823" }}>Begin Wedding Inquiry</a>
+<a href="#inquire" className="btn-primary">Begin Wedding Inquiry</a>
 <Link href="/lodging" className="btn-ghost">View Spaces & Lodging</Link>
 </div>
 </div>

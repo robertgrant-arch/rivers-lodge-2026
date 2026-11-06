@@ -77,7 +77,7 @@ export default function LodgingVenueDetail({ slug }: { slug: string }) {
             {venue.teaser}
           </p>
           <div className="flex flex-col sm:flex-row gap-4">
-            <Link href="/contact?type=lodging" className="btn-outline" style={{ borderColor: ACCENT, color: ACCENT }}>
+            <Link href="/contact?type=lodging" className="btn-outline">
               Inquire About {venue.group === "stay" ? "Lodging" : "This Venue"}
             </Link>
             <Link href="/lodging" className="btn-ghost">Back to All Lodging</Link>
@@ -199,7 +199,7 @@ export default function LodgingVenueDetail({ slug }: { slug: string }) {
           <div style={{ height: "1px", width: "2rem", backgroundColor: ACCENT, marginBottom: "1.25rem" }} />
           <p className="eyebrow text-muted-brand mb-4">Lodging & Venues</p>
           <div className="flex flex-col sm:flex-row gap-4">
-            <Link href="/lodging" className="btn-outline" style={{ borderColor: ACCENT, color: ACCENT }}>
+            <Link href="/lodging" className="btn-outline">
               View All Lodging
             </Link>
             <Link href="/contact?type=lodging" className="btn-ghost">
