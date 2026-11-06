@@ -62,6 +62,7 @@
   --color-rl-night: var(--rl-night);
   --color-rl-grass: var(--rl-grass);
   --color-rl-sand:  var(--rl-sand);
+  --color-rl-sand-light: var(--rl-sand-light);
   --color-rl-river: var(--rl-river);
   --color-rl-river-dark: var(--rl-river-dark);
   --color-rl-sage:  var(--rl-sage);
@@ -76,6 +77,7 @@
   --rl-night:  #2B2823;   /* warm near-black   — primary background */
   --rl-grass:  #6B7250;   /* olive green        — primary brand / membership */
   --rl-sand:   #E0D3BD;   /* warm cream         — primary text on dark */
+  --rl-sand-light: #F4EEE4; /* light tint of Sand — warm off-white for light sections */
   --rl-river:  #576276;   /* slate blue         — primary button / interactive accent */
   --rl-river-dark: #4A5364; /* River ~15% darker  — button hover state */
   --rl-sage:   #BABAAE;   /* muted sage gray    — tertiary / muted text */
