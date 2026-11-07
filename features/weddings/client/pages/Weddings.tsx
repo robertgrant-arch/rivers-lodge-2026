@@ -47,11 +47,12 @@ const GALLERY_CARD_IMG = "/img/wedding-gallery/wedding-gallery-12.jpg";
 const GALLERY_CARD_ALT = "Outdoor ceremony under a wooden arch dressed in white flowers, with timber-covered hills beyond";
 const GALLERY_HREF = "/gallery?category=weddings";
 
-// ─── Shade & exposure (tuned so all text over photos passes WCAG AA 4.5:1) ──
-const HERO_SCRIM = 0.7;
-const PANEL_SCRIM = { aerial: 0.72, barn: 0.8 };
-const GALLERY_SCRIM = 0.75;
-const CARD_GRADIENT = "linear-gradient(to top, rgba(43,40,35,0.9) 0%, rgba(43,40,35,0.72) 20%, rgba(43,40,35,0.3) 34%, rgba(43,40,35,0) 46%)";
+// ─── Text on photos ──────────────────────────────────────────────────────────
+// Photos stay bright: no shaded patches behind text. Readability comes from the
+// text itself — pure white, slightly larger/heavier type, and a soft shadow on the letters.
+const TEXT_SHADOW = "0 1px 3px rgba(0,0,0,0.45), 0 2px 10px rgba(0,0,0,0.25)";
+// Space cards: only a very faint tint along the bottom edge.
+const CARD_GRADIENT = "linear-gradient(to top, rgba(43,40,35,0.32) 0%, rgba(43,40,35,0) 40%)";
 // The barn photo is a dusk shot: lift exposure a little in CSS (source file untouched).
 // Its sky is already near-white, so a slight contrast compression runs first to keep
 // the sky from clipping while brightness lifts the barn's midtones (~16%).
@@ -133,18 +134,6 @@ function Rule() {
 return <div aria-hidden="true" style={{ height: "1px", width: "2rem", backgroundColor: ACCENT, marginBottom: "1.25rem" }} />;
 }
 
-/**
- * Soft Night shade that sits only behind a text block on a photo: a translucent
- * rectangle a little larger than the text, blurred so its edges fade out. The
- * rest of the photo stays at full brightness. `alpha` is tuned per section
- * against WCAG AA (measured on the rendered photos at 1440px and 390px).
- */
-function TextScrim({ alpha, spread = "3.5rem", blur = 44 }: { alpha: number; spread?: string; blur?: number }) {
-return (
-<div aria-hidden="true" className="absolute pointer-events-none" style={{ inset: `-${spread}`, background: `rgba(43,40,35,${alpha})`, filter: `blur(${blur}px)` }} />
-);
-}
-
 /** Slim labeled divider on a light Sand band — the break between every section on this page. */
 function SectionDivider({ label }: { label: string }) {
 return (
@@ -160,18 +149,16 @@ return (
 
 /**
  * Full-bleed property image with its text block anchored at the lower left.
- * Only the area behind the text is shaded (TextScrim); the rest of the photo
- * shows at full brightness.
+ * No shading on the photo; the text carries its own letter shadow.
  */
-function PropertyPanel({ src, alt, objectPosition = "center", imgFilter, scrim, children }: { src: string; alt: string; objectPosition?: string; imgFilter?: string; scrim: number; children: React.ReactNode }) {
+function PropertyPanel({ src, alt, objectPosition = "center", imgFilter, children }: { src: string; alt: string; objectPosition?: string; imgFilter?: string; children: React.ReactNode }) {
 return (
 <section className="relative overflow-hidden flex items-end" style={{ minHeight: "90vh" }}>
 <div className="absolute inset-0">
 <Picture src={src} alt={alt} label={alt} className="absolute inset-0 w-full h-full" imgClassName="absolute inset-0 w-full h-full object-cover" imgStyle={{ objectPosition, filter: imgFilter }} sizes="100vw" loading="lazy" />
 </div>
-<div className="relative z-10 max-w-[1440px] mx-auto px-5 lg:px-14 w-full pt-40 pb-16 md:pb-20 lg:pb-24">
-<div className="relative max-w-2xl text-[#F4EEE4]" style={{ textShadow: "0 1px 14px rgba(43,40,35,0.55), 0 1px 2px rgba(43,40,35,0.5)" }}>
-<TextScrim alpha={scrim} />
+<div className="relative z-10 max-w-[1440px] mx-auto px-5 lg:px-14 w-full pt-40 pb-10 md:pb-12 lg:pb-14">
+<div className="relative max-w-2xl text-white" style={{ textShadow: TEXT_SHADOW }}>
 <div className="relative">
 <Rule />
 {children}
@@ -191,9 +178,9 @@ return (
 <div className="absolute inset-x-0 bottom-0 p-7 lg:p-8 flex items-end justify-between gap-4">
 <div>
 <div aria-hidden="true" style={{ height: "1px", width: "1.5rem", backgroundColor: ACCENT, marginBottom: "0.75rem" }} />
-<h3 className="font-serif text-[#F4EEE4] text-2xl lg:text-3xl leading-tight">{label}</h3>
+<h3 className="font-serif text-white text-2xl lg:text-3xl leading-tight" style={{ textShadow: TEXT_SHADOW }}>{label}</h3>
 </div>
-<span aria-hidden="true" className="text-[#F4EEE4] text-xl transition-transform duration-300 group-hover:translate-x-1">→</span>
+<span aria-hidden="true" style={{ textShadow: TEXT_SHADOW }} className="text-white text-xl transition-transform duration-300 group-hover:translate-x-1">→</span>
 </div>
 </Link>
 );
@@ -205,33 +192,32 @@ const hasTestimonials = !!testimonials && testimonials.length > 0;
 const venuesRef = useFadeUp();
 const galleryRef = useFadeUp(0.05);
 const ctaRef = useFadeUp();
-const bodyCopy = "space-y-5 font-serif text-[#F4EEE4] leading-relaxed";
+const bodyCopy = "space-y-5 font-serif text-white leading-relaxed";
 return (
 <PublicLayout>
 <SEOHead title="Weddings" description="Intimate, cinematic weddings on a private Kansas Lodge. Rivers Barn, the Clubhouse, and your reserved lodging — all exclusively yours." url="/weddings" structuredData={structuredData.weddingVenue()} />
 <div style={{ "--track-accent": ACCENT, "--btn-primary-text": "var(--rl-sand-light)" } as React.CSSProperties}>
 {/* Hero */}
-<section className="relative hero-full flex items-end pb-24 overflow-hidden">
+<section className="relative hero-full flex items-end pb-12 lg:pb-14 overflow-hidden">
 <div className="absolute inset-0">
 <Picture src={HERO} alt="Wedding ceremony at Rivers Lodge" label="Wedding Hero Image" className="absolute inset-0 w-full h-full" imgClassName="absolute inset-0 w-full h-full object-cover object-center" fetchPriority="high" loading="eager" decoding="async" width={1920} height={1080} sizes="100vw" />
-{/* Very light overall tint; the real shade sits only behind the text block (TextScrim below) */}
-<div aria-hidden="true" className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(to top, rgba(43,40,35,0.22) 0%, rgba(43,40,35,0) 40%)" }} />
+{/* Very faint full-width tint at the bottom edge only; no shaded patch behind the text */}
+<div aria-hidden="true" className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(to top, rgba(43,40,35,0.18) 0%, rgba(43,40,35,0) 35%)" }} />
 </div>
 <div className="relative z-10 max-w-[1440px] mx-auto px-5 lg:px-14 w-full">
-<div className="relative w-fit max-w-full" style={{ textShadow: "0 1px 18px rgba(43,40,35,0.55), 0 1px 3px rgba(43,40,35,0.45)" }}>
-<TextScrim alpha={HERO_SCRIM} />
+<div className="relative w-fit max-w-full" style={{ textShadow: TEXT_SHADOW }}>
 <div className="relative">
 <Rule />
-<p className="eyebrow text-white mb-4">Weddings</p>
+<p className="eyebrow font-medium text-white mb-4">Weddings</p>
 <h1 className="font-serif font-light text-white leading-[0.92] mb-6" style={{ fontSize: "clamp(2.75rem,6.5vw,5.5rem)" }}>
 Your wedding weekend. <br /><em className="italic font-light">Entirely private.</em>
 </h1>
-<p className="font-sans text-white/95 max-w-lg leading-relaxed mb-10" style={{ fontSize: "0.9375rem" }}>
+<p className="font-sans font-medium text-white max-w-lg leading-relaxed mb-10" style={{ fontSize: "1rem" }}>
 From intimate ceremonies to grand receptions- every wedding at the Lodge is exclusively yours. No other groups, no shared access.
 </p>
 <div className="flex flex-col sm:flex-row gap-4" style={{ textShadow: "none" }}>
 <a href="#inquire" className="btn-primary">Begin Wedding Inquiry</a>
-<Link href="/lodging" className="btn-ghost bg-[#2B2823]/35 backdrop-blur-sm">View Spaces & Lodging</Link>
+<Link href="/lodging" className="btn-ghost bg-[#2B2823]/55 backdrop-blur-sm">View Spaces & Lodging</Link>
 </div>
 </div>
 </div>
@@ -239,14 +225,14 @@ From intimate ceremonies to grand receptions- every wedding at the Lodge is excl
 </section>
 {/* Property — Rivers Lodge (aerial) */}
 <SectionDivider label="Rivers Lodge" />
-<PropertyPanel src={PROPERTY_BG_1} alt="Aerial view of the Rivers Lodge property at sunset — timber, ponds, and prairie around the lodge and event barn" objectPosition="center 40%" scrim={PANEL_SCRIM.aerial}>
-<h2 className="font-serif font-light text-[#F4EEE4] leading-[1.02] mb-4" style={{ fontSize: "clamp(2.5rem,5.5vw,4.5rem)" }}>
+<PropertyPanel src={PROPERTY_BG_1} alt="Aerial view of the Rivers Lodge property at sunset — timber, ponds, and prairie around the lodge and event barn" objectPosition="center 40%">
+<h2 className="font-serif font-light text-white leading-[1.02] mb-4" style={{ fontSize: "clamp(2.5rem,5.5vw,4.5rem)" }}>
 Rivers Lodge
 </h2>
-<p className="eyebrow not-italic text-[#F4EEE4] mb-8" style={{ fontSize: "0.8125rem", letterSpacing: "0.2em" }}>
+<p className="eyebrow not-italic font-medium text-white mb-8" style={{ fontSize: "0.875rem", letterSpacing: "0.2em" }}>
 A PLACE TO CELEBRATE. A PLACE TO STAY.
 </p>
-<div className={bodyCopy} style={{ fontSize: "1.0625rem" }}>
+<div className={bodyCopy} style={{ fontSize: "1.1875rem" }}>
 <p>Set on approximately 113 acres of rolling oak and hickory timber surrounded by native prairie, Rivers Lodge offers a collection of thoughtfully designed spaces.</p>
 <p>Our property features two primary event venues, The Event Barn and The Clubhouse, designed for weddings both large and intimate. On-site and nearby lodging includes The Lodge, The Farmhouse, The Annex, and Riverhouse Suites, offering a unique experience of hosting and staying in one place. In addition to on-site accommodations, the Ohana House offers an off-site lodging option located 20 minutes south of the main campus, appreciated for its comfort and privacy.</p>
 </div>
@@ -264,11 +250,11 @@ A PLACE TO CELEBRATE. A PLACE TO STAY.
 </section>
 {/* Property — The Event Barn */}
 <SectionDivider label="The Event Barn" />
-<PropertyPanel src={PROPERTY_BG_2} alt="The Event Barn at Rivers Lodge, a dark timber barn framed by autumn oaks at golden hour" objectPosition="center 45%" imgFilter={BARN_FILTER} scrim={PANEL_SCRIM.barn}>
-<h2 className="font-serif font-light text-[#F4EEE4] leading-[1.02] mb-8" style={{ fontSize: "clamp(2.5rem,5.5vw,4.5rem)" }}>
+<PropertyPanel src={PROPERTY_BG_2} alt="The Event Barn at Rivers Lodge, a dark timber barn framed by autumn oaks at golden hour" objectPosition="center 45%" imgFilter={BARN_FILTER}>
+<h2 className="font-serif font-light text-white leading-[1.02] mb-8" style={{ fontSize: "clamp(2.5rem,5.5vw,4.5rem)" }}>
 The Event Barn
 </h2>
-<div className={bodyCopy} style={{ fontSize: "1.0625rem" }}>
+<div className={bodyCopy} style={{ fontSize: "1.1875rem" }}>
 <p>The Event Barn is the signature event space at Rivers Lodge, blending rustic charm with modern design. The barn features original raw materials preserved from generations past alongside contemporary amenities. This open-concept space is perfect for ceremonies, receptions, and large gatherings.</p>
 <p>At Rivers Lodge, our pricing is thoughtfully designed to offer flexibility while providing an exceptional, full-property experience. Whether you're hosting a single-day celebration or a full weekend gathering, each option includes access to our most loved spaces and the convenience of on-site lodging.</p>
 <p>The beauty of our property allows you and your guests to relax, connect, and truly settle in.</p>
@@ -319,15 +305,14 @@ Every space is yours.
 <Picture src={GALLERY_CARD_IMG} alt={GALLERY_CARD_ALT} className="absolute inset-0 w-full h-full" imgClassName="absolute inset-0 w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]" width={2400} height={1601} sizes="100vw" loading="lazy" />
 <div className="absolute inset-0 z-10 flex flex-col justify-end">
 <div className="max-w-[1440px] mx-auto px-5 lg:px-14 w-full pb-12 lg:pb-16">
-<div className="relative max-w-lg w-fit">
-<TextScrim alpha={GALLERY_SCRIM} />
+<div className="relative max-w-lg w-fit" style={{ textShadow: TEXT_SHADOW }}>
 <div className="relative">
 <Rule />
-<p className="eyebrow text-[#F4EEE4] mb-4">Wedding &amp; Event Gallery</p>
+<p className="eyebrow font-medium text-white mb-4">Wedding &amp; Event Gallery</p>
 <h2 className="font-serif font-light text-white leading-tight mb-8" style={{ fontSize: "clamp(1.875rem,3.5vw,3rem)" }}>
 THE LODGE IN IMAGES.
 </h2>
-<span className="btn-outline group-hover:bg-[#576276] transition-colors">View Wedding &amp; Event Gallery</span>
+<span className="btn-outline bg-[#2B2823]/55 backdrop-blur-sm group-hover:bg-[#576276] transition-colors" style={{ textShadow: "none" }}>View Wedding &amp; Event Gallery</span>
 </div>
 </div>
 </div>
