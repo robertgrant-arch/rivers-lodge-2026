@@ -224,6 +224,17 @@ A PLACE TO CELEBRATE. A PLACE TO STAY.
 <p>Our property features two primary event venues, The Event Barn and The Clubhouse, designed for weddings both large and intimate. On-site and nearby lodging includes The Lodge, The Farmhouse, The Annex, and Riverhouse Suites, offering a unique experience of hosting and staying in one place. In addition to on-site accommodations, the Ohana House offers an off-site lodging option located 20 minutes south of the main campus, appreciated for its comfort and privacy.</p>
 </div>
 </PropertyPanel>
+{/* Pull Quote — its own section */}
+<SectionDivider label="One Couple · One Weekend" />
+<section className={`${SECTION_Y} ${BG_SAND}`}>
+<div className="max-w-[1440px] mx-auto px-5 lg:px-14">
+<div className="max-w-3xl">
+<blockquote className="pull-quote" style={{ borderLeftColor: ACCENT, color: "var(--rl-night)" }}>
+"Every wedding at Rivers Lodge is exclusive. One couple, one weekend, one Lodge — entirely theirs."
+</blockquote>
+</div>
+</div>
+</section>
 {/* Property — The Event Barn */}
 <SectionDivider label="The Event Barn" />
 <PropertyPanel src={PROPERTY_BG_2} alt="The Event Barn at Rivers Lodge, a dark timber barn framed by autumn oaks at golden hour" objectPosition="center 45%">
@@ -236,17 +247,6 @@ The Event Barn
 <p>The beauty of our property allows you and your guests to relax, connect, and truly settle in.</p>
 </div>
 </PropertyPanel>
-{/* Pull Quote — its own section */}
-<SectionDivider label="One Couple · One Weekend" />
-<section className={`${SECTION_Y} ${BG_SAND}`}>
-<div className="max-w-[1440px] mx-auto px-5 lg:px-14">
-<div className="max-w-3xl">
-<blockquote className="pull-quote" style={{ borderLeftColor: ACCENT, color: "var(--rl-night)" }}>
-"Every wedding at Rivers Lodge is exclusive. One couple, one weekend, one Lodge — entirely theirs."
-</blockquote>
-</div>
-</div>
-</section>
 {/* Intro — The Experience */}
 <SectionDivider label="The Experience" />
 <section className={`${SECTION_Y} ${BG_SAND_LIGHT}`}>
