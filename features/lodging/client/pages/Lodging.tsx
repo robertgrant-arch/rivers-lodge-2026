@@ -2,9 +2,11 @@ import { Link } from "wouter";
 import PublicLayout from "../../../_shared/components/PublicLayout";
 import { trpc } from '@shared/lib/trpc';
 import SEOHead from '@shared/components/SEOHead';
+import { useHashScroll } from '@shared/hooks/useHashScroll';
 import { STAY_VENUES, GATHER_VENUES, type LodgingVenue } from './lodgingData';
 
 export default function Lodging() {
+  useHashScroll(); // supports /lodging#lodging links from /weddings
   const { data: cmsUnits } = trpc.cms.getLodgingUnits.useQuery();
 
   // CMS text merges by slug; images and gallery always from static lodgingData.

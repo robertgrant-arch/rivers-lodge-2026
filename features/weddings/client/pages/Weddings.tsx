@@ -3,7 +3,6 @@ import { Link, useLocation } from "wouter";
 import { Turnstile } from "@marsidev/react-turnstile";
 import type { TurnstileInstance } from "@marsidev/react-turnstile";
 import PublicLayout from "@shared/components/PublicLayout";
-import WeddingGallery from "../components/WeddingGallery";
 import Picture from "@shared/components/Picture";
 import { trpc } from '@shared/lib/trpc';
 import SEOHead, { structuredData } from '@shared/components/SEOHead';
@@ -35,19 +34,18 @@ obs.observe(el); return () => obs.disconnect();
 return ref;
 }
 
-const ALL_VENUES = [
-  // HIDDEN: River Lawn (may be restored later)
-  // { name: "River Lawn", img: "/img/riverlawn.jpg", desc: "An open lawn between the Lodge and the Marais des Cygnes — the Lodge's most dramatic outdoor ceremony site. Seats up to 200." },
-  { name: "Rivers Barn", img: "/img/barnwedding.jpg", desc: "6,000 sq ft of open timber-frame space. Accommodates up to 300 guests for ceremonies and receptions. Full catering kitchen." },
-  // HIDDEN: Timber Edge (may be restored later)
-  // { name: "Timber Edge", img: "/img/timberedge.jpg", desc: "A ceremony space framed by old-growth timber on the river corridor. Intimate, shaded, and unlike anything else in the region." },
-  { name: "The Clubhouse", img: "/img/clubhousewedding.jpg", desc: "A refined indoor gathering space for wedding weekend hosting, cocktail hours, private dinners, and smaller celebrations." },
-  // HIDDEN: The Pavilion (may be restored later)
-  // { name: "The Pavilion", img: "", desc: "An open-air setting that adds flexibility for ceremonies, cocktail hours, dinners, or relaxed outdoor receptions." },
+// ─── Swappable imagery ──────────────────────────────────────────────────────
+// Card images for "Ceremony, Reception & Lodging". Swap `img` to change a card's photo.
+// Labels stay generic on purpose; property names live on the pages these link to.
+const SPACE_CARDS = [
+  { label: "Ceremony Spaces",  href: "/venues#ceremony",  img: "/img/Wedding%205.jpg",          alt: "Couple exchanging vows on an outdoor deck beneath string lights" },
+  { label: "Reception Spaces", href: "/venues#reception", img: "/img/clubhousewedding.jpg",     alt: "Long candlelit reception tables set for dinner" },
+  { label: "Lodging",          href: "/lodging#lodging",  img: "/img/lodge-1-hero.jpg",         alt: "The Lodge at Rivers Lodge on an autumn afternoon" },
 ];
-
-// Filter to show only available venues
-const venues = ALL_VENUES.filter(v => !v.name.includes("River Lawn") && !v.name.includes("Timber Edge") && !v.name.includes("Pavilion"));
+// Full-width gallery card image. Swap to change the photo.
+const GALLERY_CARD_IMG = "/img/wedding-gallery/wedding-gallery-12.jpg";
+const GALLERY_CARD_ALT = "Outdoor ceremony under a wooden arch dressed in white flowers, with timber-covered hills beyond";
+const GALLERY_HREF = "/gallery?category=weddings";
 
 const ACCENT = "#9B4D19";
 
@@ -125,26 +123,56 @@ function Rule() {
 return <div aria-hidden="true" style={{ height: "1px", width: "2rem", backgroundColor: ACCENT, marginBottom: "1.25rem" }} />;
 }
 
-/** Full-bleed property image with copy overlaid directly on the photo over a see-through Night scrim. */
-function PropertyPanel({ src, alt, align, children }: { src: string; alt: string; align: "left" | "right"; children: React.ReactNode }) {
-// Scrims tuned for WCAG AA against the rendered photos (measured at 1440px and 390px).
-// Desktop: shade concentrated on the text side, fading out so the rest of the photo stays clear.
-// Mobile: text spans the full width, so a more even shade sits behind it.
-const toward = align === "right" ? "to left" : "to right";
+/** Slim labeled divider on a solid Night band — the break between every section on this page. */
+function SectionDivider({ label }: { label: string }) {
 return (
-<section className="relative overflow-hidden py-24 md:py-32 lg:py-40 flex items-center" style={{ minHeight: "90vh" }}>
-<div className="absolute inset-0">
-<Picture src={src} alt={alt} label={alt} className="absolute inset-0 w-full h-full" imgClassName="absolute inset-0 w-full h-full object-cover object-center" sizes="100vw" loading="lazy" />
-<div className="absolute inset-0 pointer-events-none lg:hidden" style={{ background: "linear-gradient(to bottom, rgba(43,40,35,0.62) 0%, rgba(43,40,35,0.74) 15%, rgba(43,40,35,0.74) 85%, rgba(43,40,35,0.62) 100%)" }} />
-<div className="absolute inset-0 pointer-events-none hidden lg:block" style={{ background: `linear-gradient(${toward}, rgba(43,40,35,0.80) 0%, rgba(43,40,35,0.70) 38%, rgba(43,40,35,0.35) 58%, rgba(43,40,35,0) 78%)` }} />
+<div className="bg-[#2B2823] py-6 lg:py-8" role="presentation">
+<div className="max-w-[1440px] mx-auto px-5 lg:px-14 flex items-center justify-center gap-6">
+<div aria-hidden="true" className="flex-1 h-px bg-[#E0D3BD]/25" />
+<p className="text-[11px] uppercase tracking-[0.2em] font-sans text-[#E0D3BD]/80 whitespace-nowrap">{label}</p>
+<div aria-hidden="true" className="flex-1 h-px bg-[#E0D3BD]/25" />
 </div>
-<div className={`relative z-10 max-w-[1440px] mx-auto px-5 lg:px-14 w-full flex ${align === "right" ? "lg:justify-end" : "lg:justify-start"}`}>
+</div>
+);
+}
+
+/**
+ * Full-bleed property image with its text block anchored at the lower left,
+ * over a Night gradient that deepens toward that corner (tuned for WCAG AA
+ * against the rendered photos at 1440px and 390px).
+ */
+function PropertyPanel({ src, alt, objectPosition = "center", children }: { src: string; alt: string; objectPosition?: string; children: React.ReactNode }) {
+return (
+<section className="relative overflow-hidden flex items-end" style={{ minHeight: "90vh" }}>
+<div className="absolute inset-0">
+<Picture src={src} alt={alt} label={alt} className="absolute inset-0 w-full h-full" imgClassName="absolute inset-0 w-full h-full object-cover" imgStyle={{ objectPosition }} sizes="100vw" loading="lazy" />
+<div className="absolute inset-0 pointer-events-none lg:hidden" style={{ background: "linear-gradient(to top, rgba(43,40,35,0.86) 0%, rgba(43,40,35,0.76) 45%, rgba(43,40,35,0.70) 75%, rgba(43,40,35,0.35) 92%, rgba(43,40,35,0.15) 100%)" }} />
+<div className="absolute inset-0 pointer-events-none hidden lg:block" style={{ background: "linear-gradient(to top, rgba(43,40,35,0.86) 0%, rgba(43,40,35,0.70) 40%, rgba(43,40,35,0.32) 66%, rgba(43,40,35,0) 84%), linear-gradient(to right, rgba(43,40,35,0.62) 0%, rgba(43,40,35,0.38) 42%, rgba(43,40,35,0) 68%)" }} />
+</div>
+<div className="relative z-10 max-w-[1440px] mx-auto px-5 lg:px-14 w-full pt-40 pb-16 md:pb-20 lg:pb-24">
 <div className="max-w-2xl text-[#F4EEE4]" style={{ textShadow: "0 1px 14px rgba(43,40,35,0.55), 0 1px 2px rgba(43,40,35,0.5)" }}>
 <Rule />
 {children}
 </div>
 </div>
 </section>
+);
+}
+
+/** Whole-card link: image, gradient and text are sibling layers inside the positioned link. */
+function SpaceCard({ label, href, img, alt }: { label: string; href: string; img: string; alt: string }) {
+return (
+<Link href={href} aria-label={`${label}: view details`} className="group relative block overflow-hidden aspect-[4/3] md:aspect-[4/5] bg-[#2B2823] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#576276]">
+<Picture src={img} alt={alt} className="absolute inset-0 w-full h-full" imgClassName="absolute inset-0 w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04] group-focus-visible:scale-[1.04]" sizes="(max-width: 767px) 100vw, 33vw" loading="lazy" />
+<div aria-hidden="true" className="absolute inset-0 pointer-events-none transition-opacity duration-300 opacity-90 group-hover:opacity-100" style={{ background: "linear-gradient(to top, rgba(43,40,35,0.88) 0%, rgba(43,40,35,0.55) 32%, rgba(43,40,35,0) 62%)" }} />
+<div className="absolute inset-x-0 bottom-0 p-7 lg:p-8 flex items-end justify-between gap-4">
+<div>
+<div aria-hidden="true" style={{ height: "1px", width: "1.5rem", backgroundColor: ACCENT, marginBottom: "0.75rem" }} />
+<h3 className="font-serif text-[#F4EEE4] text-2xl lg:text-3xl leading-tight">{label}</h3>
+</div>
+<span aria-hidden="true" className="text-[#F4EEE4] text-xl transition-transform duration-300 group-hover:translate-x-1">→</span>
+</div>
+</Link>
 );
 }
 
@@ -182,25 +210,34 @@ From intimate ceremonies to grand receptions- every wedding at the Lodge is excl
 </div>
 </div>
 </section>
-{/* Property — panel 1 */}
-<PropertyPanel src={PROPERTY_BG_1} alt="Aerial view of the Rivers Lodge property at sunset — timber, ponds, and prairie around the lodge and event barn" align="left">
-<h2 className="font-sans font-medium not-italic uppercase text-rl-sand leading-snug mb-8" style={{ fontSize: "clamp(1.5rem,2.6vw,2.125rem)", letterSpacing: "0.08em" }}>
-A PLACE TO CELEBRATE. A PLACE TO STAY.
+{/* Property — Rivers Lodge (aerial) */}
+<SectionDivider label="Rivers Lodge" />
+<PropertyPanel src={PROPERTY_BG_1} alt="Aerial view of the Rivers Lodge property at sunset — timber, ponds, and prairie around the lodge and event barn" objectPosition="center 40%">
+<h2 className="font-serif font-light text-[#F4EEE4] leading-[1.02] mb-4" style={{ fontSize: "clamp(2.5rem,5.5vw,4.5rem)" }}>
+Rivers Lodge
 </h2>
-<div className={bodyCopy} style={{ fontSize: "1.125rem" }}>
+<p className="eyebrow not-italic text-[#F4EEE4] mb-8" style={{ fontSize: "0.8125rem", letterSpacing: "0.2em" }}>
+A PLACE TO CELEBRATE. A PLACE TO STAY.
+</p>
+<div className={bodyCopy} style={{ fontSize: "1.0625rem" }}>
 <p>Set on approximately 113 acres of rolling oak and hickory timber surrounded by native prairie, Rivers Lodge offers a collection of thoughtfully designed spaces.</p>
 <p>Our property features two primary event venues, The Event Barn and The Clubhouse, designed for weddings both large and intimate. On-site and nearby lodging includes The Lodge, The Farmhouse, The Annex, and Riverhouse Suites, offering a unique experience of hosting and staying in one place. In addition to on-site accommodations, the Ohana House offers an off-site lodging option located 20 minutes south of the main campus, appreciated for its comfort and privacy.</p>
 </div>
 </PropertyPanel>
-{/* Property — panel 2 */}
-<PropertyPanel src={PROPERTY_BG_2} alt="The Event Barn at Rivers Lodge, a dark timber barn framed by autumn oaks at golden hour" align="right">
-<div className={bodyCopy} style={{ fontSize: "1.125rem" }}>
+{/* Property — The Event Barn */}
+<SectionDivider label="The Event Barn" />
+<PropertyPanel src={PROPERTY_BG_2} alt="The Event Barn at Rivers Lodge, a dark timber barn framed by autumn oaks at golden hour" objectPosition="center 45%">
+<h2 className="font-serif font-light text-[#F4EEE4] leading-[1.02] mb-8" style={{ fontSize: "clamp(2.5rem,5.5vw,4.5rem)" }}>
+The Event Barn
+</h2>
+<div className={bodyCopy} style={{ fontSize: "1.0625rem" }}>
 <p>The Event Barn is the signature event space at Rivers Lodge, blending rustic charm with modern design. The barn features original raw materials preserved from generations past alongside contemporary amenities. This open-concept space is perfect for ceremonies, receptions, and large gatherings.</p>
 <p>At Rivers Lodge, our pricing is thoughtfully designed to offer flexibility while providing an exceptional, full-property experience. Whether you're hosting a single-day celebration or a full weekend gathering, each option includes access to our most loved spaces and the convenience of on-site lodging.</p>
 <p>The beauty of our property allows you and your guests to relax, connect, and truly settle in.</p>
 </div>
 </PropertyPanel>
-{/* Pull Quote */}
+{/* Pull Quote — its own section */}
+<SectionDivider label="One Couple · One Weekend" />
 <section className={`${SECTION_Y} ${BG_SAND}`}>
 <div className="max-w-[1440px] mx-auto px-5 lg:px-14">
 <div className="max-w-3xl">
@@ -211,6 +248,7 @@ A PLACE TO CELEBRATE. A PLACE TO STAY.
 </div>
 </section>
 {/* Intro — The Experience */}
+<SectionDivider label="The Experience" />
 <section className={`${SECTION_Y} ${BG_SAND_LIGHT}`}>
 <div className="max-w-[1440px] mx-auto px-5 lg:px-14 grid grid-cols-1 lg:grid-cols-2 gap-14 lg:gap-20 items-center">
 <div className="max-w-2xl">
@@ -229,57 +267,49 @@ Not a venue. <br /><em className="italic text-rl-grass">A private Lodge.</em>
 </div>
 </div>
 </section>
-{/* Venues */}
+{/* Ceremony, Reception & Lodging — three linked cards */}
+<SectionDivider label="Ceremony, Reception & Lodging" />
 <section ref={venuesRef as React.RefObject<HTMLDivElement>} className={`fade-up ${SECTION_Y} ${BG_SAND}`}>
 <div className="max-w-[1440px] mx-auto px-5 lg:px-14">
 <div className="mb-14">
 <Rule />
-<p className="eyebrow text-[#2B2823]/75 mb-4">Ceremony & Reception Spaces</p>
+<p className="eyebrow text-[#2B2823]/75 mb-4">Ceremony, Reception &amp; Lodging</p>
 <h2 className="font-serif font-light text-[#2B2823] leading-tight" style={{ fontSize: "clamp(1.75rem,3vw,2.5rem)" }}>
 Every space is yours.
 </h2>
 </div>
-<div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
-{venues.map((v) => {
-return v.img ? (
-<div key={v.name} className="relative bg-[#2B2823] aspect-[4/3] overflow-hidden group">
-<div className="absolute inset-0 flex items-center justify-center">
-<span className="eyebrow text-muted-brand">{v.name}</span>
-</div>
-<img src={v.img} alt={v.name} className="absolute inset-0 w-full h-full object-cover block" loading="lazy" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
-<div className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(to bottom, transparent 40%, rgba(43,40,35,0.85) 100%)" }} />
-<div className="absolute bottom-0 left-0 right-0 p-8">
-<div aria-hidden="true" style={{ height: "1px", width: "1.5rem", backgroundColor: ACCENT, marginBottom: "0.75rem" }} />
-<h3 className="font-serif text-white text-2xl mb-2">{v.name}</h3>
-<p className="font-sans text-white/90 text-sm leading-relaxed">{v.desc}</p>
-</div>
-</div>
-) : (
-<div key={v.name} className={`${BG_SAND_LIGHT} p-8 flex flex-col`}>
-<div aria-hidden="true" style={{ height: "1px", width: "1.5rem", backgroundColor: ACCENT, marginBottom: "0.75rem" }} />
-<h3 className="font-serif text-[#2B2823] text-2xl mb-3">{v.name}</h3>
-<p className="font-sans text-[#2B2823]/80 text-sm leading-relaxed flex-1">{v.desc}</p>
-</div>
-);
-})}
-</div>
+<ul className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6">
+{SPACE_CARDS.map((c) => (
+<li key={c.label}><SpaceCard {...c} /></li>
+))}
+</ul>
 </div>
 </section>
-{/* Gallery */}
-<section id="gallery" ref={galleryRef as React.RefObject<HTMLDivElement>} className={`fade-up ${SECTION_Y} ${BG_SAND_LIGHT}`}>
-<div className="max-w-[1440px] mx-auto px-5 lg:px-14">
-<div className="mb-14">
+{/* Wedding & Event Gallery — one full-width card (homepage editorial overlay) */}
+<SectionDivider label="Wedding & Event Gallery" />
+<section ref={galleryRef as React.RefObject<HTMLDivElement>} className="fade-up">
+<Link href={GALLERY_HREF} aria-label="View Wedding & Event Gallery" className="group relative block overflow-hidden min-h-[600px] lg:min-h-[80vh] focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-4 focus-visible:outline-[#E0D3BD]">
+<Picture src={GALLERY_CARD_IMG} alt={GALLERY_CARD_ALT} className="absolute inset-0 w-full h-full" imgClassName="absolute inset-0 w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]" width={2400} height={1601} sizes="100vw" loading="lazy" />
+{/* Homepage editorial overlay, plus a bottom shade so the CTA stays AA on narrow screens */}
+<div aria-hidden="true" className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(to top, rgba(43,40,35,0.55) 0%, rgba(43,40,35,0) 55%), linear-gradient(135deg, rgba(43,40,35,0.85) 0%, rgba(43,40,35,0.7) 40%, rgba(43,40,35,0.5) 100%)" }} />
+<div className="absolute inset-0 z-10 flex flex-col justify-end">
+<div className="max-w-[1440px] mx-auto px-5 lg:px-14 w-full pb-12 lg:pb-16">
+<div className="max-w-lg">
 <Rule />
-<p className="eyebrow text-[#2B2823]/75 mb-4">Gallery</p>
-<h2 className="font-serif font-light text-[#2B2823] leading-tight" style={{ fontSize: "clamp(1.75rem,3vw,2.5rem)" }}>
-Weddings at <em className="italic text-rl-grass">Rivers Lodge.</em>
+<p className="eyebrow text-[#F4EEE4] mb-4">Wedding &amp; Event Gallery</p>
+<h2 className="font-serif font-light text-white leading-tight mb-8" style={{ fontSize: "clamp(1.875rem,3.5vw,3rem)" }}>
+THE LODGE IN IMAGES.
 </h2>
+<span className="btn-outline group-hover:bg-[#576276] transition-colors">View Wedding &amp; Event Gallery</span>
 </div>
-<WeddingGallery />
 </div>
+</div>
+</Link>
 </section>
 {/* Testimonials */}
 {hasTestimonials && (
+<>
+<SectionDivider label="From Our Couples" />
 <section className={`${SECTION_Y} ${BG_SAND}`}>
 <div className="max-w-[1440px] mx-auto px-5 lg:px-14">
 <div className="mb-14">
@@ -299,8 +329,10 @@ Weddings at <em className="italic text-rl-grass">Rivers Lodge.</em>
 </div>
 </div>
 </section>
+</>
 )}
 {/* CTA / Inline Inquiry Form */}
+<SectionDivider label="Begin Your Inquiry" />
 <section id="inquire" ref={ctaRef as React.RefObject<HTMLDivElement>} className={`fade-up ${SECTION_Y} ${hasTestimonials ? BG_SAND_LIGHT : BG_SAND}`}>
 <div className="max-w-[1440px] mx-auto px-5 lg:px-14">
 <div className="mb-10">

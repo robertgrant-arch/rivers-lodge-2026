@@ -39,7 +39,7 @@ const eventTypes = [
 ];
 
 const venues = [
-  { name: "Rivers Barn", capacity: "Up to 300", type: "Dinner & Reception", image: BARN_INT },
+  { name: "Rivers Barn", capacity: "Up to 256", type: "Dinner & Reception", image: BARN_INT },
   { name: "River Lawn", capacity: "Up to 200", type: "Ceremony & Outdoor", image: GROUNDS },
   { name: "Timber Edge", capacity: "Up to 120", type: "Outdoor Ceremony", image: TIMBER_EDGE },
 ];

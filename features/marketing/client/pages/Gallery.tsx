@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useSearch } from "wouter";
 import PublicLayout from "@shared/components/PublicLayout";
 import { trpc } from '@shared/lib/trpc';
 import { WEDDING_GALLERY } from '@features/weddings/public';
@@ -15,6 +16,14 @@ const categories: { key: Category; label: string; track?: "weddings" | "outdoors
   { key: "grounds",  label: "Grounds & Estate",   track: "outdoors" },
   { key: "outdoors", label: "Hunt & Fish",        track: "outdoors" },
 ];
+
+const CATEGORY_KEYS = new Set<Category>(categories.map((c) => c.key));
+
+/** Reads ?category=<key> (e.g. /gallery?category=weddings); missing or unknown → "all". */
+function categoryFromSearch(search: string): Category {
+  const value = new URLSearchParams(search).get("category");
+  return value && CATEGORY_KEYS.has(value as Category) ? (value as Category) : "all";
+}
 
 const CMS_CATEGORY_MAP: Record<string, Category> = {
   weddings: "weddings",
@@ -154,7 +163,8 @@ function Lightbox({
 // ─── Main Gallery ─────────────────────────────────────────────────────────────
 
 export default function Gallery() {
-  const [active, setActive] = useState<Category>("all");
+  const search = useSearch();
+  const [active, setActive] = useState<Category>(() => categoryFromSearch(search));
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [visible, setVisible] = useState(false);
 
@@ -166,9 +176,19 @@ export default function Gallery() {
   }, []);
 
   // Reset visible on filter change for re-animation
+  // Follow in-app navigation to a different ?category= while /gallery is mounted.
+  useEffect(() => {
+    setActive(categoryFromSearch(search));
+  }, [search]);
+
   const handleFilter = (cat: Category) => {
     setVisible(false);
     setActive(cat);
+    // Keep the URL in sync without adding Back-button entries.
+    const url = new URL(window.location.href);
+    if (cat === "all") url.searchParams.delete("category");
+    else url.searchParams.set("category", cat);
+    window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
     setTimeout(() => setVisible(true), 50);
   };
 
