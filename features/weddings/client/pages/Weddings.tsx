@@ -48,11 +48,15 @@ const GALLERY_CARD_ALT = "Outdoor ceremony under a wooden arch dressed in white 
 const GALLERY_HREF = "/gallery?category=weddings";
 
 // ─── Text on photos ──────────────────────────────────────────────────────────
-// Photos stay bright: no shaded patches behind text. Readability comes from the
-// text itself — pure white, slightly larger/heavier type, and a soft shadow on the letters.
-const TEXT_SHADOW = "0 1px 3px rgba(0,0,0,0.45), 0 2px 10px rgba(0,0,0,0.25)";
-// Space cards: only a very faint tint along the bottom edge.
-const CARD_GRADIENT = "linear-gradient(to top, rgba(43,40,35,0.32) 0%, rgba(43,40,35,0) 40%)";
+// Light touch: photos stay bright. Each text block gets a gentle, wide, very soft
+// shade (SoftShade, ~¼–½ the strength of the old scrims) plus a letter shadow.
+const TEXT_SHADOW = "0 1px 3px rgba(0,0,0,0.55), 0 2px 14px rgba(0,0,0,0.35)";
+const SOFT_SHADE = { hero: 0.3, aerial: 0.3, barn: 0.3, gallery: 0.3 };
+// Space cards: a light gradient along the bottom edge only.
+const CARD_GRADIENT = "linear-gradient(to top, rgba(43,40,35,0.55) 0%, rgba(43,40,35,0.28) 22%, rgba(43,40,35,0) 45%)";
+// "The Event Barn" heading sits on near-white sky: deep Night text with a faint light glow.
+const BARN_HEADING_COLOR = "#2B2823";
+const BARN_HEADING_SHADOW = "0 0 2px rgba(255,255,255,0.6), 0 1px 12px rgba(255,255,255,0.45)";
 // The barn photo is a dusk shot: lift exposure a little in CSS (source file untouched).
 // Its sky is already near-white, so a slight contrast compression runs first to keep
 // the sky from clipping while brightness lifts the barn's midtones (~16%).
@@ -134,14 +138,24 @@ function Rule() {
 return <div aria-hidden="true" style={{ height: "1px", width: "2rem", backgroundColor: ACCENT, marginBottom: "1.25rem" }} />;
 }
 
-/** Slim labeled divider on a light Sand band — the break between every section on this page. */
+/**
+ * Gentle, wide shade behind a text block: a faint translucent rectangle much larger
+ * than the text, heavily blurred so it fades out smoothly and never reads as a shape.
+ */
+function SoftShade({ alpha }: { alpha: number }) {
+return (
+<div aria-hidden="true" className="absolute pointer-events-none" style={{ inset: "-5rem -7rem", background: `rgba(43,40,35,${alpha})`, filter: "blur(72px)" }} />
+);
+}
+
+/** Slim labeled divider on a solid Night band — the break between every section on this page. */
 function SectionDivider({ label }: { label: string }) {
 return (
-<div className={`${BG_SAND_LIGHT} border-y border-[#2B2823]/10 py-6 lg:py-8`} role="presentation">
+<div className="bg-[#2B2823] py-6 lg:py-8" role="presentation">
 <div className="max-w-[1440px] mx-auto px-5 lg:px-14 flex items-center justify-center gap-6">
-<div aria-hidden="true" className="flex-1 h-px bg-[#2B2823]/20" />
-<p className="text-[11px] uppercase tracking-[0.2em] font-sans text-[#2B2823]/80 whitespace-nowrap">{label}</p>
-<div aria-hidden="true" className="flex-1 h-px bg-[#2B2823]/20" />
+<div aria-hidden="true" className="flex-1 h-px bg-[#E0D3BD]/25" />
+<p className="text-[11px] uppercase tracking-[0.2em] font-sans text-[#E0D3BD]/80 whitespace-nowrap">{label}</p>
+<div aria-hidden="true" className="flex-1 h-px bg-[#E0D3BD]/25" />
 </div>
 </div>
 );
@@ -149,9 +163,9 @@ return (
 
 /**
  * Full-bleed property image with its text block anchored at the lower left.
- * No shading on the photo; the text carries its own letter shadow.
+ * A gentle SoftShade sits behind the text; most of the photo stays at full brightness.
  */
-function PropertyPanel({ src, alt, objectPosition = "center", imgFilter, children }: { src: string; alt: string; objectPosition?: string; imgFilter?: string; children: React.ReactNode }) {
+function PropertyPanel({ src, alt, objectPosition = "center", imgFilter, shade, children }: { src: string; alt: string; objectPosition?: string; imgFilter?: string; shade?: number; children: React.ReactNode }) {
 return (
 <section className="relative overflow-hidden flex items-end" style={{ minHeight: "90vh" }}>
 <div className="absolute inset-0">
@@ -159,6 +173,7 @@ return (
 </div>
 <div className="relative z-10 max-w-[1440px] mx-auto px-5 lg:px-14 w-full pt-40 pb-10 md:pb-12 lg:pb-14">
 <div className="relative max-w-2xl text-white" style={{ textShadow: TEXT_SHADOW }}>
+{shade ? <SoftShade alpha={shade} /> : null}
 <div className="relative">
 <Rule />
 {children}
@@ -206,6 +221,7 @@ return (
 </div>
 <div className="relative z-10 max-w-[1440px] mx-auto px-5 lg:px-14 w-full">
 <div className="relative w-fit max-w-full" style={{ textShadow: TEXT_SHADOW }}>
+<SoftShade alpha={SOFT_SHADE.hero} />
 <div className="relative">
 <Rule />
 <p className="eyebrow font-medium text-white mb-4">Weddings</p>
@@ -225,7 +241,7 @@ From intimate ceremonies to grand receptions- every wedding at the Lodge is excl
 </section>
 {/* Property — Rivers Lodge (aerial) */}
 <SectionDivider label="Rivers Lodge" />
-<PropertyPanel src={PROPERTY_BG_1} alt="Aerial view of the Rivers Lodge property at sunset — timber, ponds, and prairie around the lodge and event barn" objectPosition="center 40%">
+<PropertyPanel src={PROPERTY_BG_1} alt="Aerial view of the Rivers Lodge property at sunset — timber, ponds, and prairie around the lodge and event barn" objectPosition="center 40%" shade={SOFT_SHADE.aerial}>
 <h2 className="font-serif font-light text-white leading-[1.02] mb-4" style={{ fontSize: "clamp(2.5rem,5.5vw,4.5rem)" }}>
 Rivers Lodge
 </h2>
@@ -251,13 +267,17 @@ A PLACE TO CELEBRATE. A PLACE TO STAY.
 {/* Property — The Event Barn */}
 <SectionDivider label="The Event Barn" />
 <PropertyPanel src={PROPERTY_BG_2} alt="The Event Barn at Rivers Lodge, a dark timber barn framed by autumn oaks at golden hour" objectPosition="center 45%" imgFilter={BARN_FILTER}>
-<h2 className="font-serif font-light text-white leading-[1.02] mb-8" style={{ fontSize: "clamp(2.5rem,5.5vw,4.5rem)" }}>
+<h2 className="font-serif font-light leading-[1.02] mb-8" style={{ fontSize: "clamp(2.5rem,5.5vw,4.5rem)", color: BARN_HEADING_COLOR, textShadow: BARN_HEADING_SHADOW }}>
 The Event Barn
 </h2>
-<div className={bodyCopy} style={{ fontSize: "1.1875rem" }}>
+{/* Shade only behind the white body copy; the dark heading above sits on clear sky */}
+<div className="relative">
+<SoftShade alpha={SOFT_SHADE.barn} />
+<div className={`relative ${bodyCopy}`} style={{ fontSize: "1.1875rem" }}>
 <p>The Event Barn is the signature event space at Rivers Lodge, blending rustic charm with modern design. The barn features original raw materials preserved from generations past alongside contemporary amenities. This open-concept space is perfect for ceremonies, receptions, and large gatherings.</p>
 <p>At Rivers Lodge, our pricing is thoughtfully designed to offer flexibility while providing an exceptional, full-property experience. Whether you're hosting a single-day celebration or a full weekend gathering, each option includes access to our most loved spaces and the convenience of on-site lodging.</p>
 <p>The beauty of our property allows you and your guests to relax, connect, and truly settle in.</p>
+</div>
 </div>
 </PropertyPanel>
 {/* Intro — The Experience */}
@@ -306,6 +326,7 @@ Every space is yours.
 <div className="absolute inset-0 z-10 flex flex-col justify-end">
 <div className="max-w-[1440px] mx-auto px-5 lg:px-14 w-full pb-12 lg:pb-16">
 <div className="relative max-w-lg w-fit" style={{ textShadow: TEXT_SHADOW }}>
+<SoftShade alpha={SOFT_SHADE.gallery} />
 <div className="relative">
 <Rule />
 <p className="eyebrow font-medium text-white mb-4">Wedding &amp; Event Gallery</p>
