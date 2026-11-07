@@ -51,7 +51,9 @@ const GALLERY_HREF = "/gallery?category=weddings";
 // Light touch: photos stay bright. Each text block gets a gentle, wide, very soft
 // shade (SoftShade, ~¼–½ the strength of the old scrims) plus a letter shadow.
 const TEXT_SHADOW = "0 1px 3px rgba(0,0,0,0.55), 0 2px 14px rgba(0,0,0,0.35)";
-const SOFT_SHADE = { hero: 0.3, aerial: 0.3, barn: 0.3, gallery: 0.3 };
+const SOFT_SHADE = { hero: 0.3, aerial: 0.26, barn: 0.3, gallery: 0.3 };
+// "Rivers Lodge" heading sits on the hazy horizon at mobile widths: a slightly stronger letter shadow.
+const AERIAL_HEADING_SHADOW = "0 1px 2px rgba(0,0,0,0.65), 0 0 10px rgba(0,0,0,0.5), 0 2px 18px rgba(0,0,0,0.35)";
 // Space cards: a light gradient along the bottom edge only.
 const CARD_GRADIENT = "linear-gradient(to top, rgba(43,40,35,0.55) 0%, rgba(43,40,35,0.28) 22%, rgba(43,40,35,0) 45%)";
 // "The Event Barn" heading sits on near-white sky: deep Night text with a faint light glow.
@@ -61,6 +63,11 @@ const BARN_HEADING_SHADOW = "0 0 2px rgba(255,255,255,0.6), 0 1px 12px rgba(255,
 // Its sky is already near-white, so a slight contrast compression runs first to keep
 // the sky from clipping while brightness lifts the barn's midtones (~16%).
 const BARN_FILTER = "contrast(0.88) brightness(1.1)";
+// The aerial is a dark sunset shot with an already-bright sky. A gamma lift (SVG filter,
+// defined once in AerialLiftFilter) raises the trees, lawn and buildings ~75% while barely
+// moving the sky's highlights, so the sunset keeps its color instead of clipping to white.
+// A little saturation restores the warmth the lift mutes. Source file untouched.
+const AERIAL_FILTER = "url(#rl-aerial-lift) saturate(1.35)";
 
 const ACCENT = "#9B4D19";
 
@@ -145,6 +152,21 @@ return <div aria-hidden="true" style={{ height: "1px", width: "2rem", background
 function SoftShade({ alpha }: { alpha: number }) {
 return (
 <div aria-hidden="true" className="absolute pointer-events-none" style={{ inset: "-5rem -7rem", background: `rgba(43,40,35,${alpha})`, filter: "blur(72px)" }} />
+);
+}
+
+/** SVG gamma curve used by AERIAL_FILTER (exponent < 1 lifts shadows/midtones, keeps highlights). */
+function AerialLiftFilter() {
+return (
+<svg aria-hidden="true" width="0" height="0" style={{ position: "absolute" }} focusable="false">
+<filter id="rl-aerial-lift" colorInterpolationFilters="sRGB">
+<feComponentTransfer>
+<feFuncR type="gamma" exponent="0.55" />
+<feFuncG type="gamma" exponent="0.55" />
+<feFuncB type="gamma" exponent="0.55" />
+</feComponentTransfer>
+</filter>
+</svg>
 );
 }
 
@@ -241,8 +263,9 @@ From intimate ceremonies to grand receptions- every wedding at the Lodge is excl
 </section>
 {/* Property — Rivers Lodge (aerial) */}
 <SectionDivider label="Rivers Lodge" />
-<PropertyPanel src={PROPERTY_BG_1} alt="Aerial view of the Rivers Lodge property at sunset — timber, ponds, and prairie around the lodge and event barn" objectPosition="center 40%" shade={SOFT_SHADE.aerial}>
-<h2 className="font-serif font-light text-white leading-[1.02] mb-4" style={{ fontSize: "clamp(2.5rem,5.5vw,4.5rem)" }}>
+<AerialLiftFilter />
+<PropertyPanel src={PROPERTY_BG_1} alt="Aerial view of the Rivers Lodge property at sunset — timber, ponds, and prairie around the lodge and event barn" objectPosition="center 40%" imgFilter={AERIAL_FILTER} shade={SOFT_SHADE.aerial}>
+<h2 className="font-serif font-light text-white leading-[1.02] mb-4" style={{ fontSize: "clamp(2.5rem,5.5vw,4.5rem)", textShadow: AERIAL_HEADING_SHADOW }}>
 Rivers Lodge
 </h2>
 <p className="eyebrow not-italic font-medium text-white mb-8" style={{ fontSize: "0.875rem", letterSpacing: "0.2em" }}>
