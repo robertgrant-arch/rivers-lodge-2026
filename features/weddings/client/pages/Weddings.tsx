@@ -47,6 +47,16 @@ const GALLERY_CARD_IMG = "/img/wedding-gallery/wedding-gallery-12.jpg";
 const GALLERY_CARD_ALT = "Outdoor ceremony under a wooden arch dressed in white flowers, with timber-covered hills beyond";
 const GALLERY_HREF = "/gallery?category=weddings";
 
+// ─── Shade & exposure (tuned so all text over photos passes WCAG AA 4.5:1) ──
+const HERO_SCRIM = 0.7;
+const PANEL_SCRIM = { aerial: 0.72, barn: 0.8 };
+const GALLERY_SCRIM = 0.75;
+const CARD_GRADIENT = "linear-gradient(to top, rgba(43,40,35,0.9) 0%, rgba(43,40,35,0.72) 20%, rgba(43,40,35,0.3) 34%, rgba(43,40,35,0) 46%)";
+// The barn photo is a dusk shot: lift exposure a little in CSS (source file untouched).
+// Its sky is already near-white, so a slight contrast compression runs first to keep
+// the sky from clipping while brightness lifts the barn's midtones (~16%).
+const BARN_FILTER = "contrast(0.88) brightness(1.1)";
+
 const ACCENT = "#9B4D19";
 
 function WeddingInquiryForm() {
@@ -123,36 +133,49 @@ function Rule() {
 return <div aria-hidden="true" style={{ height: "1px", width: "2rem", backgroundColor: ACCENT, marginBottom: "1.25rem" }} />;
 }
 
-/** Slim labeled divider on a solid Night band — the break between every section on this page. */
+/**
+ * Soft Night shade that sits only behind a text block on a photo: a translucent
+ * rectangle a little larger than the text, blurred so its edges fade out. The
+ * rest of the photo stays at full brightness. `alpha` is tuned per section
+ * against WCAG AA (measured on the rendered photos at 1440px and 390px).
+ */
+function TextScrim({ alpha, spread = "3.5rem", blur = 44 }: { alpha: number; spread?: string; blur?: number }) {
+return (
+<div aria-hidden="true" className="absolute pointer-events-none" style={{ inset: `-${spread}`, background: `rgba(43,40,35,${alpha})`, filter: `blur(${blur}px)` }} />
+);
+}
+
+/** Slim labeled divider on a light Sand band — the break between every section on this page. */
 function SectionDivider({ label }: { label: string }) {
 return (
-<div className="bg-[#2B2823] py-6 lg:py-8" role="presentation">
+<div className={`${BG_SAND_LIGHT} border-y border-[#2B2823]/10 py-6 lg:py-8`} role="presentation">
 <div className="max-w-[1440px] mx-auto px-5 lg:px-14 flex items-center justify-center gap-6">
-<div aria-hidden="true" className="flex-1 h-px bg-[#E0D3BD]/25" />
-<p className="text-[11px] uppercase tracking-[0.2em] font-sans text-[#E0D3BD]/80 whitespace-nowrap">{label}</p>
-<div aria-hidden="true" className="flex-1 h-px bg-[#E0D3BD]/25" />
+<div aria-hidden="true" className="flex-1 h-px bg-[#2B2823]/20" />
+<p className="text-[11px] uppercase tracking-[0.2em] font-sans text-[#2B2823]/80 whitespace-nowrap">{label}</p>
+<div aria-hidden="true" className="flex-1 h-px bg-[#2B2823]/20" />
 </div>
 </div>
 );
 }
 
 /**
- * Full-bleed property image with its text block anchored at the lower left,
- * over a Night gradient that deepens toward that corner (tuned for WCAG AA
- * against the rendered photos at 1440px and 390px).
+ * Full-bleed property image with its text block anchored at the lower left.
+ * Only the area behind the text is shaded (TextScrim); the rest of the photo
+ * shows at full brightness.
  */
-function PropertyPanel({ src, alt, objectPosition = "center", children }: { src: string; alt: string; objectPosition?: string; children: React.ReactNode }) {
+function PropertyPanel({ src, alt, objectPosition = "center", imgFilter, scrim, children }: { src: string; alt: string; objectPosition?: string; imgFilter?: string; scrim: number; children: React.ReactNode }) {
 return (
 <section className="relative overflow-hidden flex items-end" style={{ minHeight: "90vh" }}>
 <div className="absolute inset-0">
-<Picture src={src} alt={alt} label={alt} className="absolute inset-0 w-full h-full" imgClassName="absolute inset-0 w-full h-full object-cover" imgStyle={{ objectPosition }} sizes="100vw" loading="lazy" />
-<div className="absolute inset-0 pointer-events-none lg:hidden" style={{ background: "linear-gradient(to top, rgba(43,40,35,0.86) 0%, rgba(43,40,35,0.76) 45%, rgba(43,40,35,0.70) 75%, rgba(43,40,35,0.35) 92%, rgba(43,40,35,0.15) 100%)" }} />
-<div className="absolute inset-0 pointer-events-none hidden lg:block" style={{ background: "linear-gradient(to top, rgba(43,40,35,0.86) 0%, rgba(43,40,35,0.70) 40%, rgba(43,40,35,0.32) 66%, rgba(43,40,35,0) 84%), linear-gradient(to right, rgba(43,40,35,0.62) 0%, rgba(43,40,35,0.38) 42%, rgba(43,40,35,0) 68%)" }} />
+<Picture src={src} alt={alt} label={alt} className="absolute inset-0 w-full h-full" imgClassName="absolute inset-0 w-full h-full object-cover" imgStyle={{ objectPosition, filter: imgFilter }} sizes="100vw" loading="lazy" />
 </div>
 <div className="relative z-10 max-w-[1440px] mx-auto px-5 lg:px-14 w-full pt-40 pb-16 md:pb-20 lg:pb-24">
-<div className="max-w-2xl text-[#F4EEE4]" style={{ textShadow: "0 1px 14px rgba(43,40,35,0.55), 0 1px 2px rgba(43,40,35,0.5)" }}>
+<div className="relative max-w-2xl text-[#F4EEE4]" style={{ textShadow: "0 1px 14px rgba(43,40,35,0.55), 0 1px 2px rgba(43,40,35,0.5)" }}>
+<TextScrim alpha={scrim} />
+<div className="relative">
 <Rule />
 {children}
+</div>
 </div>
 </div>
 </section>
@@ -164,7 +187,7 @@ function SpaceCard({ label, href, img, alt }: { label: string; href: string; img
 return (
 <Link href={href} aria-label={`${label}: view details`} className="group relative block overflow-hidden aspect-[4/3] md:aspect-[4/5] bg-[#2B2823] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#576276]">
 <Picture src={img} alt={alt} className="absolute inset-0 w-full h-full" imgClassName="absolute inset-0 w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04] group-focus-visible:scale-[1.04]" sizes="(max-width: 767px) 100vw, 33vw" loading="lazy" />
-<div aria-hidden="true" className="absolute inset-0 pointer-events-none transition-opacity duration-300 opacity-90 group-hover:opacity-100" style={{ background: "linear-gradient(to top, rgba(43,40,35,0.88) 0%, rgba(43,40,35,0.55) 32%, rgba(43,40,35,0) 62%)" }} />
+<div aria-hidden="true" className="absolute inset-0 pointer-events-none transition-opacity duration-300 opacity-90 group-hover:opacity-100" style={{ background: CARD_GRADIENT }} />
 <div className="absolute inset-x-0 bottom-0 p-7 lg:p-8 flex items-end justify-between gap-4">
 <div>
 <div aria-hidden="true" style={{ height: "1px", width: "1.5rem", backgroundColor: ACCENT, marginBottom: "0.75rem" }} />
@@ -191,11 +214,13 @@ return (
 <section className="relative hero-full flex items-end pb-24 overflow-hidden">
 <div className="absolute inset-0">
 <Picture src={HERO} alt="Wedding ceremony at Rivers Lodge" label="Wedding Hero Image" className="absolute inset-0 w-full h-full" imgClassName="absolute inset-0 w-full h-full object-cover object-center" fetchPriority="high" loading="eager" decoding="async" width={1920} height={1080} sizes="100vw" />
-{/* Lighter Night-tinted scrim: the upper photo stays clear; shade is concentrated behind the text block (tuned for WCAG AA) */}
-<div className="absolute inset-0 pointer-events-none lg:hidden" style={{ background: "linear-gradient(to top, rgba(43,40,35,0.72) 0%, rgba(43,40,35,0.60) 45%, rgba(43,40,35,0.60) 66%, rgba(43,40,35,0.30) 76%, rgba(43,40,35,0) 88%)" }} />
-<div className="absolute inset-0 pointer-events-none hidden lg:block" style={{ background: "linear-gradient(to top, rgba(43,40,35,0.70) 0%, rgba(43,40,35,0.50) 28%, rgba(43,40,35,0.15) 50%, rgba(43,40,35,0) 62%), linear-gradient(to right, rgba(43,40,35,0.50) 0%, rgba(43,40,35,0.30) 35%, rgba(43,40,35,0) 60%)" }} />
+{/* Very light overall tint; the real shade sits only behind the text block (TextScrim below) */}
+<div aria-hidden="true" className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(to top, rgba(43,40,35,0.22) 0%, rgba(43,40,35,0) 40%)" }} />
 </div>
-<div className="relative z-10 max-w-[1440px] mx-auto px-5 lg:px-14 w-full" style={{ textShadow: "0 1px 18px rgba(43,40,35,0.55), 0 1px 3px rgba(43,40,35,0.45)" }}>
+<div className="relative z-10 max-w-[1440px] mx-auto px-5 lg:px-14 w-full">
+<div className="relative w-fit max-w-full" style={{ textShadow: "0 1px 18px rgba(43,40,35,0.55), 0 1px 3px rgba(43,40,35,0.45)" }}>
+<TextScrim alpha={HERO_SCRIM} />
+<div className="relative">
 <Rule />
 <p className="eyebrow text-white mb-4">Weddings</p>
 <h1 className="font-serif font-light text-white leading-[0.92] mb-6" style={{ fontSize: "clamp(2.75rem,6.5vw,5.5rem)" }}>
@@ -209,10 +234,12 @@ From intimate ceremonies to grand receptions- every wedding at the Lodge is excl
 <Link href="/lodging" className="btn-ghost bg-[#2B2823]/35 backdrop-blur-sm">View Spaces & Lodging</Link>
 </div>
 </div>
+</div>
+</div>
 </section>
 {/* Property — Rivers Lodge (aerial) */}
 <SectionDivider label="Rivers Lodge" />
-<PropertyPanel src={PROPERTY_BG_1} alt="Aerial view of the Rivers Lodge property at sunset — timber, ponds, and prairie around the lodge and event barn" objectPosition="center 40%">
+<PropertyPanel src={PROPERTY_BG_1} alt="Aerial view of the Rivers Lodge property at sunset — timber, ponds, and prairie around the lodge and event barn" objectPosition="center 40%" scrim={PANEL_SCRIM.aerial}>
 <h2 className="font-serif font-light text-[#F4EEE4] leading-[1.02] mb-4" style={{ fontSize: "clamp(2.5rem,5.5vw,4.5rem)" }}>
 Rivers Lodge
 </h2>
@@ -237,7 +264,7 @@ A PLACE TO CELEBRATE. A PLACE TO STAY.
 </section>
 {/* Property — The Event Barn */}
 <SectionDivider label="The Event Barn" />
-<PropertyPanel src={PROPERTY_BG_2} alt="The Event Barn at Rivers Lodge, a dark timber barn framed by autumn oaks at golden hour" objectPosition="center 45%">
+<PropertyPanel src={PROPERTY_BG_2} alt="The Event Barn at Rivers Lodge, a dark timber barn framed by autumn oaks at golden hour" objectPosition="center 45%" imgFilter={BARN_FILTER} scrim={PANEL_SCRIM.barn}>
 <h2 className="font-serif font-light text-[#F4EEE4] leading-[1.02] mb-8" style={{ fontSize: "clamp(2.5rem,5.5vw,4.5rem)" }}>
 The Event Barn
 </h2>
@@ -290,17 +317,18 @@ Every space is yours.
 <section ref={galleryRef as React.RefObject<HTMLDivElement>} className="fade-up">
 <Link href={GALLERY_HREF} aria-label="View Wedding & Event Gallery" className="group relative block overflow-hidden min-h-[600px] lg:min-h-[80vh] focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-4 focus-visible:outline-[#E0D3BD]">
 <Picture src={GALLERY_CARD_IMG} alt={GALLERY_CARD_ALT} className="absolute inset-0 w-full h-full" imgClassName="absolute inset-0 w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]" width={2400} height={1601} sizes="100vw" loading="lazy" />
-{/* Homepage editorial overlay, plus a bottom shade so the CTA stays AA on narrow screens */}
-<div aria-hidden="true" className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(to top, rgba(43,40,35,0.55) 0%, rgba(43,40,35,0) 55%), linear-gradient(135deg, rgba(43,40,35,0.85) 0%, rgba(43,40,35,0.7) 40%, rgba(43,40,35,0.5) 100%)" }} />
 <div className="absolute inset-0 z-10 flex flex-col justify-end">
 <div className="max-w-[1440px] mx-auto px-5 lg:px-14 w-full pb-12 lg:pb-16">
-<div className="max-w-lg">
+<div className="relative max-w-lg w-fit">
+<TextScrim alpha={GALLERY_SCRIM} />
+<div className="relative">
 <Rule />
 <p className="eyebrow text-[#F4EEE4] mb-4">Wedding &amp; Event Gallery</p>
 <h2 className="font-serif font-light text-white leading-tight mb-8" style={{ fontSize: "clamp(1.875rem,3.5vw,3rem)" }}>
 THE LODGE IN IMAGES.
 </h2>
 <span className="btn-outline group-hover:bg-[#576276] transition-colors">View Wedding &amp; Event Gallery</span>
+</div>
 </div>
 </div>
 </div>
