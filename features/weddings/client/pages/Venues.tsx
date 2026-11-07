@@ -2,12 +2,18 @@ import { Link } from "wouter";
 import PublicLayout from "@shared/components/PublicLayout";
 import { trpc } from '@shared/lib/trpc';
 import SEOHead from "@shared/components/SEOHead";
+import { useHashScroll } from "@shared/hooks/useHashScroll";
 
-const FALLBACK_VENUES = [
+type SpaceUse = "ceremony" | "reception";
+
+// `uses` drives the Ceremony Spaces / Reception Spaces sections (linked from the
+// /weddings cards as /venues#ceremony and /venues#reception). A space can be in both.
+const FALLBACK_VENUES: VenueProp[] = [
   {
     slug: "rivers-barn",
     name: "Rivers Barn",
     type: "Indoor / Outdoor",
+    uses: ["ceremony", "reception"],
     capacity: { ceremony: null, reception: 256 },
     desc: "Designed by a prominent Kansas City architect, Rivers Barn is modern farmhouse — a blank slate that lets a bride and groom or corporate group give it whatever feel they desire. The barn features two large patios, two fireplaces, air-conditioning, an indoor/outdoor bar, and separate luxury bathrooms. The space accommodates up to 256 guests.",
     details: ["Up to 256 guests", "Two large patios", "Two fireplaces", "Air-conditioning", "Indoor/outdoor bar", "Separate luxury bathrooms"],
@@ -16,6 +22,7 @@ const FALLBACK_VENUES = [
     slug: "clubhouse",
     name: "Clubhouse",
     type: "Indoor / Outdoor",
+    uses: ["ceremony", "reception"],
     capacity: { ceremony: null, reception: null },
     desc: "The Clubhouse is an additional space on the Lodge often used as a rehearsal dinner space, cocktail hour space, or intimate wedding ceremony location. Its warm, character-filled interior makes it the natural gathering point before and after the main event.",
     details: ["Rehearsal dinner space", "Cocktail hour space", "Intimate ceremony option", "Warm interior character", "Adjacent to Rivers Barn", "Full bar"],
@@ -24,6 +31,7 @@ const FALLBACK_VENUES = [
     slug: "the-green-drake",
     name: "The Green Drake",
     type: "Indoor / Outdoor",
+    uses: [],
     capacity: { ceremony: null, reception: null },
     desc: "Description coming soon.",
     details: [],
@@ -37,9 +45,16 @@ type VenueProp = {
   capacity: { ceremony: number | null; reception: number | null };
   desc: string;
   details: string[];
+  uses: SpaceUse[];
 };
 
+const SPACE_GROUPS: { id: SpaceUse; label: string }[] = [
+  { id: "ceremony", label: "Ceremony Spaces" },
+  { id: "reception", label: "Reception Spaces" },
+];
+
 export default function Venues() {
+  useHashScroll();
   const { data: cmsSpaces } = trpc.cms.getEventSpaces.useQuery();
 
   // CMS text content is merged when slugs match. Images are placeholder-only until
@@ -78,12 +93,55 @@ export default function Venues() {
         </div>
       </section>
 
+      {/* Ceremony Spaces / Reception Spaces (anchors for the /weddings cards) */}
+      {SPACE_GROUPS.map((group, gi) => {
+        const spaces = venues.filter((v) => v.uses.includes(group.id));
+        if (spaces.length === 0) return null;
+        return (
+          <section
+            key={group.id}
+            id={group.id}
+            aria-labelledby={`${group.id}-heading`}
+            className={`py-14 md:py-16 scroll-mt-24 border-t border-white/10 ${gi % 2 === 0 ? "bg-[#363330]" : "bg-background"}`}
+          >
+            <div className="max-w-[1440px] mx-auto px-6 lg:px-10">
+              <div className="gold-rule" />
+              <h2 id={`${group.id}-heading`} className="font-serif text-3xl md:text-4xl text-foreground leading-tight mb-8">
+                {group.label}
+              </h2>
+              <ul className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-4xl">
+                {spaces.map((v) => {
+                  const cap = group.id === "ceremony" ? v.capacity.ceremony : v.capacity.reception;
+                  return (
+                    <li key={v.slug}>
+                      <a
+                        href={`#${v.slug}`}
+                        className="group flex items-center justify-between gap-4 border border-white/15 hover:border-white/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#E0D3BD] px-6 py-5 transition-colors"
+                      >
+                        <span>
+                          <span className="block font-serif text-2xl text-foreground">{v.name}</span>
+                          <span className="block mt-1 text-[10px] tracking-[0.20em] uppercase font-sans text-white/60">
+                            {v.type}{cap ? ` · Up to ${cap} guests` : ""}
+                          </span>
+                        </span>
+                        <span aria-hidden="true" className="text-white/50 group-hover:text-white transition-colors">→</span>
+                        <span className="sr-only">View {v.name} details</span>
+                      </a>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          </section>
+        );
+      })}
+
       {/* Venue List */}
       {venues.map((venue, i) => (
         <section
           key={venue.slug}
           id={venue.slug}
-          className={`section ${i % 2 === 0 ? "bg-background" : "bg-[#363330]"}`}
+          className={`section scroll-mt-24 ${i % 2 === 0 ? "bg-background" : "bg-[#363330]"}`}
         >
           <div className="max-w-[1440px] mx-auto px-6 lg:px-10">
 
