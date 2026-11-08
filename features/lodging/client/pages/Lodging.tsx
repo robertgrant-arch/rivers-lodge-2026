@@ -76,7 +76,7 @@ export default function Lodging() {
               <p className="eyebrow text-[#908B82] mb-3">Event Spaces</p>
               <h2 className="font-serif font-light text-[#E0D3BD] text-3xl mb-4">Gather</h2>
               <p className="font-sans text-[#BABAAE] text-sm leading-relaxed mb-6">
-                The Barn, The Green Drake, and The Clubhouse — distinct spaces for ceremonies, receptions, and private gatherings.
+                The Event Barn, The Green Drake, and The Clubhouse — distinct spaces for ceremonies, receptions, and private gatherings.
               </p>
               <span className="text-[11px] tracking-[0.12em] uppercase font-sans font-medium text-[#9B4D19] group-hover:opacity-80 transition-opacity">
                 Browse Venues →

@@ -125,7 +125,7 @@ export const structuredData = {
     "@type": "EventVenue",
     name: `${SITE_NAME} — Weddings & Events`,
     description:
-      "A private Lodge wedding venue in La Cygne, Kansas offering ceremony and reception spaces for up to 250 guests, including the Rivers Barn, Timber Edge Clubhouse, and riverside ceremony lawn.",
+      "A private Lodge wedding venue in La Cygne, Kansas offering ceremony and reception spaces for up to 250 guests, including The Event Barn, Timber Edge Clubhouse, and riverside ceremony lawn.",
     url: `${BASE_URL}/weddings`,
     address: {
       "@type": "PostalAddress",
