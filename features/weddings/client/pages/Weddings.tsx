@@ -6,6 +6,11 @@ import PublicLayout from "@shared/components/PublicLayout";
 import Picture from "@shared/components/Picture";
 import { trpc } from '@shared/lib/trpc';
 import SEOHead, { structuredData } from '@shared/components/SEOHead';
+import ReviewsCarousel from "../components/ReviewsCarousel";
+import WeddingFaqAccordion from "../components/WeddingFaqAccordion";
+import FindUsBadges from "../components/FindUsBadges";
+import { WEDDING_REVIEWS } from "../weddingReviews";
+import { WEDDING_FAQS, faqPageJsonLd } from "../weddingFaqs";
 
 const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined;
 // redeploy: estate hero overlay 2026-07-03
@@ -224,15 +229,16 @@ return (
 }
 
 export default function Weddings() {
-const { data: testimonials } = trpc.cms.getTestimonials.useQuery({ division: "weddings", featuredOnly: true });
-const hasTestimonials = !!testimonials && testimonials.length > 0;
 const venuesRef = useFadeUp();
 const galleryRef = useFadeUp(0.05);
 const ctaRef = useFadeUp();
 const bodyCopy = "space-y-5 font-serif text-white leading-relaxed";
+// JSON-LD: the existing wedding-venue node plus a FAQPage built from the shared FAQ data.
+const { "@context": _ctx, ...venueNode } = structuredData.weddingVenue();
+const weddingsJsonLd = { "@context": "https://schema.org", "@graph": [venueNode, faqPageJsonLd(WEDDING_FAQS)] };
 return (
 <PublicLayout>
-<SEOHead title="Weddings" description="Intimate, cinematic weddings on a private Kansas Lodge. The Event Barn, the Clubhouse, and your reserved lodging — all exclusively yours." url="/weddings" structuredData={structuredData.weddingVenue()} />
+<SEOHead title="Weddings" description="Intimate, cinematic weddings on a private Kansas Lodge. The Event Barn, the Clubhouse, and your reserved lodging — all exclusively yours." url="/weddings" structuredData={weddingsJsonLd} />
 <div style={{ "--track-accent": ACCENT, "--btn-primary-text": "var(--rl-sand-light)" } as React.CSSProperties}>
 {/* Hero */}
 <section className="relative hero-full flex items-end pb-12 lg:pb-14 overflow-hidden">
@@ -276,17 +282,6 @@ A PLACE TO CELEBRATE. A PLACE TO STAY.
 <p>Our property features two primary event venues, The Event Barn and The Clubhouse, designed for weddings both large and intimate. On-site and nearby lodging includes The Lodge, The Farmhouse, The Annex, and Riverhouse Suites, offering a unique experience of hosting and staying in one place. In addition to on-site accommodations, the Ohana House offers an off-site lodging option located 20 minutes south of the main campus, appreciated for its comfort and privacy.</p>
 </div>
 </PropertyPanel>
-{/* Pull Quote — its own section */}
-<SectionDivider label="One Couple · One Weekend" />
-<section className={`${SECTION_Y} ${BG_SAND}`}>
-<div className="max-w-[1440px] mx-auto px-5 lg:px-14">
-<div className="max-w-3xl">
-<blockquote className="pull-quote" style={{ borderLeftColor: ACCENT, color: "var(--rl-night)" }}>
-"Every wedding at Rivers Lodge is exclusive. One couple, one weekend, one Lodge — entirely theirs."
-</blockquote>
-</div>
-</div>
-</section>
 {/* Property — The Event Barn */}
 <SectionDivider label="The Event Barn" />
 <PropertyPanel src={PROPERTY_BG_2} alt="The Event Barn at Rivers Lodge, a dark timber barn framed by autumn oaks at golden hour" objectPosition="center 45%" imgFilter={BARN_FILTER}>
@@ -363,34 +358,37 @@ THE LODGE IN IMAGES.
 </div>
 </Link>
 </section>
-{/* Testimonials */}
-{hasTestimonials && (
-<>
-<SectionDivider label="From Our Couples" />
-<section className={`${SECTION_Y} ${BG_SAND}`}>
+{/* Reviews — static, from weddingReviews.ts (not the CMS) */}
+<SectionDivider label="Reviews" />
+<section id="reviews" aria-labelledby="reviews-heading" className={`${SECTION_Y} ${BG_SAND_LIGHT}`}>
 <div className="max-w-[1440px] mx-auto px-5 lg:px-14">
-<div className="mb-14">
-<Rule />
-<p className="eyebrow text-[#2B2823]/75">From Our Couples</p>
+<div className="mb-12 text-center">
+<div aria-hidden="true" className="mx-auto" style={{ height: "1px", width: "2rem", backgroundColor: ACCENT, marginBottom: "1.25rem" }} />
+<h2 id="reviews-heading" className="font-serif font-light text-[#2B2823] leading-tight" style={{ fontSize: "clamp(1.875rem,3.5vw,3rem)" }}>
+From Our Guests
+</h2>
 </div>
-<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
-{testimonials.slice(0, 3).map((t: any) => (
-<div key={t.id} className={`testimonial-card ${BG_SAND_LIGHT} p-8 flex flex-col`} style={{ borderTopColor: ACCENT }}>
-<blockquote className="font-serif italic text-[#2B2823] text-lg leading-relaxed flex-1 mb-6">"{t.quote}"</blockquote>
-<div className="border-t border-[#2B2823]/15 pt-4">
-<p className="text-[#2B2823] font-sans text-sm font-medium">{t.authorName}</p>
-{t.authorTitle && <p className="eyebrow text-[#2B2823]/75 mt-1" style={{ fontSize: "10px" }}>{t.authorTitle}</p>}
+<ReviewsCarousel reviews={WEDDING_REVIEWS} />
 </div>
+</section>
+{/* FAQs — shared data with /events (weddingFaqs.ts) */}
+<SectionDivider label="FAQs" />
+<section id="faqs" aria-labelledby="faqs-heading" className={`${SECTION_Y} ${BG_SAND}`}>
+<div className="max-w-[1440px] mx-auto px-5 lg:px-14">
+<div className="max-w-3xl mx-auto">
+<div className="mb-12 text-center">
+<div aria-hidden="true" className="mx-auto" style={{ height: "1px", width: "2rem", backgroundColor: ACCENT, marginBottom: "1.25rem" }} />
+<h2 id="faqs-heading" className="font-serif font-light text-[#2B2823] leading-tight" style={{ fontSize: "clamp(1.875rem,3.5vw,3rem)" }}>
+Questions, Answered.
+</h2>
 </div>
-))}
+<WeddingFaqAccordion items={WEDDING_FAQS} />
 </div>
 </div>
 </section>
-</>
-)}
 {/* CTA / Inline Inquiry Form */}
 <SectionDivider label="Begin Your Inquiry" />
-<section id="inquire" ref={ctaRef as React.RefObject<HTMLDivElement>} className={`fade-up ${SECTION_Y} ${hasTestimonials ? BG_SAND_LIGHT : BG_SAND}`}>
+<section id="inquire" ref={ctaRef as React.RefObject<HTMLDivElement>} className={`fade-up ${SECTION_Y} ${BG_SAND_LIGHT}`}>
 <div className="max-w-[1440px] mx-auto px-5 lg:px-14">
 <div className="mb-10">
 <Rule />
@@ -403,6 +401,7 @@ We work with a limited number of couples each year. Share the basics and we'll r
 </p>
 </div>
 <WeddingInquiryForm />
+<FindUsBadges />
 </div>
 </section>
 </div>
