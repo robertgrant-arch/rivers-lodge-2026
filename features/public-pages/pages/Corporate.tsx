@@ -24,15 +24,15 @@ function useFadeUp(t = 0.12) {
 }
 
 const eventTypes = [
-  { title: "Corporate Retreats",    desc: "Multi-day team retreats with lodging, dining, and curated outdoor programming. The Lodge sleeps up to 20; the Barn accommodates 300 for evening events.", img: LODGE },
+  { title: "Corporate Retreats",    desc: "Multi-day team retreats with lodging, dining, and curated outdoor programming. The Lodge sleeps up to 20; The Event Barn accommodates 250 for evening events.", img: LODGE },
   { title: "Executive Meetings",    desc: "Private meeting space in the Clubhouse for boards, leadership teams, and strategy sessions — away from the office, on the land.", img: INTERIOR },
   { title: "Client Entertainment",  desc: "Hunting days, fishing excursions, sporting clays, and private dinners. The most memorable client entertainment is the kind that can't be replicated.", img: GROUNDS },
   { title: "Team-Building Days",    desc: "Guided outdoor experiences — from clay shooting to river fishing — that build genuine connection without a single trust fall.", img: AERIAL },
 ];
 
 const capacities = [
-  { space: "Rivers Barn",          seated: "256", reception: "300", notes: "Full AV, catering kitchen" },
-  { space: "Clubhouse",            seated: "40",  reception: "60",  notes: "Bar, private dining room" },
+  { space: "The Event Barn",       seated: "250", reception: "250", notes: "Full AV, catering kitchen" },
+  { space: "Clubhouse",            seated: "75",  reception: "75",  notes: "Bar, private dining room" },
   { space: "River Lawn",           seated: "200", reception: "300", notes: "Outdoor ceremony & dinner" },
   { space: "The Lodge",            seated: "20",  reception: "20",  notes: "Exclusive overnight lodging" },
   { space: "Riverhouse Suites",    seated: "—",   reception: "—",   notes: "4 boutique suites" },
@@ -85,11 +85,11 @@ export default function Corporate() {
               </h2>
               <div className="space-y-5 font-sans text-muted-brand leading-relaxed" style={{ fontSize: "0.9375rem" }}>
                 <p>There is a reason the best corporate decisions get made away from the office. Rivers Lodge provides the kind of environment that strips away distraction and replaces it with clarity — open land, clean air, and the particular focus that comes from being somewhere genuinely different.</p>
-                <p>The estate accommodates groups from 10 to 300. The Lodge sleeps 20 overnight guests. The Rivers Barn seats 256 for formal dinners. The Clubhouse provides private meeting space. And the 300 acres provide the programming.</p>
+                <p>The estate accommodates groups from 10 to 250. The Lodge sleeps 20 overnight guests. The Event Barn seats 250 for formal dinners. The Clubhouse provides private meeting space. And the 300 acres provide the programming.</p>
               </div>
             </div>
             <div className="aspect-[4/3] overflow-hidden">
-              <img src={BARN} alt="Rivers Barn exterior at dusk" className="w-full h-full object-cover" loading="lazy" />
+              <img src={BARN} alt="The Event Barn exterior at dusk" className="w-full h-full object-cover" loading="lazy" />
             </div>
           </div>
         </div>

@@ -232,7 +232,7 @@ const ctaRef = useFadeUp();
 const bodyCopy = "space-y-5 font-serif text-white leading-relaxed";
 return (
 <PublicLayout>
-<SEOHead title="Weddings" description="Intimate, cinematic weddings on a private Kansas Lodge. Rivers Barn, the Clubhouse, and your reserved lodging — all exclusively yours." url="/weddings" structuredData={structuredData.weddingVenue()} />
+<SEOHead title="Weddings" description="Intimate, cinematic weddings on a private Kansas Lodge. The Event Barn, the Clubhouse, and your reserved lodging — all exclusively yours." url="/weddings" structuredData={structuredData.weddingVenue()} />
 <div style={{ "--track-accent": ACCENT, "--btn-primary-text": "var(--rl-sand-light)" } as React.CSSProperties}>
 {/* Hero */}
 <section className="relative hero-full flex items-end pb-12 lg:pb-14 overflow-hidden">
@@ -314,7 +314,7 @@ The Event Barn
 Not a venue. <br /><em className="italic text-rl-grass">A private Lodge.</em>
 </h2>
 <div className="space-y-5 font-sans text-[#2B2823] leading-relaxed" style={{ fontSize: "0.9375rem" }}>
-<p>When you book a wedding at Rivers Lodge, you book the entire Lodge. Your guests are the only guests. Rivers Barn, the Clubhouse, and your reserved lodging are all exclusively yours for the weekend.</p>
+<p>When you book a wedding at Rivers Lodge, you book the entire Lodge. Your guests are the only guests. The Event Barn, the Clubhouse, and your reserved lodging are all exclusively yours for the weekend.</p>
 <p>We work with a limited number of couples each year to ensure every wedding receives the full attention of our team. We will never have multiple weddings going on at one time and the result is a totally private all weekend celebration with friends and family.</p>
 </div>
 </div>

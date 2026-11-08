@@ -28,7 +28,7 @@ const CORP_RETREAT = "/brand/corporate%20clubhouse%20.JPG";
 const CORP_ENTERTAIN = "/brand/corporate%204.jpg";
 
 const eventTypes = [
-  { title: "Corporate Retreats",    desc: "Multi-day team retreats with lodging, dining, and curated outdoor programming. From 5 to 300 people Lodge events are custom built for your team's retreat.", img: CORP_RETREAT,   alt: "Corporate retreat at the Clubhouse" },
+  { title: "Corporate Retreats",    desc: "Multi-day team retreats with lodging, dining, and curated outdoor programming. From 5 to 250 people Lodge events are custom built for your team's retreat.", img: CORP_RETREAT,   alt: "Corporate retreat at the Clubhouse" },
   { title: "Executive Meetings",    desc: "Private meeting space in the Clubhouse for boards, leadership teams, and strategy sessions — away from the office, on the land.", img: INTERIOR,       alt: "Executive meetings at Rivers Lodge" },
   { title: "Client Entertainment",  desc: "Hunting days, fishing excursions, sporting clays, and private dinners. The most memorable client entertainment is the kind that can't be replicated.", img: CORP_ENTERTAIN, alt: "Client entertainment at Rivers Lodge" },
   { title: "Team-Building Days",    desc: "Guided outdoor experiences — from clay shooting to premier fishing opportunities — that build genuine connection without a single trust fall.", img: AERIAL,          alt: "Team-building days at Rivers Lodge" },
@@ -94,12 +94,12 @@ export default function Corporate() {
               </h2>
               <div className="space-y-5 font-sans text-muted-brand leading-relaxed" style={{ fontSize: "0.9375rem" }}>
                 <p>The River's experience is genuinely different. It allows you to get away from the office and spend time with your team or clients in a distraction free environment that is a memorable experience.</p>
-                <p>The Main Lodge accommodates any size group from 5 people to 300 people. Everything is custom and everything is built around your team.</p>
+                <p>The Main Lodge accommodates any size group from 5 people to 250 people. Everything is custom and everything is built around your team.</p>
               </div>
             </div>
             <Picture
               src={BARN}
-              alt="Rivers Barn exterior at dusk"
+              alt="The Event Barn exterior at dusk"
               className="aspect-[4/3] overflow-hidden w-full"
               imgClassName="absolute inset-0 w-full h-full object-cover"
               loading="lazy"

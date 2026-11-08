@@ -21,7 +21,7 @@ const eventTypes = [
   {
     label: "Weddings",
     href: "/weddings",
-    desc: "Destination wedding weekends — from intimate ceremonies to grand receptions for 300.",
+    desc: "Destination wedding weekends — from intimate ceremonies to grand receptions for 250.",
     image: CEREMONY,
   },
   {
@@ -39,7 +39,7 @@ const eventTypes = [
 ];
 
 const venues = [
-  { name: "Rivers Barn", capacity: "Up to 256", type: "Dinner & Reception", image: BARN_INT },
+  { name: "The Event Barn", capacity: "Up to 250", type: "Dinner & Reception", image: BARN_INT },
   { name: "River Lawn", capacity: "Up to 200", type: "Ceremony & Outdoor", image: GROUNDS },
   { name: "Timber Edge", capacity: "Up to 120", type: "Outdoor Ceremony", image: TIMBER_EDGE },
 ];
@@ -114,7 +114,7 @@ export default function WeddingsLanding() {
                   The Rivers Lodge offers a complete destination wedding experience across 300 acres of Kansas landscape — river, woodland, and open sky. Your guests arrive to a private Lodge prepared entirely for them, with no one else in sight.
                 </p>
                 <p className="text-[#BABAAE] font-sans text-base leading-relaxed mb-8">
-                  The Lodge accommodates your entire wedding party on-site. Ceremony on the River Lawn. Reception in the Rivers Barn. After-party at the Clubhouse. Breakfast the next morning at The Lodge.
+                  The Lodge accommodates your entire wedding party on-site. Ceremony on the River Lawn. Reception in The Event Barn. After-party at the Clubhouse. Breakfast the next morning at The Lodge.
                 </p>
                 <Link href="/weddings" className="link-arrow">
                   Explore the Experience
@@ -130,7 +130,7 @@ export default function WeddingsLanding() {
                     <img src={RECEPTION} alt="Reception tables" className="w-full h-full object-cover" loading="lazy" decoding="async" width={800} height={800} />
                   </div>
                   <div className="aspect-square overflow-hidden">
-                    <img src={BARN_INT} alt="Rivers Barn interior" className="w-full h-full object-cover" loading="lazy" decoding="async" width={800} height={800} />
+                    <img src={BARN_INT} alt="The Event Barn interior" className="w-full h-full object-cover" loading="lazy" decoding="async" width={800} height={800} />
                   </div>
                 </div>
               </div>
@@ -216,7 +216,7 @@ export default function WeddingsLanding() {
           <div className="max-w-[1440px] mx-auto px-5 lg:px-10 py-10">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
               {[
-                { value: "300", label: "Max Reception Guests" },
+                { value: "250", label: "Max Reception Guests" },
                 { value: "16+", label: "On-Site Bedrooms" },
                 { value: "5", label: "Distinct Venue Spaces" },
                 { value: "1hr", label: "From Kansas City" },
@@ -334,7 +334,7 @@ export default function WeddingsLanding() {
                   },
                   {
                     question: "What is the guest capacity?",
-                    answer: "The Rivers Barn accommodates up to 256 guests for seated receptions, with two patios, an indoor/outdoor bar, and luxury bathrooms. Ceremony spaces on the River Lawn and Timber Edge can accommodate similar numbers. We work with you to design the perfect layout."
+                    answer: "The Event Barn accommodates up to 250 guests for seated receptions, with two patios, an indoor/outdoor bar, and luxury bathrooms. Ceremony spaces on the River Lawn and Timber Edge can accommodate similar numbers. We work with you to design the perfect layout."
                   },
                   {
                     question: "Do you offer exclusive-use buyouts?",
