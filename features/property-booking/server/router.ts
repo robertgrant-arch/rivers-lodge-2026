@@ -1875,11 +1875,63 @@ export const propertyBookingRouter = router({
         const conditions = [];
         if (!input?.includeInactive) conditions.push(eq(huntingProperties.active, true));
 
-        const props = await db
-          .select()
-          .from(huntingProperties)
-          .where(conditions.length ? and(...conditions) : undefined)
-          .orderBy(asc(huntingProperties.sortOrder), asc(huntingProperties.name));
+        // Try to select with lodgingAvailable first (column exists after migration)
+        // Fall back to excluding it if the column doesn't exist yet (backward compatibility)
+        let props: any[] = [];
+        try {
+          props = await db
+            .select()
+            .from(huntingProperties)
+            .where(conditions.length ? and(...conditions) : undefined)
+            .orderBy(asc(huntingProperties.sortOrder), asc(huntingProperties.name));
+        } catch (err: any) {
+          // If column doesn't exist, select without lodgingAvailable
+          if (err?.message?.includes('lodgingAvailable') || err?.message?.includes('unknown column')) {
+            props = await db
+              .select({
+                id: huntingProperties.id,
+                name: huntingProperties.name,
+                slug: huntingProperties.slug,
+                type: huntingProperties.type,
+                primaryActivity: huntingProperties.primaryActivity,
+                secondaryActivities: huntingProperties.secondaryActivities,
+                description: huntingProperties.description,
+                shortDescription: huntingProperties.shortDescription,
+                acreage: huntingProperties.acreage,
+                maxDeerHunters: huntingProperties.maxDeerHunters,
+                maxWaterfowlHunters: huntingProperties.maxWaterfowlHunters,
+                maxUplandHunters: huntingProperties.maxUplandHunters,
+                maxGuests: huntingProperties.maxGuests,
+                maxTotalPeople: huntingProperties.maxTotalPeople,
+                maxHunters: huntingProperties.maxHunters,
+                hasHeatedBlind: huntingProperties.hasHeatedBlind,
+                hasAtvAccess: huntingProperties.hasAtvAccess,
+                hasWaterAccess: huntingProperties.hasWaterAccess,
+                hasElectricity: huntingProperties.hasElectricity,
+                hasCellService: huntingProperties.hasCellService,
+                bookingModes: huntingProperties.bookingModes,
+                overnightEnabled: huntingProperties.overnightEnabled,
+                gpsLat: huntingProperties.gpsLat,
+                gpsLng: huntingProperties.gpsLng,
+                locationNotes: huntingProperties.locationNotes,
+                coverImageUrl: huntingProperties.coverImageUrl,
+                mapImageUrl: huntingProperties.mapImageUrl,
+                mapUrl: huntingProperties.mapUrl,
+                gateCode: huntingProperties.gateCode,
+                active: huntingProperties.active,
+                featuredOnPublicSite: huntingProperties.featuredOnPublicSite,
+                sortOrder: huntingProperties.sortOrder,
+                createdAt: huntingProperties.createdAt,
+                updatedAt: huntingProperties.updatedAt,
+                shortName: huntingProperties.shortName,
+              })
+              .from(huntingProperties)
+              .where(conditions.length ? and(...conditions) : undefined)
+              .orderBy(asc(huntingProperties.sortOrder), asc(huntingProperties.name));
+          } else {
+            throw err;
+          }
+        }
 
         // Fetch activities for all properties from join table
         const propIds = props.map((p: any) => p.id);
@@ -1906,6 +1958,7 @@ export const propertyBookingRouter = router({
           maxWaterfowlHunters: p.maxWaterfowlHunters ?? null,
           maxTotalPeople: p.maxTotalPeople ?? null,
           overnightEnabled: p.overnightEnabled ?? true,
+          lodgingAvailable: p.lodgingAvailable ?? false, // Default to false if column doesn't exist in DB
         }));
       }),
   }),
