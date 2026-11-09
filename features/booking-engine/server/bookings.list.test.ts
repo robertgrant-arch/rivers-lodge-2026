@@ -13,6 +13,9 @@ import type { TrpcContext } from "@core/server/context";
 
 vi.mock("@core/server/db", () => ({
   getDb: vi.fn(),
+  // Shared portal pool (added to db.ts after this test was written); routers
+  // reference it at import time, so the mock must define it.
+  getPortalDb: vi.fn(),
 }));
 
 // ─── Import after mocks ───────────────────────────────────────────────────────

@@ -4,7 +4,7 @@
  * Verify per-adult waiver status computation, persistence, and admin display.
  */
 
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi, afterEach } from "vitest";
 import {
   enrichBookingWithWaiverStatus,
   filterOverdueWaivers,
@@ -15,7 +15,17 @@ describe("Slice 3 — Waiver Status Tracking", () => {
   const baseTime = new Date("2026-08-10T10:00:00Z").getTime();
 
   describe("Admin booking enrichment", () => {
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
     it("should compute waiver status and deadlines for all adults", () => {
+      // enrichBookingWithWaiverStatus reads Date.now(). This test expects a
+      // "sent" waiver for an Aug 15 2026 check-in to still be "sent", which was
+      // only true while that date was in the future; pin the clock to the
+      // suite's baseTime (Aug 10 2026) so it doesn't depend on today's date.
+      vi.useFakeTimers();
+      vi.setSystemTime(baseTime);
       const booking = {
         id: 1,
         bookingRef: "RL-2026-00001",
