@@ -16,6 +16,9 @@ export default function PublicFooter() {
               <div className="font-serif text-[1.375rem] text-[#E0D3BD] leading-tight tracking-wide">
                 Rivers Lodge
               </div>
+              <p className="font-serif italic text-[#E0D3BD] leading-snug mt-2 max-w-[300px]" style={{ fontSize: "1.0625rem" }}>
+                A premier private destination to stay, gather, and make memories.
+              </p>
             </div>
             <p className="text-[12px] font-sans leading-relaxed opacity-70 max-w-[280px] mb-6">
               A private lodge on the Marais des Cygnes. Exclusive membership, destination weddings, private events, and exceptional outdoor experiences in the Midwest.
