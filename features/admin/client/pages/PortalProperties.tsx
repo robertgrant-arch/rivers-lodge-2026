@@ -26,6 +26,7 @@ import {
   ChevronDown, ChevronUp, Thermometer, Truck, Waves, Zap, Wifi,
 } from "lucide-react";
 import { toast } from "sonner";
+import { prepareCoverPhoto, coverPhotoUploadErrorMessage, COVER_PHOTO_HELP } from "../lib/prepareCoverPhoto";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -171,40 +172,31 @@ function CreatePropertyForm({
   const handleCoverPhotoFileSelect = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
     const file = files[0];
-    const validTypes = ["image/png", "image/jpeg"];
-    if (!validTypes.includes(file.type)) {
-      toast.error("Cover photo must be PNG or JPG");
-      return;
-    }
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("Cover photo exceeds 5MB limit");
-      return;
-    }
 
     setIsUploadingCoverPhoto(true);
+    // Validate + resize in the browser first (phone photos are usually 3–12 MB;
+    // the API only accepts the resized result — see @shared/uploadLimits).
+    let prepared;
     try {
-      const reader = new FileReader();
-      reader.onload = async (e) => {
-        const base64 = (e.target?.result as string).split(',')[1];
-        try {
-          const result = await uploadCoverPhoto.mutateAsync({
-            fileData: base64,
-            fileName: file.name,
-            contentType: file.type as "image/png" | "image/jpeg",
-          });
-          set("coverImageUrl", result.coverImageUrl);
-          set("coverImageFile", file);
-          set("coverImageFileName", file.name);
-          toast.success(`Cover photo "${file.name}" uploaded`);
-        } catch (err: any) {
-          toast.error(`Upload failed: ${err.message}`);
-        } finally {
-          setIsUploadingCoverPhoto(false);
-        }
-      };
-      reader.readAsDataURL(file);
+      prepared = await prepareCoverPhoto(file);
     } catch (err) {
-      toast.error("Failed to read file");
+      toast.error(err instanceof Error ? err.message : "Couldn't read that photo.");
+      setIsUploadingCoverPhoto(false);
+      return;
+    }
+    try {
+      const result = await uploadCoverPhoto.mutateAsync({
+        fileData: prepared.base64,
+        fileName: prepared.fileName,
+        contentType: prepared.contentType,
+      });
+      set("coverImageUrl", result.coverImageUrl);
+      set("coverImageFile", file);
+      set("coverImageFileName", file.name);
+      toast.success(`Cover photo "${file.name}" uploaded`);
+    } catch (err) {
+      toast.error(coverPhotoUploadErrorMessage(err));
+    } finally {
       setIsUploadingCoverPhoto(false);
     }
   };
@@ -465,11 +457,12 @@ function CreatePropertyForm({
         </div>
 
         <div className="space-y-1.5">
-          <Label className="text-stone-300 text-sm">Cover Photo (PNG or JPG)</Label>
+          <Label className="text-stone-300 text-sm">Cover Photo (JPG or PNG)</Label>
+          <p className="text-xs text-stone-500">{COVER_PHOTO_HELP}</p>
           <div className="flex items-center gap-2">
             <input
               type="file"
-              accept=".png,.jpg,.jpeg"
+              accept=".png,.jpg,.jpeg,image/png,image/jpeg"
               onChange={(e) => handleCoverPhotoFileSelect(e.target.files)}
               className="hidden"
               id="cover-photo-upload"
@@ -643,40 +636,31 @@ function EditPropertyForm({
   const handleCoverPhotoFileSelect = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
     const file = files[0];
-    const validTypes = ["image/png", "image/jpeg"];
-    if (!validTypes.includes(file.type)) {
-      toast.error("Cover photo must be PNG or JPG");
-      return;
-    }
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("Cover photo exceeds 5MB limit");
-      return;
-    }
 
     setIsUploadingCoverPhoto(true);
+    // Validate + resize in the browser first (phone photos are usually 3–12 MB;
+    // the API only accepts the resized result — see @shared/uploadLimits).
+    let prepared;
     try {
-      const reader = new FileReader();
-      reader.onload = async (e) => {
-        const base64 = (e.target?.result as string).split(',')[1];
-        try {
-          const result = await uploadCoverPhoto.mutateAsync({
-            fileData: base64,
-            fileName: file.name,
-            contentType: file.type as "image/png" | "image/jpeg",
-          });
-          set("coverImageUrl", result.coverImageUrl);
-          set("coverImageFile", file);
-          set("coverImageFileName", file.name);
-          toast.success(`Cover photo "${file.name}" uploaded`);
-        } catch (err: any) {
-          toast.error(`Upload failed: ${err.message}`);
-        } finally {
-          setIsUploadingCoverPhoto(false);
-        }
-      };
-      reader.readAsDataURL(file);
+      prepared = await prepareCoverPhoto(file);
     } catch (err) {
-      toast.error("Failed to read file");
+      toast.error(err instanceof Error ? err.message : "Couldn't read that photo.");
+      setIsUploadingCoverPhoto(false);
+      return;
+    }
+    try {
+      const result = await uploadCoverPhoto.mutateAsync({
+        fileData: prepared.base64,
+        fileName: prepared.fileName,
+        contentType: prepared.contentType,
+      });
+      set("coverImageUrl", result.coverImageUrl);
+      set("coverImageFile", file);
+      set("coverImageFileName", file.name);
+      toast.success(`Cover photo "${file.name}" uploaded`);
+    } catch (err) {
+      toast.error(coverPhotoUploadErrorMessage(err));
+    } finally {
       setIsUploadingCoverPhoto(false);
     }
   };
@@ -932,11 +916,12 @@ function EditPropertyForm({
         </div>
 
         <div className="space-y-1.5">
-          <Label className="text-stone-300 text-sm">Cover Photo (PNG or JPG)</Label>
+          <Label className="text-stone-300 text-sm">Cover Photo (JPG or PNG)</Label>
+          <p className="text-xs text-stone-500">{COVER_PHOTO_HELP}</p>
           <div className="flex items-center gap-2">
             <input
               type="file"
-              accept=".png,.jpg,.jpeg"
+              accept=".png,.jpg,.jpeg,image/png,image/jpeg"
               onChange={(e) => handleCoverPhotoFileSelect(e.target.files)}
               className="hidden"
               id="cover-photo-upload-edit"

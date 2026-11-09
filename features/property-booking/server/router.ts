@@ -16,6 +16,7 @@ import { TRPCError } from "@trpc/server";
 import { router, publicProcedure, protectedProcedure } from '@core/server/trpc';
 import { getDb } from '@core/server/db';
 import { storagePut } from '@core/server/storage';
+import { COVER_PHOTO, formatMB } from '@shared/uploadLimits';
 import {
   huntingProperties,
   propertySeasons,
@@ -1654,7 +1655,8 @@ export const propertyBookingRouter = router({
       /** Upload property cover photo (PNG, JPG) */
       uploadCoverPhoto: protectedProcedure
         .input(z.object({
-          fileData: z.string(), // base64 encoded file
+          // base64 encoded file; the browser resizes phone photos first (see @shared/uploadLimits)
+          fileData: z.string().min(1).max(Math.ceil((COVER_PHOTO.maxUploadBytes * 4) / 3) + 16),
           fileName: z.string().max(255),
           contentType: z.enum(["image/png", "image/jpeg"]),
         }))
@@ -1663,12 +1665,27 @@ export const propertyBookingRouter = router({
 
           // Decode base64
           const buffer = Buffer.from(input.fileData, 'base64');
+          if (buffer.length === 0) {
+            throw new TRPCError({ code: "BAD_REQUEST", message: "The photo was empty. Please choose another file." });
+          }
+          if (buffer.length > COVER_PHOTO.maxUploadBytes) {
+            throw new TRPCError({ code: "PAYLOAD_TOO_LARGE", message: `Photo is larger than ${formatMB(COVER_PHOTO.maxUploadBytes)} after resizing. Please choose a smaller file.` });
+          }
+          // Check the real file type from its first bytes, not the client's label.
+          const isJpeg = buffer.length > 3 && buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff;
+          const isPng = buffer.length > 8 && buffer.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]));
+          const sniffed = isJpeg ? "image/jpeg" : isPng ? "image/png" : null;
+          if (!sniffed) {
+            throw new TRPCError({ code: "BAD_REQUEST", message: "Cover photo must be a JPG or PNG image." });
+          }
+          // Keep storage keys to safe characters.
+          const safeName = String(input.fileName).replace(/[^A-Za-z0-9._-]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 120) || "cover";
 
           // Upload to S3
           const { url } = await storagePut(
-            `properties/covers/${Date.now()}-${input.fileName}`,
+            `properties/covers/${Date.now()}-${safeName}`,
             buffer,
-            input.contentType,
+            sniffed,
           );
 
           return { coverImageUrl: url };
