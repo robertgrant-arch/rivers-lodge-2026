@@ -12,6 +12,18 @@ export default defineConfig({
       "@shared/errors": path.resolve(templateRoot, "features/_core/shared/errors"),
       "@shared": path.resolve(templateRoot, "features/_shared"),
       "@features": path.resolve(templateRoot, "features"),
+      // Legacy @/ aliases — must mirror vite.config.ts. Without these, any module
+      // that (directly or through a public.ts barrel) imports e.g.
+      // "@/components/PublicLayout" fails to load under Vitest even though the
+      // app build resolves it, which broke 13 server test files at import time.
+      "@/_core": path.resolve(templateRoot, "features/_core/client"),
+      "@/_shared": path.resolve(templateRoot, "features/_shared"),
+      "@/lib": path.resolve(templateRoot, "features/_core/client/lib"),
+      "@/const": path.resolve(templateRoot, "features/_core/client/const"),
+      "@/contexts": path.resolve(templateRoot, "features/_core/client/contexts"),
+      "@/components/ui": path.resolve(templateRoot, "features/_shared/ui"),
+      "@/components": path.resolve(templateRoot, "features/_shared/components"),
+      "@/hooks": path.resolve(templateRoot, "features/_shared/hooks"),
       "@": path.resolve(templateRoot, "client", "src"),
       "@assets": path.resolve(templateRoot, "attached_assets"),
     },
