@@ -12,6 +12,7 @@ import { resolvePort } from "./port";
 import { checkDbHealth } from "./db";
 import { runStartupMigration, checkHuntingPropertiesSchema } from "./startup-migration";
 import { applySqlMigrations } from "./apply-sql-migrations";
+import { PROPERTY_MAP_JSON_LIMIT_BYTES } from "@shared/propertyRules";
 
 let deployedCommit = "unknown";
 try {
@@ -36,6 +37,25 @@ async function startServer() {
   app.use(helmet({ contentSecurityPolicy: false }));
 
   // ── Body parsers ────────────────────────────────────────────────────────────
+  // Larger JSON limits ONLY for tRPC upload procedures that carry a base64 file
+  // (see features/_shared/propertyRules.ts). A batched call qualifies only if
+  // every procedure in the batch is listed. Everything else keeps 1 MB below,
+  // which skips bodies these parsers already read.
+  const largeBodyLimits: Record<string, number> = {
+    "propertyBooking.admin.properties.uploadMap": PROPERTY_MAP_JSON_LIMIT_BYTES,
+  };
+  app.use((req, res, next) => {
+    const m = /^\/api\/trpc\/([^/]+)$/.exec(req.path);
+    if (m) {
+      let procs: string[] = [];
+      try { procs = decodeURIComponent(m[1]).split(","); } catch { /* malformed → default limit */ }
+      if (procs.length > 0 && procs.every((p) => p in largeBodyLimits)) {
+        const limit = Math.max(...procs.map((p) => largeBodyLimits[p]));
+        return express.json({ limit })(req, res, next);
+      }
+    }
+    next();
+  });
   app.use(express.json({ limit: "1mb" }));
   app.use(express.urlencoded({ limit: "1mb", extended: true }));
 
