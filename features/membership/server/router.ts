@@ -13,6 +13,7 @@ import { notifyOwner } from "../../_core/server/notification";
 import { verifyCaptcha } from "@core/server/captcha";
 import * as dal from "./dal";
 import { insertMemberWithUniqueNumber } from "./memberNumbers";
+import { todayInTimeZone, LODGE_TIME_ZONE } from "@shared/lib/dateOnly";
 import { members, users, membershipApplications, memberSkillGroups, skillGroups } from '@core/db/schema';
 
 // ─── Role Guards ──────────────────────────────────────────────────────────────
@@ -199,7 +200,7 @@ export const membershipRouter = router({
           userId: input.userId,
           memberNumber,
           active: true,
-          joinDate: input.joinDate ?? new Date().toISOString().split("T")[0],
+          joinDate: input.joinDate || todayInTimeZone(LODGE_TIME_ZONE), // Lodge calendar day, not UTC
           renewalDate: input.renewalDate ?? null,
           notes: input.notes ?? null,
         } as any).returning({ id: members.id }),
@@ -286,7 +287,7 @@ export const membershipRouter = router({
       userId: ctx.user.id,
       memberNumber: null,
       active: true,
-      joinDate: new Date().toISOString().split("T")[0],
+      joinDate: todayInTimeZone(LODGE_TIME_ZONE),
     }).returning();
 
     return { member: newMember, created: true };

@@ -9,8 +9,11 @@ import { Textarea } from "@shared/ui/textarea";
 import { trpc } from "@shared/lib/trpc";
 import { Plus, Search, User, ChevronRight, X, SlidersHorizontal } from "lucide-react";
 import { Link, useLocation } from "wouter";
+import { formatDateOnly, toDateInputValue, todayLocal } from "@shared/lib/dateOnly";
 import { toast } from "sonner";
 
+/** For timestamps (e.g. createdAt). Date-only columns (joinDate, renewalDate)
+ *  must use formatDateOnly, which shows the stored calendar date in every timezone. */
 function formatDate(d: string | Date | null | undefined) {
   if (!d) return "—";
   return new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
@@ -85,7 +88,7 @@ function AddMemberDialog({ open, onClose }: { open: boolean; onClose: () => void
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [selectedUser, setSelectedUser] = useState<{ id: string; email: string } | null>(null);
   const [memberNumber, setMemberNumber] = useState("");
-  const [joinDate, setJoinDate] = useState(new Date().toISOString().split("T")[0]);
+  const [joinDate, setJoinDate] = useState(todayLocal());
   const [renewalDate, setRenewalDate] = useState("");
   const [notes, setNotes] = useState("");
   const [membershipType, setMembershipType] = useState<"Designated" | "Silver" | "Social">("Social");
@@ -112,7 +115,7 @@ function AddMemberDialog({ open, onClose }: { open: boolean; onClose: () => void
     setSelectedUser(null);
     setMemberNumber("");
     setNotes("");
-    setJoinDate(new Date().toISOString().split("T")[0]);
+    setJoinDate(todayLocal());
     setRenewalDate("");
     setMembershipType("Social");
   }
@@ -369,7 +372,7 @@ function MemberDetailDrawer({
 }) {
   const { member: m, user: u } = row;
   const utils = trpc.useUtils();
-  const [editRenewal, setEditRenewal] = useState(m.renewalDate ?? "");
+  const [editRenewal, setEditRenewal] = useState(toDateInputValue(m.renewalDate));
   const [editNotes, setEditNotes] = useState(m.notes ?? "");
   const [editMembershipType, setEditMembershipType] = useState<"Designated" | "Silver" | "Social">(m.membershipType ?? "Social");
   const [deactivateOpen, setDeactivateOpen] = useState(false);
@@ -436,7 +439,7 @@ function MemberDetailDrawer({
             {[
               { label: "Member #", value: m.memberNumber ?? "—" },
               { label: "Status", value: <StatusDot active={m.active} /> },
-              { label: "Joined", value: formatDate(m.joinDate) },
+              { label: "Joined", value: formatDateOnly(m.joinDate) },
               { label: "Member Since", value: formatDate(m.createdAt) },
             ].map((f) => (
               <div key={f.label} className="bg-[#363330] p-4">
@@ -699,8 +702,8 @@ export default function PortalMembership() {
                           <td className={tdCls}>
                             {m.membershipType ?? "—"}
                           </td>
-                          <td className={tdCls}>{formatDate(m.joinDate)}</td>
-                          <td className={tdCls}>{formatDate(m.renewalDate)}</td>
+                          <td className={tdCls}>{formatDateOnly(m.joinDate)}</td>
+                          <td className={tdCls}>{formatDateOnly(m.renewalDate)}</td>
                           <td className={tdCls}>
                             <StatusDot active={m.active} />
                           </td>

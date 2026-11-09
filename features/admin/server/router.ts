@@ -25,6 +25,7 @@ import {
 // Cross-feature table refs — imported only via public.ts barrels
 import { users } from "@features/auth/server/public";
 import { members, membershipApplications, memberSkillGroups, skillGroups, employees, employeeSkillGroups, skillGroupCalendarAccess, insertMemberWithUniqueNumber } from "@features/membership/public";
+import { todayInTimeZone, LODGE_TIME_ZONE } from "@shared/lib/dateOnly";
 import { inquiries } from "@features/inquiries/public";
 import { bookings } from "@features/booking-engine/public";
 import { waivers } from "@features/waivers/public";
@@ -1925,7 +1926,7 @@ const membershipPortalRouter = router({
           memberNumber,
           membershipType: (input.membershipType ?? "Social") as any,
           active: true,
-          joinDate: input.joinDate ?? new Date().toISOString().split("T")[0],
+          joinDate: input.joinDate || todayInTimeZone(LODGE_TIME_ZONE), // Lodge calendar day, not UTC
           renewalDate: input.renewalDate ?? null,
           notes: input.notes ?? null,
         } as any).returning({ id: members.id }),
