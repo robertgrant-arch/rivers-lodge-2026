@@ -24,6 +24,36 @@ function useFadeUp(t = 0.12) {
   return ref;
 }
 
+// Hero: the Clubhouse-at-dusk photo is dark, so lift it in CSS (source file untouched),
+// the same way /weddings does. A gamma curve (HeroLiftFilter) raises the dark lodge, guests
+// and trees while barely moving the already-light sky, so the sky doesn't clip to white.
+const HERO_FILTER = "url(#rl-corp-hero-lift) saturate(1.1)";
+// Only a light, soft gradient on the left behind the text, plus a faint tint at the bottom edge.
+const HERO_GRADIENT =
+  "linear-gradient(to right, rgba(43,40,35,0.4) 0%, rgba(43,40,35,0.22) 35%, rgba(43,40,35,0) 62%), " +
+  "linear-gradient(to top, rgba(43,40,35,0.18) 0%, rgba(43,40,35,0) 30%)";
+// Very soft, wide, blurred shade behind the text block (as on /weddings) — never reads as a shape.
+const HERO_SOFT_SHADE = 0.32;
+// Eyebrow sits partly on light sky at desktop widths: a soft Night halo keeps it readable.
+const HERO_EYEBROW_SHADOW = "0 1px 2px rgba(0,0,0,0.75), 0 0 6px rgba(43,40,35,0.85), 0 0 14px rgba(43,40,35,0.7), 0 0 28px rgba(43,40,35,0.45)";
+// Paragraph: same letter shadow as the /weddings hero text (was 0 1px 4px rgba(0,0,0,0.5)).
+const HERO_TEXT_SHADOW = "0 1px 3px rgba(0,0,0,0.55), 0 2px 14px rgba(0,0,0,0.35)";
+
+/** SVG gamma curve used by HERO_FILTER (exponent < 1 lifts shadows/midtones, keeps highlights). */
+function HeroLiftFilter() {
+  return (
+    <svg aria-hidden="true" width="0" height="0" style={{ position: "absolute" }} focusable="false">
+      <filter id="rl-corp-hero-lift" colorInterpolationFilters="sRGB">
+        <feComponentTransfer>
+          <feFuncR type="gamma" exponent="0.62" />
+          <feFuncG type="gamma" exponent="0.62" />
+          <feFuncB type="gamma" exponent="0.62" />
+        </feComponentTransfer>
+      </filter>
+    </svg>
+  );
+}
+
 const CORP_RETREAT = "/brand/corporate%20clubhouse%20.JPG";
 const CORP_ENTERTAIN = "/brand/corporate%204.jpg";
 
@@ -127,6 +157,7 @@ export default function Corporate() {
       <div style={{ "--track-accent": "#9B4D19" } as React.CSSProperties}>
 
       {/* Hero */}
+      <HeroLiftFilter />
       <section className="relative hero-full flex items-end pb-24 overflow-hidden">
         <div className="absolute inset-0">
           <Picture
@@ -134,6 +165,7 @@ export default function Corporate() {
             alt="Corporate events at Rivers Lodge"
             className="absolute inset-0 w-full h-full"
             imgClassName="absolute inset-0 w-full h-full object-cover"
+            imgStyle={{ filter: HERO_FILTER }}
             fetchPriority="high"
             loading="eager"
             decoding="async"
@@ -141,21 +173,26 @@ export default function Corporate() {
             height={1080}
             sizes="100vw"
           />
-          <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, transparent 0%, oklch(0 0 0/0.35) 40%, oklch(0 0 0/0.90) 100%)" }} />
+          <div aria-hidden="true" className="absolute inset-0 pointer-events-none" style={{ background: HERO_GRADIENT }} />
         </div>
         <div className="relative z-10 max-w-[1440px] mx-auto px-5 lg:px-14 w-full">
+          <div className="relative w-fit max-w-full">
+          <div aria-hidden="true" className="absolute pointer-events-none" style={{ inset: "-5rem -7rem", background: `rgba(43,40,35,${HERO_SOFT_SHADE})`, filter: "blur(72px)" }} />
+          <div className="relative">
           <div className="gold-rule mb-5" />
-          <p className="eyebrow text-white/50 mb-4">Corporate Outings &amp; Events</p>
+          <p className="eyebrow font-medium text-[#E0D3BD] mb-4" style={{ fontSize: "0.8125rem", letterSpacing: "0.2em", textShadow: HERO_EYEBROW_SHADOW }}>Corporate Outings &amp; Events</p>
           <div className="max-w-2xl">
             <h1 className="font-serif font-light text-white leading-[0.92] mb-6" style={{ fontSize: "clamp(2.75rem,6.5vw,5.5rem)", textShadow: "0 2px 8px rgba(0,0,0,0.6)" }}>
               Off-site that actually
               <br /><em className="italic font-light">means something.</em>
             </h1>
-            <p className="font-sans text-white/65 max-w-lg leading-relaxed mb-10" style={{ fontSize: "0.9375rem", textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}>
+            <p className="font-sans text-white/65 max-w-lg leading-relaxed mb-10" style={{ fontSize: "0.9375rem", textShadow: HERO_TEXT_SHADOW }}>
               Corporate retreats, executive meetings, client entertainment, and team building days in a private lodge setting. One group at a time.
             </p>
           </div>
           <Link href="/contact?type=corporate" className="btn-primary">Begin Corporate Inquiry</Link>
+          </div>
+          </div>
         </div>
       </section>
 
