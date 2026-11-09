@@ -136,14 +136,6 @@ function PropertyCard({ property }: { property: any }) {
             )}
           </div>
 
-          {/* Amenities icons */}
-          <div className="flex gap-2 text-stone-500">
-            {property.hasHeatedBlind && <Thermometer className="w-3.5 h-3.5" />}
-            {property.hasAtvAccess && <Truck className="w-3.5 h-3.5" />}
-            {property.hasWaterAccess && <Waves className="w-3.5 h-3.5" />}
-            {property.hasElectricity && <Zap className="w-3.5 h-3.5" />}
-            {property.hasCellService && <Wifi className="w-3.5 h-3.5" />}
-          </div>
         </CardContent>
       </Card>
     </Link>

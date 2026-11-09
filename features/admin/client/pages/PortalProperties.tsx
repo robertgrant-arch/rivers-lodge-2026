@@ -41,26 +41,13 @@ const PROPERTY_TYPES = [
 ];
 
 const ACTIVITIES = [
-  { value: "deer", label: "Deer" },
-  { value: "duck", label: "Duck" },
-  { value: "turkey", label: "Turkey" },
-  { value: "quail", label: "Quail" },
-  { value: "dove", label: "Dove" },
-  { value: "hog", label: "Hog" },
-  { value: "bass", label: "Bass" },
-  { value: "catfish", label: "Catfish" },
-  { value: "crappie", label: "Crappie" },
-  { value: "mixed_hunt", label: "Mixed Hunt" },
-  { value: "mixed_fish", label: "Mixed Fish" },
-  { value: "hunt_and_fish", label: "Hunt & Fish" },
-];
-
-const AMENITY_FIELDS = [
-  { key: "hasHeatedBlind", label: "Heated Blind", icon: <Thermometer className="w-3.5 h-3.5" /> },
-  { key: "hasAtvAccess", label: "ATV Access", icon: <Truck className="w-3.5 h-3.5" /> },
-  { key: "hasWaterAccess", label: "Water Access", icon: <Waves className="w-3.5 h-3.5" /> },
-  { key: "hasElectricity", label: "Electricity", icon: <Zap className="w-3.5 h-3.5" /> },
-  { key: "hasCellService", label: "Cell Service", icon: <Wifi className="w-3.5 h-3.5" /> },
+  { value: "waterfowl", label: "Waterfowl Hunting" },
+  { value: "fishing", label: "Fishing" },
+  { value: "camping", label: "Camping" },
+  { value: "hiking", label: "Hiking" },
+  { value: "shooting_permitted", label: "Shooting Permitted" },
+  { value: "upland_hunting", label: "Upland Hunting" },
+  { value: "side_by_side_permitted", label: "Side by Side Permitted" },
 ];
 
 const BOOKING_MODES = [
@@ -106,6 +93,7 @@ function CreatePropertyForm({
     maxTotalPeople: "" as any,
     bookingModes: ["AM", "PM"] as string[],
     overnightEnabled: true,
+    lodgingAvailable: false,
     hasHeatedBlind: false,
     hasAtvAccess: false,
     hasWaterAccess: false,
@@ -207,6 +195,7 @@ function CreatePropertyForm({
       maxTotalPeople: form.maxTotalPeople ? Number(form.maxTotalPeople) : undefined,
       bookingModes: finalBookingModes,
       overnightEnabled: form.overnightEnabled,
+      lodgingAvailable: form.lodgingAvailable,
       hasHeatedBlind: form.hasHeatedBlind,
       hasAtvAccess: form.hasAtvAccess,
       hasWaterAccess: form.hasWaterAccess,
@@ -237,20 +226,6 @@ function CreatePropertyForm({
           <Label className="text-stone-300 text-sm">Slug (URL key) *</Label>
           <Input value={form.slug} onChange={(e) => set("slug", e.target.value)}
             placeholder="north-stand-7" className="bg-stone-800 border-stone-700 text-stone-100 font-mono text-sm" />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="space-y-1.5">
-          <Label className="text-stone-300 text-sm">Property Type</Label>
-          <Select value={form.type} onValueChange={(v) => set("type", v)}>
-            <SelectTrigger className="bg-stone-800 border-stone-700 text-stone-100"><SelectValue /></SelectTrigger>
-            <SelectContent className="bg-stone-800 border-stone-700">
-              {PROPERTY_TYPES.map((t) => (
-                <SelectItem key={t.value} value={t.value} className="text-stone-100">{t.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
         </div>
       </div>
 
@@ -295,6 +270,11 @@ function CreatePropertyForm({
         <Input type="number" step="0.1" value={form.acreage}
           onChange={(e) => set("acreage", e.target.value)}
           placeholder="40.5" className="bg-stone-800 border-stone-700 text-stone-100" />
+      </div>
+
+      <div className="flex items-center gap-2">
+        <Switch checked={form.lodgingAvailable} onCheckedChange={(v) => set("lodgingAvailable", v)} />
+        <Label className="text-stone-300 text-sm cursor-pointer">Lodging Available</Label>
       </div>
 
       <div className="border border-stone-700 rounded-lg p-4 space-y-3">
@@ -352,19 +332,6 @@ function CreatePropertyForm({
             <Switch checked={form.overnightEnabled} onCheckedChange={(v) => set("overnightEnabled", v)} />
             <Label className="text-stone-300 text-sm cursor-pointer">Overnight bookings enabled</Label>
           </div>
-        </div>
-      </div>
-
-      <div className="border border-stone-700 rounded-lg p-4 space-y-3">
-        <p className="text-xs font-semibold text-stone-400 uppercase tracking-wider">Amenities</p>
-        <div className="flex flex-wrap gap-4">
-          {AMENITY_FIELDS.map((a) => (
-            <label key={a.key} className="flex items-center gap-2 cursor-pointer">
-              <Checkbox checked={!!(form as any)[a.key]}
-                onCheckedChange={(v) => set(a.key, !!v)} className="border-stone-600" />
-              <span className="flex items-center gap-1.5 text-sm text-stone-300">{a.icon}{a.label}</span>
-            </label>
-          ))}
         </div>
       </div>
 
@@ -504,6 +471,7 @@ function EditPropertyForm({
     maxTotalPeople: initial.maxTotalPeople ?? "",
     bookingModes: initial.bookingModes ?? ["AM", "PM"],
     overnightEnabled: initial.overnightEnabled ?? true,
+    lodgingAvailable: initial.lodgingAvailable ?? false,
     hasHeatedBlind: initial.hasHeatedBlind ?? false,
     hasAtvAccess: initial.hasAtvAccess ?? false,
     hasWaterAccess: initial.hasWaterAccess ?? false,
@@ -619,6 +587,7 @@ function EditPropertyForm({
       maxTotalPeople: form.maxTotalPeople ? Number(form.maxTotalPeople) : undefined,
       bookingModes: finalBookingModes,
       overnightEnabled: form.overnightEnabled,
+      lodgingAvailable: form.lodgingAvailable,
       hasHeatedBlind: form.hasHeatedBlind,
       hasAtvAccess: form.hasAtvAccess,
       hasWaterAccess: form.hasWaterAccess,
@@ -753,19 +722,10 @@ function EditPropertyForm({
             <Switch checked={form.overnightEnabled} onCheckedChange={(v) => set("overnightEnabled", v)} />
             <Label className="text-stone-300 text-sm cursor-pointer">Overnight bookings enabled</Label>
           </div>
-        </div>
-      </div>
-
-      <div className="border border-stone-700 rounded-lg p-4 space-y-3">
-        <p className="text-xs font-semibold text-stone-400 uppercase tracking-wider">Amenities</p>
-        <div className="flex flex-wrap gap-4">
-          {AMENITY_FIELDS.map((a) => (
-            <label key={a.key} className="flex items-center gap-2 cursor-pointer">
-              <Checkbox checked={!!(form as any)[a.key]}
-                onCheckedChange={(v) => set(a.key, !!v)} className="border-stone-600" />
-              <span className="flex items-center gap-1.5 text-sm text-stone-300">{a.icon}{a.label}</span>
-            </label>
-          ))}
+          <div className="flex items-center gap-2 pt-2">
+            <Switch checked={form.lodgingAvailable} onCheckedChange={(v) => set("lodgingAvailable", v)} />
+            <Label className="text-stone-300 text-sm cursor-pointer">Lodging Available</Label>
+          </div>
         </div>
       </div>
 
@@ -979,13 +939,6 @@ function PropertyRow({ property, onEdit }: { property: any; onEdit: () => void }
             {property.maxWaterfowlHunters && <span>Waterfowl Hunters: {property.maxWaterfowlHunters}</span>}
             {property.maxUplandHunters > 0 && <span>Upland Hunters: {property.maxUplandHunters}</span>}
             {property.maxGuests > 0 && <span>Guests: {property.maxGuests}</span>}
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {AMENITY_FIELDS.filter((a) => property[a.key]).map((a) => (
-              <span key={a.key} className="flex items-center gap-1 text-xs text-stone-400 bg-stone-800 px-2 py-0.5 rounded">
-                {a.icon} {a.label}
-              </span>
-            ))}
           </div>
           {property.locationNotes && (
             <div>

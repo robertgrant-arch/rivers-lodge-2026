@@ -134,6 +134,7 @@ export const huntingProperties = pgTable("hunting_properties", {
   hasWaterAccess: boolean("hasWaterAccess").default(false),
   hasElectricity: boolean("hasElectricity").default(false),
   hasCellService: boolean("hasCellService").default(true),
+  lodgingAvailable: boolean("lodgingAvailable").default(false),
   bookingModes: json("bookingModes"), // ["AM", "PM"] or ["AM", "PM", "Overnight"]
   overnightEnabled: boolean("overnightEnabled").notNull().default(true),
   gpsLat: decimal("gpsLat", { precision: 10, scale: 7 }),
