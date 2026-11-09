@@ -1,6 +1,10 @@
 export { membershipRouter } from './server/router';
 // DB table refs — for admin feature consumption only
 export { members, membershipApplications, memberSkillGroups, skillGroups, skillGroupCalendarAccess, propertySkillGroupAccess, employees, employeeSkillGroups } from './schema';
+// Member File tables — STAFF-ONLY. Import only from the admin Member File router
+// (features/admin/server/memberFile.ts). Never select these in member-facing code.
+export { memberProfiles, memberChildren, memberStaffNotes, socialParentOrganizations } from './schema';
+export type { MemberProfile, MemberChild, MemberStaffNote, ActivityInterest } from './schema';
 // Skill group access types
 export type {
   SkillGroup,
