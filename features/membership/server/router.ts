@@ -12,6 +12,7 @@ import { publicProcedure, protectedProcedure, router } from "../../_core/server/
 import { notifyOwner } from "../../_core/server/notification";
 import { verifyCaptcha } from "@core/server/captcha";
 import * as dal from "./dal";
+import { insertMemberWithUniqueNumber } from "./memberNumbers";
 import { members, users, membershipApplications, memberSkillGroups, skillGroups } from '@core/db/schema';
 
 // ─── Role Guards ──────────────────────────────────────────────────────────────
@@ -192,20 +193,17 @@ export const membershipRouter = router({
         .where(eq(members.userId, input.userId))
         .limit(1);
       if (existing) throw new TRPCError({ code: "CONFLICT", message: "This user already has a member record" });
-      let memberNumber = input.memberNumber;
-      if (!memberNumber) {
-        const year = new Date().getFullYear();
-        const [{ count }] = await db.select({ count: sql<number>`count(*)` }).from(members);
-        memberNumber = `RL-${year}-${String(Number(count) + 1).padStart(4, "0")}`;
-      }
-      const [newMember] = await db.insert(members).values({
-        userId: input.userId,
-        memberNumber,
-        active: true,
-        joinDate: input.joinDate ?? new Date().toISOString().split("T")[0],
-        renewalDate: input.renewalDate ?? null,
-        notes: input.notes ?? null,
-      } as any).returning({ id: members.id });
+      // Unique RL-<year>-NNNN (or the staff-entered number, if unused) — see memberNumbers.ts
+      const { result: [newMember], memberNumber } = await insertMemberWithUniqueNumber(db, input.memberNumber, (memberNumber) =>
+        db.insert(members).values({
+          userId: input.userId,
+          memberNumber,
+          active: true,
+          joinDate: input.joinDate ?? new Date().toISOString().split("T")[0],
+          renewalDate: input.renewalDate ?? null,
+          notes: input.notes ?? null,
+        } as any).returning({ id: members.id }),
+      );
 
       if (input.skillGroupIds && input.skillGroupIds.length > 0) {
         await db.insert(memberSkillGroups).values(
@@ -281,11 +279,12 @@ export const membershipRouter = router({
       return { member: existing[0], created: false };
     }
 
-    const year = new Date().getFullYear();
-    const memberNumber = `RL-${year}-PREVIEW`;
+    // Preview stubs belong to an admin's own login, not a real member, so they
+    // get no member number. (This used to write RL-<year>-PREVIEW for every
+    // admin, which is how two rows ended up sharing RL-2026-PREVIEW.)
     const [newMember] = await db.insert(members).values({
       userId: ctx.user.id,
-      memberNumber,
+      memberNumber: null,
       active: true,
       joinDate: new Date().toISOString().split("T")[0],
     }).returning();

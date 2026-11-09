@@ -1,4 +1,6 @@
 export { membershipRouter } from './server/router';
+// Member-number assignment + uniqueness (server-only helpers)
+export { insertMemberWithUniqueNumber, assertMemberNumberAvailable, normalizeMemberNumber, isMemberNumberConflict, memberNumberConflictError } from './server/memberNumbers';
 // DB table refs — for admin feature consumption only
 export { members, membershipApplications, memberSkillGroups, skillGroups, skillGroupCalendarAccess, propertySkillGroupAccess, employees, employeeSkillGroups } from './schema';
 // Member File tables — STAFF-ONLY. Import only from the admin Member File router
