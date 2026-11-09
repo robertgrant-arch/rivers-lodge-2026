@@ -106,15 +106,20 @@ function CreatePropertyForm({
     mapUrl: "",
     mapFile: null as File | null,
     mapFileName: "",
+    coverImageUrl: "",
+    coverImageFile: null as File | null,
+    coverImageFileName: "",
     showGateCode: false,
     active: true,
     featuredOnPublicSite: true,
     sortOrder: 0,
   });
   const [isUploadingMap, setIsUploadingMap] = useState(false);
+  const [isUploadingCoverPhoto, setIsUploadingCoverPhoto] = useState(false);
 
   const set = (key: string, value: any) => setForm((f) => ({ ...f, [key]: value }));
   const uploadMap = trpc.propertyBooking.admin.properties.uploadMap.useMutation();
+  const uploadCoverPhoto = trpc.propertyBooking.admin.properties.uploadCoverPhoto.useMutation();
   const { data: availableActivities } = trpc.propertyBooking.properties.activities.useQuery();
 
   const handleNameChange = (v: string) => {
@@ -163,6 +168,47 @@ function CreatePropertyForm({
     }
   };
 
+  const handleCoverPhotoFileSelect = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    const file = files[0];
+    const validTypes = ["image/png", "image/jpeg"];
+    if (!validTypes.includes(file.type)) {
+      toast.error("Cover photo must be PNG or JPG");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Cover photo exceeds 5MB limit");
+      return;
+    }
+
+    setIsUploadingCoverPhoto(true);
+    try {
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const base64 = (e.target?.result as string).split(',')[1];
+        try {
+          const result = await uploadCoverPhoto.mutateAsync({
+            fileData: base64,
+            fileName: file.name,
+            contentType: file.type as "image/png" | "image/jpeg",
+          });
+          set("coverImageUrl", result.coverImageUrl);
+          set("coverImageFile", file);
+          set("coverImageFileName", file.name);
+          toast.success(`Cover photo "${file.name}" uploaded`);
+        } catch (err: any) {
+          toast.error(`Upload failed: ${err.message}`);
+        } finally {
+          setIsUploadingCoverPhoto(false);
+        }
+      };
+      reader.readAsDataURL(file);
+    } catch (err) {
+      toast.error("Failed to read file");
+      setIsUploadingCoverPhoto(false);
+    }
+  };
+
   const handleSubmit = () => {
     if (!form.name.trim()) { toast.error("Property name is required."); return; }
     if (!form.slug.trim()) { toast.error("Slug is required."); return; }
@@ -206,6 +252,7 @@ function CreatePropertyForm({
       locationNotes: form.locationNotes || undefined,
       gateCode: form.gateCode || undefined,
       mapUrl: form.mapUrl || undefined,
+      coverImageUrl: form.coverImageUrl || undefined,
       active: form.active,
       featuredOnPublicSite: form.featuredOnPublicSite,
       sortOrder: Number(form.sortOrder),
@@ -416,6 +463,48 @@ function CreatePropertyForm({
             )}
           </div>
         </div>
+
+        <div className="space-y-1.5">
+          <Label className="text-stone-300 text-sm">Cover Photo (PNG or JPG)</Label>
+          <div className="flex items-center gap-2">
+            <input
+              type="file"
+              accept=".png,.jpg,.jpeg"
+              onChange={(e) => handleCoverPhotoFileSelect(e.target.files)}
+              className="hidden"
+              id="cover-photo-upload"
+              disabled={isUploadingCoverPhoto}
+            />
+            <label htmlFor="cover-photo-upload" className="flex-1 cursor-pointer">
+              <Button variant="outline" disabled={isUploadingCoverPhoto} className="w-full bg-stone-800 border-stone-700 text-stone-300 hover:bg-stone-700 disabled:opacity-50">
+                {isUploadingCoverPhoto ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Uploading...
+                  </>
+                ) : (
+                  <>
+                    <Upload className="w-4 h-4 mr-2" />
+                    {form.coverImageFileName || "Choose file"}
+                  </>
+                )}
+              </Button>
+            </label>
+            {form.coverImageFile && !isUploadingCoverPhoto && (
+              <button
+                onClick={() => { set("coverImageFile", null); set("coverImageUrl", ""); set("coverImageFileName", ""); }}
+                className="p-2 hover:bg-stone-700 rounded"
+              >
+                <X className="w-4 h-4 text-stone-400" />
+              </button>
+            )}
+          </div>
+          {form.coverImageUrl && (
+            <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-stone-800 border border-stone-700">
+              <img src={form.coverImageUrl} alt="Cover preview" className="w-full h-full object-cover" />
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="flex items-center justify-between">
@@ -482,16 +571,21 @@ function EditPropertyForm({
     mapUrl: initial.mapUrl ?? "",
     mapFile: null as File | null,
     mapFileName: "",
+    coverImageUrl: initial.coverImageUrl ?? "",
+    coverImageFile: null as File | null,
+    coverImageFileName: "",
     showGateCode: false,
     active: initial.active ?? true,
     featuredOnPublicSite: initial.featuredOnPublicSite ?? true,
     sortOrder: initial.sortOrder ?? 0,
   });
   const [isUploadingMap, setIsUploadingMap] = useState(false);
+  const [isUploadingCoverPhoto, setIsUploadingCoverPhoto] = useState(false);
   const [propertySkillGroupAccess, setPropertySkillGroupAccess] = useState<Record<number, boolean>>({});
 
   const set = (key: string, value: any) => setForm((f) => ({ ...f, [key]: value }));
   const uploadMap = trpc.propertyBooking.admin.properties.uploadMap.useMutation();
+  const uploadCoverPhoto = trpc.propertyBooking.admin.properties.uploadCoverPhoto.useMutation();
   const { data: availableActivities } = trpc.propertyBooking.properties.activities.useQuery();
   const skillGroupsQuery = trpc.membership.listSkillGroupsForPreview.useQuery();
   const propertyAccessQuery = trpc.portal.calendarSettings.getPropertyCalendarAccessBySkillGroup.useQuery();
@@ -546,6 +640,47 @@ function EditPropertyForm({
     }
   };
 
+  const handleCoverPhotoFileSelect = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    const file = files[0];
+    const validTypes = ["image/png", "image/jpeg"];
+    if (!validTypes.includes(file.type)) {
+      toast.error("Cover photo must be PNG or JPG");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Cover photo exceeds 5MB limit");
+      return;
+    }
+
+    setIsUploadingCoverPhoto(true);
+    try {
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const base64 = (e.target?.result as string).split(',')[1];
+        try {
+          const result = await uploadCoverPhoto.mutateAsync({
+            fileData: base64,
+            fileName: file.name,
+            contentType: file.type as "image/png" | "image/jpeg",
+          });
+          set("coverImageUrl", result.coverImageUrl);
+          set("coverImageFile", file);
+          set("coverImageFileName", file.name);
+          toast.success(`Cover photo "${file.name}" uploaded`);
+        } catch (err: any) {
+          toast.error(`Upload failed: ${err.message}`);
+        } finally {
+          setIsUploadingCoverPhoto(false);
+        }
+      };
+      reader.readAsDataURL(file);
+    } catch (err) {
+      toast.error("Failed to read file");
+      setIsUploadingCoverPhoto(false);
+    }
+  };
+
   // Load existing property skill group access on mount
   useEffect(() => {
     if (propertyAccessQuery.data && initial.id) {
@@ -596,6 +731,7 @@ function EditPropertyForm({
       locationNotes: form.locationNotes || undefined,
       gateCode: form.gateCode || undefined,
       mapUrl: form.mapUrl || undefined,
+      coverImageUrl: form.coverImageUrl || undefined,
       active: form.active,
       featuredOnPublicSite: form.featuredOnPublicSite,
       sortOrder: Number(form.sortOrder),
@@ -793,6 +929,48 @@ function EditPropertyForm({
               </button>
             )}
           </div>
+        </div>
+
+        <div className="space-y-1.5">
+          <Label className="text-stone-300 text-sm">Cover Photo (PNG or JPG)</Label>
+          <div className="flex items-center gap-2">
+            <input
+              type="file"
+              accept=".png,.jpg,.jpeg"
+              onChange={(e) => handleCoverPhotoFileSelect(e.target.files)}
+              className="hidden"
+              id="cover-photo-upload-edit"
+              disabled={isUploadingCoverPhoto}
+            />
+            <label htmlFor="cover-photo-upload-edit" className="flex-1 cursor-pointer">
+              <Button variant="outline" disabled={isUploadingCoverPhoto} className="w-full bg-stone-800 border-stone-700 text-stone-300 hover:bg-stone-700 disabled:opacity-50">
+                {isUploadingCoverPhoto ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Uploading...
+                  </>
+                ) : (
+                  <>
+                    <Upload className="w-4 h-4 mr-2" />
+                    {form.coverImageFileName || "Choose file"}
+                  </>
+                )}
+              </Button>
+            </label>
+            {form.coverImageFile && !isUploadingCoverPhoto && (
+              <button
+                onClick={() => { set("coverImageFile", null); set("coverImageUrl", ""); set("coverImageFileName", ""); }}
+                className="p-2 hover:bg-stone-700 rounded"
+              >
+                <X className="w-4 h-4 text-stone-400" />
+              </button>
+            )}
+          </div>
+          {form.coverImageUrl && (
+            <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-stone-800 border border-stone-700">
+              <img src={form.coverImageUrl} alt="Cover preview" className="w-full h-full object-cover" />
+            </div>
+          )}
         </div>
       </div>
 

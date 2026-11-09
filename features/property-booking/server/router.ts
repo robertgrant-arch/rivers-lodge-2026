@@ -1651,6 +1651,29 @@ export const propertyBookingRouter = router({
           return { mapUrl: url };
         }),
 
+      /** Upload property cover photo (PNG, JPG) */
+      uploadCoverPhoto: protectedProcedure
+        .input(z.object({
+          fileData: z.string(), // base64 encoded file
+          fileName: z.string().max(255),
+          contentType: z.enum(["image/png", "image/jpeg"]),
+        }))
+        .mutation(async ({ ctx, input }: { ctx: any; input: any }) => {
+          requireAdmin(ctx.user.role);
+
+          // Decode base64
+          const buffer = Buffer.from(input.fileData, 'base64');
+
+          // Upload to S3
+          const { url } = await storagePut(
+            `properties/covers/${Date.now()}-${input.fileName}`,
+            buffer,
+            input.contentType,
+          );
+
+          return { coverImageUrl: url };
+        }),
+
       /** Maintenance: Backfill null bookingModes and overnightEnabled (for PR #57 compat) */
       backfillDefaults: protectedProcedure
         .mutation(async ({ ctx }: { ctx: any }) => {
