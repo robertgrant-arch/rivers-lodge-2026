@@ -109,6 +109,9 @@ temp/
 # Webdev artifacts (checkpoint zips, migrations, etc.)
 .webdev/
 
+# Drizzle migrations metadata (auto-generated)
+_core/db/migrations/meta/
+
 # Manus version file (auto-generated, not part of source)
 client/public/__manus__/version.json
 
