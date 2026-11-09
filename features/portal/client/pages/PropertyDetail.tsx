@@ -25,7 +25,10 @@ import {
   ArrowLeft, Users, MapPin, TreePine, Waves, Zap, Wifi, Truck,
   Thermometer, Calendar, CheckCircle2, XCircle, AlertCircle,
   Loader2, ChevronLeft, ChevronRight, Clock, Info, Plus, Trash2,
+  Map as MapIcon, FileText, Navigation, ExternalLink,
 } from "lucide-react";
+import { PROPERTY_ACTIVITIES, activityLabel, isHuntingActivity, isFishingActivity } from "@shared/propertyActivities";
+import { BOOKING_RULES, MAX_CONSECUTIVE_DAYS, bookingDayCount, propertyCapacity } from "@shared/propertyRules";
 import { toast } from "sonner";
 import WaiverSigningForm from "@features/portal/client/components/WaiverSigningForm";
 // idempotencyKey uses native crypto.randomUUID (produces a valid UUID v4)
@@ -50,21 +53,28 @@ const STATUS_LABELS: Record<string, string> = {
   closed: "Out of season",
 };
 
-const ACTIVITY_OPTIONS = [
-  { value: "deer", label: "Deer Hunting" },
-  { value: "duck", label: "Duck Hunting" },
-  { value: "turkey", label: "Turkey Hunting" },
-  { value: "quail", label: "Quail Hunting" },
-  { value: "dove", label: "Dove Hunting" },
-  { value: "hog", label: "Hog Hunting" },
-  { value: "bass", label: "Bass Fishing" },
-  { value: "catfish", label: "Catfish Fishing" },
-  { value: "crappie", label: "Crappie Fishing" },
-  { value: "mixed_hunt", label: "Mixed Hunt" },
-  { value: "mixed_fish", label: "Mixed Fish" },
-  { value: "hunt_and_fish", label: "Hunt & Fish" },
-  { value: "scouting", label: "Scouting" },
-];
+/**
+ * Activities a member can pick when booking: the property's approved labels
+ * (legacy stored values mapped by the server), or all seven if it has none.
+ */
+function bookingActivityOptions(property: any): Array<{ value: string; label: string }> {
+  const keys: string[] = Array.isArray(property?.displayActivities) ? property.displayActivities : [];
+  const list = keys.length > 0 ? keys : PROPERTY_ACTIVITIES.map((a) => a.value);
+  return list.map((value) => ({ value, label: activityLabel(value) ?? value }));
+}
+
+/** Party-size limit: Max Capacity, or the previous per-activity maximum if not set. */
+function partySizeLimit(property: any): number {
+  return propertyCapacity(property) ?? Math.max(
+    property?.maxDeerHunters ?? 0,
+    property?.maxWaterfowlHunters ?? 0,
+    property?.maxUplandHunters ?? 0,
+    property?.maxGuests ?? 0,
+    2,
+  );
+}
+
+const isPdfUrl = (url: string) => /\.pdf($|\?)/i.test(url);
 
 /** Normalise a date value (Date object, ISO string, or YYYY-MM-DD string) to a YYYY-MM-DD string */
 function toDateStr(d: string | Date | unknown): string {
@@ -366,11 +376,8 @@ function BookingDialog({
   const { user } = useAuth({});
 
   const [partySize, setPartySize] = useState(1);
-  const [activity, setActivity] = useState(
-    Array.isArray(property?.activities) && property.activities.length > 0
-      ? property.activities[0]
-      : "deer"
-  );
+  const activityOptions = bookingActivityOptions(property);
+  const [activity, setActivity] = useState(activityOptions[0]?.value ?? "fishing");
   const [adults, setAdults] = useState<PartyAdult[]>([]);
   const [huntingLicense, setHuntingLicense] = useState(false);
   const [fishingLicense, setFishingLicense] = useState(false);
@@ -380,8 +387,8 @@ function BookingDialog({
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
 
   const totalDays = daysBetween(startDate, endDate);
-  const isHunting = ["deer","duck","turkey","quail","dove","hog","mixed_hunt","hunt_and_fish","scouting"].includes(activity);
-  const isFishing = ["bass","catfish","crappie","mixed_fish","hunt_and_fish"].includes(activity);
+  const isHunting = isHuntingActivity(activity);
+  const isFishing = isFishingActivity(activity);
 
   const initializeAdults = (newPartySize: number) => {
     const currentSize = adults.length;
@@ -597,7 +604,7 @@ function BookingDialog({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="bg-stone-800 border-stone-700">
-                {ACTIVITY_OPTIONS.map((opt) => (
+                {activityOptions.map((opt) => (
                   <SelectItem key={opt.value} value={opt.value} className="text-stone-100">
                     {opt.label}
                   </SelectItem>
@@ -609,13 +616,7 @@ function BookingDialog({
           {/* Party size */}
           <div className="space-y-1.5">
             {(() => {
-              const maxCapacity = Math.max(
-                property?.maxDeerHunters ?? 0,
-                property?.maxWaterfowlHunters ?? 0,
-                property?.maxUplandHunters ?? 0,
-                property?.maxGuests ?? 0,
-                2
-              );
+              const maxCapacity = partySizeLimit(property);
               return (
                 <>
                   <Label className="text-stone-300 text-sm">
@@ -808,8 +809,7 @@ function BookingDialog({
           <div className="flex items-start gap-2 p-3 bg-amber-900/20 border border-amber-800/40 rounded-lg">
             <Info className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
             <p className="text-xs text-amber-300">
-              By booking you agree to the lodge's hunting rules, harvest reporting requirements,
-              and cancellation policy. A harvest report is due within 7 days of your outing.
+              By booking you agree to the lodge's cancellation policy. {BOOKING_RULES[0]}
             </p>
           </div>
         </div>
@@ -896,12 +896,14 @@ export default function PropertyDetail() {
         setSelectedStart(date);
         setSelectedEnd(null);
       } else {
-        if (date < selectedStart) {
-          setSelectedEnd(selectedStart);
-          setSelectedStart(date);
-        } else {
-          setSelectedEnd(date);
+        const [start, end] = date < selectedStart ? [date, selectedStart] : [selectedStart, date];
+        // Booking rule: maximum consecutive days (also enforced by the server).
+        if (bookingDayCount(start, end) > MAX_CONSECUTIVE_DAYS) {
+          toast.error(`Bookings are limited to a maximum of ${MAX_CONSECUTIVE_DAYS} consecutive days.`);
+          return;
         }
+        setSelectedStart(start);
+        setSelectedEnd(end);
       }
     } else {
       // Single-click for AM/PM/AllDay: set both start and end to the same date
@@ -935,7 +937,11 @@ export default function PropertyDetail() {
   }
 
   const { property, rules, seasons, amenities, images } = data;
-  const coverImage = property.coverImageUrl ?? images?.[0]?.url;
+  // Never use a map as the hero image (maps are property_images with type 'map').
+  const coverImage =
+    property.coverImageUrl ??
+    images?.find((img: any) => img.type === "cover")?.url ??
+    images?.find((img: any) => img.type !== "map")?.url;
 
   const canBook = selectedStart && selectedEnd;
   const selectedDays = canBook ? daysBetween(selectedStart!, selectedEnd!) : 0;
@@ -975,31 +981,14 @@ export default function PropertyDetail() {
           <Card className="bg-stone-900 border-stone-700">
             <CardContent className="pt-4 space-y-3">
               {(() => {
-                const capacityItems = [
-                  { label: "Deer", value: property.maxDeerHunters },
-                  { label: "Waterfowl", value: property.maxWaterfowlHunters },
-                  { label: "Upland", value: property.maxUplandHunters },
-                  { label: "Guests", value: property.maxGuests },
-                ].filter((item) => (item.value ?? 0) > 0);
-
-                return capacityItems.length > 0 ? (
-                  <div className="text-xs text-stone-400 space-y-1">
-                    <div className="font-medium text-stone-300 mb-1">Capacity:</div>
-                    {capacityItems.map((item) => (
-                      <div key={item.label} className="flex justify-between">
-                        <span>{item.label}</span>
-                        <span className="text-stone-200">{item.value}</span>
-                      </div>
-                    ))}
+                const capacity = propertyCapacity(property);
+                return (
+                  <div className="flex items-center gap-2 text-sm text-stone-300" data-testid="property-capacity">
+                    <Users className="w-4 h-4 text-stone-500" />
+                    {capacity !== null ? <>Capacity: <span className="text-stone-100 font-medium">{capacity}</span></> : "Capacity not specified"}
                   </div>
-                ) : null;
+                );
               })()}
-              {!property.maxDeerHunters && !property.maxWaterfowlHunters && !property.maxUplandHunters && !property.maxGuests && (
-                <div className="flex items-center gap-2 text-sm text-stone-400">
-                  <Users className="w-4 h-4 text-stone-500" />
-                  Capacity not specified
-                </div>
-              )}
               {property.acreage && (
                 <div className="flex items-center gap-2 text-sm text-stone-300">
                   <MapPin className="w-4 h-4 text-stone-500" />
@@ -1016,20 +1005,70 @@ export default function PropertyDetail() {
           </Card>
 
           {/* Available Activities */}
-          {Array.isArray(property.activities) && property.activities.length > 0 && (
+          {Array.isArray(property.displayActivities) && property.displayActivities.length > 0 && (
             <Card className="bg-stone-900 border-stone-700">
               <CardHeader className="pb-2 pt-4">
                 <CardTitle className="text-sm text-stone-300">Available Activities</CardTitle>
               </CardHeader>
               <CardContent className="pt-0 space-y-2">
-                {property.activities.map((activity: string) => {
-                  const activityConfig = ACTIVITY_OPTIONS.find((a) => a.value === activity);
-                  return (
-                    <div key={activity} className="text-sm text-stone-300">
-                      {activityConfig?.label ?? activity}
-                    </div>
-                  );
-                })}
+                {property.displayActivities.map((key: string) => (
+                  <div key={key} className="text-sm text-stone-300">{activityLabel(key) ?? key}</div>
+                ))}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Maps & Directions (hidden when the property has neither) */}
+          {((property.maps?.length ?? 0) > 0 || property.directionsUrl) && (
+            <Card className="bg-stone-900 border-stone-700" data-testid="maps-directions">
+              <CardHeader className="pb-2 pt-4">
+                <CardTitle className="text-sm text-stone-300">Maps &amp; Directions</CardTitle>
+              </CardHeader>
+              <CardContent className="pt-0 space-y-3">
+                {(property.maps?.length ?? 0) > 0 && (
+                  <ul className="grid grid-cols-2 gap-2">
+                    {property.maps.map((m: any, i: number) => {
+                      const label = m.label || `Map ${i + 1}`;
+                      return (
+                        <li key={m.id ?? i}>
+                          <a
+                            href={m.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="group block rounded-lg overflow-hidden border border-stone-700 hover:border-amber-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-600"
+                            aria-label={`Open ${label} full size`}
+                          >
+                            <div className="aspect-[4/3] bg-stone-800 flex items-center justify-center overflow-hidden">
+                              {isPdfUrl(m.url) ? (
+                                <div className="flex flex-col items-center gap-1 text-stone-400">
+                                  <FileText className="w-8 h-8" />
+                                  <span className="text-[10px] uppercase tracking-wider">PDF</span>
+                                </div>
+                              ) : (
+                                <img src={m.url} alt={label} loading="lazy" className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                              )}
+                            </div>
+                            <div className="flex items-center justify-between gap-1 px-2 py-1.5 text-xs text-stone-300">
+                              <span className="truncate">{label}</span>
+                              <ExternalLink className="w-3 h-3 shrink-0 text-stone-500" aria-hidden="true" />
+                            </div>
+                          </a>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+                {property.directionsUrl && (
+                  <a
+                    href={property.directionsUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-2 w-full rounded-md bg-amber-700 hover:bg-amber-600 text-white text-sm font-medium py-2.5 transition-colors"
+                  >
+                    <Navigation className="w-4 h-4" aria-hidden="true" />
+                    Get Directions
+                  </a>
+                )}
               </CardContent>
             </Card>
           )}
@@ -1048,40 +1087,20 @@ export default function PropertyDetail() {
             </Card>
           )}
 
-          {/* Booking rules */}
-          {rules && (
-            <Card className="bg-stone-900 border-stone-700">
-              <CardHeader className="pb-2 pt-4">
-                <CardTitle className="text-sm text-stone-300">Booking Rules</CardTitle>
-              </CardHeader>
-              <CardContent className="pt-0 space-y-2 text-xs text-stone-400">
-                <div className="flex items-center gap-1.5">
-                  <Clock className="w-3.5 h-3.5" />
-                  Book up to {rules.advanceBookingDays} days in advance
+          {/* Booking rules — only the two approved rules */}
+          <Card className="bg-stone-900 border-stone-700" data-testid="booking-rules">
+            <CardHeader className="pb-2 pt-4">
+              <CardTitle className="text-sm text-stone-300">Booking Rules</CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0 space-y-2 text-xs text-stone-400">
+              {BOOKING_RULES.map((rule, i) => (
+                <div key={rule} className="flex items-start gap-1.5">
+                  {i === 0 ? <CheckCircle2 className="w-3.5 h-3.5 shrink-0 mt-px" /> : <Calendar className="w-3.5 h-3.5 shrink-0 mt-px" />}
+                  {rule}
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <Calendar className="w-3.5 h-3.5" />
-                  Max {rules.maxConsecutiveDays} consecutive days
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <Calendar className="w-3.5 h-3.5" />
-                  Max {rules.maxDaysPerSeason} days per season
-                </div>
-                {rules.requiresApproval && (
-                  <div className="flex items-center gap-1.5 text-amber-400">
-                    <Info className="w-3.5 h-3.5" />
-                    Bookings require staff approval
-                  </div>
-                )}
-                {rules.harvestReportRequired && (
-                  <div className="flex items-center gap-1.5">
-                    <CheckCircle2 className="w-3.5 h-3.5" />
-                    Harvest report due within {rules.harvestReportDays} days
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
+              ))}
+            </CardContent>
+          </Card>
 
           {/* Seasons */}
           {seasons && seasons.length > 0 && (

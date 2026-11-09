@@ -17,62 +17,24 @@ import {
   Calendar, ChevronRight, Filter, Search, AlertCircle, Loader2, ArrowLeft,
 } from "lucide-react";
 import { Input } from '@shared/ui/input';
+import { PROPERTY_ACTIVITIES, activityLabel } from "@shared/propertyActivities";
+import { propertyCapacity } from "@shared/propertyRules";
 
 // ─── Activity config ─────────────────────────────────────────────────────────
 
-const ACTIVITIES = [
-  { value: "all", label: "All Properties", icon: "🏕️" },
-  { value: "deer", label: "Deer", icon: "🦌" },
-  { value: "duck", label: "Duck", icon: "🦆" },
-  { value: "turkey", label: "Turkey", icon: "🦃" },
-  { value: "quail", label: "Quail", icon: "🐦" },
-  { value: "dove", label: "Dove", icon: "🕊️" },
-  { value: "hog", label: "Hog", icon: "🐗" },
-  { value: "bass", label: "Bass", icon: "🐟" },
-  { value: "catfish", label: "Catfish", icon: "🐠" },
-  { value: "hunt_and_fish", label: "Hunt & Fish", icon: "🎣" },
+// Filter pills use the same seven approved labels as the property page.
+const ACTIVITY_FILTERS = [
+  { value: "all", label: "All Properties" },
+  ...PROPERTY_ACTIVITIES.map((a) => ({ value: a.value, label: a.label })),
 ];
-
-const PROPERTY_TYPE_LABELS: Record<string, string> = {
-  stand: "Deer Stand",
-  blind: "Blind",
-  field: "Field",
-  pond: "Pond",
-  creek: "Creek",
-  food_plot: "Food Plot",
-  zone: "Zone",
-  lodge: "Lodge",
-};
-
-const ACTIVITY_COLORS: Record<string, string> = {
-  deer: "bg-amber-900/20 text-amber-300 border-amber-800",
-  duck: "bg-blue-900/20 text-blue-300 border-blue-800",
-  turkey: "bg-orange-900/20 text-orange-300 border-orange-800",
-  quail: "bg-yellow-900/20 text-yellow-300 border-yellow-800",
-  dove: "bg-slate-700/20 text-slate-300 border-slate-600",
-  hog: "bg-red-900/20 text-red-300 border-red-800",
-  bass: "bg-teal-900/20 text-teal-300 border-teal-800",
-  catfish: "bg-cyan-900/20 text-cyan-300 border-cyan-800",
-  hunt_and_fish: "bg-emerald-900/20 text-emerald-300 border-emerald-800",
-  mixed_hunt: "bg-lime-900/20 text-lime-300 border-lime-800",
-  mixed_fish: "bg-sky-900/20 text-sky-300 border-sky-800",
-};
 
 // ─── Property Card ────────────────────────────────────────────────────────────
 
 function PropertyCard({ property }: { property: any }) {
-  const activities = Array.isArray(property.activities) ? property.activities : [];
-
-  const capacityItems = [
-    { label: "Deer", value: property.maxDeerHunters },
-    { label: "Waterfowl", value: property.maxWaterfowlHunters },
-    { label: "Upland", value: property.maxUplandHunters },
-    { label: "Guests", value: property.maxGuests },
-  ].filter((item) => item.value > 0);
-
-  const capacityDisplay = capacityItems.length > 0
-    ? capacityItems.map((item) => `${item.label} ${item.value}`).join(" · ")
-    : null;
+  // Approved labels only (the server maps legacy stored values).
+  const activities: string[] = Array.isArray(property.displayActivities) ? property.displayActivities : [];
+  const capacity = propertyCapacity(property);
+  const capacityDisplay = capacity !== null ? `Capacity ${capacity}` : null;
 
   return (
     <Link href={`/portal/properties/${property.id}`}>
@@ -94,15 +56,11 @@ function PropertyCard({ property }: { property: any }) {
           {/* Activity badges overlay */}
           {activities.length > 0 && (
             <div className="absolute top-3 left-3 flex flex-wrap gap-1">
-              {activities.map((activity: string) => {
-                const activityColor = ACTIVITY_COLORS[activity] ?? "bg-stone-700/20 text-stone-300 border-stone-600";
-                const activityConfig = ACTIVITIES.find((a) => a.value === activity);
-                return (
-                  <span key={activity} className={`text-xs px-2 py-0.5 rounded-full border font-medium ${activityColor}`}>
-                    {activityConfig?.icon} {activityConfig?.label ?? activity}
-                  </span>
-                );
-              })}
+              {activities.map((activity: string) => (
+                <span key={activity} className="text-xs px-2 py-0.5 rounded-full border font-medium bg-stone-900/80 text-stone-200 border-stone-600">
+                  {activityLabel(activity) ?? activity}
+                </span>
+              ))}
             </div>
           )}
         </div>
@@ -196,7 +154,7 @@ export default function PropertyBrowser() {
       <div className="space-y-3">
         {/* Activity filter pills */}
         <div className="flex flex-wrap gap-2">
-          {ACTIVITIES.map((act) => (
+          {ACTIVITY_FILTERS.map((act) => (
             <button
               key={act.value}
               onClick={() => setActivityFilter(act.value)}
@@ -206,7 +164,7 @@ export default function PropertyBrowser() {
                   : "bg-stone-800 border-stone-700 text-stone-300 hover:border-stone-500"
               }`}
             >
-              {act.icon} {act.label}
+              {act.label}
             </button>
           ))}
         </div>

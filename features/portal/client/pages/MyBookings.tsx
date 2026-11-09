@@ -21,6 +21,7 @@ import {
   CheckCircle2, XCircle, Clock, FileText, Plus,
 } from "lucide-react";
 import { toast } from "sonner";
+import { activityLabel } from "@shared/propertyActivities";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -72,13 +73,6 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; icon: ReactN
   },
 };
 
-const ACTIVITY_LABELS: Record<string, string> = {
-  deer: "Deer Hunting", duck: "Duck Hunting", turkey: "Turkey Hunting",
-  quail: "Quail Hunting", dove: "Dove Hunting", hog: "Hog Hunting",
-  bass: "Bass Fishing", catfish: "Catfish Fishing", crappie: "Crappie Fishing",
-  mixed_hunt: "Mixed Hunt", mixed_fish: "Mixed Fish", hunt_and_fish: "Hunt & Fish",
-  scouting: "Scouting",
-};
 
 const TIME_SLOT_LABELS: Record<string, string> = {
   AM: "AM",
@@ -197,7 +191,7 @@ function BookingCard({ booking, onCancel }: { booking: any; onCancel: () => void
 
             {/* Activity + time slot + party */}
             <div className="flex flex-wrap gap-3 text-xs text-stone-400">
-              <span>{ACTIVITY_LABELS[booking.activity] ?? booking.activity}</span>
+              {activityLabel(booking.activity) && <span>{activityLabel(booking.activity)}</span>}
               {booking.timeSlot && (
                 <span>·</span>
               )}
@@ -210,13 +204,6 @@ function BookingCard({ booking, onCancel }: { booking: any; onCancel: () => void
               </span>
             </div>
 
-            {/* Harvest report reminder */}
-            {booking.status === "completed" && !booking.harvestReportSubmitted && (
-              <div className="flex items-center gap-1.5 text-xs text-amber-400 bg-amber-900/20 border border-amber-800/40 rounded px-2 py-1">
-                <FileText className="w-3.5 h-3.5" />
-                Harvest report due — please submit within 7 days
-              </div>
-            )}
           </div>
 
           {/* Status + actions */}
