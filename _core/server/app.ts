@@ -172,8 +172,9 @@ async function startServer() {
   const port = await resolvePort();
 
   // ── Apply SQL migrations ────────────────────────────────────────────────────
-  // Runs all pending migrations (0001–0017) from _core/db/migrations/
-  // Uses _migrations_applied table for idempotent tracking
+  // The ONLY place SQL migrations are applied (see CLAUDE.md → Migrations).
+  // Applies each _core/db/migrations/*.sql not yet in _migrations_applied, one
+  // transaction per file, BEFORE server.listen; exits non-zero on any failure.
   await applySqlMigrations();
 
   server.listen(port, () => {
@@ -181,4 +182,9 @@ async function startServer() {
   });
 }
 
-startServer().catch(console.error);
+// Any boot failure (DB unreachable during migrations, etc.) must exit non-zero
+// so Render's health check fails and the previous version keeps serving.
+startServer().catch((err) => {
+  console.error("[boot] fatal:", err);
+  process.exit(1);
+});
