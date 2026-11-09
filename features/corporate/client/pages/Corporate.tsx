@@ -186,6 +186,9 @@ export default function Corporate() {
               Off-site that actually
               <br /><em className="italic font-light">means something.</em>
             </h1>
+            <p className="font-serif italic font-light text-white leading-snug max-w-xl mb-6" style={{ fontSize: "clamp(1.5rem,2.2vw,1.875rem)", textShadow: HERO_TEXT_SHADOW }}>
+              A private retreat where teams can truly connect.
+            </p>
             <p className="font-sans text-white/65 max-w-lg leading-relaxed mb-10" style={{ fontSize: "0.9375rem", textShadow: HERO_TEXT_SHADOW }}>
               Corporate retreats, executive meetings, client entertainment, and team building days in a private lodge setting. One group at a time.
             </p>

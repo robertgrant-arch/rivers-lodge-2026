@@ -256,6 +256,9 @@ return (
 <h1 className="font-serif font-light text-white leading-[0.92] mb-6" style={{ fontSize: "clamp(2.75rem,6.5vw,5.5rem)" }}>
 Your wedding weekend. <br /><em className="italic font-light">Entirely private.</em>
 </h1>
+<p className="font-serif italic font-light text-white leading-snug max-w-xl mb-6" style={{ fontSize: "clamp(1.5rem,2.2vw,1.875rem)", textShadow: "0 1px 3px rgba(0,0,0,0.6), 0 0 12px rgba(0,0,0,0.4), 0 2px 18px rgba(0,0,0,0.35)" }}>
+A full weekend celebration with family and friends.
+</p>
 <p className="font-sans font-medium text-white max-w-lg leading-relaxed mb-10" style={{ fontSize: "1rem" }}>
 From intimate ceremonies to grand receptions- every wedding at the Lodge is exclusively yours. No other groups, no shared access.
 </p>

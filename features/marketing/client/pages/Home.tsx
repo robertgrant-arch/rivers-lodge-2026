@@ -143,6 +143,12 @@ export default function Home() {
             Rivers Lodge
           </h1>
           <p
+            className="font-serif italic font-light text-white leading-snug max-w-xl mb-6"
+            style={{ fontSize: "clamp(1.5rem,2.2vw,1.875rem)", textShadow: "0 1px 3px rgba(0,0,0,0.6), 0 0 12px rgba(0,0,0,0.4), 0 2px 18px rgba(0,0,0,0.35)" }}
+          >
+            A premier private destination to stay, gather, and make memories.
+          </p>
+          <p
             className="font-sans text-white/70 max-w-lg mb-10 leading-relaxed"
             style={{ fontSize: "clamp(0.9375rem,1.2vw,1.0625rem)" }}
           >
