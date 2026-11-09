@@ -1034,43 +1034,16 @@ export default function PropertyDetail() {
             </Card>
           )}
 
-          {/* Amenities */}
-          {(property.hasHeatedBlind || property.hasAtvAccess || property.hasWaterAccess || property.hasElectricity || property.hasCellService) && (
+          {/* Lodging Available */}
+          {property.lodgingAvailable && (
             <Card className="bg-stone-900 border-stone-700">
               <CardHeader className="pb-2 pt-4">
-                <CardTitle className="text-sm text-stone-300">Amenities</CardTitle>
+                <CardTitle className="text-sm text-stone-300">Lodging</CardTitle>
               </CardHeader>
-              <CardContent className="pt-0 space-y-2">
-                {property.hasHeatedBlind && (
-                  <div className="flex items-center gap-2 text-sm text-stone-300">
-                    <Thermometer className="w-4 h-4 text-amber-500" /> Heated blind
-                  </div>
-                )}
-                {property.hasAtvAccess && (
-                  <div className="flex items-center gap-2 text-sm text-stone-300">
-                    <Truck className="w-4 h-4 text-amber-500" /> ATV access
-                  </div>
-                )}
-                {property.hasWaterAccess && (
-                  <div className="flex items-center gap-2 text-sm text-stone-300">
-                    <Waves className="w-4 h-4 text-amber-500" /> Water access
-                  </div>
-                )}
-                {property.hasElectricity && (
-                  <div className="flex items-center gap-2 text-sm text-stone-300">
-                    <Zap className="w-4 h-4 text-amber-500" /> Electricity
-                  </div>
-                )}
-                {property.hasCellService && (
-                  <div className="flex items-center gap-2 text-sm text-stone-300">
-                    <Wifi className="w-4 h-4 text-amber-500" /> Cell service
-                  </div>
-                )}
-                {amenities?.map((a: any) => (
-                  <div key={a.id} className="flex items-center gap-2 text-sm text-stone-300">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-500" /> {a.name}
-                  </div>
-                ))}
+              <CardContent className="pt-0">
+                <div className="flex items-center gap-2 text-sm text-stone-300">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-500" /> Lodging available
+                </div>
               </CardContent>
             </Card>
           )}
