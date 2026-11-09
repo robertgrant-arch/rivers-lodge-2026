@@ -42,6 +42,7 @@ import { storagePut, storageGetSignedUrl } from "@core/server/storage";
 import { ENV } from "@core/server/env";
 import { getPortalDb } from "@core/server/db";
 import { propertyDateInventory } from "@core/db/property-booking-schema";
+import { memberFileRouter } from "./memberFile";
 
 const getDb = getPortalDb;
 
@@ -2629,6 +2630,7 @@ export const adminRouter = router({
   customers: customersPortalRouter,
   employees: employeesPortalRouter,
   membership: membershipPortalRouter,
+  memberFile: memberFileRouter, // staff-only Member File (/ops/membership/:id)
   auditLog: auditLogRouter,
   analytics: analyticsRouter,
   users: usersAdminRouter,

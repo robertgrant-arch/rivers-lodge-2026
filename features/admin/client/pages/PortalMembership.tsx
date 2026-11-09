@@ -7,7 +7,8 @@ import { Input } from "@shared/ui/input";
 import { Label } from "@shared/ui/label";
 import { Textarea } from "@shared/ui/textarea";
 import { trpc } from "@shared/lib/trpc";
-import { Plus, Search, User, ChevronRight, X } from "lucide-react";
+import { Plus, Search, User, ChevronRight, X, SlidersHorizontal } from "lucide-react";
+import { Link, useLocation } from "wouter";
 import { toast } from "sonner";
 
 function formatDate(d: string | Date | null | undefined) {
@@ -534,6 +535,7 @@ export default function PortalMembership() {
   const [selectedRow, setSelectedRow] = useState<MemberRow | null>(null);
   const utils = trpc.useUtils();
 
+  const [, navigate] = useLocation();
   const statsQuery = trpc.portal.membership.stats.useQuery();
 
   const membersQuery = trpc.portal.membership.members.useInfiniteQuery(
@@ -646,7 +648,7 @@ export default function PortalMembership() {
                     <th className={thCls}>Joined</th>
                     <th className={thCls}>Renewal</th>
                     <th className={thCls}>Status</th>
-                    <th className={`${thCls} w-8`}></th>
+                    <th className={`${thCls} w-16`}><span className="sr-only">Actions</span></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -677,14 +679,21 @@ export default function PortalMembership() {
                   ) : (
                     membersFiltered.map((row: any) => {
                       const { member: m, user: u } = row;
+                      const fileHref = `/ops/membership/${m.id}`;
                       return (
                         <tr
                           key={m.id}
                           className="border-b border-[#57544E] hover:bg-[#423F3B]/50 cursor-pointer transition-colors"
-                          onClick={() => setSelectedRow(row as MemberRow)}
+                          onClick={() => navigate(fileHref)}
                         >
                           <td className={`${tdCls} text-[#E0D3BD]`}>
-                            {u?.email ?? "—"}
+                            <Link
+                              href={fileHref}
+                              className="hover:underline underline-offset-2"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              {u?.email ?? "—"}
+                            </Link>
                           </td>
                           <td className={`${tdCls} font-mono text-xs`}>{m.memberNumber ?? "—"}</td>
                           <td className={tdCls}>
@@ -696,7 +705,18 @@ export default function PortalMembership() {
                             <StatusDot active={m.active} />
                           </td>
                           <td className={tdCls}>
-                            <ChevronRight className="w-4 h-4 text-[#57544E]" />
+                            <span className="flex items-center justify-end gap-2">
+                              <button
+                                type="button"
+                                title="Quick edit"
+                                aria-label={`Quick edit ${u?.email ?? "member"}`}
+                                className="p-1 text-[#BABAAE] hover:text-[#E0D3BD] transition-colors"
+                                onClick={(e) => { e.stopPropagation(); setSelectedRow(row as MemberRow); }}
+                              >
+                                <SlidersHorizontal className="w-4 h-4" />
+                              </button>
+                              <ChevronRight className="w-4 h-4 text-[#57544E]" aria-hidden="true" />
+                            </span>
                           </td>
                         </tr>
                       );
