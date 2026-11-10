@@ -7,14 +7,26 @@ import { Input } from "@shared/ui/input";
 import { Label } from "@shared/ui/label";
 import { Textarea } from "@shared/ui/textarea";
 import { trpc } from "@shared/lib/trpc";
-import { Plus, Search, User, ChevronRight, X, SlidersHorizontal } from "lucide-react";
+import { Plus, Search, User, X, SlidersHorizontal, FileText } from "lucide-react";
+import { formatDateOnly, toDateInputValue, todayLocal } from "@shared/lib/dateOnly";
 import { Link, useLocation } from "wouter";
 import { toast } from "sonner";
 
+/** For timestamps (e.g. createdAt). Date-only columns (joinDate, renewalDate)
+ *  must use formatDateOnly, which shows the stored calendar date in every timezone. */
 function formatDate(d: string | Date | null | undefined) {
   if (!d) return "—";
   return new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
+
+/** Clay-outlined "View File" button-link to the Member File. */
+const viewFileBtnCls =
+  "inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 border border-[#9B4D19] text-[#E0D3BD] bg-[#9B4D19]/15 hover:bg-[#9B4D19] font-sans text-[11px] tracking-[0.08em] uppercase whitespace-nowrap transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-[#E0D3BD]";
+const quickEditBtnCls =
+  "inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 border border-[#57544E] text-[#BABAAE] hover:text-[#E0D3BD] hover:border-[#BABAAE] font-sans text-[11px] tracking-[0.08em] uppercase whitespace-nowrap transition-colors focus:outline-none focus-visible:ring-1 focus-visible:ring-[#E0D3BD]";
+/** Email styled as an obvious link. */
+const emailLinkCls =
+  "text-[#E0D3BD] underline decoration-[#9B4D19] decoration-1 underline-offset-4 cursor-pointer hover:text-white hover:decoration-2 focus:outline-none focus-visible:ring-1 focus-visible:ring-[#9B4D19] break-words";
 
 // ─── Status dot ──────────────────────────────────────────────────────────────
 function StatusDot({ active }: { active: boolean }) {
@@ -85,7 +97,7 @@ function AddMemberDialog({ open, onClose }: { open: boolean; onClose: () => void
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [selectedUser, setSelectedUser] = useState<{ id: string; email: string } | null>(null);
   const [memberNumber, setMemberNumber] = useState("");
-  const [joinDate, setJoinDate] = useState(new Date().toISOString().split("T")[0]);
+  const [joinDate, setJoinDate] = useState(todayLocal());
   const [renewalDate, setRenewalDate] = useState("");
   const [notes, setNotes] = useState("");
   const [membershipType, setMembershipType] = useState<"Designated" | "Silver" | "Social">("Social");
@@ -112,7 +124,7 @@ function AddMemberDialog({ open, onClose }: { open: boolean; onClose: () => void
     setSelectedUser(null);
     setMemberNumber("");
     setNotes("");
-    setJoinDate(new Date().toISOString().split("T")[0]);
+    setJoinDate(todayLocal());
     setRenewalDate("");
     setMembershipType("Social");
   }
@@ -369,7 +381,7 @@ function MemberDetailDrawer({
 }) {
   const { member: m, user: u } = row;
   const utils = trpc.useUtils();
-  const [editRenewal, setEditRenewal] = useState(m.renewalDate ?? "");
+  const [editRenewal, setEditRenewal] = useState(toDateInputValue(m.renewalDate));
   const [editNotes, setEditNotes] = useState(m.notes ?? "");
   const [editMembershipType, setEditMembershipType] = useState<"Designated" | "Silver" | "Social">(m.membershipType ?? "Social");
   const [deactivateOpen, setDeactivateOpen] = useState(false);
@@ -431,12 +443,17 @@ function MemberDetailDrawer({
         </div>
 
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
+          <Link href={`/ops/membership/${m.id}`} className={`${viewFileBtnCls} w-full py-2.5 text-xs`}>
+            <FileText className="w-4 h-4" aria-hidden="true" />
+            Open Member File
+          </Link>
+
           {/* Read-only facts */}
           <div className="grid grid-cols-2 gap-px bg-[#57544E]">
             {[
               { label: "Member #", value: m.memberNumber ?? "—" },
               { label: "Status", value: <StatusDot active={m.active} /> },
-              { label: "Joined", value: formatDate(m.joinDate) },
+              { label: "Joined", value: formatDateOnly(m.joinDate) },
               { label: "Member Since", value: formatDate(m.createdAt) },
             ].map((f) => (
               <div key={f.label} className="bg-[#363330] p-4">
@@ -636,8 +653,8 @@ export default function PortalMembership() {
             </div>
           </div>
 
-          {/* Members table */}
-          <div className="bg-[#363330] border border-[#57544E]">
+          {/* Members table (md and up) */}
+          <div className="hidden md:block bg-[#363330] border border-[#57544E]">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead className="bg-[#423F3B]">
@@ -648,7 +665,7 @@ export default function PortalMembership() {
                     <th className={thCls}>Joined</th>
                     <th className={thCls}>Renewal</th>
                     <th className={thCls}>Status</th>
-                    <th className={`${thCls} w-16`}><span className="sr-only">Actions</span></th>
+                    <th className={`${thCls} text-right`}>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -689,7 +706,7 @@ export default function PortalMembership() {
                           <td className={`${tdCls} text-[#E0D3BD]`}>
                             <Link
                               href={fileHref}
-                              className="hover:underline underline-offset-2"
+                              className={emailLinkCls}
                               onClick={(e) => e.stopPropagation()}
                             >
                               {u?.email ?? "—"}
@@ -699,23 +716,31 @@ export default function PortalMembership() {
                           <td className={tdCls}>
                             {m.membershipType ?? "—"}
                           </td>
-                          <td className={tdCls}>{formatDate(m.joinDate)}</td>
-                          <td className={tdCls}>{formatDate(m.renewalDate)}</td>
+                          <td className={tdCls}>{formatDateOnly(m.joinDate)}</td>
+                          <td className={tdCls}>{formatDateOnly(m.renewalDate)}</td>
                           <td className={tdCls}>
                             <StatusDot active={m.active} />
                           </td>
                           <td className={tdCls}>
                             <span className="flex items-center justify-end gap-2">
+                              <Link
+                                href={fileHref}
+                                className={viewFileBtnCls}
+                                aria-label={`View file for ${u?.email ?? "member"}`}
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <FileText className="w-3.5 h-3.5" aria-hidden="true" />
+                                View File
+                              </Link>
                               <button
                                 type="button"
-                                title="Quick edit"
                                 aria-label={`Quick edit ${u?.email ?? "member"}`}
-                                className="p-1 text-[#BABAAE] hover:text-[#E0D3BD] transition-colors"
+                                className={quickEditBtnCls}
                                 onClick={(e) => { e.stopPropagation(); setSelectedRow(row as MemberRow); }}
                               >
-                                <SlidersHorizontal className="w-4 h-4" />
+                                <SlidersHorizontal className="w-3.5 h-3.5" aria-hidden="true" />
+                                Quick edit
                               </button>
-                              <ChevronRight className="w-4 h-4 text-[#57544E]" aria-hidden="true" />
                             </span>
                           </td>
                         </tr>
@@ -726,6 +751,66 @@ export default function PortalMembership() {
               </table>
             </div>
           </div>
+
+          {/* Members cards (below md) — actions always visible, no sideways scrolling */}
+          <ul className="md:hidden space-y-2" aria-label="Members">
+            {membersQuery.isLoading ? (
+              [1, 2, 3].map((i) => (
+                <li key={i} className="bg-[#363330] border border-[#57544E] p-4">
+                  <Skeleton className="h-4 w-full bg-[#423F3B]" />
+                </li>
+              ))
+            ) : membersFiltered.length === 0 ? (
+              <li className="bg-[#363330] border border-[#57544E] px-4 py-10 text-center">
+                <p className="font-sans text-sm text-[#BABAAE]">No members found</p>
+              </li>
+            ) : (
+              membersFiltered.map((row: any) => {
+                const { member: m, user: u } = row;
+                const fileHref = `/ops/membership/${m.id}`;
+                return (
+                  <li
+                    key={m.id}
+                    className="bg-[#363330] border border-[#57544E] p-4 space-y-3 cursor-pointer hover:bg-[#423F3B]/50 transition-colors"
+                    onClick={() => navigate(fileHref)}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <Link href={fileHref} className={`${emailLinkCls} font-sans text-sm min-w-0`} onClick={(e) => e.stopPropagation()}>
+                        {u?.email ?? "—"}
+                      </Link>
+                      <StatusDot active={m.active} />
+                    </div>
+                    <dl className="grid grid-cols-2 gap-x-4 gap-y-1 font-sans text-xs">
+                      <dt className="text-[#BABAAE]">Member #</dt><dd className="text-[#E0D3BD] font-mono break-all">{m.memberNumber ?? "—"}</dd>
+                      <dt className="text-[#BABAAE]">Type</dt><dd className="text-[#E0D3BD]">{m.membershipType ?? "—"}</dd>
+                      <dt className="text-[#BABAAE]">Joined</dt><dd className="text-[#E0D3BD]">{formatDateOnly(m.joinDate)}</dd>
+                      <dt className="text-[#BABAAE]">Renewal</dt><dd className="text-[#E0D3BD]">{formatDateOnly(m.renewalDate)}</dd>
+                    </dl>
+                    <div className="grid grid-cols-2 gap-2">
+                      <Link
+                        href={fileHref}
+                        className={`${viewFileBtnCls} py-2`}
+                        aria-label={`View file for ${u?.email ?? "member"}`}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <FileText className="w-3.5 h-3.5" aria-hidden="true" />
+                        View File
+                      </Link>
+                      <button
+                        type="button"
+                        aria-label={`Quick edit ${u?.email ?? "member"}`}
+                        className={`${quickEditBtnCls} py-2`}
+                        onClick={(e) => { e.stopPropagation(); setSelectedRow(row as MemberRow); }}
+                      >
+                        <SlidersHorizontal className="w-3.5 h-3.5" aria-hidden="true" />
+                        Quick edit
+                      </button>
+                    </div>
+                  </li>
+                );
+              })
+            )}
+          </ul>
 
           {membersQuery.hasNextPage && (
             <div className="flex justify-center pt-1">

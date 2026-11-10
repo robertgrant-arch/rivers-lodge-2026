@@ -17,6 +17,9 @@ vi.mock("@core/server/captcha", () => ({
 
 vi.mock("@core/server/db", () => ({
   getDb: vi.fn().mockResolvedValue(null),
+  // Shared portal pool (added to db.ts after this test was written); routers
+  // reference it at import time, so the mock must define it.
+  getPortalDb: vi.fn(),
 }));
 
 vi.mock("./dal", () => ({

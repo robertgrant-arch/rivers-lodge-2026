@@ -29,8 +29,11 @@ git commit --allow-empty -m "chore: trigger Render production deploy (...)" && g
 
 ## Architecture overview
 
-React 19 SPA (Vite) + Express backend + tRPC API + Drizzle ORM + MySQL.
-Auth via Clerk. Hosted on Render.
+React 19 SPA (Vite) + Express backend + tRPC API + Drizzle ORM + **PostgreSQL** (Render Postgres;
+`pg` driver, `drizzle-orm/node-postgres`). Hosted on Render.
+Login is handled in-app by `features/auth` (email + password, argon2 hashes, DB-backed sessions in
+the `sessions` table, `rl_session` cookie). Some old comments and env vars still mention Clerk; the
+current login code does not call Clerk.
 
 **Vertical slice pattern:** every product area is a self-contained folder under `features/`.
 Each slice owns its DB schema, tRPC router, and React pages. Cross-slice imports are only
@@ -48,12 +51,20 @@ allowed through each feature's `public.ts` barrel file — enforced by ESLint `p
 ├── .claudeignore          ← files Claude skips (build output, secrets, etc.)
 ├── .claude/settings.json  ← Claude Code project permissions
 │
+├── _core/                 ← SERVER infrastructure (repo root, alias @core → _core/)
+│   ├── server/app.ts      ← Express entry point (esbuild bundles it to dist/index.js)
+│   ├── server/router.ts   ← Root tRPC router (mounts all feature routers)
+│   ├── server/db.ts       ← Postgres pool + Drizzle client (getDb / getPortalDb)
+│   ├── server/env.ts      ← Env var schema (add new vars here first)
+│   ├── server/apply-sql-migrations.ts ← THE migration runner (see "Database migrations")
+│   ├── server/startup-migration.ts    ← legacy idempotent DDL/seeding run at every boot
+│   └── db/
+│       ├── index.ts       ← full Drizzle schema barrel (used by drizzle.config.ts)
+│       └── migrations/    ← NNNN_description.sql — applied at boot, once each
+│
 ├── features/              ← ALL application code (vertical slices)
-│   ├── _core/             ← Infrastructure: Express app, tRPC factory, DB client
-│   │   ├── server/app.ts  ← Express entry point
-│   │   ├── server/router.ts ← Root tRPC router (mounts all feature routers)
-│   │   ├── server/db.ts   ← Drizzle ORM client
-│   │   ├── server/env.ts  ← Env var schema (add new vars here first)
+│   ├── _core/             ← CLIENT shell + thin server re-exports
+│   │   ├── server/*.ts    ← re-export shims of _core/server (e.g. `export * from '@core/server/db'`)
 │   │   └── client/
 │   │       ├── App.tsx    ← Wouter router (ALL routes defined here)
 │   │       ├── main.tsx   ← React DOM entry
@@ -73,7 +84,7 @@ allowed through each feature's `public.ts` barrel file — enforced by ESLint `p
 │   │
 │   ├── marketing/         ← / · /gallery · /contact · /privacy · /outdoors
 │   ├── weddings/          ← /events · /weddings · /venues
-│   ├── lodging/           ← /lodging · /estate
+│   ├── lodging/           ← /lodging  (/estate was removed in c90e6cd)
 │   ├── membership/        ← /membership · /membership/benefits · /membership/faq
 │   ├── hunt-fish/         ← /hunt · /fish
 │   ├── about/             ← /about · /about/team · /about/property
@@ -81,7 +92,7 @@ allowed through each feature's `public.ts` barrel file — enforced by ESLint `p
 │   ├── food-and-wine/     ← /food-and-wine
 │   ├── inquiries/         ← /inquiry-confirmed · InquiryForm · StickyInquiryCTA
 │   ├── waivers/           ← /sign-waiver/:token · PDF generation
-│   ├── auth/              ← /sign-in · Clerk session management
+│   ├── auth/              ← /sign-in · email/password login, DB sessions
 │   ├── portal/            ← /portal · /portal/my-bookings · /portal/properties
 │   ├── booking-engine/    ← Availability engine (embedded in portal)
 │   ├── trips/             ← Hunt/fish slot calendar
@@ -98,7 +109,7 @@ allowed through each feature's `public.ts` barrel file — enforced by ESLint `p
 │       ├── img/           ← Photography assets (NEVER delete)
 │       └── brand/         ← Logo variants (1.png–13.png)
 │
-├── server/                ← Legacy test stubs only (real server is in _core)
+├── server/                ← Legacy test stubs only (real server is in root _core/)
 ├── scripts/               ← Build/utility scripts
 ├── docs/                  ← Architecture documentation
 │
@@ -188,7 +199,7 @@ All theme customization lives in `features/_core/client/index.css`.
 
 ### Import aliases (vite.config.ts)
 ```typescript
-@core     → features/_core
+@core     → _core            (server: _core/server, _core/db)
 @shared   → features/_shared
 @features → features
 ```
@@ -196,7 +207,8 @@ All theme customization lives in `features/_core/client/index.css`.
 ### New feature checklist
 1. Create `features/<name>/` folder
 2. Add `schema.ts` (if DB), `types.ts`, `public.ts`
-3. Add `server/router.ts` and mount in `features/_core/server/router.ts`
+3. Add `server/router.ts` and mount in `_core/server/router.ts`
+   (DB changes: add a new `_core/db/migrations/NNNN_*.sql` file — see "Database migrations")
 4. Add page components to `client/pages/`
 5. Register routes in `features/_core/client/App.tsx`
 
@@ -227,8 +239,50 @@ pnpm dev        # local dev (Vite + Express watch mode)
 pnpm build      # production build
 pnpm test       # Vitest unit tests
 pnpm lint       # ESLint — run before every PR
-pnpm db:push    # push Drizzle schema to DB
+pnpm check      # typecheck (tsc --noEmit)
 ```
+
+⚠️ Don't use `pnpm db:push` against production. Despite the name it runs `drizzle-kit generate &&
+drizzle-kit migrate`: it writes new auto-generated SQL into `_core/db/migrations/` (which the boot
+migrator would then apply) and uses drizzle's own journal, not `_migrations_applied`. Write
+migrations by hand instead (below). For a local scratch DB, `npx drizzle-kit push` is fine.
+
+DB integration tests (`_core/server/root-properties.test.ts`,
+`features/property-booking/server/router.test.ts`) insert real rows, so they only run when
+`TEST_DATABASE_URL` points at a disposable database. They are skipped otherwise.
+
+---
+
+## Database migrations (how they actually run)
+
+**Single source of truth: `_core/server/apply-sql-migrations.ts`, at server boot.** Sequence on
+every Render deploy:
+
+1. `pnpm build`: `prebuild` only writes `_core/generated/version.ts`. The build then bundles the
+   server and copies `_core/db/` → `dist/db/` (`scripts/copy-db-migrations.mjs`). **The build
+   never touches the database.**
+2. `pnpm start` → `dist/index.js` → `runStartupMigration()` (legacy idempotent DDL/seeding)
+   → `applySqlMigrations()` → `server.listen()`.
+3. `applySqlMigrations()` reads `dist/db/migrations/*.sql` in filename order. It skips every file
+   already recorded in the `_migrations_applied` table and applies each new one in **its own
+   transaction**, recording it in the same transaction.
+4. On any failure (bad SQL, DB unreachable, migrations folder missing in production) the process
+   **exits non-zero before listening**. Render's health check (`/api/health`) then fails, the
+   previous version keeps serving, and the new code never runs against a half-migrated schema.
+   Look for `[apply-sql-migrations]` in the Render logs.
+
+Rules for new migrations:
+- Next number after the highest in `_core/db/migrations/` (e.g. `0037_add_x.sql`). Files are
+  applied once and **never edited after they ship**. Fix forward with a new file.
+- Make them additive and repeat-safe (`IF NOT EXISTS`, guarded `DO $$ … $$` blocks).
+- No `CREATE INDEX CONCURRENTLY` (each file runs inside a transaction).
+- `pnpm dev` deliberately does **not** apply migrations, so a feature branch run locally with a
+  production `DATABASE_URL` can't push unmerged schema changes. To test one, run the production
+  bundle against a local Postgres: `pnpm build && NODE_ENV=production PORT=5099
+  DATABASE_URL=postgresql://…/scratch node dist/index.js`.
+- There used to be a build-time runner (`scripts/run-migrations.mjs` in `prebuild`). It never
+  applied anything, because it passed SQL via `input` with `stdio: 'inherit'`, so psql got no
+  input and reported success. It was removed.
 
 ---
 
@@ -264,11 +318,11 @@ git push origin main
 
 ## Environment variables
 
-Managed in the Render dashboard. Schema validated in `features/_core/server/env.ts`.
+Managed in the Render dashboard. Schema validated in `_core/server/env.ts`.
 Add new vars there first, then set values in Render.
 
 Key vars:
-- `DATABASE_URL` — MySQL connection string
+- `DATABASE_URL` — PostgreSQL connection string (Render Postgres)
 - `CLERK_SECRET_KEY`, `VITE_CLERK_PUBLISHABLE_KEY` — auth
 - `VITE_ANALYTICS_ENDPOINT`, `VITE_ANALYTICS_WEBSITE_ID` — Umami
 - `VITE_APP_TITLE` — "The Rivers Lodge & Hunt Club"

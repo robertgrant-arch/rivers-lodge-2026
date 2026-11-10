@@ -101,18 +101,19 @@ export async function applySqlMigrations(): Promise<void> {
     // Continue \u2014 the file-based migrator below may still succeed.
   }
 
-  // Resolve migrations directory. When bundled/transpiled to dist/, import.meta.url
-  // points to the compiled dist location, so we resolve relative to that.
-  // The build copies _core/db → dist/db, so migrations are at dist/db/migrations.
+  // Resolve migrations directory. The production bundle (dist/index.js) finds
+  // them at <dist>/db/migrations because the build copies _core/db → dist/db.
+  //
+  // Under `pnpm dev` (tsx _core/server/app.ts) this resolves to
+  // _core/server/db/migrations, which does not exist, so dev never applies
+  // migrations. That is deliberate: a feature branch run locally with a
+  // production DATABASE_URL must not push unmerged migrations to production.
   let migrationsDir: string;
   try {
     const here = dirname(fileURLToPath((import.meta as any).url));
-    // In bundled context, 'here' is the directory containing the compiled app.js.
-    // Resolve relative to that directory (e.g., /dist → /dist/db/migrations).
     migrationsDir = resolve(here, "db", "migrations");
   } catch {
-    // Fallback for development: resolve from project root.
-    migrationsDir = resolve(process.cwd(), "_core", "db", "migrations");
+    migrationsDir = resolve(process.cwd(), "dist", "db", "migrations");
   }
 
   let files: string[];
@@ -120,13 +121,19 @@ export async function applySqlMigrations(): Promise<void> {
     const entries = await readdir(migrationsDir);
     files = entries.filter((f) => f.endsWith(".sql")).sort();
   } catch (err) {
-    console.warn(
-      `[apply-sql-migrations] could not read ${migrationsDir}: ${
-        err instanceof Error ? err.message : String(err)
-      }`
-    );
+    const msg = `[apply-sql-migrations] could not read ${migrationsDir}: ${
+      err instanceof Error ? err.message : String(err)
+    }`;
+    if (process.env.NODE_ENV === "production") {
+      // In production a missing directory means a broken build — refuse to
+      // serve rather than run new code against an un-migrated schema.
+      console.error(`${msg} \u2014 boot aborted`);
+      process.exit(1);
+    }
+    console.warn(`${msg} \u2014 not applying migrations (expected under pnpm dev)`);
     return;
   }
+  console.log(`[apply-sql-migrations] using ${migrationsDir} (${files.length} file(s))`);
 
   if (files.length === 0) {
     console.log("[apply-sql-migrations] no .sql files found; nothing to do");

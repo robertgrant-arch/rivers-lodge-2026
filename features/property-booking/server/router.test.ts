@@ -9,7 +9,14 @@ import { getDb } from "@core/server/db";
 import { huntingProperties, propertyActivities, propertyDateInventory, propertyBookings } from "@core/db/property-booking-schema";
 import { eq, and, sql } from "drizzle-orm";
 
-describe("Property Booking - Activities", () => {
+// Integration test: inserts/deletes real rows. It only runs when
+// TEST_DATABASE_URL points at a disposable database (e.g. a local Postgres with
+// the Drizzle schema pushed) and never against whatever DATABASE_URL happens to
+// be set, so a laptop configured for production can't write test rows there.
+const TEST_DATABASE_URL = process.env.TEST_DATABASE_URL;
+if (TEST_DATABASE_URL) process.env.DATABASE_URL = TEST_DATABASE_URL;
+
+describe.skipIf(!TEST_DATABASE_URL)("Property Booking - Activities", () => {
   let db: any;
   let testPropertyId: number;
 
@@ -316,7 +323,7 @@ describe("Property Booking - Activities", () => {
     const bookingResult = await db
       .insert(propertyBookings)
       .values({
-        bookingRef: `TEST-OVERNIGHT-${Date.now()}`,
+        bookingRef: `TON-${Date.now()}`, // column is varchar(20)
         idempotencyKey: `overnight-test-${Date.now()}`,
         memberId: 999, // Dummy member ID
         userId: "test-user-id",
@@ -463,7 +470,7 @@ describe("Property Booking - Activities", () => {
     const bookingResult = await db
       .insert(propertyBookings)
       .values({
-        bookingRef: `TEST-OVERNIGHT-CANCEL-${Date.now()}`,
+        bookingRef: `TOC-${Date.now()}`, // column is varchar(20)
         idempotencyKey: `overnight-cancel-test-${Date.now()}`,
         memberId: 999,
         userId: "test-user-id",

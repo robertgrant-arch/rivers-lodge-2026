@@ -78,6 +78,9 @@ vi.mock("@core/server/db", async () => {
     updateUser: vi.fn(async () => {}),
     createDbSession: vi.fn(async () => "mock-session-id"),
     deleteDbSession: vi.fn(async () => {}),
+    // Shared portal pool (added to db.ts after this test was written); routers
+    // reference it at import time, so the mock must define it.
+    getPortalDb: vi.fn(),
     getDbSession: vi.fn(async () => undefined),
     getInviteByTokenHash: vi.fn(async (hash: string) => {
       // "valid-token-hash" simulates a valid non-expired invite

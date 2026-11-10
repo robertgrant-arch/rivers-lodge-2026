@@ -12,6 +12,7 @@ import { resolvePort } from "./port";
 import { checkDbHealth } from "./db";
 import { runStartupMigration, checkHuntingPropertiesSchema } from "./startup-migration";
 import { applySqlMigrations } from "./apply-sql-migrations";
+import { COVER_PHOTO_JSON_LIMIT_BYTES } from "@shared/uploadLimits";
 import { PROPERTY_MAP_JSON_LIMIT_BYTES } from "@shared/propertyRules";
 
 let deployedCommit = "unknown";
@@ -42,6 +43,7 @@ async function startServer() {
   // every procedure in the batch is listed. Everything else keeps 1 MB below,
   // which skips bodies these parsers already read.
   const largeBodyLimits: Record<string, number> = {
+    "propertyBooking.admin.properties.uploadCoverPhoto": COVER_PHOTO_JSON_LIMIT_BYTES,
     "propertyBooking.admin.properties.uploadMap": PROPERTY_MAP_JSON_LIMIT_BYTES,
   };
   app.use((req, res, next) => {
@@ -192,8 +194,9 @@ async function startServer() {
   const port = await resolvePort();
 
   // ── Apply SQL migrations ────────────────────────────────────────────────────
-  // Runs all pending migrations (0001–0017) from _core/db/migrations/
-  // Uses _migrations_applied table for idempotent tracking
+  // The ONLY place SQL migrations are applied (see CLAUDE.md → Migrations).
+  // Applies each _core/db/migrations/*.sql not yet in _migrations_applied, one
+  // transaction per file, BEFORE server.listen; exits non-zero on any failure.
   await applySqlMigrations();
 
   server.listen(port, () => {
@@ -201,4 +204,9 @@ async function startServer() {
   });
 }
 
-startServer().catch(console.error);
+// Any boot failure (DB unreachable during migrations, etc.) must exit non-zero
+// so Render's health check fails and the previous version keeps serving.
+startServer().catch((err) => {
+  console.error("[boot] fatal:", err);
+  process.exit(1);
+});

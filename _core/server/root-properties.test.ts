@@ -7,14 +7,21 @@
 
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { appRouter } from "./router";
-import { createCallerFactory } from "@trpc/server";
 import { getDb } from "./db";
 import { huntingProperties } from "@core/db/property-booking-schema";
 import { eq } from "drizzle-orm";
 
-const createCaller = createCallerFactory(appRouter);
+// Integration test: inserts/deletes real rows. It only runs when
+// TEST_DATABASE_URL points at a disposable database (e.g. a local Postgres with
+// the Drizzle schema pushed) and never against whatever DATABASE_URL happens to
+// be set, so a laptop configured for production can't write test rows there.
+const TEST_DATABASE_URL = process.env.TEST_DATABASE_URL;
+if (TEST_DATABASE_URL) process.env.DATABASE_URL = TEST_DATABASE_URL;
 
-describe("Root-level Properties Endpoints", () => {
+// tRPC v11 has no top-level createCallerFactory export; use the router's own.
+const createCaller = (ctx: any) => appRouter.createCaller(ctx);
+
+describe.skipIf(!TEST_DATABASE_URL)("Root-level Properties Endpoints", () => {
   let db: any;
   let testPropertyId: number;
 
