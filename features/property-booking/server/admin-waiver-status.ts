@@ -47,15 +47,15 @@ export function enrichBookingWithWaiverStatus(
   memberEmail: string
 ): AdminBookingWaiverView {
   const now = Date.now();
+  // The deadline tier is fixed by when the booking was made. A booking with no
+  // createdAt is treated as booked well in advance (normal 12-hour deadline).
+  const bookedAt = Number(booking.createdAt) || 0;
 
   // Compute waiver status for each adult
   const enrichedAdults: AdminPartyAdultView[] = partyAdults.map((adult) => {
-    const nextStatus = getNextWaiverStatus(adult.waiverStatus, booking.startDate, now);
-    const { deadline, isOverdue, hoursUntilDue } = computeWaiverDeadline(
-      booking.startDate,
-      nextStatus,
-      now
-    );
+    const base = { checkInDate: booking.startDate, bookedAt, now };
+    const nextStatus = getNextWaiverStatus({ ...base, waiverStatus: adult.waiverStatus });
+    const { deadline, isOverdue, hoursUntilDue } = computeWaiverDeadline({ ...base, waiverStatus: nextStatus });
 
     return {
       id: adult.id,

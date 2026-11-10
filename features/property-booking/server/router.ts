@@ -37,6 +37,7 @@ import {
   propertyActivities,
 } from '@core/db/property-booking-schema';
 import { members } from '@core/db/schema';
+import { propertyViewer, propertyForViewer } from './propertyAccess';
 import { eq, and, gte, lte, sql, desc, asc, or, isNull, ne } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { getWaiverProvider } from '@features/property-booking/server/waiver-provider';
@@ -359,16 +360,18 @@ export const propertyBookingRouter = router({
 
   properties: router({
 
-    /** List all active properties, optionally filtered by activity */
+    /** List all active properties, optionally filtered by activity.
+     *  Never includes gate codes; signed-out callers also get no location/map fields. */
     list: publicProcedure
       .input(z.object({
         activity: z.string().optional(),
         type: z.string().optional(),
         includeInactive: z.boolean().optional(),
       }).optional())
-      .query(async ({ input }: { input: any }) => {
+      .query(async ({ ctx, input }: { ctx: any; input: any }) => {
         const db = await getDb();
         if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+        const viewer = await propertyViewer(db, ctx.user);
 
         const conditions = [];
         if (!input?.includeInactive) conditions.push(eq(huntingProperties.active, true));
@@ -422,7 +425,7 @@ export const propertyBookingRouter = router({
         const mapsByProperty = await loadMaps(db, result.map((p: any) => p.id));
 
         // Normalize response: provide safe defaults for nullable JSON fields
-        return result.map((p: any) => ({
+        return result.map((p: any) => propertyForViewer({
           ...p,
           ...memberView(p, activitiesMap.get(p.id) ?? [], mapsByProperty.get(p.id) ?? []),
           activities: activitiesMap.get(p.id) ?? [],
@@ -432,7 +435,7 @@ export const propertyBookingRouter = router({
           maxWaterfowlHunters: p.maxWaterfowlHunters ?? null,
           maxTotalPeople: p.maxTotalPeople ?? null,
           overnightEnabled: p.overnightEnabled ?? true,
-        }));
+        }, viewer, { includeGateCode: false }));
       }),
 
     /** List all available activities for properties */
@@ -442,9 +445,12 @@ export const propertyBookingRouter = router({
     /** Get a single property by ID with full details */
     detail: publicProcedure
       .input(z.object({ id: z.number().int().positive() }))
-      .query(async ({ input }: { input: any }) => {
+      .query(async ({ ctx, input }: { ctx: any; input: any }) => {
         const db = await getDb();
         if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+        // Gate code only for signed-in members (active property) and staff;
+        // signed-out callers get no access-sensitive fields at all.
+        const viewer = await propertyViewer(db, ctx.user);
 
         const [property] = await db
           .select()
@@ -470,7 +476,7 @@ export const propertyBookingRouter = router({
         const maps = (await loadMaps(db, [input.id])).get(input.id) ?? [];
 
         // Normalize response: provide safe defaults for nullable fields
-        const normalized = {
+        const normalized = propertyForViewer({
           ...property,
           ...memberView(property, activities, maps),
           activities,
@@ -479,9 +485,12 @@ export const propertyBookingRouter = router({
           maxWaterfowlHunters: property.maxWaterfowlHunters ?? null,
           maxTotalPeople: property.maxTotalPeople ?? null,
           overnightEnabled: property.overnightEnabled ?? true,
-        };
+        }, viewer, { includeGateCode: true });
 
-        return { property: normalized, rules: rules[0] ?? null, seasons, amenities, images };
+        // Map files are also property_images rows; keep them from signed-out callers.
+        const visibleImages = viewer === "anonymous" ? images.filter((img: any) => img.type !== "map") : images;
+
+        return { property: normalized, rules: rules[0] ?? null, seasons, amenities, images: visibleImages };
       }),
 
     /** Get availability for a property over a date range */

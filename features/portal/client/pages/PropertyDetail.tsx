@@ -25,7 +25,7 @@ import {
   ArrowLeft, Users, MapPin, TreePine, Waves, Zap, Wifi, Truck,
   Thermometer, Calendar, CheckCircle2, XCircle, AlertCircle,
   Loader2, ChevronLeft, ChevronRight, Clock, Info, Plus, Trash2,
-  Map as MapIcon, FileText, Navigation, ExternalLink,
+  Map as MapIcon, FileText, Navigation, ExternalLink, KeyRound,
 } from "lucide-react";
 import { PROPERTY_ACTIVITIES, activityLabel, isHuntingActivity, isFishingActivity } from "@shared/propertyActivities";
 import { BOOKING_RULES, MAX_CONSECUTIVE_DAYS, bookingDayCount, propertyCapacity } from "@shared/propertyRules";
@@ -989,6 +989,13 @@ export default function PropertyDetail() {
                   </div>
                 );
               })()}
+              {/* Gate code: the server only sends it to signed-in members who can view this property, and to staff */}
+              {property.gateCode && (
+                <div className="flex items-center gap-2 text-sm text-stone-300" data-testid="property-gate-code">
+                  <KeyRound className="w-4 h-4 text-stone-500" />
+                  Gate code: <span className="text-stone-100 font-medium font-mono tracking-wider">{property.gateCode}</span>
+                </div>
+              )}
               {property.acreage && (
                 <div className="flex items-center gap-2 text-sm text-stone-300">
                   <MapPin className="w-4 h-4 text-stone-500" />

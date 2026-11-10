@@ -14,6 +14,7 @@ import { cmsRouter } from 'features/cms/server/router';
 import { bookingRouter } from 'features/booking-engine/server/router';
 import { tripsRouter } from 'features/trips/server/router';
 import { propertyBookingRouter } from 'features/property-booking/server/router';
+import { propertyViewer, propertyForViewer } from 'features/property-booking/server/propertyAccess';
 import { reportsRouter } from 'features/reports/server/router';
 import { adminRouter as portalRouter } from 'features/admin/server/router';
 import { updatesRouter } from 'features/updates/server/router';
@@ -23,16 +24,18 @@ import { propertySlotConfigRouter } from 'features/property-slot-config/server/r
 // ─── Root-level Properties Routers (for backward compatibility) ──────────────
 
 const propertiesRouter = router({
-  /** List all active properties (public) */
+  /** List all active properties (public). Never includes gate codes; signed-out
+   *  callers also get no location/map fields (see property-booking propertyAccess). */
   list: publicProcedure
     .input(z.object({
       activity: z.string().optional(),
       type: z.string().optional(),
       includeInactive: z.boolean().optional(),
     }).optional())
-    .query(async ({ input }: { input: any }) => {
+    .query(async ({ ctx, input }: { ctx: any; input: any }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+      const viewer = await propertyViewer(db, ctx.user);
 
       const conditions = [];
       if (!input?.includeInactive) conditions.push(eq(huntingProperties.active, true));
@@ -46,14 +49,14 @@ const propertiesRouter = router({
         .orderBy(asc(huntingProperties.sortOrder), asc(huntingProperties.name));
 
       // Null-safe response normalization for backward compat
-      return props.map((p: any) => ({
+      return props.map((p: any) => propertyForViewer({
         ...p,
         bookingModes: Array.isArray(p.bookingModes) ? p.bookingModes : ["AM", "PM"],
         secondaryActivities: Array.isArray(p.secondaryActivities) ? p.secondaryActivities : null,
         maxWaterfowlHunters: p.maxWaterfowlHunters ?? null,
         maxTotalPeople: p.maxTotalPeople ?? null,
         overnightEnabled: p.overnightEnabled ?? true,
-      }));
+      }, viewer, { includeGateCode: false }));
     }),
 });
 
