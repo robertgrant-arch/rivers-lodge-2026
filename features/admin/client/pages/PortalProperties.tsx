@@ -793,12 +793,24 @@ function PropertyRow({ property, onEdit }: { property: any; onEdit: () => void }
   const capacityDisplay = capacity !== null ? `Capacity ${capacity}` : "Capacity not set";
 
   return (
-    <div className="bg-stone-900 border border-stone-700 rounded-lg overflow-hidden">
-      <div className="flex items-center gap-4 p-4">
-        <TreePine className="w-5 h-5 text-amber-500 shrink-0" />
+    <div className="bg-stone-900 border border-stone-700 rounded-lg overflow-hidden" data-testid="property-row">
+      {/* Clicking anywhere on the header opens Edit; buttons stop propagation. */}
+      <div
+        className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:gap-4 cursor-pointer hover:bg-stone-800/40 transition-colors"
+        onClick={onEdit}
+      >
+        <div className="flex items-start gap-4 flex-1 min-w-0">
+        <TreePine className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-semibold text-stone-100">{property.name}</span>
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); onEdit(); }}
+              className="font-semibold text-stone-100 text-left hover:underline underline-offset-2 focus:outline-none focus-visible:ring-1 focus-visible:ring-amber-500 rounded-sm"
+              title="Edit property"
+            >
+              {property.name}
+            </button>
             {property.active ? (
               <Badge className="bg-emerald-900/30 text-emerald-300 border-emerald-700 text-xs">Active</Badge>
             ) : (
@@ -825,19 +837,35 @@ function PropertyRow({ property, onEdit }: { property: any; onEdit: () => void }
             {property.acreage && <><span>·</span><span>{property.acreage} ac</span></>}
           </div>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <Button variant="ghost" size="sm" onClick={onEdit} className="text-stone-400 hover:text-stone-100 h-8 w-8 p-0">
-            <Pencil className="w-3.5 h-3.5" />
+        </div>
+        <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center sm:shrink-0">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={(e) => { e.stopPropagation(); onEdit(); }}
+            aria-label={`Edit ${property.name}`}
+            className="border-amber-700 bg-amber-900/20 text-amber-100 hover:bg-amber-800/40 hover:text-white gap-1.5"
+          >
+            <Pencil className="w-3.5 h-3.5" aria-hidden="true" />
+            Edit
           </Button>
-          <Button variant="ghost" size="sm" onClick={() => setExpanded(!expanded)}
-            className="text-stone-400 hover:text-stone-100 h-8 w-8 p-0">
-            {expanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={(e) => { e.stopPropagation(); setExpanded(!expanded); }}
+            aria-expanded={expanded}
+            aria-controls={`property-details-${property.id}`}
+            aria-label={`${expanded ? "Hide" : "Show"} details for ${property.name}`}
+            className="text-stone-400 hover:text-stone-100 gap-1.5"
+          >
+            {expanded ? <ChevronUp className="w-3.5 h-3.5" aria-hidden="true" /> : <ChevronDown className="w-3.5 h-3.5" aria-hidden="true" />}
+            {expanded ? "Hide details" : "Details"}
           </Button>
         </div>
       </div>
 
       {expanded && (
-        <div className="border-t border-stone-800 px-4 pb-4 pt-3 space-y-3">
+        <div id={`property-details-${property.id}`} className="border-t border-stone-800 px-4 pb-4 pt-3 space-y-3">
           {property.shortDescription && (
             <p className="text-sm text-stone-300">{property.shortDescription}</p>
           )}
