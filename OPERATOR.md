@@ -50,7 +50,7 @@ features/portal/client/pages/MemberPortal.tsx  ← /portal  member dashboard
 features/portal/client/pages/MyBookings.tsx    ← /portal/my-bookings
 features/portal/client/pages/PropertyBrowser.tsx ← /portal/properties
 ```
-Auth is Clerk-managed. Keys live in Render env vars — nothing to edit in the repo.
+Auth is in-app (features/auth: email + password, DB sessions, `rl_session` cookie). Secrets live in Render env vars.
 
 ### Admin & Ops Tools
 ```
@@ -58,7 +58,7 @@ features/admin/client/pages/PortalDashboard.tsx  ← /ops root
 features/admin/client/pages/Portal*.tsx          ← all /ops/* sub-pages
 features/admin/client/components/PortalLayout.tsx ← sidebar shell
 ```
-Access `/ops` by signing in with a staff-role Clerk account.
+Access `/ops` by signing in at `/sign-in` with an admin or staff account.
 
 ### Nav, Footer, Layout
 ```
@@ -79,7 +79,7 @@ client/index.html                 ← Google Fonts <link> tags
 ### Render Deployment Config
 ```
 render.yaml                      ← service definition (health check, region, build/start)
-features/_core/server/env.ts     ← env var schema (add new vars here first)
+_core/server/env.ts              ← env var schema (add new vars here first)
 ```
 Env var values are set in the Render dashboard — not in the repo.
 
@@ -92,7 +92,9 @@ pnpm dev        # local development (Vite + Express watch mode)
 pnpm build      # production build (Vite client + esbuild server)
 pnpm test       # run Vitest unit tests
 pnpm lint       # ESLint — enforces vertical-slice boundaries; run before every PR
-pnpm db:push    # push Drizzle schema changes to the database
+pnpm check      # typecheck
+# DB changes: add _core/db/migrations/NNNN_*.sql — applied at server boot (see CLAUDE.md → Database migrations).
+# Don't run `pnpm db:push` against production.
 ```
 
 ---

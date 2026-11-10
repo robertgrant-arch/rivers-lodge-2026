@@ -12,6 +12,7 @@ import { Skeleton } from "@shared/ui/skeleton";
 import { trpc } from "@shared/lib/trpc";
 import { ArrowLeft, Camera, Pencil, Plus, ShieldAlert, Trash2, User, X } from "lucide-react";
 import { toast } from "sonner";
+import { formatDateOnly, toDateInputValue } from "@shared/lib/dateOnly";
 import {
   ACTIVITIES,
   CHILD_AGE_GROUPS,
@@ -43,10 +44,12 @@ const dash = "—";
 const show = (v: string | number | null | undefined) =>
   v === null || v === undefined || v === "" ? dash : String(v);
 const yesNo = (v: boolean | null | undefined) => (v === true ? "Yes" : v === false ? "No" : dash);
+/** Date-only values (joinDate, renewalDate, birthdays…) — the stored calendar
+ *  date in every timezone. Timestamps (e.g. signedAt) keep local formatting. */
 function formatDate(d: string | Date | null | undefined) {
   if (!d) return dash;
-  const date = typeof d === "string" && /^\d{4}-\d{2}-\d{2}$/.test(d) ? new Date(`${d}T12:00:00`) : new Date(d);
-  return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  if (typeof d === "string" && /^\d{4}-\d{2}-\d{2}$/.test(d)) return formatDateOnly(d, dash);
+  return new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
 function formatDateTime(d: string | Date) {
   return new Date(d).toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" });
@@ -319,10 +322,10 @@ export default function PortalMemberFile() {
       },
       membership: {
         memberNumber: m.memberNumber ?? "", membershipType: m.membershipType, active: m.active ? "active" : "inactive",
-        joinDate: m.joinDate ?? "", renewalDate: m.renewalDate ?? "",
+        joinDate: toDateInputValue(m.joinDate), renewalDate: toDateInputValue(m.renewalDate),
         householdOrCompany: p?.householdOrCompany ?? "", referredBy: p?.referredBy ?? "", referralSource: p?.referralSource ?? "",
         assignedStaffEmployeeId: p?.assignedStaffEmployeeId ? String(p.assignedStaffEmployeeId) : "",
-        orientationCompleted: fromTriState(p?.orientationCompleted), orientationDate: p?.orientationDate ?? "",
+        orientationCompleted: fromTriState(p?.orientationCompleted), orientationDate: toDateInputValue(p?.orientationDate),
       },
       generalNotes: { notes: m.notes ?? "" },
     };

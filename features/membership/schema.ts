@@ -150,6 +150,8 @@ export type InsertPropertySkillGroupAccess = typeof propertySkillGroupAccess.$in
 export const members = pgTable("members", {
   id: integer("id").generatedAlwaysAsIdentity().primaryKey(),
   userId: varchar("userId", { length: 36 }).notNull(),
+  // Unique (trimmed, case-insensitive) via index members_member_number_unique —
+  // migration 0036; assign with insertMemberWithUniqueNumber (server/memberNumbers.ts).
   memberNumber: varchar("memberNumber", { length: 50 }),
   membershipType: memberTypeEnum("membership_type").notNull().default("Social"),
   socialParentOrganizationId: integer("social_parent_organization_id").references(

@@ -24,7 +24,8 @@ import {
 } from "../schema";
 // Cross-feature table refs — imported only via public.ts barrels
 import { users } from "@features/auth/server/public";
-import { members, membershipApplications, memberSkillGroups, skillGroups, employees, employeeSkillGroups, skillGroupCalendarAccess } from "@features/membership/public";
+import { members, membershipApplications, memberSkillGroups, skillGroups, employees, employeeSkillGroups, skillGroupCalendarAccess, insertMemberWithUniqueNumber } from "@features/membership/public";
+import { todayInTimeZone, LODGE_TIME_ZONE } from "@shared/lib/dateOnly";
 import { inquiries } from "@features/inquiries/public";
 import { bookings } from "@features/booking-engine/public";
 import { waivers } from "@features/waivers/public";
@@ -1918,21 +1919,18 @@ const membershipPortalRouter = router({
       const db = getDb();
       const [existing] = await db.select({ id: members.id }).from(members).where(eq(members.userId, input.userId)).limit(1);
       if (existing) throw new TRPCError({ code: "CONFLICT", message: "This user already has a member record" });
-      let memberNumber = input.memberNumber;
-      if (!memberNumber) {
-        const year = new Date().getFullYear();
-        const [{ count }] = await db.select({ count: sql<number>`count(*)` }).from(members);
-        memberNumber = `RL-${year}-${String(Number(count) + 1).padStart(4, "0")}`;
-      }
-      const [newMember] = await db.insert(members).values({
-        userId: input.userId,
-        memberNumber,
-        membershipType: (input.membershipType ?? "Social") as any,
-        active: true,
-        joinDate: input.joinDate ?? new Date().toISOString().split("T")[0],
-        renewalDate: input.renewalDate ?? null,
-        notes: input.notes ?? null,
-      } as any).returning({ id: members.id });
+      // Unique RL-<year>-NNNN (or the staff-entered number, if unused) — see membership/server/memberNumbers.ts
+      const { result: [newMember], memberNumber } = await insertMemberWithUniqueNumber(db, input.memberNumber, (memberNumber) =>
+        db.insert(members).values({
+          userId: input.userId,
+          memberNumber,
+          membershipType: (input.membershipType ?? "Social") as any,
+          active: true,
+          joinDate: input.joinDate || todayInTimeZone(LODGE_TIME_ZONE), // Lodge calendar day, not UTC
+          renewalDate: input.renewalDate ?? null,
+          notes: input.notes ?? null,
+        } as any).returning({ id: members.id }),
+      );
 
       await logAudit({
         actingUserId: ctx.user.id,

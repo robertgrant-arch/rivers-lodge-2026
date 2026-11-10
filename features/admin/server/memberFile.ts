@@ -26,6 +26,10 @@ import {
   memberChildren,
   memberStaffNotes,
   socialParentOrganizations,
+  normalizeMemberNumber,
+  assertMemberNumberAvailable,
+  isMemberNumberConflict,
+  memberNumberConflictError,
 } from "@features/membership/public";
 import { waivers } from "@features/waivers/public";
 import { portalWaivers, portalAuditLog } from "../schema";
@@ -260,7 +264,21 @@ export const memberFileRouter = router({
     .mutation(async ({ input, ctx }) => {
       await assertMemberExists(input.memberId);
       const { memberId, ...values } = input;
-      await getPortalDb().update(members).set(values as any).where(eq(members.id, memberId));
+      const db = getPortalDb();
+      // Member numbers must be unique. Only check when the number actually
+      // changes, so a member who still has a grandfathered shared number (see
+      // migration 0036) can have their other membership values edited.
+      const newNumber = normalizeMemberNumber(values.memberNumber);
+      const [current] = await db.select({ memberNumber: members.memberNumber }).from(members).where(eq(members.id, memberId)).limit(1);
+      const numberChanged = newNumber !== normalizeMemberNumber(current?.memberNumber);
+      if (numberChanged && newNumber) await assertMemberNumberAvailable(db, newNumber, memberId);
+      const toSave = { ...values, memberNumber: numberChanged ? newNumber : current?.memberNumber ?? null };
+      try {
+        await db.update(members).set(toSave as any).where(eq(members.id, memberId));
+      } catch (err) {
+        if (newNumber && isMemberNumberConflict(err)) throw memberNumberConflictError(newNumber);
+        throw err;
+      }
       await logMemberFileAudit(ctx.user, memberId, "Membership values");
       return { success: true };
     }),

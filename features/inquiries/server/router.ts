@@ -115,6 +115,9 @@ export const inquiriesRouter = router({
 
         return { success: true, leadId, reservationRequestId };
       } catch (err) {
+        // Deliberate tRPC errors (e.g. captcha FORBIDDEN, "Database unavailable")
+        // already carry the right status — don't turn a 403 into a 500.
+        if (err instanceof TRPCError) throw err;
         const pgErr = err as any;
         const code = pgErr?.code ?? pgErr?.data?.code;
         const constraint = pgErr?.constraint;

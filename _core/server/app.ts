@@ -12,6 +12,7 @@ import { resolvePort } from "./port";
 import { checkDbHealth } from "./db";
 import { runStartupMigration, checkHuntingPropertiesSchema } from "./startup-migration";
 import { applySqlMigrations } from "./apply-sql-migrations";
+import { COVER_PHOTO_JSON_LIMIT_BYTES } from "@shared/uploadLimits";
 
 let deployedCommit = "unknown";
 try {
@@ -36,6 +37,24 @@ async function startServer() {
   app.use(helmet({ contentSecurityPolicy: false }));
 
   // ── Body parsers ────────────────────────────────────────────────────────────
+  // Larger JSON limit ONLY for tRPC calls that carry a base64 cover photo
+  // (browser-resized to ≤ COVER_PHOTO.maxUploadBytes). The match is on the
+  // procedure path, and a batched call qualifies only if every procedure in the
+  // batch is on the list. Everything else keeps the 1 MB limit below, which
+  // skips bodies this parser already read.
+  const largeBodyProcedures = new Set(["propertyBooking.admin.properties.uploadCoverPhoto"]);
+  const largeJson = express.json({ limit: COVER_PHOTO_JSON_LIMIT_BYTES });
+  app.use((req, res, next) => {
+    const m = /^\/api\/trpc\/([^/]+)$/.exec(req.path);
+    if (m) {
+      let procs: string[] = [];
+      try { procs = decodeURIComponent(m[1]).split(","); } catch { /* malformed → default limit */ }
+      if (procs.length > 0 && procs.every((p) => largeBodyProcedures.has(p))) {
+        return largeJson(req, res, next);
+      }
+    }
+    next();
+  });
   app.use(express.json({ limit: "1mb" }));
   app.use(express.urlencoded({ limit: "1mb", extended: true }));
 
@@ -172,8 +191,9 @@ async function startServer() {
   const port = await resolvePort();
 
   // ── Apply SQL migrations ────────────────────────────────────────────────────
-  // Runs all pending migrations (0001–0017) from _core/db/migrations/
-  // Uses _migrations_applied table for idempotent tracking
+  // The ONLY place SQL migrations are applied (see CLAUDE.md → Migrations).
+  // Applies each _core/db/migrations/*.sql not yet in _migrations_applied, one
+  // transaction per file, BEFORE server.listen; exits non-zero on any failure.
   await applySqlMigrations();
 
   server.listen(port, () => {
@@ -181,4 +201,9 @@ async function startServer() {
   });
 }
 
-startServer().catch(console.error);
+// Any boot failure (DB unreachable during migrations, etc.) must exit non-zero
+// so Render's health check fails and the previous version keeps serving.
+startServer().catch((err) => {
+  console.error("[boot] fatal:", err);
+  process.exit(1);
+});

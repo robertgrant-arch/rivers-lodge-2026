@@ -71,9 +71,9 @@ git push origin main
 ## How Auto-Deploy Works
 
 `render.yaml` specifies:
-- `autoDeployTrigger: commit` — every push to `main` triggers a build
+- `autoDeploy: true` — every push to `main` triggers a build
 - `branch: main` — watches only the main branch
-- `preDeployCommand: node scripts/run-migrations.mjs` — runs SQL migrations before build
+- SQL migrations are applied at **boot** by `_core/server/apply-sql-migrations.ts`, before the server listens (see CLAUDE.md → Migrations). There is no build-time or pre-deploy migration step.
 - `buildCommand`, `startCommand` — how to build and run the app
 
 The service listens for pushes and starts a new deploy automatically. No GitHub App integration needed.
@@ -94,7 +94,7 @@ The service listens for pushes and starts a new deploy automatically. No GitHub 
    \d portal_blocked_dates  -- psql command to show table schema
    -- Should have columns: title, kind, startAt, endAt, allDay
    ```
-3. Review Render deploy logs — migrations run in `preDeployCommand`
+3. Review Render deploy logs — search for `[apply-sql-migrations]` in the service's boot output
 
 **Fix:**
 1. Push a new commit with migrations in `_core/db/migrations/0*.sql`

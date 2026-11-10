@@ -53,12 +53,13 @@ describe("Design system — CSS tokens", () => {
 describe("Design system — Typography", () => {
   const html = readFile("client/index.html");
 
-  it("loads Cormorant Garamond from Google Fonts", () => {
-    expect(html).toContain("Cormorant+Garamond");
+  // Brand standards (PR #28, 085813d) replaced Cormorant Garamond + Inter.
+  it("loads Montserrat from Google Fonts", () => {
+    expect(html).toContain("family=Montserrat");
   });
 
-  it("loads Inter from Google Fonts", () => {
-    expect(html).toContain("Inter");
+  it("loads Crimson Text from Google Fonts", () => {
+    expect(html).toContain("family=Crimson+Text");
   });
 });
 
@@ -95,8 +96,9 @@ describe("Route registration", () => {
     expect(app).toContain('path="/contact"');
   });
 
-  it("registers /estate route", () => {
-    expect(app).toContain('path="/estate"');
+  // /estate and Estate.tsx were deliberately removed (c90e6cd).
+  it("does not register the removed /estate route", () => {
+    expect(app).not.toContain('path="/estate"');
   });
 });
 
@@ -112,8 +114,9 @@ describe("Navigation — PublicNav", () => {
     expect(nav).toContain("Member Login");
   });
 
+  // Renamed weddingsDropdown → eventsDropdown in the nav restructure (5c22a22).
   it("has Weddings & Events dropdown", () => {
-    expect(nav).toContain("weddingsDropdown");
+    expect(nav).toContain("eventsDropdown");
   });
 
   it("has Membership & Outdoors dropdown", () => {
