@@ -46,7 +46,8 @@ export async function persistPartyMembers(
 
   for (const adult of partyAdults) {
     // Compute initial waiver deadline
-    const { deadline } = computeWaiverDeadline(startDate, "pending", now);
+    // The booking is being made now, so its lead time is measured from now.
+    const { deadline } = computeWaiverDeadline({ checkInDate: startDate, bookedAt: now, waiverStatus: "pending", now });
 
     // Insert adult record
     const insertResult = await tx
