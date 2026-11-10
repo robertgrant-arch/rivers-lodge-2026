@@ -27,6 +27,10 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { prepareCoverPhoto, coverPhotoUploadErrorMessage, COVER_PHOTO_HELP } from "../lib/prepareCoverPhoto";
+import { PropertyCleanupReview } from "../components/PropertyCleanupReview";
+import { PropertyMapsEditor, MaxCapacityField, PropertyActivitiesField, legacyActivityLabel, type MapItem } from "../components/PropertyFormFields";
+import { activityLabel, toDisplayActivities, type PropertyActivityKey } from "@shared/propertyActivities";
+import { isDirectionsUrl, propertyCapacity, DIRECTIONS_URL_HELP } from "@shared/propertyRules";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -87,11 +91,7 @@ function CreatePropertyForm({
     description: "",
     shortDescription: "",
     acreage: "",
-    maxDeerHunters: 0,
-    maxWaterfowlHunters: "" as any,
-    maxUplandHunters: 0,
-    maxGuests: 0,
-    maxTotalPeople: "" as any,
+    maxGuests: "" as string,
     bookingModes: ["AM", "PM"] as string[],
     overnightEnabled: true,
     lodgingAvailable: false,
@@ -104,9 +104,8 @@ function CreatePropertyForm({
     gpsLng: "",
     locationNotes: "",
     gateCode: "",
-    mapUrl: "",
-    mapFile: null as File | null,
-    mapFileName: "",
+    maps: [] as MapItem[],
+    directionsUrl: "",
     coverImageUrl: "",
     coverImageFile: null as File | null,
     coverImageFileName: "",
@@ -115,58 +114,15 @@ function CreatePropertyForm({
     featuredOnPublicSite: true,
     sortOrder: 0,
   });
-  const [isUploadingMap, setIsUploadingMap] = useState(false);
+  const [mapsBusy, setMapsBusy] = useState(false);
   const [isUploadingCoverPhoto, setIsUploadingCoverPhoto] = useState(false);
 
   const set = (key: string, value: any) => setForm((f) => ({ ...f, [key]: value }));
-  const uploadMap = trpc.propertyBooking.admin.properties.uploadMap.useMutation();
   const uploadCoverPhoto = trpc.propertyBooking.admin.properties.uploadCoverPhoto.useMutation();
-  const { data: availableActivities } = trpc.propertyBooking.properties.activities.useQuery();
 
   const handleNameChange = (v: string) => {
     set("name", v);
     set("slug", v.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""));
-  };
-
-  const handleMapFileSelect = async (files: FileList | null) => {
-    if (!files || files.length === 0) return;
-    const file = files[0];
-    const validTypes = ["application/pdf", "image/png", "image/jpeg"];
-    if (!validTypes.includes(file.type)) {
-      toast.error("Map must be PDF, PNG, or JPG");
-      return;
-    }
-    if (file.size > 10 * 1024 * 1024) {
-      toast.error("Map file exceeds 10MB limit");
-      return;
-    }
-
-    setIsUploadingMap(true);
-    try {
-      const reader = new FileReader();
-      reader.onload = async (e) => {
-        const base64 = (e.target?.result as string).split(',')[1];
-        try {
-          const result = await uploadMap.mutateAsync({
-            fileData: base64,
-            fileName: file.name,
-            contentType: file.type as "application/pdf" | "image/png" | "image/jpeg",
-          });
-          set("mapUrl", result.mapUrl);
-          set("mapFile", file);
-          set("mapFileName", file.name);
-          toast.success(`Map "${file.name}" uploaded`);
-        } catch (err: any) {
-          toast.error(`Upload failed: ${err.message}`);
-        } finally {
-          setIsUploadingMap(false);
-        }
-      };
-      reader.readAsDataURL(file);
-    } catch (err) {
-      toast.error("Failed to read file");
-      setIsUploadingMap(false);
-    }
   };
 
   const handleCoverPhotoFileSelect = async (files: FileList | null) => {
@@ -205,13 +161,15 @@ function CreatePropertyForm({
     if (!form.name.trim()) { toast.error("Property name is required."); return; }
     if (!form.slug.trim()) { toast.error("Slug is required."); return; }
 
-    // Validate capacity fields
-    if (form.maxWaterfowlHunters && Number(form.maxWaterfowlHunters) < 0) {
-      toast.error("Max Waterfowl Hunters cannot be negative"); return;
+    // Validate Max Capacity, directions link and pending uploads
+    const maxCapacity = form.maxGuests.trim() === "" ? undefined : Number(form.maxGuests);
+    if (maxCapacity !== undefined && (!Number.isInteger(maxCapacity) || maxCapacity < 1 || maxCapacity > 50)) {
+      toast.error("Max Capacity must be a whole number from 1 to 50."); return;
     }
-    if (form.maxTotalPeople && Number(form.maxTotalPeople) < 0) {
-      toast.error("Max Total People cannot be negative"); return;
+    if (form.directionsUrl.trim() && !isDirectionsUrl(form.directionsUrl)) {
+      toast.error(DIRECTIONS_URL_HELP); return;
     }
+    if (mapsBusy) { toast.error("Please wait for the map upload to finish."); return; }
 
     // Filter booking modes based on overnightEnabled
     const finalBookingModes = form.overnightEnabled
@@ -226,11 +184,9 @@ function CreatePropertyForm({
       description: form.description || undefined,
       shortDescription: form.shortDescription || undefined,
       acreage: form.acreage ? parseFloat(form.acreage) : undefined,
-      maxDeerHunters: Number(form.maxDeerHunters),
-      maxWaterfowlHunters: form.maxWaterfowlHunters ? Number(form.maxWaterfowlHunters) : undefined,
-      maxUplandHunters: Number(form.maxUplandHunters),
-      maxGuests: Number(form.maxGuests),
-      maxTotalPeople: form.maxTotalPeople ? Number(form.maxTotalPeople) : undefined,
+      maxGuests: maxCapacity ?? 0,
+      maps: form.maps.map((m) => ({ url: m.url, label: m.label || null })),
+      directionsUrl: form.directionsUrl.trim() || undefined,
       bookingModes: finalBookingModes,
       overnightEnabled: form.overnightEnabled,
       lodgingAvailable: form.lodgingAvailable,
@@ -243,7 +199,6 @@ function CreatePropertyForm({
       gpsLng: toOptionalNumber(form.gpsLng),
       locationNotes: form.locationNotes || undefined,
       gateCode: form.gateCode || undefined,
-      mapUrl: form.mapUrl || undefined,
       coverImageUrl: form.coverImageUrl || undefined,
       active: form.active,
       featuredOnPublicSite: form.featuredOnPublicSite,
@@ -268,27 +223,7 @@ function CreatePropertyForm({
         </div>
       </div>
 
-      <div className="border border-stone-700 rounded-lg p-4 space-y-3">
-        <p className="text-xs font-semibold text-stone-400 uppercase tracking-wider">Available Activities</p>
-        <div className="flex flex-wrap gap-4">
-          {availableActivities?.map((a) => (
-            <label key={a.value} className="flex items-center gap-2 cursor-pointer">
-              <Checkbox
-                checked={form.activities.includes(a.value)}
-                onCheckedChange={(v) => {
-                  if (v) {
-                    set("activities", [...form.activities, a.value]);
-                  } else {
-                    set("activities", form.activities.filter((act) => act !== a.value));
-                  }
-                }}
-                className="border-stone-600"
-              />
-              <span className="text-sm text-stone-300">{a.label}</span>
-            </label>
-          ))}
-        </div>
-      </div>
+      <PropertyActivitiesField stored={form.activities} onChange={(keys) => set("activities", keys)} />
 
       <div className="space-y-1.5">
         <Label className="text-stone-300 text-sm">Short Description (shown on cards)</Label>
@@ -316,35 +251,7 @@ function CreatePropertyForm({
         <Label className="text-stone-300 text-sm cursor-pointer">Lodging Available</Label>
       </div>
 
-      <div className="border border-stone-700 rounded-lg p-4 space-y-3">
-        <p className="text-xs font-semibold text-stone-400 uppercase tracking-wider">Capacity Settings</p>
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-1.5">
-            <Label className="text-stone-300 text-sm">Max Deer Hunters</Label>
-            <Input type="number" min={0} value={form.maxDeerHunters}
-              onChange={(e) => set("maxDeerHunters", parseInt(e.target.value) || 0)}
-              className="bg-stone-800 border-stone-700 text-stone-100" />
-          </div>
-          <div className="space-y-1.5">
-            <Label className="text-stone-300 text-sm">Max Waterfowl Hunters</Label>
-            <Input type="number" min={0} value={form.maxWaterfowlHunters}
-              onChange={(e) => set("maxWaterfowlHunters", e.target.value)}
-              placeholder="Leave blank if not applicable" className="bg-stone-800 border-stone-700 text-stone-100" />
-          </div>
-          <div className="space-y-1.5">
-            <Label className="text-stone-300 text-sm">Max Upland Hunters</Label>
-            <Input type="number" min={0} value={form.maxUplandHunters}
-              onChange={(e) => set("maxUplandHunters", parseInt(e.target.value) || 0)}
-              className="bg-stone-800 border-stone-700 text-stone-100" />
-          </div>
-          <div className="space-y-1.5">
-            <Label className="text-stone-300 text-sm">Max Guests</Label>
-            <Input type="number" min={0} value={form.maxGuests}
-              onChange={(e) => set("maxGuests", parseInt(e.target.value) || 0)}
-              className="bg-stone-800 border-stone-700 text-stone-100" />
-          </div>
-        </div>
-      </div>
+      <MaxCapacityField id="create-max-capacity" value={form.maxGuests} onChange={(v) => set("maxGuests", v)} />
 
       <div className="border border-stone-700 rounded-lg p-4 space-y-3">
         <p className="text-xs font-semibold text-stone-400 uppercase tracking-wider">Booking Modes</p>
@@ -396,6 +303,15 @@ function CreatePropertyForm({
           className="bg-stone-800 border-stone-700 text-stone-100 resize-none" />
       </div>
 
+      <PropertyMapsEditor
+        idPrefix="create"
+        maps={form.maps}
+        onChange={(maps) => set("maps", maps)}
+        directionsUrl={form.directionsUrl}
+        onDirectionsUrlChange={(v) => set("directionsUrl", v)}
+        onBusyChange={setMapsBusy}
+      />
+
       <div className="border border-stone-700 rounded-lg p-4 space-y-3">
         <p className="text-xs font-semibold text-stone-400 uppercase tracking-wider">Admin-Only Fields</p>
 
@@ -419,42 +335,6 @@ function CreatePropertyForm({
           </div>
         </div>
 
-        <div className="space-y-1.5">
-          <Label className="text-stone-300 text-sm">Property Map (PDF, PNG, or JPG)</Label>
-          <div className="flex items-center gap-2">
-            <input
-              type="file"
-              accept=".pdf,.png,.jpg,.jpeg"
-              onChange={(e) => handleMapFileSelect(e.target.files)}
-              className="hidden"
-              id="map-upload"
-              disabled={isUploadingMap}
-            />
-            <label htmlFor="map-upload" className="flex-1 cursor-pointer">
-              <Button variant="outline" disabled={isUploadingMap} className="w-full bg-stone-800 border-stone-700 text-stone-300 hover:bg-stone-700 disabled:opacity-50">
-                {isUploadingMap ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Uploading...
-                  </>
-                ) : (
-                  <>
-                    <Upload className="w-4 h-4 mr-2" />
-                    {form.mapFileName || "Choose file"}
-                  </>
-                )}
-              </Button>
-            </label>
-            {form.mapFile && !isUploadingMap && (
-              <button
-                onClick={() => { set("mapFile", null); set("mapUrl", ""); set("mapFileName", ""); }}
-                className="p-2 hover:bg-stone-700 rounded"
-              >
-                <X className="w-4 h-4 text-stone-400" />
-              </button>
-            )}
-          </div>
-        </div>
 
         <div className="space-y-1.5">
           <Label className="text-stone-300 text-sm">Cover Photo (JPG or PNG)</Label>
@@ -546,11 +426,9 @@ function EditPropertyForm({
     shortDescription: initial.shortDescription ?? "",
     description: initial.description ?? "",
     slug: initial.slug ?? "", activities: (Array.isArray(initial.activities) ? initial.activities.map((v: any) => typeof v === 'string' ? v : (v?.value ?? v?.activity ?? '')).filter(Boolean) : []) as string[],
-    maxDeerHunters: initial.maxDeerHunters ?? 0,
-    maxWaterfowlHunters: initial.maxWaterfowlHunters ?? "",
-    maxUplandHunters: initial.maxUplandHunters ?? 0,
-    maxGuests: initial.maxGuests ?? 0,
-    maxTotalPeople: initial.maxTotalPeople ?? "",
+    // Max Capacity (stored as maxGuests). Deer/waterfowl/upland/total columns
+    // are no longer edited here; their stored values are kept.
+    maxGuests: initial.maxGuests ? String(initial.maxGuests) : "",
     bookingModes: initial.bookingModes ?? ["AM", "PM"],
     overnightEnabled: initial.overnightEnabled ?? true,
     lodgingAvailable: initial.lodgingAvailable ?? false,
@@ -561,9 +439,8 @@ function EditPropertyForm({
     hasCellService: initial.hasCellService ?? true,
     locationNotes: initial.locationNotes ?? "",
     gateCode: initial.gateCode ?? "",
-    mapUrl: initial.mapUrl ?? "",
-    mapFile: null as File | null,
-    mapFileName: "",
+    maps: (Array.isArray(initial.maps) ? initial.maps : []).map((m: any) => ({ id: m.id, url: m.url, label: m.label ?? "" })) as MapItem[],
+    directionsUrl: initial.directionsUrl ?? "",
     coverImageUrl: initial.coverImageUrl ?? "",
     coverImageFile: null as File | null,
     coverImageFileName: "",
@@ -572,14 +449,13 @@ function EditPropertyForm({
     featuredOnPublicSite: initial.featuredOnPublicSite ?? true,
     sortOrder: initial.sortOrder ?? 0,
   });
-  const [isUploadingMap, setIsUploadingMap] = useState(false);
+  const [mapsBusy, setMapsBusy] = useState(false);
   const [isUploadingCoverPhoto, setIsUploadingCoverPhoto] = useState(false);
   const [propertySkillGroupAccess, setPropertySkillGroupAccess] = useState<Record<number, boolean>>({});
+  const [activitiesDirty, setActivitiesDirty] = useState(false);
 
   const set = (key: string, value: any) => setForm((f) => ({ ...f, [key]: value }));
-  const uploadMap = trpc.propertyBooking.admin.properties.uploadMap.useMutation();
   const uploadCoverPhoto = trpc.propertyBooking.admin.properties.uploadCoverPhoto.useMutation();
-  const { data: availableActivities } = trpc.propertyBooking.properties.activities.useQuery();
   const skillGroupsQuery = trpc.membership.listSkillGroupsForPreview.useQuery();
   const propertyAccessQuery = trpc.portal.calendarSettings.getPropertyCalendarAccessBySkillGroup.useQuery();
   const updatePropertyAccessMutation = trpc.portal.calendarSettings.updatePropertyCalendarAccessBySkillGroup.useMutation({
@@ -591,47 +467,6 @@ function EditPropertyForm({
       toast.error("Failed to update property access");
     },
   });
-
-  const handleMapFileSelect = async (files: FileList | null) => {
-    if (!files || files.length === 0) return;
-    const file = files[0];
-    const validTypes = ["application/pdf", "image/png", "image/jpeg"];
-    if (!validTypes.includes(file.type)) {
-      toast.error("Map must be PDF, PNG, or JPG");
-      return;
-    }
-    if (file.size > 10 * 1024 * 1024) {
-      toast.error("Map file exceeds 10MB limit");
-      return;
-    }
-
-    setIsUploadingMap(true);
-    try {
-      const reader = new FileReader();
-      reader.onload = async (e) => {
-        const base64 = (e.target?.result as string).split(',')[1];
-        try {
-          const result = await uploadMap.mutateAsync({
-            fileData: base64,
-            fileName: file.name,
-            contentType: file.type as "application/pdf" | "image/png" | "image/jpeg",
-          });
-          set("mapUrl", result.mapUrl);
-          set("mapFile", file);
-          set("mapFileName", file.name);
-          toast.success(`Map "${file.name}" uploaded`);
-        } catch (err: any) {
-          toast.error(`Upload failed: ${err.message}`);
-        } finally {
-          setIsUploadingMap(false);
-        }
-      };
-      reader.readAsDataURL(file);
-    } catch (err) {
-      toast.error("Failed to read file");
-      setIsUploadingMap(false);
-    }
-  };
 
   const handleCoverPhotoFileSelect = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
@@ -680,13 +515,15 @@ function EditPropertyForm({
   const handleSubmit = async () => {
     if (!form.name.trim()) { toast.error("Property name is required."); return; }
 
-    // Validate capacity fields
-    if (form.maxWaterfowlHunters && Number(form.maxWaterfowlHunters) < 0) {
-      toast.error("Max Waterfowl Hunters cannot be negative"); return;
+    // Validate Max Capacity, directions link and pending uploads
+    const maxCapacity = form.maxGuests.trim() === "" ? undefined : Number(form.maxGuests);
+    if (maxCapacity !== undefined && (!Number.isInteger(maxCapacity) || maxCapacity < 1 || maxCapacity > 50)) {
+      toast.error("Max Capacity must be a whole number from 1 to 50."); return;
     }
-    if (form.maxTotalPeople && Number(form.maxTotalPeople) < 0) {
-      toast.error("Max Total People cannot be negative"); return;
+    if (form.directionsUrl.trim() && !isDirectionsUrl(form.directionsUrl)) {
+      toast.error(DIRECTIONS_URL_HELP); return;
     }
+    if (mapsBusy) { toast.error("Please wait for the map upload to finish."); return; }
 
     // Filter booking modes based on overnightEnabled
     const finalBookingModes = form.overnightEnabled
@@ -698,12 +535,12 @@ function EditPropertyForm({
       name: form.name,
       shortDescription: form.shortDescription || undefined,
       description: form.description || undefined,
-      activities: form.activities,
-      maxDeerHunters: Number(form.maxDeerHunters),
-      maxWaterfowlHunters: form.maxWaterfowlHunters ? Number(form.maxWaterfowlHunters) : undefined,
-      maxUplandHunters: Number(form.maxUplandHunters),
-      maxGuests: Number(form.maxGuests),
-      maxTotalPeople: form.maxTotalPeople ? Number(form.maxTotalPeople) : undefined,
+      // Only send activities if the admin changed them, so simply saving a
+      // property never rewrites its stored (possibly legacy) activity values.
+      ...(activitiesDirty ? { activities: form.activities } : {}),
+      ...(maxCapacity !== undefined ? { maxGuests: maxCapacity } : {}),
+      maps: form.maps.map((m) => ({ id: m.id, url: m.url, label: m.label || null })),
+      directionsUrl: form.directionsUrl.trim(),
       bookingModes: finalBookingModes,
       overnightEnabled: form.overnightEnabled,
       lodgingAvailable: form.lodgingAvailable,
@@ -714,7 +551,6 @@ function EditPropertyForm({
       hasCellService: form.hasCellService,
       locationNotes: form.locationNotes || undefined,
       gateCode: form.gateCode || undefined,
-      mapUrl: form.mapUrl || undefined,
       coverImageUrl: form.coverImageUrl || undefined,
       active: form.active,
       featuredOnPublicSite: form.featuredOnPublicSite,
@@ -759,27 +595,7 @@ function EditPropertyForm({
           rows={3} className="bg-stone-800 border-stone-700 text-stone-100 resize-none" />
       </div>
 
-      <div className="border border-stone-700 rounded-lg p-4 space-y-3">
-        <p className="text-xs font-semibold text-stone-400 uppercase tracking-wider">Available Activities</p>
-        <div className="flex flex-wrap gap-4">
-          {availableActivities?.map((a) => (
-            <label key={a.value} className="flex items-center gap-2 cursor-pointer">
-              <Checkbox
-                checked={form.activities.includes(a.value)}
-                onCheckedChange={(v) => {
-                  if (v) {
-                    set("activities", [...form.activities, a.value]);
-                  } else {
-                    set("activities", form.activities.filter((act) => act !== a.value));
-                  }
-                }}
-                className="border-stone-600"
-              />
-              <span className="text-sm text-stone-300">{a.label}</span>
-            </label>
-          ))}
-        </div>
-      </div>
+      <PropertyActivitiesField stored={form.activities} onChange={(keys) => { set("activities", keys); setActivitiesDirty(true); }} />
 
       <div className="space-y-1.5">
         <Label className="text-stone-300 text-sm">Sort Order</Label>
@@ -787,35 +603,7 @@ function EditPropertyForm({
           className="bg-stone-800 border-stone-700 text-stone-100" />
       </div>
 
-      <div className="border border-stone-700 rounded-lg p-4 space-y-3">
-        <p className="text-xs font-semibold text-stone-400 uppercase tracking-wider">Capacity Settings</p>
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-1.5">
-            <Label className="text-stone-300 text-sm">Max Deer Hunters</Label>
-            <Input type="number" min={0} value={form.maxDeerHunters}
-              onChange={(e) => set("maxDeerHunters", parseInt(e.target.value) || 0)}
-              className="bg-stone-800 border-stone-700 text-stone-100" />
-          </div>
-          <div className="space-y-1.5">
-            <Label className="text-stone-300 text-sm">Max Waterfowl Hunters</Label>
-            <Input type="number" min={0} value={form.maxWaterfowlHunters}
-              onChange={(e) => set("maxWaterfowlHunters", e.target.value)}
-              placeholder="Leave blank if not applicable" className="bg-stone-800 border-stone-700 text-stone-100" />
-          </div>
-          <div className="space-y-1.5">
-            <Label className="text-stone-300 text-sm">Max Upland Hunters</Label>
-            <Input type="number" min={0} value={form.maxUplandHunters}
-              onChange={(e) => set("maxUplandHunters", parseInt(e.target.value) || 0)}
-              className="bg-stone-800 border-stone-700 text-stone-100" />
-          </div>
-          <div className="space-y-1.5">
-            <Label className="text-stone-300 text-sm">Max Guests</Label>
-            <Input type="number" min={0} value={form.maxGuests}
-              onChange={(e) => set("maxGuests", parseInt(e.target.value) || 0)}
-              className="bg-stone-800 border-stone-700 text-stone-100" />
-          </div>
-        </div>
-      </div>
+      <MaxCapacityField id="edit-max-capacity" value={form.maxGuests} onChange={(v) => set("maxGuests", v)} />
 
       <div className="border border-stone-700 rounded-lg p-4 space-y-3">
         <p className="text-xs font-semibold text-stone-400 uppercase tracking-wider">Booking Modes</p>
@@ -855,6 +643,15 @@ function EditPropertyForm({
           rows={2} className="bg-stone-800 border-stone-700 text-stone-100 resize-none" />
       </div>
 
+      <PropertyMapsEditor
+        idPrefix="edit"
+        maps={form.maps}
+        onChange={(maps) => set("maps", maps)}
+        directionsUrl={form.directionsUrl}
+        onDirectionsUrlChange={(v) => set("directionsUrl", v)}
+        onBusyChange={setMapsBusy}
+      />
+
       <div className="border border-stone-700 rounded-lg p-4 space-y-3">
         <p className="text-xs font-semibold text-stone-400 uppercase tracking-wider">Admin-Only Fields</p>
 
@@ -878,42 +675,6 @@ function EditPropertyForm({
           </div>
         </div>
 
-        <div className="space-y-1.5">
-          <Label className="text-stone-300 text-sm">Property Map (PDF, PNG, or JPG)</Label>
-          <div className="flex items-center gap-2">
-            <input
-              type="file"
-              accept=".pdf,.png,.jpg,.jpeg"
-              onChange={(e) => handleMapFileSelect(e.target.files)}
-              className="hidden"
-              id="map-upload-edit"
-              disabled={isUploadingMap}
-            />
-            <label htmlFor="map-upload-edit" className="flex-1 cursor-pointer">
-              <Button variant="outline" disabled={isUploadingMap} className="w-full bg-stone-800 border-stone-700 text-stone-300 hover:bg-stone-700 disabled:opacity-50">
-                {isUploadingMap ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Uploading...
-                  </>
-                ) : (
-                  <>
-                    <Upload className="w-4 h-4 mr-2" />
-                    {form.mapFileName || "Choose file"}
-                  </>
-                )}
-              </Button>
-            </label>
-            {form.mapFile && !isUploadingMap && (
-              <button
-                onClick={() => { set("mapFile", null); set("mapUrl", ""); set("mapFileName", ""); }}
-                className="p-2 hover:bg-stone-700 rounded"
-              >
-                <X className="w-4 h-4 text-stone-400" />
-              </button>
-            )}
-          </div>
-        </div>
 
         <div className="space-y-1.5">
           <Label className="text-stone-300 text-sm">Cover Photo (JPG or PNG)</Label>
@@ -1024,18 +785,12 @@ function PropertyRow({ property, onEdit }: { property: any; onEdit: () => void }
   const [expanded, setExpanded] = useState(true);
 
   const typeLabel = PROPERTY_TYPES.find((t) => t.value === property.type)?.label ?? property.type;
-  const activityLabels = (() => { const list = Array.isArray(property.activities) && property.activities.length > 0 ? property.activities : []; const seen = new Set<string>(); const out: string[] = []; for (const v of list) { const val = typeof v === 'string' ? v : (v?.value ?? v?.activity ?? ''); if (!val || seen.has(val)) continue; seen.add(val); out.push(ACTIVITIES.find((a) => a.value === val)?.label ?? val); } return out; })();
+  // Same seven labels members see (legacy stored values mapped, unmapped ones flagged).
+  const activityLabels = toDisplayActivities(property.activities).keys.map((k) => activityLabel(k) ?? k);
+  const flaggedActivities: string[] = toDisplayActivities(property.activities).flagged;
 
-  const capacityItems = [
-    { label: "Deer", value: property.maxDeerHunters },
-    { label: "Waterfowl", value: property.maxWaterfowlHunters },
-    { label: "Upland", value: property.maxUplandHunters },
-    { label: "Guests", value: property.maxGuests },
-  ].filter((item) => item.value > 0);
-
-  const capacityDisplay = capacityItems.length > 0
-    ? capacityItems.map((item) => `${item.label} ${item.value}`).join(" · ")
-    : null;
+  const capacity = propertyCapacity(property);
+  const capacityDisplay = capacity !== null ? `Capacity ${capacity}` : "Capacity not set";
 
   return (
     <div className="bg-stone-900 border border-stone-700 rounded-lg overflow-hidden">
@@ -1097,11 +852,13 @@ function PropertyRow({ property, onEdit }: { property: any; onEdit: () => void }
               ))}
             </div>
           )}
-          <div className="grid grid-cols-2 gap-2 text-xs text-stone-400 bg-stone-800/50 p-2 rounded">
-            {property.maxDeerHunters > 0 && <span>Deer Hunters: {property.maxDeerHunters}</span>}
-            {property.maxWaterfowlHunters && <span>Waterfowl Hunters: {property.maxWaterfowlHunters}</span>}
-            {property.maxUplandHunters > 0 && <span>Upland Hunters: {property.maxUplandHunters}</span>}
-            {property.maxGuests > 0 && <span>Guests: {property.maxGuests}</span>}
+          {flaggedActivities.length > 0 && (
+            <p className="text-xs text-amber-300/90">Not shown to members (no approved activity): {flaggedActivities.map(legacyActivityLabel).join(", ")}</p>
+          )}
+          <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-stone-400 bg-stone-800/50 p-2 rounded">
+            <span>{capacityDisplay}</span>
+            <span>{(property.maps?.length ?? 0) === 1 ? "1 map" : `${property.maps?.length ?? 0} maps`}</span>
+            <span>{property.directionsUrl ? "Directions link set" : "No directions link"}</span>
           </div>
           {property.locationNotes && (
             <div>
@@ -1200,6 +957,8 @@ export default function PortalProperties() {
           ))}
         </div>
       </div>
+
+      {properties && properties.length > 0 && <PropertyCleanupReview properties={properties} />}
 
       {/* Loading */}
       {isLoading && (

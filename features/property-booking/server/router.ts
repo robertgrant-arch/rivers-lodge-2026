@@ -16,7 +16,9 @@ import { TRPCError } from "@trpc/server";
 import { router, publicProcedure, protectedProcedure } from '@core/server/trpc';
 import { getDb } from '@core/server/db';
 import { storagePut } from '@core/server/storage';
-import { COVER_PHOTO, formatMB } from '@shared/uploadLimits';
+import { COVER_PHOTO } from '@shared/uploadLimits';
+import { PROPERTY_ACTIVITIES, PROPERTY_ACTIVITY_KEYS, LEGACY_ACTIVITY_VALUES, toDisplayActivities } from '@shared/propertyActivities';
+import { consecutiveDaysError, propertyCapacity, isDirectionsUrl, DIRECTIONS_URL_HELP, PROPERTY_MAP_UPLOAD, sniffMapType, formatMB } from '@shared/propertyRules';
 import {
   huntingProperties,
   propertySeasons,
@@ -226,6 +228,96 @@ async function backfillOvernightEnabled(db: any): Promise<number> {
   return updated;
 }
 
+// ─── Activities, maps & directions helpers ────────────────────────────────────
+
+/** Approved keys plus legacy values (legacy kept so existing data still validates). */
+const ALLOWED_ACTIVITY_VALUES = new Set<string>([...PROPERTY_ACTIVITY_KEYS, ...LEGACY_ACTIVITY_VALUES]);
+const activityValue = z.string().refine((v) => ALLOWED_ACTIVITY_VALUES.has(v), { message: "Unknown activity" });
+/** Property activities: legacy property enum has no 'scouting'. */
+const propertyActivityValue = activityValue.refine((v) => v !== "scouting", { message: "Unknown activity" });
+
+/** "" clears the link; anything else must be a Google/Apple Maps URL. */
+const directionsUrlInput = z
+  .string()
+  .max(500)
+  .refine((v) => v.trim() === "" || isDirectionsUrl(v), { message: DIRECTIONS_URL_HELP });
+
+/** One map in the Add/Edit Property maps list. url comes from uploadMap. */
+const mapItemInput = z.object({
+  id: z.number().int().positive().optional(),
+  url: z
+    .string()
+    .min(1)
+    .max(500)
+    .refine((u) => u.startsWith("/manus-storage/") || /^https:\/\//.test(u), { message: "Upload the map file first" }),
+  label: z.string().trim().max(120).optional().nullable(),
+});
+const mapsInput = z.array(mapItemInput).max(PROPERTY_MAP_UPLOAD.maxMaps).optional();
+
+type MapRow = { id: number; url: string; label: string | null; sortOrder: number };
+
+/** Active maps for the given properties, in display order. */
+async function loadMaps(db: any, propertyIds: number[]): Promise<Map<number, MapRow[]>> {
+  const out = new Map<number, MapRow[]>();
+  if (propertyIds.length === 0) return out;
+  const rows = await db
+    .select({ id: propertyImages.id, propertyId: propertyImages.propertyId, url: propertyImages.url, caption: propertyImages.caption, sortOrder: propertyImages.sortOrder })
+    .from(propertyImages)
+    .where(and(
+      sql`${propertyImages.propertyId} IN (${sql.join(propertyIds.map((id) => sql`${id}`), sql`, `)})`,
+      eq(propertyImages.type, "map"),
+      eq(propertyImages.active, true),
+    ))
+    .orderBy(asc(propertyImages.sortOrder), asc(propertyImages.id));
+  for (const r of rows) {
+    const arr = out.get(r.propertyId) ?? [];
+    arr.push({ id: r.id, url: r.url, label: r.caption ?? null, sortOrder: r.sortOrder ?? 0 });
+    out.set(r.propertyId, arr);
+  }
+  return out;
+}
+
+/**
+ * Make the property's active maps match `maps` (in order): update kept rows,
+ * insert new ones, and deactivate removed ones (rows are kept, not deleted).
+ */
+async function syncMaps(db: any, propertyId: number, maps: Array<{ id?: number; url: string; label?: string | null }>, userId: string | null) {
+  const existing = (await loadMaps(db, [propertyId])).get(propertyId) ?? [];
+  const existingIds = new Set(existing.map((m) => m.id));
+  const keep = new Set<number>();
+  for (const [i, m] of maps.entries()) {
+    const label = m.label?.trim() ? m.label.trim() : null;
+    if (m.id && existingIds.has(m.id)) {
+      keep.add(m.id);
+      await db.update(propertyImages).set({ url: m.url, caption: label, sortOrder: i } as any).where(eq(propertyImages.id, m.id));
+    } else {
+      await db.insert(propertyImages).values({
+        propertyId, url: m.url, caption: label, type: "map", sortOrder: i, active: true,
+        uploadedByUserId: userId, createdAt: now(),
+      } as any);
+    }
+  }
+  const removed = existing.filter((m) => !keep.has(m.id)).map((m) => m.id);
+  if (removed.length) {
+    await db.update(propertyImages).set({ active: false } as any).where(and(
+      eq(propertyImages.propertyId, propertyId),
+      sql`${propertyImages.id} IN (${sql.join(removed.map((id) => sql`${id}`), sql`, `)})`,
+    ));
+  }
+}
+
+/** Member-facing view fields added to every property response. */
+function memberView(p: any, rawActivities: string[], maps: MapRow[]) {
+  const { keys, flagged } = toDisplayActivities(rawActivities);
+  return {
+    displayActivities: keys,
+    flaggedActivities: flagged,
+    capacity: propertyCapacity(p),
+    maps,
+    directionsUrl: p.directionsUrl ?? null,
+  };
+}
+
 // ─── Input Schemas ────────────────────────────────────────────────────────────
 
 const createBookingInput = z.object({
@@ -233,10 +325,8 @@ const createBookingInput = z.object({
   startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   partySize: z.number().int().min(1).max(20),
-  activity: z.enum([
-    "deer", "duck", "turkey", "quail", "dove", "hog",
-    "bass", "catfish", "crappie", "mixed_hunt", "mixed_fish", "hunt_and_fish", "scouting",
-  ]),
+  // Approved activity keys (what members now pick) or a legacy value.
+  activity: activityValue,
   timeSlot: z.enum(["AM", "PM", "ALL_DAY", "OVERNIGHT"]).optional(),
   guestNames: z.array(z.string().max(100)).optional(),
   hasMinors: z.boolean().optional(),
@@ -319,18 +409,22 @@ export const propertyBookingRouter = router({
           activitiesMap.set(act.propertyId, arr);
         }
 
-        // Filter by activity if requested (check join table, not primaryActivity)
+        // Filter by activity if requested: an approved key matches any stored
+        // value that maps to it (e.g. "fishing" matches bass/catfish/crappie).
         let result = props;
         if (input?.activity) {
           result = props.filter((p: any) => {
             const acts = activitiesMap.get(p.id) ?? [];
-            return acts.includes(input.activity);
+            return acts.includes(input.activity) || toDisplayActivities(acts).keys.includes(input.activity);
           });
         }
+
+        const mapsByProperty = await loadMaps(db, result.map((p: any) => p.id));
 
         // Normalize response: provide safe defaults for nullable JSON fields
         return result.map((p: any) => ({
           ...p,
+          ...memberView(p, activitiesMap.get(p.id) ?? [], mapsByProperty.get(p.id) ?? []),
           activities: activitiesMap.get(p.id) ?? [],
           coverImageUrl: p.coverImageUrl ?? imageMap.get(p.id) ?? null,
           bookingModes: Array.isArray(p.bookingModes) ? p.bookingModes : ["AM", "PM"],
@@ -343,16 +437,7 @@ export const propertyBookingRouter = router({
 
     /** List all available activities for properties */
     activities: publicProcedure
-      .query(async () => {
-        const activityEnum = [
-          "deer", "duck", "turkey", "quail", "dove", "hog",
-          "bass", "catfish", "crappie", "mixed_hunt", "mixed_fish", "hunt_and_fish",
-        ];
-        return activityEnum.map((value) => ({
-          value,
-          label: value.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase()),
-        }));
-      }),
+      .query(async () => PROPERTY_ACTIVITIES.map((a) => ({ value: a.value, label: a.label }))),
 
     /** Get a single property by ID with full details */
     detail: publicProcedure
@@ -382,10 +467,12 @@ export const propertyBookingRouter = router({
         ]);
 
         const activities = activitiesData.map((a: any) => a.activity);
+        const maps = (await loadMaps(db, [input.id])).get(input.id) ?? [];
 
         // Normalize response: provide safe defaults for nullable fields
         const normalized = {
           ...property,
+          ...memberView(property, activities, maps),
           activities,
           bookingModes: Array.isArray(property.bookingModes) ? property.bookingModes : ["AM", "PM"],
           secondaryActivities: Array.isArray(property.secondaryActivities) ? property.secondaryActivities : null,
@@ -687,6 +774,13 @@ export const propertyBookingRouter = router({
         // a connection from the pool.
         const member = await requireMember(db, ctx.user.id);
 
+        // Booking rule: maximum consecutive days (see features/_shared/propertyRules.ts).
+        if (input.endDate < input.startDate) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "The end date must be on or after the start date." });
+        }
+        const tooLong = consecutiveDaysError(input.startDate, input.endDate);
+        if (tooLong) throw new TRPCError({ code: "BAD_REQUEST", message: tooLong });
+
         const result = await db.transaction(async (tx) => {
           // ── Idempotency (inside tx so the re-check is serialised) ──────────
           const existing = await tx
@@ -739,12 +833,21 @@ export const propertyBookingRouter = router({
           // ALL_DAY is always allowed if bookingModes includes AM and PM
 
           // ── Party size ────────────────────────────────────────────────────
-          // Activity-aware validation: hunting activities check maxHunters,
-          // non-hunting activities check maxGuests
-          const huntingActivities = ["deer", "duck", "turkey", "quail", "dove", "hog", "mixed_hunt", "hunt_and_fish", "scouting"];
+          // One capacity per property: Max Capacity (maxGuests), the number
+          // members see. Properties without it keep the previous
+          // activity-aware check (hunting → maxHunters, otherwise maxGuests).
+          const capacity = propertyCapacity(property);
+          const huntingActivities = ["deer", "duck", "turkey", "quail", "dove", "hog", "mixed_hunt", "hunt_and_fish", "scouting", "waterfowl", "upland_hunting"];
           const isHuntingActivity = huntingActivities.includes(input.activity);
 
-          if (isHuntingActivity) {
+          if (capacity !== null) {
+            if (input.partySize > capacity) {
+              throw new TRPCError({
+                code: "BAD_REQUEST",
+                message: `This property allows a maximum of ${capacity} ${capacity === 1 ? "person" : "people"}.`,
+              });
+            }
+          } else if (isHuntingActivity) {
             const maxCapacity = property.maxHunters ?? 0;
             if (input.partySize > maxCapacity) {
               throw new TRPCError({
@@ -1326,10 +1429,9 @@ export const propertyBookingRouter = router({
             "bass", "catfish", "crappie", "mixed_hunt", "mixed_fish", "hunt_and_fish",
           ]).optional(),
           secondaryActivities: z.array(z.string()).optional(),
-          activities: z.array(z.enum([
-            "deer", "duck", "turkey", "quail", "dove", "hog",
-            "bass", "catfish", "crappie", "mixed_hunt", "mixed_fish", "hunt_and_fish",
-          ])).optional(),
+          activities: z.array(propertyActivityValue).optional(),
+          maps: mapsInput,
+          directionsUrl: directionsUrlInput.optional(),
           description: z.string().optional(),
           shortDescription: z.string().max(280).optional(),
           acreage: z.number().positive().optional(),
@@ -1365,8 +1467,10 @@ export const propertyBookingRouter = router({
             if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
 
             const ts = now();
+            const { maps: newMaps, activities: _activities, ...propertyInput } = input;
             const insertValues = {
-              ...input,
+              ...propertyInput,
+              directionsUrl: input.directionsUrl?.trim() ? input.directionsUrl.trim() : null,
               primaryActivity: input.primaryActivity ?? null,
               secondaryActivities: input.secondaryActivities ?? null,
               acreage: input.acreage ?? null,
@@ -1418,6 +1522,10 @@ export const propertyBookingRouter = router({
                 activity,
               }));
               await db.insert(propertyActivities).values(activityRows as any);
+            }
+
+            if (newMaps && newMaps.length > 0) {
+              await syncMaps(db, propertyId, newMaps, ctx.user.id ?? null);
             }
 
             // Create default booking rules
@@ -1509,21 +1617,27 @@ export const propertyBookingRouter = router({
           hasWaterAccess: z.boolean().optional(),
           hasElectricity: z.boolean().optional(),
           hasCellService: z.boolean().optional(),
-          activities: z.array(z.enum([
-            "deer", "duck", "turkey", "quail", "dove", "hog",
-            "bass", "catfish", "crappie", "mixed_hunt", "mixed_fish", "hunt_and_fish",
-          ])).optional(),
+          activities: z.array(propertyActivityValue).optional(),
+          maps: mapsInput,
+          directionsUrl: directionsUrlInput.optional(),
         }))
         .mutation(async ({ ctx, input }: { ctx: any; input: any }) => {
           requireAdmin(ctx.user.role);
           const db = await getDb();
           if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
 
-          const { id, activities, ...updates } = input;
+          const { id, activities, maps, ...updates } = input;
+          if (updates.directionsUrl !== undefined) {
+            updates.directionsUrl = updates.directionsUrl.trim() ? updates.directionsUrl.trim() : null;
+          }
           await db
             .update(huntingProperties)
             .set({ ...updates, updatedAt: now() } as any)
             .where(eq(huntingProperties.id, id));
+
+          if (maps !== undefined) {
+            await syncMaps(db, id, maps, ctx.user.id ?? null);
+          }
 
           // Update activities if provided
           if (activities !== undefined) {
@@ -1547,17 +1661,15 @@ export const propertyBookingRouter = router({
       updateRules: protectedProcedure
         .input(z.object({
           propertyId: z.number().int().positive(),
-          advanceBookingDays: z.number().int().min(0).max(365).optional(),
+          // advanceBookingDays, maxDaysPerSeason and the harvest-report settings
+          // are no longer rules (owner decision); their stored values are kept
+          // but can't be changed here. The consecutive-day maximum is fixed at
+          // MAX_CONSECUTIVE_DAYS (features/_shared/propertyRules.ts).
           minAdvanceHours: z.number().int().min(0).max(168).optional(),
-          maxConsecutiveDays: z.number().int().min(1).max(30).optional(),
-          maxDaysPerSeason: z.number().int().min(1).max(365).optional(),
           requiresApproval: z.boolean().optional(),
           allowGuests: z.boolean().optional(),
           maxGuestsPerBooking: z.number().int().min(0).max(10).optional(),
           cancellationHours: z.number().int().min(0).max(168).optional(),
-          harvestReportRequired: z.boolean().optional(),
-          harvestReportDays: z.number().int().min(1).max(30).optional(),
-          blockBookingsIfReportOverdue: z.boolean().optional(),
           tierAccess: z.record(z.string(), z.boolean()).optional(),
           notes: z.string().max(1000).optional(),
         }))
@@ -1632,24 +1744,35 @@ export const propertyBookingRouter = router({
       /** Permanently delete a property (admin only). Refuses if bookings exist. */ delete: protectedProcedure.input(z.object({ id: z.number().int().positive() })).mutation(async ({ ctx, input }: { ctx: any; input: any }) => { requireAdmin(ctx.user.role); const db = await getDb(); if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" }); const { id } = input; const [existing] = await db.select({ id: huntingProperties.id }).from(huntingProperties).where(eq(huntingProperties.id, id)).limit(1); if (!existing) throw new TRPCError({ code: "NOT_FOUND", message: "Property not found." }); const [hasBooking] = await db.select({ id: propertyBookings.id }).from(propertyBookings).where(eq(propertyBookings.propertyId, id)).limit(1); if (hasBooking) throw new TRPCError({ code: "CONFLICT", message: "This property has bookings and cannot be deleted. Set it to Inactive instead." }); await db.delete(propertyActivities).where(eq(propertyActivities.propertyId, id)); await db.delete(propertyAmenities).where(eq(propertyAmenities.propertyId, id)); await db.delete(propertyImages).where(eq(propertyImages.propertyId, id)); await db.delete(propertyBookingRules).where(eq(propertyBookingRules.propertyId, id)); await db.delete(propertySeasons).where(eq(propertySeasons.propertyId, id)); await db.delete(propertyPricing).where(eq(propertyPricing.propertyId, id)); await db.delete(propertyDateInventory).where(eq(propertyDateInventory.propertyId, id)); await db.delete(propertyBlockedDates).where(eq(propertyBlockedDates.propertyId, id)); await db.delete(bookingWaitlist).where(eq(bookingWaitlist.propertyId, id)); await db.delete(huntingProperties).where(eq(huntingProperties.id, id)); return { success: true }; }), /** Upload property map file (PDF, PNG, JPG) */
       uploadMap: protectedProcedure
         .input(z.object({
-          fileData: z.string(), // base64 encoded file
+          // base64; images are resized in the browser first, PDFs are sent as-is
+          // (see features/_shared/propertyRules.ts → PROPERTY_MAP_UPLOAD)
+          fileData: z.string().min(1).max(Math.ceil((PROPERTY_MAP_UPLOAD.maxUploadBytes * 4) / 3) + 16),
           fileName: z.string().max(255),
-          contentType: z.enum(["application/pdf", "image/png", "image/jpeg"]),
+          contentType: z.enum(PROPERTY_MAP_UPLOAD.contentTypes),
         }))
         .mutation(async ({ ctx, input }: { ctx: any; input: any }) => {
           requireAdmin(ctx.user.role);
 
           // Decode base64
           const buffer = Buffer.from(input.fileData, 'base64');
+          if (buffer.length > PROPERTY_MAP_UPLOAD.maxUploadBytes) {
+            throw new TRPCError({ code: "PAYLOAD_TOO_LARGE", message: `Map files can be up to ${formatMB(PROPERTY_MAP_UPLOAD.maxUploadBytes)}. Please choose a smaller file.` });
+          }
+          // Check the real type from the first bytes, not the client's label.
+          const sniffed = sniffMapType(buffer);
+          if (!sniffed) {
+            throw new TRPCError({ code: "BAD_REQUEST", message: "Maps must be a PDF, PNG or JPG file." });
+          }
+          const safeName = String(input.fileName).replace(/[^A-Za-z0-9._-]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 120) || "map";
 
           // Upload to S3
           const { url } = await storagePut(
-            `properties/maps/${Date.now()}-${input.fileName}`,
+            `properties/maps/${Date.now()}-${safeName}`,
             buffer,
-            input.contentType,
+            sniffed,
           );
 
-          return { mapUrl: url };
+          return { mapUrl: url, contentType: sniffed };
         }),
 
       /** Upload property cover photo (PNG, JPG) */
@@ -1948,6 +2071,7 @@ export const propertyBookingRouter = router({
             coverImageUrl: huntingProperties.coverImageUrl,
             mapImageUrl: huntingProperties.mapImageUrl,
             mapUrl: huntingProperties.mapUrl,
+            directionsUrl: huntingProperties.directionsUrl,
             gateCode: huntingProperties.gateCode,
             active: huntingProperties.active,
             featuredOnPublicSite: huntingProperties.featuredOnPublicSite,
@@ -1976,9 +2100,12 @@ export const propertyBookingRouter = router({
           activitiesMap.set(act.propertyId, arr);
         }
 
+        const mapsByProperty = await loadMaps(db, propIds);
+
         // Normalize response: provide safe defaults for nullable JSON fields
         return props.map((p: any) => ({
           ...p,
+          ...memberView(p, activitiesMap.get(p.id) ?? [], mapsByProperty.get(p.id) ?? []),
           activities: activitiesMap.get(p.id) ?? [],
           bookingModes: Array.isArray(p.bookingModes) ? p.bookingModes : ["AM", "PM"],
           secondaryActivities: Array.isArray(p.secondaryActivities) ? p.secondaryActivities : null,

@@ -30,6 +30,9 @@ export const huntingPropertyTypeEnum = pgEnum("hunting_property_type", [
 export const propertyActivityEnum = pgEnum("property_activity", [
   "deer", "duck", "turkey", "quail", "dove", "hog", "bass", "catfish", "crappie",
   "mixed_hunt", "mixed_fish", "hunt_and_fish",
+  // Approved member-facing activities (migration 0037). Legacy values above are
+  // kept for existing rows; see features/_shared/propertyActivities.ts.
+  "waterfowl", "fishing", "camping", "hiking", "shooting_permitted", "upland_hunting", "side_by_side_permitted",
 ]);
 
 export const inventoryStatusEnum = pgEnum("inventory_status", [
@@ -39,6 +42,9 @@ export const inventoryStatusEnum = pgEnum("inventory_status", [
 export const propertyBookingActivityEnum = pgEnum("property_booking_activity", [
   "deer", "duck", "turkey", "quail", "dove", "hog", "bass", "catfish", "crappie",
   "mixed_hunt", "mixed_fish", "hunt_and_fish", "scouting",
+  // Approved member-facing activities (migration 0037). Legacy values above are
+  // kept for existing rows; see features/_shared/propertyActivities.ts.
+  "waterfowl", "fishing", "camping", "hiking", "shooting_permitted", "upland_hunting", "side_by_side_permitted",
 ]);
 
 export const propertyBookingStatusEnum = pgEnum("property_booking_status", [
@@ -128,7 +134,7 @@ export const huntingProperties = pgTable("hunting_properties", {
   maxTotalPeople: integer("maxTotalPeople"), // Deprecated: use maxGuests instead
   maxDeerHunters: integer("maxDeerHunters").default(0),
   maxUplandHunters: integer("maxUplandHunters").default(0),
-  maxGuests: integer("maxGuests").default(0),
+  maxGuests: integer("maxGuests").default(0), // = "Max Capacity": the single capacity members see and the party-size limit
   hasHeatedBlind: boolean("hasHeatedBlind").default(false),
   hasAtvAccess: boolean("hasAtvAccess").default(false),
   hasWaterAccess: boolean("hasWaterAccess").default(false),
@@ -142,7 +148,8 @@ export const huntingProperties = pgTable("hunting_properties", {
   locationNotes: varchar("locationNotes", { length: 300 }),
   coverImageUrl: varchar("coverImageUrl", { length: 500 }),
   mapImageUrl: varchar("mapImageUrl", { length: 500 }),
-  mapUrl: varchar("mapUrl", { length: 500 }), // Uploaded PDF/image map
+  mapUrl: varchar("mapUrl", { length: 500 }), // Legacy single map — copied into property_images (type 'map') by migration 0038; no longer written
+  directionsUrl: varchar("directionsUrl", { length: 500 }), // Google/Apple Maps link → "Get Directions" (migration 0037)
   gateCode: varchar("gateCode", { length: 255 }), // Admin-only access code (encrypted)
   active: boolean("active").notNull().default(true),
   featuredOnPublicSite: boolean("featuredOnPublicSite").default(true),
