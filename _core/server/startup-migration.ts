@@ -421,17 +421,11 @@ export async function runStartupMigration() {
           console.error("[startup-migration] Failed to query information_schema:", err instanceof Error ? err.message : String(err));
         }
 
-        // Clean up orphan test properties from failed create attempts
-        // (one-time cleanup of: Test Alpha, Test Bravo, Test 1 Minimal, 69 highway, Test - delete me, etc.)
-        const cleanupTestProperties = `
-          DELETE FROM hunting_properties
-          WHERE name ILIKE 'test%' OR name ILIKE '%delete%' OR name = '69 highway' OR slug LIKE 'test-%'
-          AND id NOT IN (SELECT DISTINCT "propertyId" FROM property_bookings);
-        `;
-        const cleanupResult = await client.query(cleanupTestProperties);
-        if ((cleanupResult.rowCount ?? 0) > 0) {
-          console.log(`[startup-migration] 🧹 cleaned up ${cleanupResult.rowCount} orphan test properties`);
-        }
+        // NOTE: a "one-time cleanup" used to run here on every boot and DELETE
+        // properties by name (test%, %delete%, …). Operator precedence made its
+        // "no bookings" guard apply to only one condition, so any property named
+        // like that was removed at each deploy. Removed; startup must never
+        // delete properties or bookings (see startup-migration.test.ts).
 
         const duration = Date.now() - startTime;
         console.log(`[startup-migration] ✅ SCHEMA MIGRATION COMPLETED SUCCESSFULLY in ${duration}ms`);
