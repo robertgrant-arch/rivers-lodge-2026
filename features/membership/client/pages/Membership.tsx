@@ -4,6 +4,7 @@ import { Turnstile } from "@marsidev/react-turnstile";
 import type { TurnstileInstance } from "@marsidev/react-turnstile";
 import PublicLayout from "@/components/PublicLayout";
 import Picture from "@shared/components/Picture";
+import SpaceCardsSection, { type SpaceCardItem } from "@shared/components/SpaceCards";
 import SEOHead, { structuredData } from '@shared/components/SEOHead';
 import { useAuth } from '@features/auth/public';
 import { trpc } from '@shared/lib/trpc';
@@ -40,6 +41,13 @@ const benefits = [
   { title: "Lodging Priority",       desc: "Priority booking on The Lodge, Riverhouse Suites, The Annex, and all other lodge accommodations." },
   { title: "Land Access & Updates",  desc: "Year-round land access and seasonal stewardship updates — stay connected to the property between visits." },
   { title: "Guest Privileges",       desc: "Bring guests onto the property for hunting, fishing, sporting days, and member events." },
+];
+
+/** "Lodging, Venues & Outdoor Activities" cards — same card section as /weddings. */
+const SPACE_CARDS: SpaceCardItem[] = [
+  { label: "Lodging",            href: "/lodging#lodging",    img: "/img/lodge-1-hero.jpg", alt: "The Lodge at Rivers Lodge on an autumn afternoon" },
+  { label: "Venues",             href: "/lodging#venues",     img: "/img/barn-15-hero.jpg", alt: "The Event Barn at Rivers Lodge" },
+  { label: "Outdoor Activities", href: "/outdoor-activities", img: "/img/3C0A0165.jpg",     alt: "Outdoor pursuits at Rivers Lodge" },
 ];
 
 const tiers = [
@@ -412,6 +420,9 @@ export default function Membership() {
           </div>
         </div>
       </section>
+
+      {/* Lodging, Venues & Outdoor Activities — shared space cards */}
+      <SpaceCardsSection label="Lodging, Venues & Outdoor Activities" heading="Available lodging and venues." cards={SPACE_CARDS} />
 
       {/* Tiers */}
       <section ref={tiersRef as React.RefObject<HTMLDivElement>} className="fade-up section bg-surface">

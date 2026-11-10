@@ -3,6 +3,7 @@ import { Link } from "wouter";
 import PublicLayout from "../../../_shared/components/PublicLayout";
 import SEOHead from '@shared/components/SEOHead';
 import Picture from "@shared/components/Picture";
+import SpaceCardsSection, { type SpaceCardItem } from "@shared/components/SpaceCards";
 
 
 const HERO     = "/brand/Corporate%20Event%201.jpg";
@@ -53,6 +54,12 @@ function HeroLiftFilter() {
     </svg>
   );
 }
+
+/** "Venues & Lodging" cards — same card section as /weddings. */
+const SPACE_CARDS: SpaceCardItem[] = [
+  { label: "Venues",  href: "/lodging#venues",  img: "/img/barn-15-hero.jpg", alt: "The Event Barn at Rivers Lodge" },
+  { label: "Lodging", href: "/lodging#lodging", img: "/img/lodge-1-hero.jpg", alt: "The Lodge at Rivers Lodge on an autumn afternoon" },
+];
 
 const CORP_RETREAT = "/brand/corporate%20clubhouse%20.JPG";
 const CORP_ENTERTAIN = "/brand/corporate%204.jpg";
@@ -288,6 +295,9 @@ export default function Corporate() {
           </ul>
         </div>
       </section>
+
+      {/* Venues & Lodging — shared space cards */}
+      <SpaceCardsSection label="Venues & Lodging" heading="Every space for your team." cards={SPACE_CARDS} />
 
       {/* Sample Retreat Schedule */}
       <SectionDivider label="Sample Itinerary" />

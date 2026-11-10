@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
+import type { KeyboardEvent as ReactKeyboardEvent } from "react";
 import { Link, useLocation } from "wouter";
-import { Menu, X, ChevronDown, LogOut, User } from "lucide-react";
+import { Menu, X, ChevronDown, ChevronRight, LogOut, User } from "lucide-react";
 import { useAuth, getLoginUrl } from '@features/auth/public';
 
 
@@ -18,17 +19,194 @@ function getTrackFromPath(path: string): Track {
   return null;
 }
 
-const eventsDropdown = [
-  { label: "Weddings",         href: "/weddings",        desc: "Ceremonies & receptions on the Lodge" },
-  { label: "Corporate Events", href: "/corporate-events", desc: "Retreats, outings & client entertainment" },
+type NavLink = { label: string; href: string; desc: string };
+/** A dropdown entry. `children` adds a slide-out child panel (desktop) / inline accordion (mobile). */
+type NavItem = NavLink & { children?: NavLink[] };
+
+/** Shared child panel used under Corporate Events and Lodging & Venues. */
+const LODGING_VENUES_SUBMENU: NavLink[] = [
+  { label: "Lodging", href: "/lodging#lodging", desc: "Stay on the estate" },
+  { label: "Venues",  href: "/lodging#venues",  desc: "Event spaces for your group" },
 ];
 
-const membershipDropdown = [
+const eventsDropdown: NavItem[] = [
+  { label: "Weddings",         href: "/weddings",        desc: "Ceremonies & receptions on the Lodge" },
+  { label: "Corporate Events", href: "/corporate-events", desc: "Retreats, outings & client entertainment", children: LODGING_VENUES_SUBMENU },
+];
+
+const membershipDropdown: NavItem[] = [
   { label: "Membership Overview",   href: "/membership",           desc: "Compare membership options" },
   { label: "Benefits / Why Join",   href: "/membership/benefits",  desc: "What membership includes" },
   { label: "FAQ",                   href: "/membership/faq",       desc: "Common questions answered" },
   { label: "Member Events",         href: "/membership/events",    desc: "Exclusive member gatherings" },
+  { label: "Outdoor Activities",    href: "/outdoor-activities",   desc: "Hunting, fishing & more on the land" },
+  { label: "Lodging & Venues",      href: "/lodging",              desc: "Where members stay and gather", children: LODGING_VENUES_SUBMENU },
 ];
+
+const CHILD_PANEL_WIDTH = 256; // w-64, same as the dropdowns
+
+/** Stable DOM id for an item's child panel; `${id}-toggle` is its chevron button. */
+const submenuId = (prefix: string, menu: string, href: string) =>
+  `${prefix}-${menu}-${href.replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "")}-submenu`;
+
+/** Focusable links/buttons that belong directly to `menu` (not to a nested child panel). */
+function menuFocusables(menu: Element): HTMLElement[] {
+  return Array.from(menu.querySelectorAll<HTMLElement>("a[href], button")).filter(
+    (el) => el.closest("[data-nav-menu]") === menu && !el.closest(".invisible"),
+  );
+}
+
+/**
+ * Desktop dropdown entries. Items with `children` get a chevron button and a child
+ * panel that slides out to the right (or left when there's no room). Hover or
+ * click/Enter on the chevron opens it; the label itself still navigates.
+ */
+function DesktopDropdownItems({
+  menu, items, linkCls, labelCls, openChild, onOpenChild, onNavigate,
+}: {
+  menu: string;
+  items: NavItem[];
+  linkCls: string;
+  labelCls: string;
+  openChild: { id: string; flip: boolean } | null;
+  onOpenChild: (next: { id: string; flip: boolean } | null) => void;
+  onNavigate: () => void;
+}) {
+  const hoverOpened = useRef(false);
+
+  return (
+    <>
+      {items.map((item) => {
+        if (!item.children) {
+          return (
+            <Link key={item.href} href={item.href} onClick={onNavigate} className={`flex flex-col px-5 py-3 ${linkCls}`}>
+              <span className={`text-[11px] tracking-[0.12em] uppercase font-sans font-medium text-[#E0D3BD] transition-colors ${labelCls}`}>{item.label}</span>
+              <span className="text-[11px] font-sans text-[#908B82] mt-0.5 normal-case tracking-normal">{item.desc}</span>
+            </Link>
+          );
+        }
+        const id = submenuId("nav", menu, item.href);
+        const open = openChild?.id === id;
+        const flip = open && openChild!.flip;
+        const openPanel = (row: HTMLElement) => {
+          const r = row.getBoundingClientRect();
+          onOpenChild({ id, flip: r.right + CHILD_PANEL_WIDTH + 8 > window.innerWidth });
+        };
+        return (
+          <div
+            key={item.href}
+            className="relative flex items-stretch"
+            onMouseEnter={(e) => { if (!open) { hoverOpened.current = true; openPanel(e.currentTarget); } }}
+            onMouseLeave={() => { if (open) { hoverOpened.current = false; onOpenChild(null); } }}
+          >
+            <Link
+              href={item.href}
+              onClick={onNavigate}
+              data-submenu={id}
+              className={`flex-1 min-w-0 flex flex-col px-5 py-3 ${linkCls} ${open ? "bg-[#423F3B]" : ""}`}
+            >
+              <span className={`text-[11px] tracking-[0.12em] uppercase font-sans font-medium text-[#E0D3BD] transition-colors ${labelCls}`}>{item.label}</span>
+              <span className="text-[11px] font-sans text-[#908B82] mt-0.5 normal-case tracking-normal">{item.desc}</span>
+            </Link>
+            <button
+              type="button"
+              id={`${id}-toggle`}
+              data-submenu={id}
+              aria-label={`Open ${item.label} submenu`}
+              aria-expanded={open}
+              aria-controls={id}
+              onClick={(e) => {
+                const row = e.currentTarget.parentElement!;
+                if (open && !hoverOpened.current) onOpenChild(null);
+                else openPanel(row);
+                hoverOpened.current = false;
+              }}
+              className={`absolute inset-y-0 right-0 w-7 flex items-center justify-center text-[#BABAAE] hover:text-[#E0D3BD] transition-colors ${open ? "text-[#E0D3BD]" : ""}`}
+            >
+              <ChevronRight size={12} aria-hidden="true" />
+            </button>
+            <NavChildPanel id={id} items={item.children} open={open} flip={flip} onNavigate={onNavigate} />
+          </div>
+        );
+      })}
+    </>
+  );
+}
+
+/** Slide-out child panel, styled like the dropdowns. Kept mounted so aria-controls resolves; `invisible` when closed keeps it out of the tab order. */
+function NavChildPanel({ id, items, open, flip, onNavigate }: { id: string; items: NavLink[]; open: boolean; flip: boolean; onNavigate: () => void }) {
+  return (
+    <div
+      id={id}
+      data-nav-menu
+      data-parent-toggle={`${id}-toggle`}
+      className={`absolute -top-[9px] ${flip ? "right-full" : "left-full"} w-64 bg-[#363330] border border-[#57544E] shadow-2xl py-2 z-50 ${
+        // 180ms slide/fade. Visibility flips at once on open (so focus can move in) and after the fade on close.
+        open
+          ? "visible opacity-100 translate-x-0 [transition:opacity_180ms_ease-out,transform_180ms_ease-out]"
+          : `invisible opacity-0 pointer-events-none ${flip ? "translate-x-2" : "-translate-x-2"} [transition:opacity_180ms_ease-out,transform_180ms_ease-out,visibility_0s_linear_180ms]`
+      }`}
+    >
+      {items.map((c) => (
+        <Link key={c.href} href={c.href} onClick={onNavigate} tabIndex={open ? undefined : -1} className="flex flex-col px-5 py-3 border-l-2 border-transparent hover:border-rl-river hover:bg-[#423F3B] focus-visible:border-rl-river focus-visible:bg-[#423F3B] transition-colors group">
+          <span className="text-[11px] tracking-[0.12em] uppercase font-sans font-medium text-[#E0D3BD] transition-colors">{c.label}</span>
+          <span className="text-[11px] font-sans text-[#908B82] mt-0.5 normal-case tracking-normal">{c.desc}</span>
+        </Link>
+      ))}
+    </div>
+  );
+}
+
+/** Mobile accordion entries; items with `children` get an indented inline sub-accordion. */
+function MobileDropdownItems({
+  menu, items, linkCls, openChild, onToggleChild, onNavigate,
+}: {
+  menu: string;
+  items: NavItem[];
+  linkCls: (item: NavLink) => string;
+  openChild: string | null;
+  onToggleChild: (id: string) => void;
+  onNavigate: () => void;
+}) {
+  return (
+    <>
+      {items.map((item) => {
+        const link = (
+          <Link key={item.href} href={item.href} onClick={onNavigate} className={`py-3 font-serif text-xl italic transition-colors ${linkCls(item)}`}>
+            {item.label}
+          </Link>
+        );
+        if (!item.children) return link;
+        const id = submenuId("m-nav", menu, item.href);
+        const open = openChild === id;
+        return (
+          <div key={item.href}>
+            <div className="flex items-center justify-between">
+              {link}
+              <button
+                type="button"
+                onClick={() => onToggleChild(id)}
+                aria-label={`Open ${item.label} submenu`}
+                aria-expanded={open}
+                aria-controls={id}
+                className="p-1 text-[#BABAAE]"
+              >
+                <ChevronDown size={14} className={chevronCls(open)} aria-hidden="true" />
+              </button>
+            </div>
+            <div id={id} hidden={!open} className="pl-4 mb-2 flex flex-col gap-0 border-l border-rl-river/60">
+              {item.children.map((c) => (
+                <Link key={c.href} href={c.href} onClick={onNavigate} className={`py-2 font-serif text-lg italic transition-colors ${linkCls(c)}`}>
+                  {c.label}
+                </Link>
+              ))}
+            </div>
+          </div>
+        );
+      })}
+    </>
+  );
+}
 
 function getPortalHref(role?: string): string {
   return role === "admin" ? "/ops" : "/portal";
@@ -64,9 +242,15 @@ export default function PublicNav() {
   const [mobileEventsOpen,     setMobileEventsOpen]     = useState(false);
   const [mobileMembershipOpen, setMobileMembershipOpen] = useState(false);
 
+  // Child panels (one open at a time): desktop slide-out, mobile inline accordion
+  const [openChild,       setOpenChild]       = useState<{ id: string; flip: boolean } | null>(null);
+  const [mobileOpenChild, setMobileOpenChild] = useState<string | null>(null);
+
   const eventsRef     = useRef<HTMLDivElement>(null);
   const membershipRef = useRef<HTMLDivElement>(null);
   const userMenuRef   = useRef<HTMLDivElement>(null);
+  const eventsTriggerRef     = useRef<HTMLButtonElement>(null);
+  const membershipTriggerRef = useRef<HTMLButtonElement>(null);
 
   const { user, isAuthenticated, logout } = useAuth();
 
@@ -78,6 +262,86 @@ export default function PublicNav() {
   function closeAll() {
     setEventsOpen(false);
     setMembershipOpen(false);
+    setOpenChild(null);
+    setMobileOpenChild(null);
+  }
+
+  // Esc closes an open child panel first, then the dropdown; focus returns to the opener.
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key !== "Escape") return;
+      const active = document.activeElement;
+      if (openChild) {
+        const panel = document.getElementById(openChild.id);
+        const toggle = document.getElementById(`${openChild.id}-toggle`);
+        if (panel?.contains(active) || toggle === active) toggle?.focus();
+        setOpenChild(null);
+      } else if (eventsOpen) {
+        if (eventsRef.current?.contains(active)) eventsTriggerRef.current?.focus();
+        setEventsOpen(false);
+      } else if (membershipOpen) {
+        if (membershipRef.current?.contains(active)) membershipTriggerRef.current?.focus();
+        setMembershipOpen(false);
+      }
+    }
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [openChild, eventsOpen, membershipOpen]);
+
+  // Closing a dropdown closes its child panels.
+  useEffect(() => {
+    if (!eventsOpen && !membershipOpen) setOpenChild(null);
+  }, [eventsOpen, membershipOpen]);
+  useEffect(() => {
+    if (!mobileOpen) setMobileOpenChild(null);
+  }, [mobileOpen]);
+
+  /** ArrowDown on a dropdown trigger opens it and focuses the first entry. */
+  function onTriggerKeyDown(e: ReactKeyboardEvent<HTMLButtonElement>, which: "events" | "membership") {
+    if (e.key !== "ArrowDown") return;
+    e.preventDefault();
+    setEventsOpen(which === "events");
+    setMembershipOpen(which === "membership");
+    const wrap = which === "events" ? eventsRef : membershipRef;
+    requestAnimationFrame(() => {
+      const menu = wrap.current?.querySelector("[data-nav-menu]");
+      if (menu) menuFocusables(menu)[0]?.focus();
+    });
+  }
+
+  /** Arrow-key movement inside an open dropdown / child panel. */
+  function onDropdownKeyDown(e: ReactKeyboardEvent<HTMLDivElement>) {
+    const active = document.activeElement as HTMLElement | null;
+    if (!active) return;
+    const menu = active.closest("[data-nav-menu]");
+    if (!menu || !e.currentTarget.contains(menu)) return;
+    if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+      const items = menuFocusables(menu);
+      const i = items.indexOf(active);
+      if (i === -1) return;
+      e.preventDefault();
+      const next = e.key === "ArrowDown" ? (i + 1) % items.length : (i - 1 + items.length) % items.length;
+      items[next]?.focus();
+    } else if (e.key === "ArrowRight") {
+      const id = active.getAttribute("data-submenu");
+      if (!id) return;
+      e.preventDefault();
+      const toggle = document.getElementById(`${id}-toggle`);
+      const row = toggle?.parentElement;
+      if (!row) return;
+      const r = row.getBoundingClientRect();
+      setOpenChild({ id, flip: r.right + CHILD_PANEL_WIDTH + 8 > window.innerWidth });
+      requestAnimationFrame(() => {
+        const panel = document.getElementById(id);
+        if (panel) menuFocusables(panel)[0]?.focus();
+      });
+    } else if (e.key === "ArrowLeft") {
+      const toggleId = menu.getAttribute("data-parent-toggle");
+      if (!toggleId) return;
+      e.preventDefault();
+      setOpenChild(null);
+      document.getElementById(toggleId)?.focus();
+    }
   }
 
   useEffect(() => {
@@ -148,6 +412,8 @@ export default function PublicNav() {
             {/* 1. Weddings & Events ▾ */}
             <div ref={eventsRef} className="relative">
               <button
+                ref={eventsTriggerRef}
+                onKeyDown={(e) => onTriggerKeyDown(e, "events")}
                 onClick={() => { setEventsOpen(!eventsOpen); setMembershipOpen(false); }}
                 aria-expanded={eventsOpen}
                 aria-haspopup="true"
@@ -157,13 +423,16 @@ export default function PublicNav() {
                 <ChevronDown size={11} className={chevronCls(eventsOpen)} />
               </button>
               {eventsOpen && (
-                <div className="absolute top-full left-0 mt-1 w-64 bg-[#363330] border border-[#57544E] shadow-2xl py-2 z-50">
-                  {eventsDropdown.map((item) => (
-                    <Link key={item.href} href={item.href} className="flex flex-col px-5 py-3 border-l-2 border-transparent hover:border-rl-river hover:bg-[#423F3B] transition-colors group">
-                      <span className="text-[11px] tracking-[0.12em] uppercase font-sans font-medium text-[#E0D3BD] transition-colors">{item.label}</span>
-                      <span className="text-[11px] font-sans text-[#908B82] mt-0.5 normal-case tracking-normal">{item.desc}</span>
-                    </Link>
-                  ))}
+                <div data-nav-menu onKeyDown={onDropdownKeyDown} className="absolute top-full left-0 mt-1 w-64 bg-[#363330] border border-[#57544E] shadow-2xl py-2 z-50">
+                  <DesktopDropdownItems
+                    menu="events"
+                    items={eventsDropdown}
+                    linkCls="border-l-2 border-transparent hover:border-rl-river hover:bg-[#423F3B] transition-colors group"
+                    labelCls=""
+                    openChild={openChild}
+                    onOpenChild={setOpenChild}
+                    onNavigate={closeAll}
+                  />
                 </div>
               )}
             </div>
@@ -181,6 +450,8 @@ export default function PublicNav() {
                   Explore Membership
                 </Link>
                 <button
+                  ref={membershipTriggerRef}
+                  onKeyDown={(e) => onTriggerKeyDown(e, "membership")}
                   onClick={() => { setMembershipOpen(!membershipOpen); setEventsOpen(false); }}
                   aria-label="Open Explore Membership menu"
                   aria-expanded={membershipOpen}
@@ -193,13 +464,16 @@ export default function PublicNav() {
                 </button>
               </div>
               {membershipOpen && (
-                <div className="absolute top-full left-0 mt-1 w-64 bg-[#363330] border border-[#57544E] shadow-2xl py-2 z-50">
-                  {membershipDropdown.map((item) => (
-                    <Link key={item.href} href={item.href} className="flex flex-col px-5 py-3 hover:bg-[#423F3B] transition-colors group">
-                      <span className="text-[11px] tracking-[0.12em] uppercase font-sans font-medium text-[#E0D3BD] group-hover:text-[#6B7250] transition-colors">{item.label}</span>
-                      <span className="text-[11px] font-sans text-[#908B82] mt-0.5 normal-case tracking-normal">{item.desc}</span>
-                    </Link>
-                  ))}
+                <div data-nav-menu onKeyDown={onDropdownKeyDown} className="absolute top-full left-0 mt-1 w-64 bg-[#363330] border border-[#57544E] shadow-2xl py-2 z-50">
+                  <DesktopDropdownItems
+                    menu="membership"
+                    items={membershipDropdown}
+                    linkCls="hover:bg-[#423F3B] transition-colors group"
+                    labelCls="group-hover:text-[#6B7250]"
+                    openChild={openChild}
+                    onOpenChild={setOpenChild}
+                    onNavigate={closeAll}
+                  />
                 </div>
               )}
             </div>
@@ -338,16 +612,14 @@ export default function PublicNav() {
             </div>
             {mobileEventsOpen && (
               <div className="pl-4 mt-1 flex flex-col gap-0 border-l border-rl-river">
-                {eventsDropdown.map((item) => (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={() => setMobileOpen(false)}
-                    className={`py-3 font-serif text-xl italic transition-colors ${riverLinkCls(location === item.href)}`}
-                  >
-                    {item.label}
-                  </Link>
-                ))}
+                <MobileDropdownItems
+                  menu="events"
+                  items={eventsDropdown}
+                  linkCls={(item) => riverLinkCls(location === item.href)}
+                  openChild={mobileOpenChild}
+                  onToggleChild={(id) => setMobileOpenChild(mobileOpenChild === id ? null : id)}
+                  onNavigate={() => setMobileOpen(false)}
+                />
               </div>
             )}
           </div>
@@ -372,16 +644,14 @@ export default function PublicNav() {
             </div>
             {mobileMembershipOpen && (
               <div className="pl-4 mt-1 flex flex-col gap-0 border-l border-[#6B7250]/30">
-                {membershipDropdown.map((item) => (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={() => setMobileOpen(false)}
-                    className="py-3 text-[#E0D3BD] font-serif text-xl italic hover:text-[#6B7250] transition-colors"
-                  >
-                    {item.label}
-                  </Link>
-                ))}
+                <MobileDropdownItems
+                  menu="membership"
+                  items={membershipDropdown}
+                  linkCls={() => "text-[#E0D3BD] hover:text-[#6B7250]"}
+                  openChild={mobileOpenChild}
+                  onToggleChild={(id) => setMobileOpenChild(mobileOpenChild === id ? null : id)}
+                  onNavigate={() => setMobileOpen(false)}
+                />
               </div>
             )}
           </div>
