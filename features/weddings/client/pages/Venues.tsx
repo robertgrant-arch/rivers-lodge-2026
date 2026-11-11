@@ -16,8 +16,9 @@ type SpaceUse = "ceremony" | "reception";
  */
 const SHOW_COVER_VIDEOS = true;
 
-// `uses` drives the Ceremony Spaces / Reception Spaces sections (linked from the
-// /weddings cards as /venues#ceremony and /venues#reception). A space can be in both.
+// `uses` records whether a space hosts ceremonies and/or receptions. The page shows
+// one combined "Ceremony and Reception Spaces" list (SPACE_LIST below), which keeps
+// the /venues#ceremony and /venues#reception anchors the /weddings cards link to.
 // Venues with `copyLocked` always show the copy, capacity and features below; published
 // CMS event-space records are not merged over them (so /ops edits don't change them here).
 const FALLBACK_VENUES: VenueProp[] = [
@@ -88,9 +89,12 @@ type VenueProp = {
   copyLocked?: boolean;
 };
 
-const SPACE_GROUPS: { id: SpaceUse; label: string }[] = [
-  { id: "ceremony", label: "Ceremony Spaces" },
-  { id: "reception", label: "Reception Spaces" },
+// One combined "Ceremony and Reception Spaces" list (each card links to the
+// venue's section below). Order and labels as the owner asked.
+const SPACE_LIST: { slug: string; label: string }[] = [
+  { slug: "clubhouse", label: "The Clubhouse" },
+  { slug: "event-barn", label: "The Event Barn" },
+  { slug: "the-green-drake", label: "The Green Drake" },
 ];
 
 export default function Venues() {
@@ -133,44 +137,41 @@ export default function Venues() {
         </div>
       </section>
 
-      {/* Ceremony Spaces / Reception Spaces (anchors for the /weddings cards) */}
-      {SPACE_GROUPS.map((group, gi) => {
-        const spaces = venues.filter((v) => v.uses.includes(group.id));
-        if (spaces.length === 0) return null;
-        return (
-          <section
-            key={group.id}
-            id={group.id}
-            aria-labelledby={`${group.id}-heading`}
-            className={`py-14 md:py-16 scroll-mt-24 border-t border-white/10 ${gi % 2 === 0 ? "bg-[#363330]" : "bg-background"}`}
-          >
-            <div className="max-w-[1440px] mx-auto px-6 lg:px-10">
-              <div className="gold-rule" />
-              <h2 id={`${group.id}-heading`} className="font-serif text-3xl md:text-4xl text-foreground leading-tight mb-8">
-                {group.label}
-              </h2>
-              <ul className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-4xl">
-                {spaces.map((v) => {
-                  const cap = group.id === "ceremony" ? v.capacity.ceremony : v.capacity.reception;
-                  return (
-                    <li key={v.slug} className="flex flex-col items-start gap-4 border border-white/15 px-6 py-5">
-                      <span>
-                        <span className="block font-serif text-2xl text-foreground">{v.name}</span>
-                        <span className="block mt-1 text-[10px] tracking-[0.20em] uppercase font-sans text-white/70">
-                          {v.type}{cap ? ` · Up to ${cap} guests` : ""}
-                        </span>
-                      </span>
-                      <a href={`#${v.slug}`} className="btn-primary whitespace-nowrap" style={{ color: "#F4EEE4" }}>
-                        View {v.shortName} Details →
-                      </a>
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
-          </section>
-        );
-      })}
+      {/* Ceremony and Reception Spaces — one list. Keeps both anchors the /weddings
+          cards link to (/venues#ceremony and /venues#reception). */}
+      <section
+        id="ceremony"
+        aria-labelledby="spaces-heading"
+        className="py-14 md:py-16 scroll-mt-24 border-t border-white/10 bg-[#363330]"
+      >
+        <span id="reception" aria-hidden="true" className="block h-0 scroll-mt-24" />
+        <div className="max-w-[1440px] mx-auto px-6 lg:px-10">
+          <div className="gold-rule" />
+          <h2 id="spaces-heading" className="font-serif text-3xl md:text-4xl text-foreground leading-tight mb-8">
+            Ceremony and Reception Spaces
+          </h2>
+          <ul className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-6xl">
+            {SPACE_LIST.map(({ slug, label }) => {
+              const v = venues.find((x) => x.slug === slug);
+              if (!v) return null;
+              const cap = Math.max(v.capacity.ceremony ?? 0, v.capacity.reception ?? 0);
+              return (
+                <li key={slug} className="flex flex-col items-start justify-between gap-4 border border-white/15 px-6 py-5">
+                  <span>
+                    <span className="block font-serif text-2xl text-foreground">{label}</span>
+                    <span className="block mt-1 text-[10px] tracking-[0.20em] uppercase font-sans text-white/70">
+                      {v.type}{cap ? ` · Up to ${cap} guests` : ""}
+                    </span>
+                  </span>
+                  <a href={`#${v.slug}`} className="btn-primary whitespace-nowrap" style={{ color: "#F4EEE4" }}>
+                    View Details →
+                  </a>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      </section>
 
       {/* Venue List */}
       {venues.map((venue, i) => (
