@@ -1,4 +1,5 @@
 import { Link } from "wouter";
+import { CoverVideo, type CoverVideoSource } from "../components/CoverVideo";
 import PublicLayout from "@shared/components/PublicLayout";
 import Picture from "@shared/components/Picture";
 import { trpc } from '@shared/lib/trpc';
@@ -27,6 +28,8 @@ const FALLBACK_VENUES: VenueProp[] = [
       src: "/img/venues/event-barn-cover.jpg", width: 1350, height: 2400, position: "center 62%",
       alt: "Aerial view of The Event Barn during an outdoor wedding ceremony, guests seated on the stone-walled terrace in front of the barn, with lawn, walking paths and dense timber around it",
     },
+    // Cover video (replaces the photo above); poster = DJI_0186.jpg
+    video: { mp4: "/img/venues/event-barn.mp4", webm: "/img/venues/event-barn.webm", poster: "/img/venues/event-barn-poster.jpg" },
     copyLocked: true,
   },
   {
@@ -43,6 +46,8 @@ const FALLBACK_VENUES: VenueProp[] = [
       src: "/img/venues/clubhouse-cover.jpg", width: 2400, height: 1601, position: "center 55%",
       alt: "The Clubhouse at Rivers Lodge — a dark timber building with an antler mount and glass doors, framed by golden ornamental grasses and a weeping willow on a sunny day",
     },
+    // Cover video (replaces the photo above); poster = Rivers-HH-1.jpg
+    video: { mp4: "/img/venues/clubhouse.mp4", webm: "/img/venues/clubhouse.webm", poster: "/img/venues/clubhouse-poster.jpg" },
     copyLocked: true,
   },
   {
@@ -69,6 +74,8 @@ type VenueProp = {
   details: string[];
   uses: SpaceUse[];
   img?: { src: string; alt: string; width: number; height: number; position: string };
+  /** Optional cover video shown instead of img (img's alt and position are reused). */
+  video?: CoverVideoSource;
   copyLocked?: boolean;
 };
 
@@ -172,17 +179,26 @@ export default function Venues() {
               /* Cover photo: text over the photo on md+; photo above the text on mobile so nothing is clipped */
               <div className="relative w-full md:aspect-[16/9] overflow-hidden mb-10">
                 <div className="relative aspect-[4/3] md:absolute md:inset-0 md:aspect-auto overflow-hidden">
-                  <Picture
-                    src={venue.img.src}
-                    alt={venue.img.alt}
-                    label={venue.name}
-                    width={venue.img.width}
-                    height={venue.img.height}
-                    className="absolute inset-0 w-full h-full"
-                    imgClassName="absolute inset-0 w-full h-full object-cover"
-                    imgStyle={{ objectPosition: venue.img.position }}
-                    sizes="(max-width: 1440px) 100vw, 1360px"
-                  />
+                  {venue.video ? (
+                    <CoverVideo
+                      video={venue.video}
+                      alt={venue.img.alt}
+                      className="absolute inset-0 w-full h-full object-cover"
+                      objectPosition={venue.img.position}
+                    />
+                  ) : (
+                    <Picture
+                      src={venue.img.src}
+                      alt={venue.img.alt}
+                      label={venue.name}
+                      width={venue.img.width}
+                      height={venue.img.height}
+                      className="absolute inset-0 w-full h-full"
+                      imgClassName="absolute inset-0 w-full h-full object-cover"
+                      imgStyle={{ objectPosition: venue.img.position }}
+                      sizes="(max-width: 1440px) 100vw, 1360px"
+                    />
+                  )}
                   {/* Shade only behind the text block (lower left), desktop only */}
                   <div
                     aria-hidden="true"
