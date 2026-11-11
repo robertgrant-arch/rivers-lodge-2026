@@ -182,6 +182,17 @@ export const PURSUITS: Pursuit[] = [
   { tileImg: "/img/fivestand-5-gallery.jpg", slug: "five-stand", title: "Five Stand", teaser: "Five Stand shooting for members, corporate retreats, hunt add-ons and more", heroImg: "/img/fivestand-hero.jpg", heroAlt: "Five stand sporting clays at Rivers Lodge", description: [ "The Club's five stand course offers a fast paced, social sporting clay shooting experience just steps away from the main lodge. Multiple throwers present a rotating variety of clay targets that simulate natural in-field shot angles.", "Whether you are warming up before a hunt or spending an afternoon on the course, five stand is ideal for shooters of every skill level. One on one instruction, 20 gauge Benelli shotguns and shotgun shells are provided by The Club." ], galleryImgs: [], season: [ { label: "Availability", value: "Year-round" } ], regulations: [ "Eye and ear protection required at all times", "Shooting only from designated stations", "Follow all range safety officer instructions" ], },
 ];
 
+/**
+ * Image + alt a pursuit uses on its /outdoor-activities "Choose your pursuit" tile.
+ * Mirrors the tile logic in OutdoorActivities.tsx (whitetail and upland-birds have
+ * dedicated tile photos; the rest use tileImg ?? heroImg with heroAlt).
+ */
+export function pursuitTile(p: Pursuit): { img: string; alt: string } {
+  if (p.slug === "whitetail") return { img: "/deer-1-gallery.jpg", alt: "Whitetail Deer" };
+  if (p.slug === "upland-birds") return { img: "/upland-1-tile.jpg", alt: "Upland Birds" };
+  return { img: p.tileImg ?? p.heroImg, alt: p.heroAlt };
+}
+
 export function getPursuit(slug: string): Pursuit | undefined {
   return PURSUITS.find((p) => p.slug === slug);
 }

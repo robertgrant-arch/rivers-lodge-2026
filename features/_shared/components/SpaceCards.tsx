@@ -39,10 +39,12 @@ function SpaceCard({ label, href, img, alt, sizes }: SpaceCardItem & { sizes: st
   );
 }
 
-/** The card grid: one column on mobile, one column per card from `md` up. */
+/** The card grid: one column on mobile; from `md` up, one column per card (3-up rows past 4 cards). */
 export function SpaceCardGrid({ cards }: { cards: SpaceCardItem[] }) {
-  const cols = MD_COLS[cards.length] ?? "md:grid-cols-3";
-  const sizes = `(max-width: 767px) 100vw, ${Math.round(100 / Math.max(1, Math.min(cards.length, 4)))}vw`;
+  // 1–4 cards: one row. More than 4 (e.g. 6): 3-up rows.
+  const n = cards.length <= 4 ? Math.max(1, cards.length) : 3;
+  const cols = MD_COLS[n];
+  const sizes = `(max-width: 767px) 100vw, ${Math.round(100 / n)}vw`;
   return (
     <ul className={`grid grid-cols-1 ${cols} gap-4 lg:gap-6`}>
       {cards.map((c) => (
@@ -67,8 +69,9 @@ function useFadeUp(t = 0.12) {
 /**
  * Full section: labeled Night divider band, then a Sand section with the accent
  * rule, eyebrow, h2 and the card grid. `label` is used for both divider and eyebrow.
+ * Optional `footer` (e.g. a "View all →" link) renders below the grid.
  */
-export default function SpaceCardsSection({ label, heading, cards }: { label: string; heading: string; cards: SpaceCardItem[] }) {
+export default function SpaceCardsSection({ label, heading, cards, footer }: { label: string; heading: string; cards: SpaceCardItem[]; footer?: React.ReactNode }) {
   const ref = useFadeUp();
   return (
     <>
@@ -89,6 +92,7 @@ export default function SpaceCardsSection({ label, heading, cards }: { label: st
             </h2>
           </div>
           <SpaceCardGrid cards={cards} />
+          {footer ? <div className="mt-10">{footer}</div> : null}
         </div>
       </section>
     </>
