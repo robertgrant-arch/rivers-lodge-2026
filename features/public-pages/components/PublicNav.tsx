@@ -23,7 +23,7 @@ type NavLink = { label: string; href: string; desc: string };
 /** A dropdown entry. `children` adds a slide-out child panel (desktop) / inline accordion (mobile). */
 type NavItem = NavLink & { children?: NavLink[] };
 
-/** Shared child panel used under Corporate Events and Lodging & Venues. */
+/** Child panel used under Explore Membership → Lodging & Venues. */
 const LODGING_VENUES_SUBMENU: NavLink[] = [
   { label: "Lodging", href: "/lodging#lodging", desc: "Stay on the estate" },
   { label: "Venues",  href: "/lodging#venues",  desc: "Event spaces for your group" },
@@ -31,7 +31,8 @@ const LODGING_VENUES_SUBMENU: NavLink[] = [
 
 const eventsDropdown: NavItem[] = [
   { label: "Weddings",         href: "/weddings",        desc: "Ceremonies & receptions on the Lodge" },
-  { label: "Corporate Events", href: "/corporate-events", desc: "Retreats, outings & client entertainment", children: LODGING_VENUES_SUBMENU },
+  // No child panel here: the Corporate Events page itself shows Venues & Lodging.
+  { label: "Corporate Events", href: "/corporate-events", desc: "Retreats, outings & client entertainment" },
 ];
 
 const membershipDropdown: NavItem[] = [
