@@ -7,6 +7,8 @@ export type CoverVideoSource = {
   webm?: string;
   /** Still image shown before playback, if the video can't play, and to reduced-motion visitors. */
   poster: string;
+  /** object-position for the video frame (defaults to the poster's position). */
+  position?: string;
 };
 
 function prefersReducedMotion(): boolean {
@@ -23,11 +25,15 @@ export function CoverVideo({
   alt,
   className,
   objectPosition,
+  posterPosition,
 }: {
   video: CoverVideoSource;
   alt: string;
   className?: string;
+  /** object-position of the playing video. */
   objectPosition?: string;
+  /** object-position of the poster/still (it may be framed differently from the video). */
+  posterPosition?: string;
 }) {
   const ref = useRef<HTMLVideoElement>(null);
   const [stillOnly, setStillOnly] = useState(prefersReducedMotion);
@@ -50,16 +56,21 @@ export function CoverVideo({
     el.play?.().catch(() => { /* autoplay refused: the poster stays visible */ });
   }, [stillOnly]);
 
-  const style = { objectPosition };
+  const [playing, setPlaying] = useState(false);
+  const stillStyle = { objectPosition: posterPosition ?? objectPosition };
   if (stillOnly) {
-    return <img src={video.poster} alt={alt} className={className} style={style} loading="lazy" decoding="async" />;
+    return <img src={video.poster} alt={alt} className={className} style={stillStyle} loading="lazy" decoding="async" />;
   }
+  // The poster is drawn as an <img> underneath (with its own framing) and the
+  // video fades in over it once frames are playing, so there's no jump.
   return (
+    <>
+      <img src={video.poster} alt="" aria-hidden="true" className={className} style={stillStyle} decoding="async" />
     <video
       ref={ref}
       className={className}
-      style={style}
-      poster={video.poster}
+      style={{ objectPosition, opacity: playing ? 1 : 0, transition: "opacity 600ms ease" }}
+      onPlaying={() => setPlaying(true)}
       autoPlay
       muted
       loop
@@ -71,5 +82,6 @@ export function CoverVideo({
       {video.webm && <source src={video.webm} type="video/webm" />}
       <source src={video.mp4} type="video/mp4" />
     </video>
+    </>
   );
 }

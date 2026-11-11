@@ -28,8 +28,9 @@ const FALLBACK_VENUES: VenueProp[] = [
       src: "/img/venues/event-barn-cover.jpg", width: 1350, height: 2400, position: "center 62%",
       alt: "Aerial view of The Event Barn during an outdoor wedding ceremony, guests seated on the stone-walled terrace in front of the barn, with lawn, walking paths and dense timber around it",
     },
-    // Cover video (replaces the photo above); poster = DJI_0186.jpg
-    video: { mp4: "/img/venues/event-barn.mp4", webm: "/img/venues/event-barn.webm", poster: "/img/venues/event-barn-poster.jpg" },
+    // Cover video (replaces the photo above); the existing cover photo is the poster/fallback
+    // (video is pre-cropped to a landscape band at the photo's framing, so it's centred)
+    video: { mp4: "/img/venues/event-barn.mp4", poster: "/img/venues/event-barn-cover.jpg", position: "center" },
     copyLocked: true,
   },
   {
@@ -46,8 +47,8 @@ const FALLBACK_VENUES: VenueProp[] = [
       src: "/img/venues/clubhouse-cover.jpg", width: 2400, height: 1601, position: "center 55%",
       alt: "The Clubhouse at Rivers Lodge — a dark timber building with an antler mount and glass doors, framed by golden ornamental grasses and a weeping willow on a sunny day",
     },
-    // Cover video (replaces the photo above); poster = Rivers-HH-1.jpg
-    video: { mp4: "/img/venues/clubhouse.mp4", webm: "/img/venues/clubhouse.webm", poster: "/img/venues/clubhouse-poster.jpg" },
+    // Cover video (replaces the photo above); the existing cover photo is the poster/fallback
+    video: { mp4: "/img/venues/clubhouse.mp4", poster: "/img/venues/clubhouse-cover-1920w.webp", position: "center" },
     copyLocked: true,
   },
   {
@@ -184,7 +185,8 @@ export default function Venues() {
                       video={venue.video}
                       alt={venue.img.alt}
                       className="absolute inset-0 w-full h-full object-cover"
-                      objectPosition={venue.img.position}
+                      objectPosition={venue.video.position ?? venue.img.position}
+                      posterPosition={venue.img.position}
                     />
                   ) : (
                     <Picture
