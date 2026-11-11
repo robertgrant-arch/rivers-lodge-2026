@@ -46,6 +46,8 @@ export function CoverVideo({
     return () => mq.removeEventListener?.("change", onChange);
   }, []);
 
+  const [playing, setPlaying] = useState(false);
+
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
@@ -53,10 +55,19 @@ export function CoverVideo({
     // (the `muted` attribute alone isn't always reflected) and nudge playback.
     el.muted = true;
     el.defaultMuted = true;
+    // Autoplay can start before React attaches onPlaying, so listen directly and
+    // also check the current state; reveal the video once frames are advancing.
+    const markPlaying = () => { if (!el.paused && el.currentTime > 0) setPlaying(true); };
+    el.addEventListener("playing", markPlaying);
+    el.addEventListener("timeupdate", markPlaying);
+    markPlaying();
     el.play?.().catch(() => { /* autoplay refused: the poster stays visible */ });
+    return () => {
+      el.removeEventListener("playing", markPlaying);
+      el.removeEventListener("timeupdate", markPlaying);
+    };
   }, [stillOnly]);
 
-  const [playing, setPlaying] = useState(false);
   const stillStyle = { objectPosition: posterPosition ?? objectPosition };
   if (stillOnly) {
     return <img src={video.poster} alt={alt} className={className} style={stillStyle} loading="lazy" decoding="async" />;
@@ -70,7 +81,6 @@ export function CoverVideo({
       ref={ref}
       className={className}
       style={{ objectPosition, opacity: playing ? 1 : 0, transition: "opacity 600ms ease" }}
-      onPlaying={() => setPlaying(true)}
       autoPlay
       muted
       loop
