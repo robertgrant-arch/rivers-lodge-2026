@@ -8,6 +8,14 @@ import { useHashScroll } from "@shared/hooks/useHashScroll";
 
 type SpaceUse = "ceremony" | "reception";
 
+/**
+ * Cover videos on/off switch. Set to false to go straight back to the cover
+ * photos (img below) for every venue — nothing else needs to change. Each
+ * venue's `video` entry can also be deleted individually.
+ * Files: client/public/img/venues/{event-barn,clubhouse}.mp4
+ */
+const SHOW_COVER_VIDEOS = true;
+
 // `uses` drives the Ceremony Spaces / Reception Spaces sections (linked from the
 // /weddings cards as /venues#ceremony and /venues#reception). A space can be in both.
 // Venues with `copyLocked` always show the copy, capacity and features below; published
@@ -180,7 +188,7 @@ export default function Venues() {
               /* Cover photo: text over the photo on md+; photo above the text on mobile so nothing is clipped */
               <div className="relative w-full md:aspect-[16/9] overflow-hidden mb-10">
                 <div className="relative aspect-[4/3] md:absolute md:inset-0 md:aspect-auto overflow-hidden">
-                  {venue.video ? (
+                  {SHOW_COVER_VIDEOS && venue.video ? (
                     <CoverVideo
                       video={venue.video}
                       alt={venue.img.alt}
