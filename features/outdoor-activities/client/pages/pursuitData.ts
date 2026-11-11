@@ -3,8 +3,11 @@ export interface Pursuit {
   title: string;
   teaser: string;
   heroImg: string;
+  /** Photo for the "Choose your pursuit" tile (/outdoor-activities) and Membership card; falls back to heroImg. */
   tileImg?: string;
   heroAlt: string;
+  /** Alt text for tileImg; falls back to heroAlt. */
+  tileAlt?: string;
   description: string[];
   galleryImgs: { src: string; alt: string; objectPosition?: string }[];
   season: { label: string; value: string }[];
@@ -20,7 +23,9 @@ export const PURSUITS: Pursuit[] = [
     title: "Whitetail Deer",
     teaser: "Trophy whitetail hunting across CRP, river bottoms, agricultural fields, timber, and intensively managed food plots",
     heroImg: "/deer-1-hero.jpg",
+    tileImg: "/deer-1-gallery.jpg",
     heroAlt: "Whitetail deer habitat at Rivers Lodge",
+    tileAlt: "Whitetail Deer",
     description: [
       "The Club's whitetail program is managed through extremely low hunting pressure, on thousands of acres of intensively managed ground. Members have select access to member-only DIY deer zones or exclusive fully-guided muzzleloader, rifle and archery rut hunts.",
       "Elevated tower stands, ground blinds and tree stands are positioned throughout our properties based on prevailing winds and deer movement patterns observed over years of hunting and trail camera data. Fully guided and DIY hunts are available to our members, with the guided program providing dedicated guides, scouting support, transportation, full lodge service, field processing, and more.",
@@ -82,7 +87,9 @@ export const PURSUITS: Pursuit[] = [
     title: "Upland Gamebirds",
     teaser: "Pheasant, quail and chukar hunting on native Kansas uplands.",
     heroImg: "/upland-1-gallery.jpg",
+    tileImg: "/upland-1-tile.jpg",
     heroAlt: "Upland bird hunting at Rivers Lodge",
+    tileAlt: "Upland Birds",
     description: [
       "Traditional upland hunting at its finest — The Club manages our upland habitat with rotational controlled burns, herbicide application, forestry mulching and native grass restoration, providing the best habitat and picture perfect settings for traditional upland gamebird hunting in Eastern Kansas.",
       "Guided traditional upland hunts are available with trained pointing and flushing dogs. The Club's guides are experienced in both wild bird hunting and released controlled bird hunts; they adapt to our member preference and skill level. Half-day and full-day traditional upland hunts are available across our four different controlled shooting areas.",
@@ -183,14 +190,11 @@ export const PURSUITS: Pursuit[] = [
 ];
 
 /**
- * Image + alt a pursuit uses on its /outdoor-activities "Choose your pursuit" tile.
- * Mirrors the tile logic in OutdoorActivities.tsx (whitetail and upland-birds have
- * dedicated tile photos; the rest use tileImg ?? heroImg with heroAlt).
+ * Single source for a pursuit's tile photo + alt, used by the /outdoor-activities
+ * "Choose your pursuit" tiles and the Membership "Choose your pursuit." cards.
  */
 export function pursuitTile(p: Pursuit): { img: string; alt: string } {
-  if (p.slug === "whitetail") return { img: "/deer-1-gallery.jpg", alt: "Whitetail Deer" };
-  if (p.slug === "upland-birds") return { img: "/upland-1-tile.jpg", alt: "Upland Birds" };
-  return { img: p.tileImg ?? p.heroImg, alt: p.heroAlt };
+  return { img: p.tileImg ?? p.heroImg, alt: p.tileAlt ?? p.heroAlt };
 }
 
 export function getPursuit(slug: string): Pursuit | undefined {

@@ -3,7 +3,7 @@ import { useRef, useEffect } from "react";
 import PublicLayout from "@shared/components/PublicLayout";
 import SEOHead from "@shared/components/SEOHead";
 import Picture from "@shared/components/Picture";
-import { PURSUITS } from "./pursuitData";
+import { PURSUITS, pursuitTile } from "./pursuitData";
 // build: 20260706-2200-upland-birds-tile-fixed
 
 const ACCENT = "#6B7250";
@@ -106,47 +106,19 @@ export default function OutdoorActivities() {
                 href={`/outdoor-activities/${pursuit.slug}`}
                 className="group bg-surface hover:bg-background transition-colors flex flex-col"
               >
-                {/* Image or Placeholder */}
-                {pursuit.slug === "whitetail" ? (
-                  <Picture
-                    src="/deer-1-gallery.jpg"
-                    alt="Whitetail Deer"
-                    label={pursuit.title}
-                    className="aspect-[4/3] overflow-hidden"
-                    imgClassName="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                    loading="lazy"
-                    decoding="async"
-                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                    width={800}
-                    height={600}
-                  />
-                ) : pursuit.slug === "upland-birds" ? (
-                  <Picture
-                    src="/upland-1-tile.jpg"
-                    alt="Upland Birds"
-                    label={pursuit.title}
-                    className="aspect-[4/3] overflow-hidden"
-                    imgClassName="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                    loading="lazy"
-                    decoding="async"
-                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                    width={800}
-                    height={600}
-                  />
-                ) : (
-                  <Picture
-                    src={pursuit.tileImg ?? pursuit.heroImg}
-                    alt={pursuit.heroAlt}
-                    label={pursuit.title}
-                    className="aspect-[4/3] overflow-hidden"
-                    imgClassName="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                    loading="lazy"
-                    decoding="async"
-                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                    width={800}
-                    height={600}
-                  />
-                )}
+                {/* Tile photo (same source as the Membership pursuit cards) */}
+                <Picture
+                  src={pursuitTile(pursuit).img}
+                  alt={pursuitTile(pursuit).alt}
+                  label={pursuit.title}
+                  className="aspect-[4/3] overflow-hidden"
+                  imgClassName="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                  loading="lazy"
+                  decoding="async"
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                  width={800}
+                  height={600}
+                />
 
                 {/* Card body */}
                 <div className="p-7 flex flex-col flex-1">
