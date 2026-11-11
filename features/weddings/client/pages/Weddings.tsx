@@ -4,6 +4,7 @@ import { Turnstile } from "@marsidev/react-turnstile";
 import type { TurnstileInstance } from "@marsidev/react-turnstile";
 import PublicLayout from "@shared/components/PublicLayout";
 import Picture from "@shared/components/Picture";
+import SpaceCardsSection from "@shared/components/SpaceCards";
 import { trpc } from '@shared/lib/trpc';
 import SEOHead, { structuredData } from '@shared/components/SEOHead';
 import ReviewsCarousel from "../components/ReviewsCarousel";
@@ -59,8 +60,6 @@ const TEXT_SHADOW = "0 1px 3px rgba(0,0,0,0.55), 0 2px 14px rgba(0,0,0,0.35)";
 const SOFT_SHADE = { hero: 0.3, aerial: 0.26, barn: 0.3, gallery: 0.3 };
 // "Rivers Lodge" heading sits on the hazy horizon at mobile widths: a slightly stronger letter shadow.
 const AERIAL_HEADING_SHADOW = "0 1px 2px rgba(0,0,0,0.65), 0 0 10px rgba(0,0,0,0.5), 0 2px 18px rgba(0,0,0,0.35)";
-// Space cards: a light gradient along the bottom edge only.
-const CARD_GRADIENT = "linear-gradient(to top, rgba(43,40,35,0.55) 0%, rgba(43,40,35,0.28) 22%, rgba(43,40,35,0) 45%)";
 // "The Event Barn" heading sits on near-white sky: deep Night text with a faint light glow.
 const BARN_HEADING_COLOR = "#2B2823";
 const BARN_HEADING_SHADOW = "0 0 2px rgba(255,255,255,0.6), 0 1px 12px rgba(255,255,255,0.45)";
@@ -211,25 +210,7 @@ return (
 );
 }
 
-/** Whole-card link: image, gradient and text are sibling layers inside the positioned link. */
-function SpaceCard({ label, href, img, alt }: { label: string; href: string; img: string; alt: string }) {
-return (
-<Link href={href} aria-label={`${label}: view details`} className="group relative block overflow-hidden aspect-[4/3] md:aspect-[4/5] bg-[#2B2823] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#576276]">
-<Picture src={img} alt={alt} className="absolute inset-0 w-full h-full" imgClassName="absolute inset-0 w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04] group-focus-visible:scale-[1.04]" sizes="(max-width: 767px) 100vw, 33vw" loading="lazy" />
-<div aria-hidden="true" className="absolute inset-0 pointer-events-none transition-opacity duration-300 opacity-90 group-hover:opacity-100" style={{ background: CARD_GRADIENT }} />
-<div className="absolute inset-x-0 bottom-0 p-7 lg:p-8 flex items-end justify-between gap-4">
-<div>
-<div aria-hidden="true" style={{ height: "1px", width: "1.5rem", backgroundColor: ACCENT, marginBottom: "0.75rem" }} />
-<h3 className="font-serif text-white text-2xl lg:text-3xl leading-tight" style={{ textShadow: TEXT_SHADOW }}>{label}</h3>
-</div>
-<span aria-hidden="true" style={{ textShadow: TEXT_SHADOW }} className="text-white text-xl transition-transform duration-300 group-hover:translate-x-1">→</span>
-</div>
-</Link>
-);
-}
-
 export default function Weddings() {
-const venuesRef = useFadeUp();
 const galleryRef = useFadeUp(0.05);
 const ctaRef = useFadeUp();
 const bodyCopy = "space-y-5 font-serif text-white leading-relaxed";
@@ -321,24 +302,8 @@ Not a venue. <br /><em className="italic text-rl-grass">A private Lodge.</em>
 </div>
 </div>
 </section>
-{/* Ceremony, Reception & Lodging — three linked cards */}
-<SectionDivider label="Ceremony, Reception & Lodging" />
-<section ref={venuesRef as React.RefObject<HTMLDivElement>} className={`fade-up ${SECTION_Y} ${BG_SAND}`}>
-<div className="max-w-[1440px] mx-auto px-5 lg:px-14">
-<div className="mb-14">
-<Rule />
-<p className="eyebrow text-[#2B2823]/75 mb-4">Ceremony, Reception &amp; Lodging</p>
-<h2 className="font-serif font-light text-[#2B2823] leading-tight" style={{ fontSize: "clamp(1.75rem,3vw,2.5rem)" }}>
-Every space is yours.
-</h2>
-</div>
-<ul className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6">
-{SPACE_CARDS.map((c) => (
-<li key={c.label}><SpaceCard {...c} /></li>
-))}
-</ul>
-</div>
-</section>
+{/* Ceremony, Reception & Lodging — three linked cards (shared with /corporate-events, /membership) */}
+<SpaceCardsSection label="Ceremony, Reception & Lodging" heading="Every space is yours." cards={SPACE_CARDS} />
 {/* Wedding & Event Gallery — one full-width card (homepage editorial overlay) */}
 <SectionDivider label="Wedding & Event Gallery" />
 <section ref={galleryRef as React.RefObject<HTMLDivElement>} className="fade-up">

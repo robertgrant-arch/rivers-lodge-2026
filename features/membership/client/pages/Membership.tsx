@@ -4,6 +4,8 @@ import { Turnstile } from "@marsidev/react-turnstile";
 import type { TurnstileInstance } from "@marsidev/react-turnstile";
 import PublicLayout from "@/components/PublicLayout";
 import Picture from "@shared/components/Picture";
+import SpaceCardsSection, { type SpaceCardItem } from "@shared/components/SpaceCards";
+import { PURSUITS, pursuitTile } from "@features/outdoor-activities/public";
 import SEOHead, { structuredData } from '@shared/components/SEOHead';
 import { useAuth } from '@features/auth/public';
 import { trpc } from '@shared/lib/trpc';
@@ -41,6 +43,19 @@ const benefits = [
   { title: "Land Access & Updates",  desc: "Year-round land access and seasonal stewardship updates — stay connected to the property between visits." },
   { title: "Guest Privileges",       desc: "Bring guests onto the property for hunting, fishing, sporting days, and member events." },
 ];
+
+/** "Lodging & Venues" cards — same card section as /weddings and /corporate-events. */
+const LODGING_CARDS: SpaceCardItem[] = [
+  { label: "Lodging", href: "/lodging#lodging", img: "/img/lodge-1-hero.jpg", alt: "The Lodge at Rivers Lodge on an autumn afternoon" },
+  { label: "Venues",  href: "/lodging#venues",  img: "/img/barn-15-hero.jpg", alt: "The Event Barn at Rivers Lodge" },
+];
+
+/** "Outdoor Pursuits" cards: one per pursuit, using its /outdoor-activities tile photo. */
+const PURSUIT_ORDER = ["whitetail", "waterfowl", "upland-birds", "turkey", "fishing", "five-stand"];
+const PURSUIT_CARDS: SpaceCardItem[] = PURSUIT_ORDER.flatMap((slug) => {
+  const p = PURSUITS.find((x) => x.slug === slug);
+  return p ? [{ label: p.title, href: `/outdoor-activities/${p.slug}`, ...pursuitTile(p) }] : [];
+});
 
 const tiers = [
   {
@@ -412,6 +427,17 @@ export default function Membership() {
           </div>
         </div>
       </section>
+
+      {/* Lodging & Venues — shared space cards */}
+      <SpaceCardsSection label="Lodging & Venues" heading="Available lodging and venues." cards={LODGING_CARDS} />
+
+      {/* Outdoor Pursuits — shared space cards, one per pursuit */}
+      <SpaceCardsSection
+        label="Outdoor Pursuits"
+        heading="Choose your pursuit."
+        cards={PURSUIT_CARDS}
+        footer={<Link href="/outdoor-activities" className="link-arrow">View all outdoor activities →</Link>}
+      />
 
       {/* Tiers */}
       <section ref={tiersRef as React.RefObject<HTMLDivElement>} className="fade-up section bg-surface">
