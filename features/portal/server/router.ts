@@ -9,12 +9,13 @@
  */
 
 import { z } from "zod";
+import { TRPCError } from "@trpc/server";
 import { router, memberProcedure } from "../../_core/server/trpc";
 import { getDb } from "@core/server/db";
 import { members, messages, bookings, memberSkillGroups, skillGroups } from "@core/db/schema";
 import { eq, inArray } from "drizzle-orm";
 import { calendarAccessSettings } from "../schema";
-import { skillGroupCalendarAccess } from "@features/membership/public";
+import { skillGroupCalendarAccess, canViewMemberRoster, listMemberRoster } from "@features/membership/public";
 
 // ─── Portal Router (member-facing) ────────────────────────────────────────────
 
@@ -94,4 +95,20 @@ export const memberPortalRouter = router({
 
       return grants.some(g => g.canViewMasterCalendar);
     }),
+
+  /**
+   * Membership Roster: each active member's name, phone and login email,
+   * sorted by name. Admins and users with an active member record only —
+   * everyone else gets FORBIDDEN, so contact details never reach a caller
+   * the UI would have hidden them from. (Admin preview mode works because the
+   * previewing admin is the signed-in user.)
+   */
+  roster: memberProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+    if (!(await canViewMemberRoster(db, ctx.user))) {
+      throw new TRPCError({ code: "FORBIDDEN", message: "The Membership Roster is available to members only." });
+    }
+    return listMemberRoster(db);
+  }),
 });

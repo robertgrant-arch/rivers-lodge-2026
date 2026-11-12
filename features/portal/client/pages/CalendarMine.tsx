@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { useAuth } from "@features/auth/public";
 import { trpc } from "@shared/lib/trpc";
-import PublicLayout from "@/components/PublicLayout";
+import MemberPortalLayout from "@features/portal/client/components/MemberPortalLayout";
 import {
   Dialog,
   DialogContent,
@@ -9,6 +9,7 @@ import {
   DialogTitle,
 } from "@shared/ui/dialog";
 import { X } from "lucide-react";
+import { isPortalOptionVisible, usePortalLink } from "@features/portal/client/portalNav";
 
 const MONTH_NAMES = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
@@ -194,6 +195,7 @@ function MiniCalendar({
 }
 
 export default function CalendarMine() {
+  const portalLink = usePortalLink();
   const { user, isAuthenticated, loading } = useAuth({
     redirectOnUnauthenticated: true,
   });
@@ -268,14 +270,14 @@ export default function CalendarMine() {
 
   if (loading) {
     return (
-      <PublicLayout>
+      <MemberPortalLayout>
         <div className="min-h-screen flex items-center justify-center bg-background">
           <div className="flex flex-col items-center gap-3">
             <div className="w-8 h-8 border border-white/20 border-t-white/60 rounded-full animate-spin" />
             <p className="text-white/40 font-sans text-xs tracking-[0.14em] uppercase">Loading</p>
           </div>
         </div>
-      </PublicLayout>
+      </MemberPortalLayout>
     );
   }
 
@@ -288,7 +290,7 @@ export default function CalendarMine() {
 
   if (!isMember && !memberStatus.isLoading) {
     return (
-      <PublicLayout>
+      <MemberPortalLayout>
         <section className="min-h-screen flex items-center justify-center bg-background">
           <div className="max-w-md w-full mx-auto px-6 text-center">
             <div className="w-16 h-px bg-white/20 mx-auto mb-8" />
@@ -302,7 +304,7 @@ export default function CalendarMine() {
             </a>
           </div>
         </section>
-      </PublicLayout>
+      </MemberPortalLayout>
     );
   }
 
@@ -350,10 +352,10 @@ export default function CalendarMine() {
   })();
 
   return (
-    <PublicLayout>
+    <MemberPortalLayout>
       <div className="min-h-screen bg-background">
         {/* ── Header ─────────────────────────────────────────────── */}
-        <div className="bg-[#2B2823] border-b border-white/8 pt-24 pb-8">
+        <div className="bg-[#2B2823] border-b border-white/8 pt-10 pb-8">
           <div className="max-w-[1440px] mx-auto px-6 lg:px-16">
             <div className="flex items-start justify-between gap-4">
               <div>
@@ -397,13 +399,16 @@ export default function CalendarMine() {
                   </div>
                 ))}
               </div>
+              {/* Points to Request a Stay — shown when that option is visible in portalNav.ts */}
+              {isPortalOptionVisible("request-stay") && (
               <div className="mt-6 p-4 border border-[var(--gold)]/20 bg-[var(--gold)]/5">
                 <p className="text-[10px] tracking-[0.14em] uppercase font-sans text-[var(--gold)] mb-1">Plan Your Visit</p>
                 <p className="text-xs font-sans text-white/50 leading-relaxed mb-3">Submit a stay request and our concierge will confirm availability within 24 hours.</p>
-                <a href="/portal" className="text-[10px] font-sans text-[var(--gold)] hover:underline tracking-[0.1em] uppercase">
+                <a href={portalLink("/portal")} className="text-[10px] font-sans text-[var(--gold)] hover:underline tracking-[0.1em] uppercase">
                   Back to Portal →
                 </a>
               </div>
+              )}
             </div>
           </div>
         </div>
@@ -426,6 +431,6 @@ export default function CalendarMine() {
           </Dialog>
         )}
       </div>
-    </PublicLayout>
+    </MemberPortalLayout>
   );
 }

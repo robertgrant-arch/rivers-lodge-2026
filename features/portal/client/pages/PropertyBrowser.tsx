@@ -19,6 +19,7 @@ import {
 import { Input } from '@shared/ui/input';
 import { PROPERTY_ACTIVITIES, activityLabel } from "@shared/propertyActivities";
 import { propertyCapacity } from "@shared/propertyRules";
+import { usePortalLink } from "@features/portal/client/portalNav";
 
 // ─── Activity config ─────────────────────────────────────────────────────────
 
@@ -31,13 +32,14 @@ const ACTIVITY_FILTERS = [
 // ─── Property Card ────────────────────────────────────────────────────────────
 
 function PropertyCard({ property }: { property: any }) {
+  const portalLink = usePortalLink();
   // Approved labels only (the server maps legacy stored values).
   const activities: string[] = Array.isArray(property.displayActivities) ? property.displayActivities : [];
   const capacity = propertyCapacity(property);
   const capacityDisplay = capacity !== null ? `Capacity ${capacity}` : null;
 
   return (
-    <Link href={`/portal/properties/${property.id}`}>
+    <Link href={portalLink(`/portal/properties/${property.id}`)}>
       <Card className="group bg-stone-900 border-stone-700 hover:border-amber-700 transition-all duration-200 cursor-pointer overflow-hidden">
         {/* Cover image */}
         <div className="relative h-44 bg-stone-800 overflow-hidden">
@@ -103,11 +105,12 @@ function PropertyCard({ property }: { property: any }) {
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function PropertyBrowser() {
+  const portalLink = usePortalLink();
   const [activityFilter, setActivityFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
-    console.log("[PropertyBrowser build 20260706-1000] H1=Properties padding=fixed");
+    console.log("[PropertyBrowser build 20260706-1000] H1=Book a Property");
   }, []);
 
   const { data: properties, isLoading, error } = trpc.propertyBooking.properties.list.useQuery(
@@ -135,7 +138,7 @@ export default function PropertyBrowser() {
   return (
     <div className="space-y-6 px-4 py-8 sm:px-6 lg:px-8" data-build="20260706-1000">
       {/* Back link */}
-      <Link href="/portal">
+      <Link href={portalLink("/portal")}>
         <button className="flex items-center gap-1.5 text-sm text-stone-400 hover:text-stone-100 transition-colors">
           <ArrowLeft className="w-4 h-4" />
           Back to Dashboard
@@ -144,7 +147,7 @@ export default function PropertyBrowser() {
 
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-white mb-2">Properties</h1>
+        <h1 className="text-3xl font-bold text-white mb-2">Book a Property</h1>
         <p className="text-stone-400 mt-1 text-sm">
           Browse available properties and book your next outing directly.
         </p>

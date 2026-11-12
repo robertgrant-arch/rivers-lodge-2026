@@ -1,15 +1,16 @@
-import { useState, useEffect, useMemo } from "react";
-import { Link } from "wouter";
+import { useState, useEffect } from "react";
+import { Link, useLocation, useSearch } from "wouter";
 import { useAuth, getLoginUrl } from '@features/auth/public';
 import { trpc } from '@shared/lib/trpc';
 import { toast } from "sonner";
-import PublicLayout from "@/components/PublicLayout";
+import MemberPortalLayout, { usePortalNav } from "@features/portal/client/components/MemberPortalLayout";
+import { isPortalOptionVisible, portalNavHref, portalTabFromSearch, withPreview, type PortalTab } from "@features/portal/client/portalNav";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@shared/ui/dialog';
-import { Eye, X } from "lucide-react";
 import PropertyBrowser from "@features/portal/client/pages/PropertyBrowser";
 import { getMembershipTypeValue, getMembershipTypeSub } from "@features/portal/client/utils/membershipTypeHelpers";
 
-type Tab = "dashboard" | "bookings" | "request" | "updates" | "messages" | "profile" | "properties";
+// Tabs are selected by ?tab=… so the portal menu (portalNav.ts) can link to them.
+type Tab = PortalTab;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -181,7 +182,12 @@ export default function MemberPortal() {
   const { user, isAuthenticated, loading } = useAuth({
     redirectOnUnauthenticated: true,
   });
-  const [tab, setTab] = useState<Tab>("dashboard");
+  const portalNav = usePortalNav();
+  const { preview } = portalNav;
+  const search = useSearch();
+  const [, navigate] = useLocation();
+  const tab: Tab = portalTabFromSearch(search);
+  const setTab = (t: Tab) => navigate(withPreview(t === "dashboard" ? "/portal" : `/portal?tab=${t}`, preview));
   const [msgForm, setMsgForm] = useState({ subject: "", body: "" });
   const [notifOpen, setNotifOpen] = useState(false);
   const [expandedSection, setExpandedSection] = useState<Tab | null>(null);
@@ -229,42 +235,19 @@ export default function MemberPortal() {
     specialRequests: "",
   });
 
-  // Read URL params on client side only (after hydration)
-  const [urlParams, setUrlParams] = useState({ isPreviewMode: false, previewSkillGroupId: undefined as number | undefined });
-  useEffect(() => {
-    const searchParams = new URLSearchParams(window.location.search);
-    const id = searchParams.get("skillGroupId");
-    setUrlParams({
-      isPreviewMode: searchParams.get("preview") === "1",
-      previewSkillGroupId: id ? parseInt(id) : undefined,
-    });
-  }, []);
-
-  const isPreviewMode = urlParams.isPreviewMode;
-  const previewSkillGroupId = urlParams.previewSkillGroupId;
-
-  // Memoize query input to prevent new object reference on every render
-  const calendarQueryInput = useMemo(() =>
-    previewSkillGroupId ? { previewSkillGroupId } : undefined,
-    [previewSkillGroupId]
-  );
-
-  // Check if member (or preview group) can view master calendar — MUST be before early returns
-  const canViewMasterCalendar = trpc.memberPortal.canViewMasterCalendar.useQuery(
-    calendarQueryInput,
-    { enabled: isAuthenticated && (!isPreviewMode || !!previewSkillGroupId) }
-  );
+  const isPreviewMode = preview.isPreviewMode;
+  const previewSkillGroupId = preview.skillGroupId;
 
   if (loading) {
     return (
-      <PublicLayout>
+      <MemberPortalLayout>
         <div className="min-h-screen flex items-center justify-center bg-background">
           <div className="flex flex-col items-center gap-3">
             <div className="w-8 h-8 border border-white/20 border-t-white/60 rounded-full animate-spin" />
             <p className="text-white/40 font-sans text-xs tracking-[0.14em] uppercase">Loading</p>
           </div>
         </div>
-      </PublicLayout>
+      </MemberPortalLayout>
     );
   }
 
@@ -280,7 +263,7 @@ export default function MemberPortal() {
 
   if (!isMember && !memberStatus.isLoading) {
     return (
-      <PublicLayout>
+      <MemberPortalLayout>
         <section className="min-h-screen flex items-center justify-center bg-background">
           <div className="max-w-md w-full mx-auto px-6 text-center">
             <div className="w-16 h-px bg-white/20 mx-auto mb-8" />
@@ -297,45 +280,19 @@ export default function MemberPortal() {
             </a>
           </div>
         </section>
-      </PublicLayout>
+      </MemberPortalLayout>
     );
   }
-
-  const tabs: { key: Tab; label: string; badge?: number }[] = [
-    { key: "dashboard",   label: "Dashboard" },
-    { key: "properties",  label: "Properties" },
-    { key: "bookings",    label: "My Stays", badge: (myRequests.data ?? []).filter(r => r.status === "new" || r.status === "contacted").length || undefined },
-    { key: "request",     label: "Request a Stay" },
-    { key: "updates",     label: "Seasonal Updates" },
-    { key: "messages",    label: "Concierge", badge: (myMessages.data ?? []).length || undefined },
-    { key: "profile",     label: "Profile" },
-  ];
 
   const pendingRequests = (myRequests.data ?? []).filter(r => !["converted","rejected","lost"].includes(r.status));
   const announcements = cmsAnnouncements.data ?? [];
 
   return (
-    <PublicLayout hideNav={isPreviewMode || isAuthenticated}>
-      {/* Admin preview banner */}
-      {isPreviewMode && (
-        <div className="fixed top-0 left-0 right-0 z-[200] bg-amber-600 text-white text-sm font-medium flex items-center justify-between px-4 py-2 shadow-lg">
-          <div className="flex items-center gap-2">
-            <Eye className="w-4 h-4 flex-shrink-0" />
-            <span>Admin Preview Mode — you are viewing the Member Portal with a preview member account.</span>
-          </div>
-          <a
-            href="/ops"
-            className="flex items-center gap-1.5 bg-white/20 hover:bg-white/30 rounded px-3 py-1 text-xs font-semibold transition-colors whitespace-nowrap ml-4"
-          >
-            <X className="w-3.5 h-3.5" />
-            Exit Preview
-          </a>
-        </div>
-      )}
-      <div className="min-h-screen bg-background" style={isPreviewMode ? { paddingTop: "2.5rem" } : {}}>
+    <MemberPortalLayout>
+      <div className="min-h-screen bg-background">
 
         {/* ── Portal Header ─────────────────────────────────────────────── */}
-        <div className="bg-[#2B2823] border-b border-white/8 pt-24 pb-8">
+        <div className="bg-[#2B2823] border-b border-white/8 pt-10 pb-8">
           <div className="max-w-[1440px] mx-auto px-6 lg:px-16">
             <div className="flex items-start justify-between gap-4">
               <div>
@@ -352,7 +309,7 @@ export default function MemberPortal() {
                   {member?.memberNumber && (
                     <span className="text-sm font-sans text-white/30">#{member.memberNumber}</span>
                   )}
-                  {pendingRequests.length > 0 && (
+                  {isPortalOptionVisible("request-stay") && pendingRequests.length > 0 && (
                     <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-[var(--gold)]/10 text-[var(--gold)] text-[10px] tracking-[0.14em] uppercase font-sans">
                       {pendingRequests.length} Active {pendingRequests.length === 1 ? "Request" : "Requests"}
                     </span>
@@ -427,8 +384,13 @@ export default function MemberPortal() {
                   const stats = [
                     { label: "Membership", value: member ? "Active" : "—", sub: member?.memberNumber ? `#${member.memberNumber}` : "N/A" },
                     { label: "Membership Type", value: membershipTypeValue, sub: membershipTypeSub },
-                    { label: "Stay Requests", value: String((myRequests.data ?? []).length), sub: `${pendingRequests.length} active` },
-                    { label: "Messages", value: String(myMessages.data?.length ?? 0), sub: "with concierge" },
+                    // Tied to hidden portal options — shown again if those are restored in portalNav.ts.
+                    ...(isPortalOptionVisible("request-stay")
+                      ? [{ label: "Stay Requests", value: String((myRequests.data ?? []).length), sub: `${pendingRequests.length} active` }]
+                      : []),
+                    ...(isPortalOptionVisible("concierge")
+                      ? [{ label: "Messages", value: String(myMessages.data?.length ?? 0), sub: "with concierge" }]
+                      : []),
                   ];
                   return stats;
                 })().map((stat) => (
@@ -447,154 +409,36 @@ export default function MemberPortal() {
                 </a>
               </div>
 
-              {/* Navigation Tiles Grid */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-                {/* Request a Stay */}
-                <button
-                  onClick={() => setTab("request")}
-                  className="flex flex-col items-center gap-3 bg-[#2B2823] border border-white/8 hover:border-[var(--gold)]/40 p-4 text-center transition-colors group"
-                >
-                  <div className="w-10 h-10 flex items-center justify-center border border-white/10 group-hover:border-[var(--gold)]/40 transition-colors">
-                    <svg className="w-5 h-5 text-white/50 group-hover:text-[var(--gold)] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="text-xs font-sans text-white font-medium">Request a Stay</p>
-                  </div>
-                </button>
-
-                {/* Contact Concierge */}
-                <button
-                  onClick={() => setTab("messages")}
-                  className="flex flex-col items-center gap-3 bg-[#2B2823] border border-white/8 hover:border-[var(--gold)]/40 p-4 text-center transition-colors group"
-                >
-                  <div className="w-10 h-10 flex items-center justify-center border border-white/10 group-hover:border-[var(--gold)]/40 transition-colors">
-                    <svg className="w-5 h-5 text-white/50 group-hover:text-[var(--gold)] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="text-xs font-sans text-white font-medium">Concierge</p>
-                  </div>
-                </button>
-
-                {/* My Bookings */}
-                <Link href="/portal/my-bookings">
-                  <div className="flex flex-col items-center gap-3 bg-[#2B2823] border border-white/8 hover:border-[var(--gold)]/40 p-4 text-center transition-colors group cursor-pointer">
-                    <div className="w-10 h-10 flex items-center justify-center border border-white/10 group-hover:border-[var(--gold)]/40 transition-colors">
-                      <svg className="w-5 h-5 text-white/50 group-hover:text-[var(--gold)] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-                      </svg>
-                    </div>
-                    <div>
-                      <p className="text-xs font-sans text-white font-medium">My Bookings</p>
-                    </div>
-                  </div>
-                </Link>
-
-                {/* My Calendar */}
-                <Link href="/portal/calendar/mine">
-                  <div className="flex flex-col items-center gap-3 bg-[#2B2823] border border-white/8 hover:border-[var(--gold)]/40 p-4 text-center transition-colors group cursor-pointer">
-                    <div className="w-10 h-10 flex items-center justify-center border border-white/10 group-hover:border-[var(--gold)]/40 transition-colors">
-                      <svg className="w-5 h-5 text-white/50 group-hover:text-[var(--gold)] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                    </div>
-                    <div>
-                      <p className="text-xs font-sans text-white font-medium">My Calendar</p>
-                    </div>
-                  </div>
-                </Link>
-
-                {/* Master Calendar (conditional) */}
-                {canViewMasterCalendar.data ? (
-                  <Link href="/portal/calendar/master">
-                    <div className="flex flex-col items-center gap-3 bg-[#2B2823] border border-white/8 hover:border-[var(--gold)]/40 p-4 text-center transition-colors group cursor-pointer">
+              {/* Navigation Tiles Grid — built from portalNav.ts (same options as the menu) */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3" data-testid="portal-tiles">
+                {portalNav.items.map((item) => {
+                  const Icon = item.icon;
+                  const tile = (
+                    <div className="h-full flex flex-col items-center gap-3 bg-[#2B2823] border border-white/8 hover:border-[var(--gold)]/40 p-4 text-center transition-colors group cursor-pointer">
                       <div className="w-10 h-10 flex items-center justify-center border border-white/10 group-hover:border-[var(--gold)]/40 transition-colors">
-                        <svg className="w-5 h-5 text-white/50 group-hover:text-[var(--gold)] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
+                        <Icon className="w-5 h-5 text-white/50 group-hover:text-[var(--gold)] transition-colors" strokeWidth={1.5} aria-hidden="true" />
                       </div>
-                      <div>
-                        <p className="text-xs font-sans text-white font-medium">Master Calendar</p>
-                      </div>
+                      <p className="text-xs font-sans text-white font-medium">{item.label}</p>
                     </div>
-                  </Link>
-                ) : isPreviewMode && canViewMasterCalendar.isLoading ? (
+                  );
+                  const href = portalNavHref(item, { email: user?.email, preview });
+                  return item.external
+                    ? <a key={item.key} href={href}>{tile}</a>
+                    : <Link key={item.key} href={href}>{tile}</Link>;
+                })}
+                {/* Master Calendar placeholder while the preview group's access loads */}
+                {portalNav.masterCalendarLoading && (
                   <div className="flex flex-col items-center gap-3 bg-[#2B2823] border border-white/8 p-4 text-center opacity-50">
                     <div className="w-10 h-10 flex items-center justify-center border border-white/10">
                       <div className="w-4 h-4 border border-white/20 border-t-white/60 rounded-full animate-spin" />
                     </div>
-                    <div>
-                      <p className="text-xs font-sans text-white font-medium">Master Calendar</p>
-                    </div>
+                    <p className="text-xs font-sans text-white font-medium">Master Calendar</p>
                   </div>
-                ) : null}
-
-                {/* Explore Properties */}
-                <Link href="/portal/properties">
-                  <div className="flex flex-col items-center gap-3 bg-[#2B2823] border border-white/8 hover:border-[var(--gold)]/40 p-4 text-center transition-colors group cursor-pointer">
-                    <div className="w-10 h-10 flex items-center justify-center border border-white/10 group-hover:border-[var(--gold)]/40 transition-colors">
-                      <svg className="w-5 h-5 text-white/50 group-hover:text-[var(--gold)] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                      </svg>
-                    </div>
-                    <div>
-                      <p className="text-xs font-sans text-white font-medium">Properties</p>
-                    </div>
-                  </div>
-                </Link>
-
-                {/* Seasonal Updates */}
-                <button
-                  onClick={() => setTab("updates")}
-                  className="flex flex-col items-center gap-3 bg-[#2B2823] border border-white/8 hover:border-[var(--gold)]/40 p-4 text-center transition-colors group"
-                >
-                  <div className="w-10 h-10 flex items-center justify-center border border-white/10 group-hover:border-[var(--gold)]/40 transition-colors">
-                    <svg className="w-5 h-5 text-white/50 group-hover:text-[var(--gold)] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v11m-5-5l-5 5m0 0l5 5m-5-5h12" />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="text-xs font-sans text-white font-medium">Updates</p>
-                  </div>
-                </button>
-
-                {/* Refer a Member */}
-                <a
-                  href={`/contact?type=membership&ref=${encodeURIComponent(user?.email ?? "")}&note=${encodeURIComponent("I'd like to refer a friend for membership at The Rivers Lodge.")}`}
-                  className="flex flex-col items-center gap-3 bg-[#2B2823] border border-white/8 hover:border-[var(--gold)]/40 p-4 text-center transition-colors group cursor-pointer"
-                >
-                  <div className="w-10 h-10 flex items-center justify-center border border-white/10 group-hover:border-[var(--gold)]/40 transition-colors">
-                    <svg className="w-5 h-5 text-white/50 group-hover:text-[var(--gold)] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="text-xs font-sans text-white font-medium">Refer</p>
-                  </div>
-                </a>
-
-                {/* My Profile */}
-                <button
-                  onClick={() => setTab("profile")}
-                  className="flex flex-col items-center gap-3 bg-[#2B2823] border border-white/8 hover:border-[var(--gold)]/40 p-4 text-center transition-colors group"
-                >
-                  <div className="w-10 h-10 flex items-center justify-center border border-white/10 group-hover:border-[var(--gold)]/40 transition-colors">
-                    <svg className="w-5 h-5 text-white/50 group-hover:text-[var(--gold)] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="text-xs font-sans text-white font-medium">Profile</p>
-                  </div>
-                </button>
+                )}
               </div>
 
               {/* Recent requests summary */}
-              {(myRequests.data ?? []).length > 0 && (
+              {isPortalOptionVisible("request-stay") && (myRequests.data ?? []).length > 0 && (
                 <div className="bg-[#2B2823] border border-white/8 p-6">
                   <div className="flex items-center justify-between mb-5">
                     <p className="eyebrow text-white/40">Recent Stay Requests</p>
@@ -619,7 +463,7 @@ export default function MemberPortal() {
               )}
 
               {/* Latest updates */}
-              {(updates.data ?? []).length > 0 && (
+              {isPortalOptionVisible("updates") && (updates.data ?? []).length > 0 && (
                 <div className="bg-[#2B2823] border border-white/8 p-6">
                   <div className="flex items-center justify-between mb-5">
                     <p className="eyebrow text-white/40">Latest Updates</p>
@@ -974,7 +818,6 @@ export default function MemberPortal() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   {[
                     { label: "Email", value: user?.email ?? "—" },
-                    { label: "Email", value: user?.email ?? "—" },
                     { label: "Member Number", value: member?.memberNumber ? `#${member.memberNumber}` : "—" },
                     { label: "Status", value: member?.active ? "Active" : isStaff ? "Staff Access" : "Inactive" },
                     { label: "Member Since", value: member?.joinDate ? new Date(member.joinDate).toLocaleDateString("en-US", { month: "long", year: "numeric" }) : "—" },
@@ -994,7 +837,8 @@ export default function MemberPortal() {
                   <p className="text-sm font-sans text-white/50 leading-relaxed">{member.notes}</p>
                 </div>
               )}
-              {/* Contact */}
+              {/* Contact (links to Concierge — shown when that option is visible) */}
+              {isPortalOptionVisible("concierge") && (
               <div className="border border-[var(--gold)]/20 bg-[var(--gold)]/5 p-5">
                 <p className="text-[10px] tracking-[0.14em] uppercase font-sans text-[var(--gold)] mb-1">Need to update your information?</p>
                 <p className="text-xs font-sans text-white/50 leading-relaxed mb-3">Contact our concierge team to update your contact details, preferences, or membership information.</p>
@@ -1002,6 +846,7 @@ export default function MemberPortal() {
                   Message Concierge →
                 </button>
               </div>
+              )}
             </div>
           </div>
         )}
@@ -1075,6 +920,6 @@ export default function MemberPortal() {
 
     </div>
 
-    </PublicLayout>
+    </MemberPortalLayout>
   );
 }

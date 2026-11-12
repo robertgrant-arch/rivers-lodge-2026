@@ -71,6 +71,9 @@ const PropertyDetail = lazy(() => import("@features/portal/client/pages/Property
 const PortalAvailability = lazy(() => import("@features/portal/client/pages/PortalAvailability"));
 const CalendarMine = lazy(() => import("@features/portal/client/pages/CalendarMine"));
 const CalendarMaster = lazy(() => import("@features/portal/client/pages/CalendarMaster"));
+const MembershipRoster = lazy(() => import("@features/portal/client/pages/MembershipRoster"));
+// Member portal menu + admin-preview banner for portal pages without their own layout
+const MemberPortalLayout = lazy(() => import("@features/portal/client/components/MemberPortalLayout"));
 
 // Auth pages
 const SignIn = lazy(() => import("@features/auth/client/pages/SignIn"));
@@ -156,9 +159,10 @@ function Router() {
         <Route path="/portal" component={MemberPortal} />
         <Route path="/portal/calendar/mine" component={CalendarMine} />
         <Route path="/portal/calendar/master" component={CalendarMaster} />
-        <Route path="/portal/properties" component={PropertyBrowser} />
-        <Route path="/portal/properties/:id" component={PropertyDetail} />
-        <Route path="/portal/my-bookings" component={MyBookings} />
+        <Route path="/portal/roster" component={MembershipRoster} />
+        <Route path="/portal/properties">{() => <MemberPortalLayout><PropertyBrowser /></MemberPortalLayout>}</Route>
+        <Route path="/portal/properties/:id">{() => <MemberPortalLayout><PropertyDetail /></MemberPortalLayout>}</Route>
+        <Route path="/portal/my-bookings">{() => <MemberPortalLayout><MyBookings /></MemberPortalLayout>}</Route>
         <Route path="/privacy" component={Privacy} />
         <Route path="/inquiry-confirmed" component={InquiryConfirmed} />
         <Route path="/admin" component={AdminDashboard} />

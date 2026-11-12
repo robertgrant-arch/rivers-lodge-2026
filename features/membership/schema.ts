@@ -219,7 +219,9 @@ export type InsertEmployeeSkillGroup = typeof employeeSkillGroups.$inferInsert;
 //
 // PRIVACY: Health & Safety columns and member_staff_notes are staff-only. Only
 // the Member File procedures in features/admin/server/memberFile.ts may read
-// these tables; no member-facing query may select from them.
+// these tables; no member-facing query may select from them — except the
+// Membership Roster (server/roster.ts), which reads only full_name,
+// preferred_name, cell_phone and work_phone.
 
 export type ActivityInterest = { activity: string; level: string | null };
 
