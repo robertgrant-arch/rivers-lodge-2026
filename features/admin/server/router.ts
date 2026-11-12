@@ -51,10 +51,16 @@ const getDb = getPortalDb;
 const STAFF_ROLES = ["admin", "employee"] as const;
 type StaffRole = typeof STAFF_ROLES[number];
 
+// Ops portal procedures: ADMIN ONLY.
+// This used to admit any "employee"-role user — and every member login carries
+// that role, so any signed-in member could call the ops API directly (weddings,
+// corporate, leads, employees, membership…). The /ops UI was already
+// admin-only (PortalLayout), so this only closes the API to match it.
+// A future staff-only area should add its own guard (admin, or "employee" with
+// an active employees row — see memberFile.ts), not widen this one.
 const portalProcedure = protectedProcedure.use(({ ctx, next }) => {
-  const role = ctx.user.role as string;
-  if (!STAFF_ROLES.includes(role as StaffRole)) {
-    throw new TRPCError({ code: "FORBIDDEN", message: "Portal access requires a staff role" });
+  if (ctx.user.role !== "admin") {
+    throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
   }
   return next({ ctx });
 });

@@ -100,7 +100,8 @@ export const messagesRouter = router({
       return { success: true };
     }),
 
-  markRead: protectedProcedure
+  // Admin only: marks any message read by id (no member UI uses it).
+  markRead: adminProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ input }) => {
       await dal.markMessageRead(input.id);
