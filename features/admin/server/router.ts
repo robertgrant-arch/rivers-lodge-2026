@@ -266,8 +266,14 @@ function normalizeInsertPayload(input: {
 }
 
 // ─── Calendar Router ──────────────────────────────────────────────────────────
+// Master Calendar data (weddings, corporate, hunt/fish, events, blocks).
+// Admin only — both viewing the full data and every edit. Members read their
+// share through memberPortal.masterCalendar / memberPortal.unavailableDates,
+// which check skill-group access and return only what members may see.
+// (portalProcedure would also admit "employee"-role users, which includes
+// every member login.)
 const calendarRouter = router({
-  events: portalProcedure
+  events: ownerProcedure
     .input(z.object({
       startDate: z.string(),
       endDate: z.string(),
@@ -429,7 +435,7 @@ const calendarRouter = router({
     }),
 
   // Save a regular event (non-block)
-  saveEvent: portalProcedure
+  saveEvent: ownerProcedure
     .input(z.object({
       title: z.string().min(1),
       type: z.string(),
@@ -477,7 +483,7 @@ const calendarRouter = router({
     }),
 
   // Update a regular event
-  updateEvent: portalProcedure
+  updateEvent: ownerProcedure
     .input(z.object({
       id: z.number(),
       title: z.string().min(1).optional(),
@@ -525,7 +531,7 @@ const calendarRouter = router({
     }),
 
   // Delete a regular event
-  deleteEvent: portalProcedure
+  deleteEvent: ownerProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ input, ctx }) => {
       try {
@@ -548,7 +554,7 @@ const calendarRouter = router({
     }),
 
   // Save a block day (unavailability)
-  blockDates: portalProcedure
+  blockDates: ownerProcedure
     .input(z.object({
       startDate: z.string(),
       endDate: z.string(),
@@ -599,7 +605,7 @@ const calendarRouter = router({
     }),
 
   // Update a block
-  updateBlock: portalProcedure
+  updateBlock: ownerProcedure
     .input(z.object({
       id: z.number(),
       startDate: z.string().optional(),
@@ -647,7 +653,7 @@ const calendarRouter = router({
     }),
 
   // Delete a block
-  unblockDates: portalProcedure
+  unblockDates: ownerProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ input, ctx }) => {
       try {

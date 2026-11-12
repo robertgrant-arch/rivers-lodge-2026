@@ -167,18 +167,13 @@ export async function runStartupMigration() {
           console.log("[startup-migration] backfill member_skill_groups completed or skipped");
         }
 
-        // Initialize skill_group_calendar_access with default settings
-        // Designated, Admin, and Employee can view master calendar by default
-        // Use LOWER() for case-insensitive name matching to handle any casing in production
-        // CRITICAL: UPDATE existing rows first (idempotent), then INSERT missing rows
+        // Give skill groups that have NO Master Calendar access row yet a default:
+        // Designated, Admin and Employee can view (case-insensitive name match).
+        // Existing rows are left alone — they hold what admins chose in
+        // /ops calendar settings. (This used to UPDATE every row back to the
+        // defaults on each boot, wiping those choices on every deploy.)
+        // Editing the Master Calendar is admin-only by role, not by this table.
         const initCalendarAccess = `
-          -- Update existing skill_group_calendar_access rows with correct grants
-          UPDATE skill_group_calendar_access sgca
-          SET can_view_master_calendar = CASE WHEN LOWER(sg.name) IN ('designated', 'admin', 'employee') THEN true ELSE false END,
-              can_manage_master_calendar = CASE WHEN LOWER(sg.name) = 'admin' THEN true ELSE false END
-          FROM skill_groups sg
-          WHERE sgca.skill_group_id = sg.id AND sg.active = true;
-
           -- Insert any missing skill_group_calendar_access rows
           INSERT INTO skill_group_calendar_access (skill_group_id, can_view_master_calendar, can_manage_master_calendar)
           SELECT sg.id,
@@ -203,7 +198,7 @@ export async function runStartupMigration() {
           // Execute update + insert statements
           const result = await client.query(initCalendarAccess);
           // Note: result.rowCount reflects only the last query (INSERT); UPDATE count is in result.affectedRows if available
-          console.log(`[startup-migration] skill_group_calendar_access initialized (updated existing + inserted new rows)`);
+          console.log(`[startup-migration] skill_group_calendar_access: defaults inserted for groups without a row (existing rows kept)`);
 
           // Verify: log the final state with detailed access grants
           const verifyResult = await client.query(`
