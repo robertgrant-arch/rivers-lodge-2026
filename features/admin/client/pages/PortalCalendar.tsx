@@ -1,3 +1,4 @@
+import { Link } from 'wouter';
 import { Button } from '@shared/ui/button';
 import {
   Dialog,
@@ -20,7 +21,6 @@ import { trpc } from '@shared/lib/trpc';
 import { useState, useMemo, useEffect } from 'react';
 import { toast } from 'sonner';
 import { Settings } from 'lucide-react';
-import MasterCalendarSettingsPanel from '../components/MasterCalendarSettingsPanel';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -54,32 +54,60 @@ const DAY_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 // Event type config
 // ---------------------------------------------------------------------------
 
-type EventKind = 'wedding' | 'corporate' | 'hunt_fish' | 'blocked' | 'member_event';
+type EventKind = 'wedding' | 'corporate' | 'hunt_fish' | 'blocked' | 'member_event' | 'ops_event';
 
 const EVENT_CONFIG: Record<EventKind, { label: string; dot: string; text: string }> = {
-  wedding:    { label: 'Wedding',    dot: '#9B4D19', text: 'text-[#9B4D19]' },
-  corporate:  { label: 'Corporate',  dot: '#576276', text: 'text-[#576276]' },
-  hunt_fish:  { label: 'Hunt/Fish',  dot: '#6B7250', text: 'text-[#6B7250]' },
-  blocked:    { label: 'Hold/Block', dot: '#57544E', text: 'text-[#BABAAE]' },
-  member_event: { label: 'Admin Event', dot: '#8B6F47', text: 'text-[#8B6F47]' },
+  // Same colours as the staff Ops Calendar (/portal/ops-calendar).
+  wedding:    { label: 'Wedding',    dot: '#7D8AA3', text: 'text-[#7D8AA3]' },
+  corporate:  { label: 'Corporate',  dot: '#8E9670', text: 'text-[#8E9670]' },
+  hunt_fish:  { label: 'Hunt/Fish',  dot: '#D9B98C', text: 'text-[#D9B98C]' },
+  blocked:    { label: 'Hold/Block', dot: '#8A847A', text: 'text-[#BABAAE]' },
+  member_event: { label: 'Member Event', dot: '#BABAAE', text: 'text-[#BABAAE]' },
+  ops_event:    { label: 'Ops Event',    dot: '#C2662A', text: 'text-[#C2662A]' },
+};
+
+// The admin calendar has two views, one per audience:
+//   ops    — what staff see on the Ops Calendar: everything.
+//   master — what members see on the Member Master Calendar: member events and
+//            the blocks members are shown (same rule as the member page).
+export type CalendarView = 'ops' | 'master';
+
+const VIEW_KINDS: Record<CalendarView, EventKind[]> = {
+  ops: ['ops_event', 'member_event', 'wedding', 'corporate', 'hunt_fish', 'blocked'],
+  master: ['member_event', 'blocked'],
+};
+
+const VIEW_COPY: Record<CalendarView, { title: string; audience: string; other: { label: string; path: string } }> = {
+  ops: {
+    title: 'Ops Calendar',
+    audience: 'Staff only — admins and Admin/Employee staff. Shows everything, including entries members never see.',
+    other: { label: 'Member Master Calendar', path: '/ops/master-calendar' },
+  },
+  master: {
+    title: 'Member Master Calendar',
+    audience: 'What members see (if their skill group can view the Member Master Calendar).',
+    other: { label: 'Ops Calendar', path: '/ops/calendar' },
+  },
 };
 
 type FilterKey = EventKind | 'all';
 
-const FILTER_CHIPS: { key: FilterKey; label: string }[] = [
-  { key: 'all',       label: 'All' },
-  { key: 'wedding',   label: 'Weddings' },
-  { key: 'corporate', label: 'Corporate' },
-  { key: 'hunt_fish', label: 'Hunt/Fish' },
-  { key: 'member_event', label: 'Admin Events' },
-  { key: 'blocked',   label: 'Blocks/Holds' },
-];
+const FILTER_LABELS: Record<EventKind, string> = {
+  ops_event: 'Ops Events',
+  member_event: 'Member Events',
+  wedding: 'Weddings',
+  corporate: 'Corporate',
+  hunt_fish: 'Hunt/Fish',
+  blocked: 'Blocks/Holds',
+};
 
 // ---------------------------------------------------------------------------
 // Types matching tRPC response shape
 // ---------------------------------------------------------------------------
 
 interface CalEvent {
+  /** Blocks: had a real title (hidden titled blocks are not shown to members). */
+  hasTitle?: boolean;
   id: string | number;
   title: string;
   startDate: string; // YYYY-MM-DD
@@ -100,6 +128,8 @@ interface CalEvent {
 interface CreateModalProps {
   open: boolean;
   defaultDate?: string;
+  /** Pre-selected calendar: the calendar the admin is looking at. */
+  defaultCalendar?: Exclude<CalendarChoice, ''>;
   onClose: () => void;
   onSuccess: () => void;
 }
@@ -145,7 +175,7 @@ function CalendarChoiceField({ value, onChange, idPrefix }: { value: CalendarCho
   );
 }
 
-function CreateEventModal({ open, defaultDate, onClose, onSuccess }: CreateModalProps) {
+function CreateEventModal({ open, defaultDate, defaultCalendar, onClose, onSuccess }: CreateModalProps) {
   const [title, setTitle] = useState('');
   const [type, setType] = useState('member_event');
   const [startDate, setStartDate] = useState(defaultDate ?? '');
@@ -155,7 +185,7 @@ function CreateEventModal({ open, defaultDate, onClose, onSuccess }: CreateModal
   const [allDay, setAllDay] = useState(true);
   const [notes, setNotes] = useState('');
   const [isBlockDay, setIsBlockDay] = useState(false);
-  const [calendarChoice, setCalendarChoice] = useState<CalendarChoice>('');
+  const [calendarChoice, setCalendarChoice] = useState<CalendarChoice>(defaultCalendar ?? '');
   const [error, setError] = useState('');
 
   const saveEventMutation = trpc.portal.calendar.saveEvent.useMutation({
@@ -200,7 +230,7 @@ function CreateEventModal({ open, defaultDate, onClose, onSuccess }: CreateModal
     setAllDay(true);
     setNotes('');
     setIsBlockDay(false);
-    setCalendarChoice('');
+    setCalendarChoice(defaultCalendar ?? '');
     setError('');
   }
 
@@ -679,7 +709,7 @@ function EventDetailModal({ event, onClose, onUnblocked, onEdit }: DetailModalPr
 
   if (!event) return null;
   const cfg = EVENT_CONFIG[event.kind];
-  const isEvent = event.kind === 'member_event';
+  const isEvent = event.kind === 'member_event' || event.kind === 'ops_event';
 
   return (
     <Dialog open={!!event} onOpenChange={(v) => { if (!v) { onClose(); setConfirming(false); } }}>
@@ -780,7 +810,9 @@ function EventDetailModal({ event, onClose, onUnblocked, onEdit }: DetailModalPr
 // Main component
 // ---------------------------------------------------------------------------
 
-export default function PortalCalendar() {
+export default function PortalCalendar({ view = 'ops' }: { view?: CalendarView }) {
+  const copy = VIEW_COPY[view];
+  const viewKinds = VIEW_KINDS[view];
   const today = new Date();
   const [year, setYear] = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth()); // 0-indexed
@@ -790,7 +822,6 @@ export default function PortalCalendar() {
   const [selectedEvent, setSelectedEvent] = useState<CalEvent | null>(null);
   const [editingEvent, setEditingEvent] = useState<CalEvent | null>(null);
   const [editOpen, setEditOpen] = useState(false);
-  const [settingsOpen, setSettingsOpen] = useState(false);
 
   const startDate = toDateStr(new Date(year, month, 1));
   const endDate = toDateStr(new Date(year, month + 1, 0));
@@ -808,18 +839,19 @@ export default function PortalCalendar() {
     // Bookings carry their own date fields (weddingDate, arrival/departure,
     // bookingDate) — there is no startDate on them. Reading startDate left it
     // undefined and crashed the page whenever a booking fell in the month.
-    const add = (ev: CalEvent) => { if (ev.startDate) result.push(ev); };
+    // Cancelled bookings are left off, as on the staff Ops Calendar.
+    const add = (ev: CalEvent, status?: string) => { if (ev.startDate && status !== 'cancelled') result.push(ev); };
     (data.weddings ?? []).forEach((e: any) =>
-      add({ id: e.id, title: e.title ?? 'Wedding', startDate: e.weddingDate, endDate: e.weddingDate, kind: 'wedding', notes: e.notes }),
+      add({ id: e.id, title: e.title ?? 'Wedding', startDate: e.weddingDate, endDate: e.weddingDate, kind: 'wedding', notes: e.notes }, e.status),
     );
     (data.corporate ?? []).forEach((e: any) =>
-      add({ id: e.id, title: e.title ?? 'Corporate', startDate: e.arrivalDate, endDate: e.departureDate ?? e.arrivalDate, kind: 'corporate', notes: e.notes }),
+      add({ id: e.id, title: e.title ?? 'Corporate', startDate: e.arrivalDate, endDate: e.departureDate ?? e.arrivalDate, kind: 'corporate', notes: e.notes }, e.status),
     );
     (data.huntFish ?? []).forEach((e: any) =>
-      add({ id: e.id, title: e.title ?? 'Hunt/Fish', startDate: e.bookingDate, endDate: e.bookingDate, kind: 'hunt_fish', notes: e.notes }),
+      add({ id: e.id, title: e.title ?? 'Hunt/Fish', startDate: e.bookingDate, endDate: e.bookingDate, kind: 'hunt_fish', notes: e.notes }, e.status),
     );
     (data.blocked ?? []).forEach((e: any) =>
-      result.push({ id: e.id, title: e.title ?? e.reasonNotes ?? (e.reason && e.reason !== 'other' ? e.reason : 'Hold'), startDate: e.startDate, endDate: e.endDate ?? e.startDate, kind: 'blocked', notes: e.reasonNotes }),
+      result.push({ id: e.id, title: e.title ?? e.reasonNotes ?? (e.reason && e.reason !== 'other' ? e.reason : 'Hold'), startDate: e.startDate, endDate: e.endDate ?? e.startDate, kind: 'blocked', notes: e.reasonNotes, hasTitle: !!e.title, hiddenFromMembers: e.hiddenFromMembers ?? false }),
     );
     (data.events ?? []).forEach((e: any) =>
       result.push({
@@ -827,7 +859,7 @@ export default function PortalCalendar() {
         title: e.title ?? 'Admin Event',
         startDate: e.startDate,
         endDate: e.endDate ?? e.startDate,
-        kind: 'member_event',
+        kind: e.hiddenFromMembers ? 'ops_event' : 'member_event',
         notes: e.notes,
         type: e.type,
         startTime: e.startTime,
@@ -837,8 +869,18 @@ export default function PortalCalendar() {
       }),
     );
 
-    return result;
-  }, [data]);
+    // Keep only what this calendar's audience sees.
+    return result.filter((ev) => {
+      if (!viewKinds.includes(ev.kind)) return false;
+      if (view === 'master' && ev.kind === 'blocked' && ev.hiddenFromMembers && ev.hasTitle) return false;
+      return true;
+    });
+  }, [data, view, viewKinds]);
+
+  const filterChips: { key: FilterKey; label: string }[] = [
+    { key: 'all', label: 'All' },
+    ...viewKinds.map((k) => ({ key: k as FilterKey, label: FILTER_LABELS[k] })),
+  ];
 
   const visibleEvents = useMemo(
     () => filter === 'all' ? allEvents : allEvents.filter((e) => e.kind === filter),
@@ -886,19 +928,23 @@ export default function PortalCalendar() {
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="font-sans text-[10px] tracking-[0.16em] uppercase text-[#BABAAE] mb-1">Operations</p>
-          <h1 className="font-sans text-2xl font-medium tracking-tight text-[#E0D3BD]">Calendar</h1>
+          <h1 className="font-sans text-2xl font-medium tracking-tight text-[#E0D3BD]" data-testid="calendar-title">{copy.title}</h1>
+          <p className="font-sans text-xs text-[#BABAAE] mt-1 max-w-xl">{copy.audience}</p>
+          <Link href={copy.other.path} className="inline-block mt-2 font-sans text-[10px] tracking-[0.12em] uppercase text-[#9B4D19] hover:underline">
+            Switch to {copy.other.label} →
+          </Link>
         </div>
         <div className="flex items-start gap-4">
-          <Button
-            onClick={() => setSettingsOpen(true)}
-            variant="outline"
-            size="sm"
-            className="border-[#57544E] text-[#BABAAE] hover:border-[#9B4D19] hover:text-[#E0D3BD] rounded-none font-sans text-xs tracking-[0.1em] uppercase px-3 py-2 h-auto gap-2"
-            title="Configure calendar visibility by skill group"
-          >
-            <Settings className="w-4 h-4" />
-            Settings
-          </Button>
+          {view === 'master' && (
+            <Link
+              href="/ops/calendar-settings"
+              className="inline-flex items-center border border-[#57544E] text-[#BABAAE] hover:border-[#9B4D19] hover:text-[#E0D3BD] rounded-none font-sans text-xs tracking-[0.1em] uppercase px-3 py-2 gap-2"
+              title="Choose which skill groups can view the Member Master Calendar"
+            >
+              <Settings className="w-4 h-4" />
+              Who can see it
+            </Link>
+          )}
           <Button
             onClick={() => { setCreateDefaultDate(undefined); setCreateOpen(true); }}
             className="bg-[#9B4D19] hover:bg-[#7a3c14] text-[#E0D3BD] rounded-none font-sans text-xs tracking-[0.1em] uppercase px-5 py-2 h-auto"
@@ -910,7 +956,7 @@ export default function PortalCalendar() {
 
       {/* Filter chips */}
       <div className="flex flex-wrap gap-2">
-        {FILTER_CHIPS.map((chip) => {
+        {filterChips.map((chip) => {
           const active = filter === chip.key;
           return (
             <button
@@ -1052,9 +1098,9 @@ export default function PortalCalendar() {
         )}
       </div>
 
-      {/* Legend */}
+      {/* Legend (this calendar's kinds only) */}
       <div className="flex flex-wrap gap-5">
-        {(Object.entries(EVENT_CONFIG) as [EventKind, typeof EVENT_CONFIG[EventKind]][]).map(([kind, cfg]) => (
+        {viewKinds.map((kind) => [kind, EVENT_CONFIG[kind]] as const).map(([kind, cfg]) => (
           <div key={kind} className="flex items-center gap-1.5">
             <span className="inline-block w-2 h-2 rounded-full" style={{ backgroundColor: cfg.dot }} />
             <span className="font-sans text-[10px] tracking-[0.1em] uppercase text-[#BABAAE]">{cfg.label}</span>
@@ -1114,6 +1160,7 @@ export default function PortalCalendar() {
       <CreateEventModal
         open={createOpen}
         defaultDate={createDefaultDate}
+        defaultCalendar={view === 'master' ? 'member' : 'ops'}
         onClose={() => setCreateOpen(false)}
         onSuccess={() => refetch()}
       />
@@ -1141,15 +1188,6 @@ export default function PortalCalendar() {
         }}
       />
 
-      {/* Master Calendar Settings Modal */}
-      <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
-        <DialogContent className="bg-stone-900 border-stone-700 text-stone-100 max-w-2xl">
-          <DialogHeader>
-            <DialogTitle className="text-stone-100">Calendar Settings</DialogTitle>
-          </DialogHeader>
-          <MasterCalendarSettingsPanel onClose={() => setSettingsOpen(false)} />
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

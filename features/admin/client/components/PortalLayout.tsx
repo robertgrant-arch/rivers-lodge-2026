@@ -80,7 +80,8 @@ const navGroups = [
     label: "Overview",
     items: [
       { icon: Home, label: "Dashboard", path: "/ops" },
-      { icon: Calendar, label: "Master Calendar", path: "/ops/calendar" },
+      { icon: Calendar, label: "Ops Calendar", path: "/ops/calendar" },
+      { icon: Calendar, label: "Member Master Calendar", path: "/ops/master-calendar" },
       { icon: Search, label: "Availability", path: "/ops/availability" },
       { icon: BookOpen, label: "All Bookings", path: "/ops/bookings" },
       { icon: TrendingUp, label: "Sales Pipeline", path: "/ops/leads" },
@@ -204,7 +205,9 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
                   </SidebarGroupLabel>
                   <SidebarMenu className="gap-0.5">
                     {group.items.map((item) => {
-                      const isActive = location === item.path || (item.path !== "/ops" && location.startsWith(item.path));
+                      // Exact page or a sub-page ("/ops/weddings/12"), not a sibling with a
+                      // longer name ("/ops/calendar-settings" is not "/ops/calendar").
+                      const isActive = location === item.path || (item.path !== "/ops" && location.startsWith(`${item.path}/`));
                       return (
                         <SidebarMenuItem key={item.path}>
                           <SidebarMenuButton asChild isActive={isActive} className={navButtonCls}>
