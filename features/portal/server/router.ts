@@ -17,6 +17,7 @@ import { eq } from "drizzle-orm";
 import { calendarAccessSettings } from "../schema";
 import { canViewMemberRoster, listMemberRoster } from "@features/membership/public";
 import { canUseMemberCalendar, canViewMasterCalendar, loadMasterCalendar, loadUnavailableDates } from "./calendarAccess";
+import { canViewOpsCalendar, loadOpsCalendar } from "./opsCalendar";
 
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Use YYYY-MM-DD");
 /** Start ≤ end, at most ~13 months per request. */
@@ -110,6 +111,31 @@ export const memberPortalRouter = router({
         throw new TRPCError({ code: "FORBIDDEN", message: "My Calendar is available to members only." });
       }
       return loadUnavailableDates(db, input.startDate, input.endDate);
+    }),
+
+  /**
+   * May the caller view the staff-only Ops Calendar? (Admins, or an active
+   * employee record in the Admin or Employee skill group — see opsCalendar.ts.)
+   */
+  canViewOpsCalendar: memberProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) return false;
+    return canViewOpsCalendar(db, ctx.user);
+  }),
+
+  /**
+   * Ops Calendar entries (read-only). Staff only; everyone else gets FORBIDDEN.
+   * Editing stays admin-only in /ops/calendar.
+   */
+  opsCalendar: memberProcedure
+    .input(dateRangeInput)
+    .query(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+      if (!(await canViewOpsCalendar(db, ctx.user))) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "The Ops Calendar is for staff only." });
+      }
+      return loadOpsCalendar(db, input.startDate, input.endDate);
     }),
 
   /**

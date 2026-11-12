@@ -38,9 +38,16 @@ export function usePortalNav() {
   const canViewMasterCalendar = trpc.memberPortal.canViewMasterCalendar.useQuery(masterInput, {
     enabled: isAuthenticated && (!preview.isPreviewMode || !!preview.skillGroupId),
   });
+  // Staff-only Ops Calendar. Hidden in admin preview, which shows what a member sees.
+  const canViewOpsCalendar = trpc.memberPortal.canViewOpsCalendar.useQuery(undefined, {
+    enabled: isAuthenticated && !preview.isPreviewMode,
+  });
   const isStaff = !!user?.role && STAFF_ROLES.includes(user.role as string);
   const hasPortalAccess = isAuthenticated && (isStaff || !!memberStatus.data?.active);
-  const items = visiblePortalNavItems({ canViewMasterCalendar: !!canViewMasterCalendar.data });
+  const items = visiblePortalNavItems({
+    canViewMasterCalendar: !!canViewMasterCalendar.data,
+    canViewOpsCalendar: !preview.isPreviewMode && !!canViewOpsCalendar.data,
+  });
   return {
     user,
     isAuthenticated,

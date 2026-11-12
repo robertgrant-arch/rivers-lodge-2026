@@ -16,6 +16,7 @@ import type { LucideIcon } from "lucide-react";
 import { useSearch } from "wouter";
 import {
   CalendarDays,
+  ClipboardCheck,
   CalendarPlus,
   CalendarRange,
   ClipboardList,
@@ -31,6 +32,7 @@ export type PortalNavKey =
   | "book-property"
   | "master-calendar"
   | "my-calendar"
+  | "ops-calendar"
   | "roster"
   | "profile"
   | "request-stay"
@@ -50,7 +52,7 @@ export type PortalNavItem = {
   /** Shown in the portal menus. false = hidden but kept (pages/routes still work). */
   visible: boolean;
   /** Extra per-user condition for showing the option. */
-  requires?: "masterCalendar";
+  requires?: "masterCalendar" | "opsCalendar";
   /** Where the option goes. Portal paths get the admin-preview params added. */
   href: (ctx: { email?: string | null }) => string;
   /** Leaves the portal (no preview params, plain link). */
@@ -60,8 +62,10 @@ export type PortalNavItem = {
 export const PORTAL_NAV_ITEMS: readonly PortalNavItem[] = [
   // ── Visible, in display order ────────────────────────────────────────────
   { key: "book-property",   label: "Book a Property",   icon: MapPin,        visible: true, href: () => "/portal/properties" },
-  { key: "master-calendar", label: "Master Calendar",   icon: CalendarRange, visible: true, requires: "masterCalendar", href: () => "/portal/calendar/master" },
+  { key: "master-calendar", label: "Member Master Calendar", icon: CalendarRange, visible: true, requires: "masterCalendar", href: () => "/portal/calendar/master" },
   { key: "my-calendar",     label: "My Calendar",       icon: CalendarDays,  visible: true, href: () => "/portal/calendar/mine" },
+  // Staff only (admins + employees in the Admin/Employee skill group). Members never see it.
+  { key: "ops-calendar",    label: "Ops Calendar",      icon: ClipboardCheck, visible: true, requires: "opsCalendar", href: () => "/portal/ops-calendar" },
   { key: "roster",          label: "Membership Roster", icon: Users,         visible: true, href: () => "/portal/roster" },
   { key: "profile",         label: "Profile",           icon: UserCircle,    visible: true, href: () => "/portal?tab=profile" },
 
@@ -83,10 +87,11 @@ export function isPortalOptionVisible(key: PortalNavKey): boolean {
 }
 
 /** The options to show this user, in order. */
-export function visiblePortalNavItems(opts: { canViewMasterCalendar: boolean }): PortalNavItem[] {
+export function visiblePortalNavItems(opts: { canViewMasterCalendar: boolean; canViewOpsCalendar?: boolean }): PortalNavItem[] {
   return PORTAL_NAV_ITEMS.filter((i) => {
     if (!i.visible) return false;
     if (i.requires === "masterCalendar" && !opts.canViewMasterCalendar) return false;
+    if (i.requires === "opsCalendar" && !opts.canViewOpsCalendar) return false;
     return true;
   });
 }
