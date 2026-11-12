@@ -27,6 +27,18 @@ describe("canViewOpsCalendar", () => {
     expect(await canViewOpsCalendar(db, { id: "a", role: "admin" })).toBe(true);
     expect(db.calls).toBe(0);
   });
+  it("admin previewing the Employee or Admin group → yes; a member group → no", async () => {
+    expect(await canViewOpsCalendar(fakeDb([[{ slug: "employee" }]]), { id: "a", role: "admin" }, 5)).toBe(true);
+    expect(await canViewOpsCalendar(fakeDb([[{ slug: "admin" }]]), { id: "a", role: "admin" }, 4)).toBe(true);
+    expect(await canViewOpsCalendar(fakeDb([[{ slug: "designated" }]]), { id: "a", role: "admin" }, 1)).toBe(false);
+    expect(await canViewOpsCalendar(fakeDb([[]]), { id: "a", role: "admin" }, 99)).toBe(false); // unknown/inactive group
+  });
+
+  it("a non-admin can't borrow staff access via the preview parameter", async () => {
+    const db = fakeDb([[]]); // no employee record
+    expect(await canViewOpsCalendar(db, { id: "m", role: "employee" }, 5)).toBe(false);
+  });
+
   it("active employee in the Employee or Admin skill group → yes", async () => {
     expect(await canViewOpsCalendar(fakeDb([emp, groups("employee")]), { id: "e", role: "employee" })).toBe(true);
     expect(await canViewOpsCalendar(fakeDb([emp, groups("Admin")]), { id: "e", role: "employee" })).toBe(true);
