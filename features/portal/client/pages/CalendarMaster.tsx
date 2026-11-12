@@ -162,26 +162,28 @@ export default function CalendarMaster() {
 
   const previewSkillGroupId = urlParams.previewSkillGroupId;
 
-  const memberStatus = trpc.membership.myStatus.useQuery(undefined, { enabled: isAuthenticated });
-  const skillGroupsQuery = trpc.membership.listSkillGroupsForPreview.useQuery();
-
-  const calendarEvents = trpc.portal.calendar.events.useQuery({
-    startDate: `${year}-01-01`,
-    endDate: `${year}-12-31`,
+  // Admin-only list, used to name the previewed group.
+  const skillGroupsQuery = trpc.membership.listSkillGroupsForPreview.useQuery(undefined, {
+    enabled: isAuthenticated && user?.role === "admin" && !!previewSkillGroupId,
   });
+
+  // Server decides access (admins, or members whose skill group may view the
+  // Master Calendar; the preview group is honoured for admins only) and
+  // returns only what members may see.
+  const calendarEvents = trpc.memberPortal.masterCalendar.useQuery(
+    {
+      startDate: `${year}-01-01`,
+      endDate: `${year}-12-31`,
+      ...(previewSkillGroupId ? { previewSkillGroupId } : {}),
+    },
+    { enabled: isAuthenticated, retry: false },
+  );
+  const accessDenied = calendarEvents.error?.data?.code === "FORBIDDEN";
 
   // Get preview skill group details for display
   const previewSkillGroup = previewSkillGroupId && skillGroupsQuery.data
     ? skillGroupsQuery.data.find((sg) => sg.id === previewSkillGroupId)
     : null;
-
-  // Check if preview skill group can view master calendar
-  const canViewMasterCalendarQuery = trpc.memberPortal.canViewMasterCalendar.useQuery(
-    previewSkillGroupId ? { previewSkillGroupId } : undefined,
-    { enabled: !previewSkillGroupId || !!previewSkillGroup }
-  );
-
-  const canViewMasterCalendar = !previewSkillGroup || canViewMasterCalendarQuery.data;
 
   // Build map of dates to events and blocks
   const eventsByDate: Map<string, CalendarEvent[]> = useMemo(() => {
@@ -278,12 +280,7 @@ export default function CalendarMaster() {
 
   if (!isAuthenticated) return null;
 
-  const member = memberStatus.data;
-  const STAFF_ROLES = ["admin", "owner", "venue_sales", "events_manager", "membership_manager", "hunt_fish_ops", "hospitality", "staff", "finance"];
-  const isStaff = !!user?.role && STAFF_ROLES.includes(user.role as string);
-  const isMember = isStaff || (!!member && member.active);
-
-  if (!isMember && !memberStatus.isLoading) {
+  if (accessDenied) {
     return (
       <MemberPortalLayout>
         <section className="min-h-screen flex items-center justify-center bg-background">
@@ -292,27 +289,9 @@ export default function CalendarMaster() {
             <p className="eyebrow text-white/40 mb-4">Access Denied</p>
             <h1 className="font-serif text-4xl text-white mb-5">403 — Forbidden</h1>
             <p className="text-base font-sans text-white/50 leading-relaxed mb-8">
-              You don't have permission to view the Master Calendar.
-            </p>
-            <a href={portalLink("/portal")} className="btn-primary inline-flex items-center justify-center px-8 py-3.5">
-              Return to Portal
-            </a>
-          </div>
-        </section>
-      </MemberPortalLayout>
-    );
-  }
-
-  if (previewSkillGroup && !canViewMasterCalendar) {
-    return (
-      <MemberPortalLayout>
-        <section className="min-h-screen flex items-center justify-center bg-background">
-          <div className="max-w-md w-full mx-auto px-6 text-center">
-            <div className="w-16 h-px bg-white/20 mx-auto mb-8" />
-            <p className="eyebrow text-white/40 mb-4">Access Denied</p>
-            <h1 className="font-serif text-4xl text-white mb-5">403 — Forbidden</h1>
-            <p className="text-base font-sans text-white/50 leading-relaxed mb-8">
-              The skill group "{previewSkillGroup.name}" does not have permission to view the Master Calendar.
+              {previewSkillGroup
+                ? `The skill group "${previewSkillGroup.name}" does not have permission to view the Master Calendar.`
+                : "You don't have permission to view the Master Calendar."}
             </p>
             <a href={portalLink("/portal")} className="btn-primary inline-flex items-center justify-center px-8 py-3.5">
               Return to Portal

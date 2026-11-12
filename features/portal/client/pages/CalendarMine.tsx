@@ -204,10 +204,12 @@ export default function CalendarMine() {
   const memberStatus = trpc.membership.myStatus.useQuery(undefined, { enabled: isAuthenticated });
   const today = new Date();
   const year = today.getFullYear();
-  const calendarEvents = trpc.portal.calendar.events.useQuery({
-    startDate: `${year}-01-01`,
-    endDate: `${year}-12-31`,
-  });
+  // Estate closed dates (weddings, corporate events, hunt/fish bookings, blocked
+  // dates) — dates only, no booking details.
+  const unavailableDates = trpc.memberPortal.unavailableDates.useQuery(
+    { startDate: `${year}-01-01`, endDate: `${year}-12-31` },
+    { enabled: isAuthenticated, retry: false },
+  );
   const myBookings = trpc.propertyBooking.bookings.myBookings.useQuery(
     undefined,
     { enabled: isAuthenticated }
@@ -308,48 +310,10 @@ export default function CalendarMine() {
     );
   }
 
-  const blockedDateStrings: string[] = (() => {
-    const events = calendarEvents.data;
-    if (!events) return [];
-
-    const dates = new Set<string>();
-
-    // Add weddings
-    events.weddings?.forEach((w: any) => {
-      const date = new Date(w.weddingDate);
-      const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
-      dates.add(dateStr);
-    });
-
-    // Add corporate events (range from arrival to departure)
-    events.corporate?.forEach((c: any) => {
-      const start = new Date(c.arrivalDate);
-      const end = new Date(c.departureDate);
-      for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-        const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-        dates.add(dateStr);
-      }
-    });
-
-    // Add hunt/fish bookings
-    events.huntFish?.forEach((h: any) => {
-      const date = new Date(h.bookingDate);
-      const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
-      dates.add(dateStr);
-    });
-
-    // Add manually blocked dates (range from start to end)
-    events.blocked?.forEach((b: any) => {
-      const start = new Date(b.startDate);
-      const end = new Date(b.endDate);
-      for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-        const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-        dates.add(dateStr);
-      }
-    });
-
-    return Array.from(dates);
-  })();
+  // "YYYY-MM-DD" strings computed on the server from calendar dates. (The old
+  // client-side version parsed them with new Date(), which in US time zones
+  // marked every closed day one day early.)
+  const blockedDateStrings: string[] = unavailableDates.data ?? [];
 
   return (
     <MemberPortalLayout>

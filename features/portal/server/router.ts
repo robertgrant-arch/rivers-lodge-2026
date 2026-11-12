@@ -12,10 +12,21 @@ import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { router, memberProcedure } from "../../_core/server/trpc";
 import { getDb } from "@core/server/db";
-import { members, messages, bookings, memberSkillGroups, skillGroups } from "@core/db/schema";
-import { eq, inArray } from "drizzle-orm";
+import { members, messages, bookings } from "@core/db/schema";
+import { eq } from "drizzle-orm";
 import { calendarAccessSettings } from "../schema";
-import { skillGroupCalendarAccess, canViewMemberRoster, listMemberRoster } from "@features/membership/public";
+import { canViewMemberRoster, listMemberRoster } from "@features/membership/public";
+import { canUseMemberCalendar, canViewMasterCalendar, loadMasterCalendar, loadUnavailableDates } from "./calendarAccess";
+
+const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Use YYYY-MM-DD");
+/** Start ≤ end, at most ~13 months per request. */
+const validRange = (r: { startDate: string; endDate: string }) =>
+  r.startDate <= r.endDate && (Date.parse(r.endDate) - Date.parse(r.startDate)) / 86_400_000 <= 400;
+const dateRangeFields = { startDate: isoDate, endDate: isoDate };
+const dateRangeInput = z.object(dateRangeFields).refine(validRange, "Invalid date range");
+const masterCalendarInput = z
+  .object({ ...dateRangeFields, previewSkillGroupId: z.number().int().positive().optional() })
+  .refine(validRange, "Invalid date range");
 
 // ─── Portal Router (member-facing) ────────────────────────────────────────────
 
@@ -59,41 +70,46 @@ export const memberPortalRouter = router({
   }),
 
   /**
-   * Checks if a member or preview skill group can view the master calendar.
-   * Uses skillGroupCalendarAccess table (ID-based access control).
-   * If previewSkillGroupId is provided, checks that group (for preview mode).
-   * Otherwise, checks the authenticated member's skill groups.
+   * May the caller view the Master Calendar? Admins always; members when one
+   * of their skill groups has view access. `previewSkillGroupId` (admin preview
+   * mode) is honoured for admins only — see calendarAccess.ts.
    */
   canViewMasterCalendar: memberProcedure
     .input(z.object({ previewSkillGroupId: z.number().optional() }).optional())
     .query(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) return false;
+      return canViewMasterCalendar(db, ctx.user, input?.previewSkillGroupId);
+    }),
 
-      let skillGroupIds: number[] = [];
-
-      // If preview mode, use the provided skill group ID directly
-      if (input?.previewSkillGroupId) {
-        skillGroupIds = [input.previewSkillGroupId];
-      } else {
-        // Otherwise, get the authenticated member's skill group IDs
-        const member = await db.select().from(members).where(eq(members.userId, ctx.user.id)).limit(1);
-        if (!member[0]) return false;
-
-        const memberGroups = await db.select({ skillGroupId: memberSkillGroups.skillGroupId })
-          .from(memberSkillGroups)
-          .where(eq(memberSkillGroups.memberId, member[0].id));
-
-        skillGroupIds = memberGroups.map(g => g.skillGroupId);
-        if (skillGroupIds.length === 0) return false;
+  /**
+   * Master Calendar entries (member events + blocked dates) for members whose
+   * skill group allows it, and admins. Everyone else gets FORBIDDEN.
+   * Read-only: editing is admin-only via portal.calendar.* in the ops portal.
+   */
+  masterCalendar: memberProcedure
+    .input(masterCalendarInput)
+    .query(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+      if (!(await canViewMasterCalendar(db, ctx.user, input.previewSkillGroupId))) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "Your membership doesn't include the Master Calendar." });
       }
+      return loadMasterCalendar(db, input.startDate, input.endDate);
+    }),
 
-      // Check if any of the user's skill groups have master calendar access
-      const grants = await db.select({ canViewMasterCalendar: skillGroupCalendarAccess.canViewMasterCalendar })
-        .from(skillGroupCalendarAccess)
-        .where(inArray(skillGroupCalendarAccess.skillGroupId, skillGroupIds));
-
-      return grants.some(g => g.canViewMasterCalendar);
+  /**
+   * Estate closed dates for My Calendar (dates only). Admins and active members.
+   */
+  unavailableDates: memberProcedure
+    .input(dateRangeInput)
+    .query(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
+      if (!(await canUseMemberCalendar(db, ctx.user))) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "My Calendar is available to members only." });
+      }
+      return loadUnavailableDates(db, input.startDate, input.endDate);
     }),
 
   /**
