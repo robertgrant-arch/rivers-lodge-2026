@@ -23,13 +23,12 @@ const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
   return next({ ctx });
 });
 
-const STAFF_ROLES = ["admin", "employee"] as const;
-type StaffRole = typeof STAFF_ROLES[number];
-
+// Membership management (applications, members, users): ADMIN ONLY.
+// It used to admit any "employee"-role user, which includes every member login.
+// Its only caller (/admin) is already admin-only.
 const portalProcedure = protectedProcedure.use(({ ctx, next }) => {
-  const role = ctx.user.role as string;
-  if (!STAFF_ROLES.includes(role as StaffRole)) {
-    throw new TRPCError({ code: "FORBIDDEN", message: "Portal access requires a staff role" });
+  if (ctx.user.role !== "admin") {
+    throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
   }
   return next({ ctx });
 });
