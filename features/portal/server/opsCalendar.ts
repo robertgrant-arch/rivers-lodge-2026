@@ -27,10 +27,26 @@ type User = { id: string; role?: string | null } | null | undefined;
 /** Skill group slugs whose employees may view the Ops Calendar. */
 export const OPS_CALENDAR_SKILL_GROUPS = ["admin", "employee"] as const;
 
-/** May this user view the Ops Calendar? */
-export async function canViewOpsCalendar(db: Db, user: User): Promise<boolean> {
+const isOpsGroupSlug = (slug: unknown) =>
+  (OPS_CALENDAR_SKILL_GROUPS as readonly string[]).includes(String(slug ?? "").toLowerCase());
+
+/**
+ * May this user view the Ops Calendar?
+ * Admin preview: an admin previewing a skill group sees what that group would
+ * see — yes for the Admin/Employee groups, no for member groups. The preview
+ * group is ignored for everyone except admins.
+ */
+export async function canViewOpsCalendar(db: Db, user: User, previewSkillGroupId?: number): Promise<boolean> {
   if (!user?.id) return false;
-  if (user.role === "admin") return true;
+  if (user.role === "admin") {
+    if (!previewSkillGroupId) return true;
+    const [g] = await db
+      .select({ slug: skillGroups.slug })
+      .from(skillGroups)
+      .where(and(eq(skillGroups.id, previewSkillGroupId), eq(skillGroups.active, true)))
+      .limit(1);
+    return !!g && isOpsGroupSlug(g.slug);
+  }
   const [emp] = await db
     .select({ id: employees.id })
     .from(employees)
@@ -42,7 +58,7 @@ export async function canViewOpsCalendar(db: Db, user: User): Promise<boolean> {
     .from(employeeSkillGroups)
     .innerJoin(skillGroups, eq(employeeSkillGroups.skillGroupId, skillGroups.id))
     .where(and(eq(employeeSkillGroups.employeeId, emp.id), eq(skillGroups.active, true)));
-  return groups.some((g) => (OPS_CALENDAR_SKILL_GROUPS as readonly string[]).includes(String(g.slug).toLowerCase()));
+  return groups.some((g) => isOpsGroupSlug(g.slug));
 }
 
 export type OpsCalendarEntry = {

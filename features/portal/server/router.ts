@@ -25,6 +25,9 @@ const validRange = (r: { startDate: string; endDate: string }) =>
   r.startDate <= r.endDate && (Date.parse(r.endDate) - Date.parse(r.startDate)) / 86_400_000 <= 400;
 const dateRangeFields = { startDate: isoDate, endDate: isoDate };
 const dateRangeInput = z.object(dateRangeFields).refine(validRange, "Invalid date range");
+const opsCalendarInput = z
+  .object({ ...dateRangeFields, previewSkillGroupId: z.number().int().positive().optional() })
+  .refine(validRange, "Invalid date range");
 const masterCalendarInput = z
   .object({ ...dateRangeFields, previewSkillGroupId: z.number().int().positive().optional() })
   .refine(validRange, "Invalid date range");
@@ -117,22 +120,24 @@ export const memberPortalRouter = router({
    * May the caller view the staff-only Ops Calendar? (Admins, or an active
    * employee record in the Admin or Employee skill group — see opsCalendar.ts.)
    */
-  canViewOpsCalendar: memberProcedure.query(async ({ ctx }) => {
-    const db = await getDb();
-    if (!db) return false;
-    return canViewOpsCalendar(db, ctx.user);
-  }),
+  canViewOpsCalendar: memberProcedure
+    .input(z.object({ previewSkillGroupId: z.number().int().positive().optional() }).optional())
+    .query(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) return false;
+      return canViewOpsCalendar(db, ctx.user, input?.previewSkillGroupId);
+    }),
 
   /**
    * Ops Calendar entries (read-only). Staff only; everyone else gets FORBIDDEN.
    * Editing stays admin-only in /ops/calendar.
    */
   opsCalendar: memberProcedure
-    .input(dateRangeInput)
+    .input(opsCalendarInput)
     .query(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
-      if (!(await canViewOpsCalendar(db, ctx.user))) {
+      if (!(await canViewOpsCalendar(db, ctx.user, input.previewSkillGroupId))) {
         throw new TRPCError({ code: "FORBIDDEN", message: "The Ops Calendar is for staff only." });
       }
       return loadOpsCalendar(db, input.startDate, input.endDate);

@@ -13,7 +13,8 @@ import { trpc } from "@shared/lib/trpc";
 import MemberPortalLayout from "@features/portal/client/components/MemberPortalLayout";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@shared/ui/dialog";
 import { formatTimeRange } from "@features/portal/client/utils/timeFormat";
-import { usePortalLink } from "@features/portal/client/portalNav";
+import { parsePortalPreview, usePortalLink } from "@features/portal/client/portalNav";
+import { useSearch } from "wouter";
 
 type Kind = "ops_event" | "member_event" | "blocked" | "wedding" | "corporate" | "hunt_fish";
 
@@ -86,7 +87,12 @@ export default function OpsCalendar() {
 
   const lastDay = new Date(year, month + 1, 0).getDate();
   const range = { startDate: ymd(year, month, 1), endDate: ymd(year, month, lastDay) };
-  const q = trpc.memberPortal.opsCalendar.useQuery(range, { enabled: isAuthenticated, retry: false });
+  // Admin preview: see exactly what the previewed skill group would see.
+  const preview = parsePortalPreview(useSearch());
+  const q = trpc.memberPortal.opsCalendar.useQuery(
+    { ...range, ...(preview.isPreviewMode && preview.skillGroupId ? { previewSkillGroupId: preview.skillGroupId } : {}) },
+    { enabled: isAuthenticated, retry: false },
+  );
   const denied = q.error?.data?.code === "FORBIDDEN";
 
   const byDate = useMemo(() => {
@@ -143,7 +149,7 @@ export default function OpsCalendar() {
               <h1 className="font-serif text-3xl md:text-4xl text-white">Ops Calendar</h1>
               <p className="text-sm font-sans text-white/40 mt-2">Everything on the estate calendar, including entries members don't see.</p>
             </div>
-            {user?.role === "admin" && (
+            {user?.role === "admin" && !preview.isPreviewMode && (
               <a href="/ops/calendar" className="text-[10px] font-sans text-[var(--gold)] hover:underline tracking-[0.12em] uppercase whitespace-nowrap">
                 Add or edit entries →
               </a>
