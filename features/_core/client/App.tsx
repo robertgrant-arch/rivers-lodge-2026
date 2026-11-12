@@ -170,7 +170,8 @@ function Router() {
         <Route path="/admin" component={AdminDashboard} />
         {/* Operations Portal */}
         <Route path="/ops">{() => <PortalLayout><PortalDashboard /></PortalLayout>}</Route>
-        <Route path="/ops/calendar">{() => <PortalLayout><PortalCalendar /></PortalLayout>}</Route>
+        <Route path="/ops/calendar">{() => <PortalLayout><PortalCalendar view="ops" /></PortalLayout>}</Route>
+        <Route path="/ops/master-calendar">{() => <PortalLayout><PortalCalendar view="master" /></PortalLayout>}</Route>
         <Route path="/ops/notifications">{() => <PortalLayout><PortalNotifications /></PortalLayout>}</Route>
         <Route path="/ops/weddings/:id">{(p) => <PortalLayout><PortalWeddings /></PortalLayout>}</Route>
         <Route path="/ops/weddings">{() => <PortalLayout><PortalWeddings /></PortalLayout>}</Route>
