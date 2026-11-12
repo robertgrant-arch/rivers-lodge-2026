@@ -72,6 +72,7 @@ const PortalAvailability = lazy(() => import("@features/portal/client/pages/Port
 const CalendarMine = lazy(() => import("@features/portal/client/pages/CalendarMine"));
 const CalendarMaster = lazy(() => import("@features/portal/client/pages/CalendarMaster"));
 const MembershipRoster = lazy(() => import("@features/portal/client/pages/MembershipRoster"));
+const OpsCalendar = lazy(() => import("@features/portal/client/pages/OpsCalendar"));
 // Member portal menu + admin-preview banner for portal pages without their own layout
 const MemberPortalLayout = lazy(() => import("@features/portal/client/components/MemberPortalLayout"));
 
@@ -160,6 +161,7 @@ function Router() {
         <Route path="/portal/calendar/mine" component={CalendarMine} />
         <Route path="/portal/calendar/master" component={CalendarMaster} />
         <Route path="/portal/roster" component={MembershipRoster} />
+        <Route path="/portal/ops-calendar" component={OpsCalendar} />
         <Route path="/portal/properties">{() => <MemberPortalLayout><PropertyBrowser /></MemberPortalLayout>}</Route>
         <Route path="/portal/properties/:id">{() => <MemberPortalLayout><PropertyDetail /></MemberPortalLayout>}</Route>
         <Route path="/portal/my-bookings">{() => <MemberPortalLayout><MyBookings /></MemberPortalLayout>}</Route>

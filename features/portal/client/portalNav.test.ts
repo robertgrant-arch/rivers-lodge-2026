@@ -11,9 +11,16 @@ import {
 } from "./portalNav";
 
 describe("portal menu config", () => {
-  it("shows exactly the five options, in order", () => {
+  it("members see exactly the five options, in order", () => {
     expect(visiblePortalNavItems({ canViewMasterCalendar: true }).map((i) => i.label)).toEqual([
-      "Book a Property", "Master Calendar", "My Calendar", "Membership Roster", "Profile",
+      "Book a Property", "Member Master Calendar", "My Calendar", "Membership Roster", "Profile",
+    ]);
+    expect(visiblePortalNavItems({ canViewMasterCalendar: true, canViewOpsCalendar: false }).map((i) => i.label)).not.toContain("Ops Calendar");
+  });
+
+  it("staff also get the Ops Calendar, after My Calendar", () => {
+    expect(visiblePortalNavItems({ canViewMasterCalendar: true, canViewOpsCalendar: true }).map((i) => i.label)).toEqual([
+      "Book a Property", "Member Master Calendar", "My Calendar", "Ops Calendar", "Membership Roster", "Profile",
     ]);
   });
 

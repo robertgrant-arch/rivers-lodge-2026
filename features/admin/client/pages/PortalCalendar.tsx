@@ -111,6 +111,40 @@ interface EditModalProps {
   onSuccess: () => void;
 }
 
+// Which calendar an event belongs on. "ops" = staff-only Ops Calendar, stored
+// as hiddenFromMembers=true (members never receive it); "member" = Member
+// Master Calendar. New events must pick one — there is no default.
+type CalendarChoice = '' | 'member' | 'ops';
+
+function CalendarChoiceField({ value, onChange, idPrefix }: { value: CalendarChoice; onChange: (v: CalendarChoice) => void; idPrefix: string }) {
+  const options: { v: Exclude<CalendarChoice, ''>; label: string; hint: string }[] = [
+    { v: 'member', label: 'Member Master Calendar', hint: 'Members whose skill group can view it, plus staff' },
+    { v: 'ops', label: 'Ops Calendar (staff only)', hint: 'Admins and Admin/Employee staff — never members' },
+  ];
+  return (
+    <fieldset className="space-y-2" data-testid="calendar-choice">
+      <legend className="font-sans text-xs tracking-[0.1em] uppercase text-[#BABAAE] mb-1.5">Calendar *</legend>
+      {options.map((o) => (
+        <label key={o.v} htmlFor={`${idPrefix}-${o.v}`} className={`flex items-start gap-2.5 p-2.5 border cursor-pointer ${value === o.v ? 'border-[#9B4D19] bg-[#9B4D19]/10' : 'border-[#57544E]'}`}>
+          <input
+            type="radio"
+            id={`${idPrefix}-${o.v}`}
+            name={`${idPrefix}-calendar`}
+            value={o.v}
+            checked={value === o.v}
+            onChange={() => onChange(o.v)}
+            className="mt-0.5"
+          />
+          <span>
+            <span className="block font-sans text-xs text-[#E0D3BD]">{o.label}</span>
+            <span className="block font-sans text-[11px] text-[#8A847A]">{o.hint}</span>
+          </span>
+        </label>
+      ))}
+    </fieldset>
+  );
+}
+
 function CreateEventModal({ open, defaultDate, onClose, onSuccess }: CreateModalProps) {
   const [title, setTitle] = useState('');
   const [type, setType] = useState('member_event');
@@ -121,7 +155,7 @@ function CreateEventModal({ open, defaultDate, onClose, onSuccess }: CreateModal
   const [allDay, setAllDay] = useState(true);
   const [notes, setNotes] = useState('');
   const [isBlockDay, setIsBlockDay] = useState(false);
-  const [hiddenFromMembers, setHiddenFromMembers] = useState(false);
+  const [calendarChoice, setCalendarChoice] = useState<CalendarChoice>('');
   const [error, setError] = useState('');
 
   const saveEventMutation = trpc.portal.calendar.saveEvent.useMutation({
@@ -166,7 +200,7 @@ function CreateEventModal({ open, defaultDate, onClose, onSuccess }: CreateModal
     setAllDay(true);
     setNotes('');
     setIsBlockDay(false);
-    setHiddenFromMembers(false);
+    setCalendarChoice('');
     setError('');
   }
 
@@ -192,6 +226,11 @@ function CreateEventModal({ open, defaultDate, onClose, onSuccess }: CreateModal
       return;
     }
 
+    if (!isBlockDay && !calendarChoice) {
+      setError('Choose which calendar this goes on: Member Master Calendar or Ops Calendar');
+      return;
+    }
+
     if (isBlockDay) {
       // Route to blockDates mutation for Block Days
       blockMutation.mutate({
@@ -214,7 +253,7 @@ function CreateEventModal({ open, defaultDate, onClose, onSuccess }: CreateModal
         endTime: allDay || !endTime ? null : endTime,
         allDay,
         notes: notes?.trim() || null,
-        hiddenFromMembers,
+        hiddenFromMembers: calendarChoice === 'ops',
       });
     }
   }
@@ -348,18 +387,10 @@ function CreateEventModal({ open, defaultDate, onClose, onSuccess }: CreateModal
             </div>
           )}
 
-          <div className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              id="hidefrom"
-              checked={hiddenFromMembers}
-              onChange={(e) => setHiddenFromMembers(e.target.checked)}
-              className="w-4 h-4 rounded border-[#57544E] bg-[#2B2823]"
-            />
-            <Label htmlFor="hidefrom" className="font-sans text-xs tracking-[0.1em] uppercase text-[#BABAAE] cursor-pointer">
-              Hide from members
-            </Label>
-          </div>
+          {/* Block days are estate closures and show on both calendars. */}
+          {!isBlockDay && (
+            <CalendarChoiceField value={calendarChoice} onChange={setCalendarChoice} idPrefix="create" />
+          )}
 
           <DialogFooter className="pt-2 gap-2">
             <Button
@@ -577,18 +608,11 @@ function EditEventModal({ open, event, onClose, onSuccess }: EditModalProps) {
             />
           </div>
 
-          <div className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              id="hidefrom_edit"
-              checked={hiddenFromMembers}
-              onChange={(e) => setHiddenFromMembers(e.target.checked)}
-              className="w-4 h-4 rounded border-[#57544E] bg-[#2B2823]"
-            />
-            <Label htmlFor="hidefrom_edit" className="font-sans text-xs tracking-[0.1em] uppercase text-[#BABAAE] cursor-pointer">
-              Hide from members
-            </Label>
-          </div>
+          <CalendarChoiceField
+            value={hiddenFromMembers ? 'ops' : 'member'}
+            onChange={(v) => setHiddenFromMembers(v === 'ops')}
+            idPrefix="edit"
+          />
 
           <DialogFooter className="pt-2 gap-2">
             <Button
@@ -680,6 +704,12 @@ function EventDetailModal({ event, onClose, onUnblocked, onEdit }: DetailModalPr
             <span className="font-sans text-[10px] tracking-[0.12em] uppercase text-[#BABAAE] block mb-0.5">Dates</span>
             <span>{event.startDate === event.endDate ? event.startDate : `${event.startDate} — ${event.endDate}`}</span>
           </div>
+          {isEvent && (
+            <div data-testid="event-calendar">
+              <span className="font-sans text-[10px] tracking-[0.12em] uppercase text-[#BABAAE] block mb-0.5">Calendar</span>
+              <span>{event.hiddenFromMembers ? 'Ops Calendar (staff only)' : 'Member Master Calendar'}</span>
+            </div>
+          )}
           {event.notes && (
             <div>
               <span className="font-sans text-[10px] tracking-[0.12em] uppercase text-[#BABAAE] block mb-0.5">Notes</span>
@@ -775,14 +805,18 @@ export default function PortalCalendar() {
     if (!data) return [];
     const result: CalEvent[] = [];
 
+    // Bookings carry their own date fields (weddingDate, arrival/departure,
+    // bookingDate) — there is no startDate on them. Reading startDate left it
+    // undefined and crashed the page whenever a booking fell in the month.
+    const add = (ev: CalEvent) => { if (ev.startDate) result.push(ev); };
     (data.weddings ?? []).forEach((e: any) =>
-      result.push({ id: e.id, title: e.title ?? 'Wedding', startDate: e.startDate, endDate: e.endDate ?? e.startDate, kind: 'wedding', notes: e.notes }),
+      add({ id: e.id, title: e.title ?? 'Wedding', startDate: e.weddingDate, endDate: e.weddingDate, kind: 'wedding', notes: e.notes }),
     );
     (data.corporate ?? []).forEach((e: any) =>
-      result.push({ id: e.id, title: e.title ?? 'Corporate', startDate: e.startDate, endDate: e.endDate ?? e.startDate, kind: 'corporate', notes: e.notes }),
+      add({ id: e.id, title: e.title ?? 'Corporate', startDate: e.arrivalDate, endDate: e.departureDate ?? e.arrivalDate, kind: 'corporate', notes: e.notes }),
     );
     (data.huntFish ?? []).forEach((e: any) =>
-      result.push({ id: e.id, title: e.title ?? 'Hunt/Fish', startDate: e.startDate, endDate: e.endDate ?? e.startDate, kind: 'hunt_fish', notes: e.notes }),
+      add({ id: e.id, title: e.title ?? 'Hunt/Fish', startDate: e.bookingDate, endDate: e.bookingDate, kind: 'hunt_fish', notes: e.notes }),
     );
     (data.blocked ?? []).forEach((e: any) =>
       result.push({ id: e.id, title: e.title ?? e.reasonNotes ?? (e.reason && e.reason !== 'other' ? e.reason : 'Hold'), startDate: e.startDate, endDate: e.endDate ?? e.startDate, kind: 'blocked', notes: e.reasonNotes }),

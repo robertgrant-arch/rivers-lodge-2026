@@ -410,7 +410,7 @@ export default function MemberPortal() {
               </div>
 
               {/* Navigation Tiles Grid — built from portalNav.ts (same options as the menu) */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3" data-testid="portal-tiles">
+              <div className={`grid grid-cols-2 sm:grid-cols-3 gap-3 ${portalNav.items.length > 5 ? "lg:grid-cols-6" : "lg:grid-cols-5"}`} data-testid="portal-tiles">
                 {portalNav.items.map((item) => {
                   const Icon = item.icon;
                   const tile = (
@@ -432,7 +432,7 @@ export default function MemberPortal() {
                     <div className="w-10 h-10 flex items-center justify-center border border-white/10">
                       <div className="w-4 h-4 border border-white/20 border-t-white/60 rounded-full animate-spin" />
                     </div>
-                    <p className="text-xs font-sans text-white font-medium">Master Calendar</p>
+                    <p className="text-xs font-sans text-white font-medium">Member Master Calendar</p>
                   </div>
                 )}
               </div>

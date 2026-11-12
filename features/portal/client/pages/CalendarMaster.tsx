@@ -310,7 +310,7 @@ export default function CalendarMaster() {
           <div className="flex items-center justify-between mb-8">
             <div>
               <p className="eyebrow text-white/40 mb-2">Portal</p>
-              <h1 className="font-serif text-4xl text-white">Master Calendar</h1>
+              <h1 className="font-serif text-4xl text-white">Member Master Calendar</h1>
             </div>
             {previewSkillGroup && (
               <div className="text-right">
