@@ -1,10 +1,11 @@
 import { useState, useEffect, useMemo } from "react";
 import { useAuth } from "@features/auth/public";
 import { trpc } from "@shared/lib/trpc";
-import PublicLayout from "@/components/PublicLayout";
+import MemberPortalLayout from "@features/portal/client/components/MemberPortalLayout";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@shared/ui/dialog";
 import { Button } from "@shared/ui/button";
 import { formatTimeRange } from "@features/portal/client/utils/timeFormat";
+import { usePortalLink } from "@features/portal/client/portalNav";
 
 const MONTH_NAMES = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -139,6 +140,7 @@ function EventDetailModal({ event, onClose }: { event: CalendarEvent | null; onC
 }
 
 export default function CalendarMaster() {
+  const portalLink = usePortalLink();
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const today = new Date();
   const [year, setYear] = useState(today.getFullYear());
@@ -263,14 +265,14 @@ export default function CalendarMaster() {
 
   if (loading) {
     return (
-      <PublicLayout>
+      <MemberPortalLayout>
         <div className="min-h-screen flex items-center justify-center bg-background">
           <div className="flex flex-col items-center gap-3">
             <div className="w-8 h-8 border border-white/20 border-t-white/60 rounded-full animate-spin" />
             <p className="text-white/40 font-sans text-xs tracking-[0.14em] uppercase">Loading</p>
           </div>
         </div>
-      </PublicLayout>
+      </MemberPortalLayout>
     );
   }
 
@@ -283,7 +285,7 @@ export default function CalendarMaster() {
 
   if (!isMember && !memberStatus.isLoading) {
     return (
-      <PublicLayout>
+      <MemberPortalLayout>
         <section className="min-h-screen flex items-center justify-center bg-background">
           <div className="max-w-md w-full mx-auto px-6 text-center">
             <div className="w-16 h-px bg-white/20 mx-auto mb-8" />
@@ -292,18 +294,18 @@ export default function CalendarMaster() {
             <p className="text-base font-sans text-white/50 leading-relaxed mb-8">
               You don't have permission to view the Master Calendar.
             </p>
-            <a href="/portal" className="btn-primary inline-flex items-center justify-center px-8 py-3.5">
+            <a href={portalLink("/portal")} className="btn-primary inline-flex items-center justify-center px-8 py-3.5">
               Return to Portal
             </a>
           </div>
         </section>
-      </PublicLayout>
+      </MemberPortalLayout>
     );
   }
 
   if (previewSkillGroup && !canViewMasterCalendar) {
     return (
-      <PublicLayout>
+      <MemberPortalLayout>
         <section className="min-h-screen flex items-center justify-center bg-background">
           <div className="max-w-md w-full mx-auto px-6 text-center">
             <div className="w-16 h-px bg-white/20 mx-auto mb-8" />
@@ -312,17 +314,17 @@ export default function CalendarMaster() {
             <p className="text-base font-sans text-white/50 leading-relaxed mb-8">
               The skill group "{previewSkillGroup.name}" does not have permission to view the Master Calendar.
             </p>
-            <a href="/portal" className="btn-primary inline-flex items-center justify-center px-8 py-3.5">
+            <a href={portalLink("/portal")} className="btn-primary inline-flex items-center justify-center px-8 py-3.5">
               Return to Portal
             </a>
           </div>
         </section>
-      </PublicLayout>
+      </MemberPortalLayout>
     );
   }
 
   return (
-    <PublicLayout>
+    <MemberPortalLayout>
       <section className="bg-background py-12 px-6">
         <div className="max-w-6xl mx-auto">
           {/* Header */}
@@ -461,6 +463,6 @@ export default function CalendarMaster() {
 
       {/* Event Detail Modal */}
       <EventDetailModal event={selectedEvent} onClose={() => setSelectedEvent(null)} />
-    </PublicLayout>
+    </MemberPortalLayout>
   );
 }

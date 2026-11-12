@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { activityLabel } from "@shared/propertyActivities";
+import { usePortalLink } from "@features/portal/client/portalNav";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -156,6 +157,7 @@ function CancelDialog({
 // ─── Booking Card ─────────────────────────────────────────────────────────────
 
 function BookingCard({ booking, onCancel }: { booking: any; onCancel: () => void }) {
+  const portalLink = usePortalLink();
   const statusCfg = STATUS_CONFIG[booking.status] ?? STATUS_CONFIG.pending_approval;
   const today = new Date().toISOString().split("T")[0];
   const startStr = booking.startDate instanceof Date ? booking.startDate.toISOString().split("T")[0] : String(booking.startDate ?? "");
@@ -171,7 +173,7 @@ function BookingCard({ booking, onCancel }: { booking: any; onCancel: () => void
             <div className="flex items-start gap-2">
               <TreePine className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
               <div>
-                <Link href={`/portal/properties/${booking.propertyId}`}>
+                <Link href={portalLink(`/portal/properties/${booking.propertyId}`)}>
                   <span className="font-semibold text-stone-100 hover:text-amber-400 transition-colors cursor-pointer">
                     {booking.property?.name ?? booking.propertyName ?? "Property"}
                   </span>
@@ -234,6 +236,7 @@ function BookingCard({ booking, onCancel }: { booking: any; onCancel: () => void
 type TabType = "upcoming" | "past" | "all";
 
 export default function MyBookings() {
+  const portalLink = usePortalLink();
   const [tab, setTab] = useState<TabType>("upcoming");
   const [cancelTarget, setCancelTarget] = useState<any>(null);
 
@@ -277,7 +280,7 @@ export default function MyBookings() {
           <h1 className="text-2xl font-bold text-stone-100">My Bookings</h1>
           <p className="text-stone-400 mt-1 text-sm">Your hunting property reservations.</p>
         </div>
-        <Link href="/portal/properties">
+        <Link href={portalLink("/portal/properties")}>
           <Button size="sm" className="bg-amber-700 hover:bg-amber-600 text-white gap-1.5">
             <Plus className="w-4 h-4" />
             Book a Property
@@ -329,7 +332,7 @@ export default function MyBookings() {
                 : "No past bookings to show."}
             </p>
           </div>
-          <Link href="/portal/properties">
+          <Link href={portalLink("/portal/properties")}>
             <Button size="sm" className="bg-amber-700 hover:bg-amber-600 text-white">
               Browse Properties
             </Button>

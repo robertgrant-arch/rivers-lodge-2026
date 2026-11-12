@@ -31,6 +31,7 @@ import { PROPERTY_ACTIVITIES, activityLabel, isHuntingActivity, isFishingActivit
 import { BOOKING_RULES, MAX_CONSECUTIVE_DAYS, bookingDayCount, propertyCapacity } from "@shared/propertyRules";
 import { toast } from "sonner";
 import WaiverSigningForm from "@features/portal/client/components/WaiverSigningForm";
+import { usePortalLink } from "@features/portal/client/portalNav";
 // idempotencyKey uses native crypto.randomUUID (produces a valid UUID v4)
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -371,6 +372,7 @@ function BookingDialog({
   endDate: string;
   slot: "AM" | "PM" | "AllDay" | "Overnight";
 }) {
+  const portalLink = usePortalLink();
   const [, navigate] = useLocation();
   const utils = trpc.useUtils();
   const { user } = useAuth({});
@@ -472,7 +474,7 @@ function BookingDialog({
       utils.propertyBooking.bookings.myBookings.invalidate();
       utils.propertyBooking.properties.availability.invalidate();
       onClose();
-      navigate("/portal/my-bookings");
+      navigate(portalLink("/portal/my-bookings"));
     },
     onError: (err) => {
       toast.error(`Booking failed: ${err.message}`);
@@ -843,6 +845,7 @@ function BookingDialog({
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function PropertyDetail() {
+  const portalLink = usePortalLink();
   const [, params] = useRoute("/portal/properties/:id");
   const propertyId = parseInt(params?.id ?? "0");
 
@@ -927,7 +930,7 @@ export default function PropertyDetail() {
           <AlertCircle className="w-5 h-5 shrink-0" />
           <span className="text-sm">Property not found or unavailable.</span>
         </div>
-        <Link href="/portal">
+        <Link href={portalLink("/portal")}>
           <Button variant="ghost" className="mt-4 text-stone-400">
             <ArrowLeft className="w-4 h-4 mr-2" /> Back to Dashboard
           </Button>
@@ -949,7 +952,7 @@ export default function PropertyDetail() {
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">
       {/* Back link */}
-      <Link href="/portal">
+      <Link href={portalLink("/portal")}>
         <button className="flex items-center gap-1.5 text-sm text-stone-400 hover:text-stone-100 transition-colors">
           <ArrowLeft className="w-4 h-4" />
           Back to Dashboard
