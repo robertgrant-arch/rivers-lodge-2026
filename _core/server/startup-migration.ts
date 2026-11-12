@@ -145,27 +145,14 @@ export async function runStartupMigration() {
         `;
         await client.query(skillGroupAccessMigration);
 
-        // Backfill member_skill_groups from existing members
-        const backfillMembersSkillGroups = `
-          -- For each member, ensure they have skill group assignments
-          -- This is idempotent - only inserts if not already present
-          INSERT INTO member_skill_groups (member_id, skill_group_id)
-          SELECT DISTINCT m.id, sg.id
-          FROM members m
-          CROSS JOIN skill_groups sg
-          WHERE NOT EXISTS (
-            SELECT 1 FROM member_skill_groups msg
-            WHERE msg.member_id = m.id AND msg.skill_group_id = sg.id
-          )
-          AND sg.name IN ('Designated', 'Silver', 'Social', 'Admin', 'Employee')
-          AND m.active = true
-          ON CONFLICT (member_id, skill_group_id) DO NOTHING;
-        `;
-        try {
-          await client.query(backfillMembersSkillGroups);
-        } catch (err) {
-          console.log("[startup-migration] backfill member_skill_groups completed or skipped");
-        }
+        // (Removed) A "backfill member_skill_groups" step used to run here on
+        // every boot. It inserted EVERY active member into ALL of Designated,
+        // Silver, Social, Admin and Employee, so every member passed any
+        // skill-group check (Master Calendar, property access) and admins could
+        // not remove anyone from a group — the next deploy put them back.
+        // Members get their groups from the admin membership screens; migration
+        // 0020 gave existing members "Social" once. Existing assignments are not
+        // changed here — they need cleaning up in the admin screens.
 
         // Give skill groups that have NO Master Calendar access row yet a default:
         // Designated, Admin and Employee can view (case-insensitive name match).
