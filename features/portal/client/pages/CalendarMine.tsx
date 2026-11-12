@@ -196,6 +196,7 @@ function MiniCalendar({
 
 export default function CalendarMine() {
   const portalLink = usePortalLink();
+  const showPlanYourVisit = isPortalOptionVisible("request-stay");
   const { user, isAuthenticated, loading } = useAuth({
     redirectOnUnauthenticated: true,
   });
@@ -369,8 +370,12 @@ export default function CalendarMine() {
 
         {/* ── Content ───────────────────────────────────────────────── */}
         <div className="max-w-[1440px] mx-auto px-6 lg:px-16 py-10">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2">
+          {/* The sidebar only holds "Plan Your Visit", which follows the Request a Stay
+              option in portalNav.ts. Without it there is no sidebar column; the calendar
+              keeps about the width it had beside the sidebar (square day cells grow huge
+              at full width). */}
+          <div className={showPlanYourVisit ? "grid grid-cols-1 lg:grid-cols-3 gap-8" : ""}>
+            <div className={showPlanYourVisit ? "lg:col-span-2" : "max-w-4xl"}>
               <h2 className="font-serif text-3xl text-white mb-2">My Calendar</h2>
               <p className="text-sm font-sans text-white/40 mb-6">Red dates indicate estate events or private closures. Amber dates show your confirmed bookings. Contact concierge for availability.</p>
               <MiniCalendar
@@ -379,37 +384,17 @@ export default function CalendarMine() {
                 onBookingClick={(booking) => setSelectedBooking(booking)}
               />
             </div>
-            <div>
-              <h3 className="font-serif text-xl text-white mb-5">Activity Status</h3>
-              <div className="flex flex-col gap-3">
-                {[
-                  { season: "Whitetail Deer", open: false },
-                  { season: "Waterfowl", open: false },
-                  { season: "Turkey", open: true },
-                  { season: "Fishing", open: true },
-                  { season: "Sporting Clays", open: true },
-                ].map((s) => (
-                  <div key={s.season} className="flex items-center justify-between bg-[#2B2823] border border-white/8 px-4 py-3">
-                    <div className="text-sm font-sans font-medium text-white">{s.season}</div>
-                    <span className={`text-[9px] tracking-[0.12em] uppercase font-sans px-2 py-0.5 ${
-                      s.open ? "text-green-400 bg-green-400/10" : "text-white/30 bg-white/5"
-                    }`}>
-                      {s.open ? "Open" : "Closed"}
-                    </span>
-                  </div>
-                ))}
+            {showPlanYourVisit && (
+              <div>
+                <div className="p-4 border border-[var(--gold)]/20 bg-[var(--gold)]/5">
+                  <p className="text-[10px] tracking-[0.14em] uppercase font-sans text-[var(--gold)] mb-1">Plan Your Visit</p>
+                  <p className="text-xs font-sans text-white/50 leading-relaxed mb-3">Submit a stay request and our concierge will confirm availability within 24 hours.</p>
+                  <a href={portalLink("/portal")} className="text-[10px] font-sans text-[var(--gold)] hover:underline tracking-[0.1em] uppercase">
+                    Back to Portal →
+                  </a>
+                </div>
               </div>
-              {/* Points to Request a Stay — shown when that option is visible in portalNav.ts */}
-              {isPortalOptionVisible("request-stay") && (
-              <div className="mt-6 p-4 border border-[var(--gold)]/20 bg-[var(--gold)]/5">
-                <p className="text-[10px] tracking-[0.14em] uppercase font-sans text-[var(--gold)] mb-1">Plan Your Visit</p>
-                <p className="text-xs font-sans text-white/50 leading-relaxed mb-3">Submit a stay request and our concierge will confirm availability within 24 hours.</p>
-                <a href={portalLink("/portal")} className="text-[10px] font-sans text-[var(--gold)] hover:underline tracking-[0.1em] uppercase">
-                  Back to Portal →
-                </a>
-              </div>
-              )}
-            </div>
+            )}
           </div>
         </div>
 
