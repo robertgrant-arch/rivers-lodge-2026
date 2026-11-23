@@ -78,6 +78,12 @@ export const PURSUITS: Pursuit[] = [
     ],
     galleryImgs: [
       { src: "/img/waterfow-8-gallery.jpg", alt: "River corridor — waterfowl habitat" }, { src: "/img/waterfowl%2067.jpg", alt: "Waterfowl at Rivers Lodge" }, { src: "/img/waterfowl-1-gallery.jpg", alt: "Waterfowl at Rivers Lodge" }, { src: "/img/waterfowl-3-gallery.jpg", alt: "Waterfowl at Rivers Lodge" }, { src: "/img/waterfowl-7-gallery.jpg", alt: "Waterfowl at Rivers Lodge" }, { src: "/img/waterfowl-10-gallery.jpg", alt: "Waterfowl at Rivers Lodge" }, { src: "/img/waterfowl-11-gallery.jpg", alt: "Waterfowl at Rivers Lodge" },       { src: "/img/waterfowl-12-.jpg", alt: "Waterfowl at Rivers Lodge" },
+      {
+        src: "/images/waterfowl/waterfowl-gallery-9.jpg",
+        alt: "Black Labrador retrieving a mallard drake from the water at Rivers Lodge",
+        caption: "Waterfowl at Rivers Lodge",
+        cropPosition: "70% 55%", // dog and duck sit right of center
+      },
     ],
     season: [
       { label: "Early Teal",    value: "Sep 1 – Sep 16" },
