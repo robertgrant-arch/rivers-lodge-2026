@@ -9,7 +9,19 @@ export interface Pursuit {
   /** Alt text for tileImg; falls back to heroAlt. */
   tileAlt?: string;
   description: string[];
-  galleryImgs: { src: string; alt: string; objectPosition?: string }[];
+  galleryImgs: {
+    src: string;
+    alt: string;
+    objectPosition?: string;
+    /** Gallery label (placeholder caption). Falls back to `alt` when not set. */
+    caption?: string;
+    /**
+     * CSS object-position for the gallery crop, e.g. "center 60%". Applied by
+     * PursuitDetail. (Separate from `objectPosition`, which the gallery has never
+     * applied — wiring that up would change existing crops on other pages.)
+     */
+    cropPosition?: string;
+  }[];
   season: { label: string; value: string }[];
   regulations: string[];
   // Unique placeholder ID for tiles that need photos/stats (e.g., "01", "02")
@@ -98,9 +110,24 @@ export const PURSUITS: Pursuit[] = [
       { src: "/upland-1-gallery.jpg", alt: "Upland birds at Rivers Lodge" },
       { src: "/upland-2-gallery.jpg", alt: "Upland habitat" },
       { src: "/upland-3-gallery.jpg", alt: "Upland birds hunting grounds" },
-      { src: "", alt: "02" },
-      { src: "", alt: "04" },
-      { src: "", alt: "05" },
+      {
+        src: "/images/upland/upland-gallery-1.jpg",
+        alt: "Pheasants lined up on a red gate after an upland hunt at Rivers Lodge",
+        caption: "The day's harvest",
+        cropPosition: "center 60%", // keep the pheasants on the gate in frame
+      },
+      {
+        src: "/images/upland/upland-gallery-2.jpg",
+        alt: "Hunters in blaze orange walking native tallgrass prairie at Rivers Lodge",
+        caption: "Working the prairie",
+        cropPosition: "center bottom", // hunters are at the very bottom
+      },
+      {
+        src: "/images/upland/upland-gallery-3.jpg",
+        alt: "Two upland hunters in blaze orange standing in tall native grass",
+        caption: "In the field",
+        cropPosition: "center 65%", // keep both hunters in frame
+      },
     ],
     season: [
       { label: "Quail",          value: "Nov 15 – Feb 15" },
