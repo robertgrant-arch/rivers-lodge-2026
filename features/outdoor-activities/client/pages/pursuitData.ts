@@ -196,12 +196,17 @@ export const PURSUITS: Pursuit[] = [
       "Member-only fishing tournaments, destination trips, fly fishing classes and more",
     ],
     galleryImgs: [
-      { src: "/img/fishing%202.JPG", alt: "Trophy catch from the private fisheries", objectPosition: "center 30%" },
+      { src: "/img/fishing-gallery-trophy-catch.jpg", alt: "Trophy catch from the private fisheries", cropPosition: "center" },
       { src: "/img/Fishing%20net.jpg", alt: "Netting the catch on the water at Rivers Lodge" },
       { src: "/img/fishing-01-gallery.jpg", alt: "Fishing the Marais des Cygnes at Rivers Lodge" },
       { src: "/img/fishing-02-gallery.jpg", alt: "Trophy catch on the private fisheries at Rivers Lodge" },
       { src: "/img/fishing-03-gallery.jpg", alt: "Guided fishing trip at Rivers Lodge" },
-      { src: "", alt: "03" },
+      {
+        src: "/img/fishing-gallery-bass.jpg",
+        alt: "Angler holding a largemouth bass on a tree-lined lake at Rivers Lodge",
+        caption: "Largemouth bass on the private lakes",
+        cropPosition: "center",
+      },
     ],
     season: [
       { label: "Bass",          value: "Apr – Oct (year-round for members)" },
