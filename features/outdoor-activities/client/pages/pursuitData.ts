@@ -48,7 +48,6 @@ export const PURSUITS: Pursuit[] = [
       { src: "/deer-2-gallery.jpg", alt: "Whitetail deer at Rivers Lodge" },
       { src: "/deer-4-gallery.jpg", alt: "Trophy whitetail habitat" },
       { src: "/deer-5-gallery.jpg", alt: "Deer landscape at Rivers Lodge" },
-      { src: "", alt: "01" },
     ],
     season: [
       { label: "Archery",      value: "Sep 15 – Nov 15" },
