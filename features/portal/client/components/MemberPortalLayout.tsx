@@ -8,11 +8,13 @@
  */
 import { useMemo, useState, useEffect } from "react";
 import { Link, useLocation, useSearch } from "wouter";
-import { Eye, Menu, X } from "lucide-react";
+import { ArrowLeft, Eye, Menu, X } from "lucide-react";
 import { useAuth } from "@features/auth/public";
 import { trpc } from "@shared/lib/trpc";
 import PublicLayout from "@/components/PublicLayout";
 import {
+  ADMIN_HOME_HREF,
+  canShowBackToAdmin,
   isPortalNavItemActive,
   parsePortalPreview,
   portalNavHref,
@@ -55,6 +57,8 @@ export function usePortalNav() {
     preview,
     hasPortalAccess,
     items,
+    // Admins (server session role) get a way back to the Operations Portal.
+    showBackToAdmin: isAuthenticated && canShowBackToAdmin(user),
     masterCalendarLoading: preview.isPreviewMode && canViewMasterCalendar.isLoading && canViewMasterCalendar.fetchStatus !== "idle",
   };
 }
@@ -107,17 +111,38 @@ function NavLink({
   );
 }
 
+function BackToAdminLink({ compact }: { compact?: boolean }) {
+  return (
+    <Link
+      href={ADMIN_HOME_HREF}
+      aria-label="Back to Admin"
+      data-testid={compact ? "back-to-admin-mobile" : "back-to-admin"}
+      className={`inline-flex items-center gap-1.5 border border-[var(--gold)] text-[#E0D3BD] hover:bg-[var(--gold)] hover:text-white transition-colors font-sans uppercase whitespace-nowrap ${
+        compact ? "px-2.5 py-1.5 text-[10px] tracking-[0.12em]" : "px-3 py-2 text-[11px] tracking-[0.14em]"
+      }`}
+    >
+      <ArrowLeft className="w-3.5 h-3.5" aria-hidden="true" />
+      {/* Very narrow phones: "Admin" (accessible name stays "Back to Admin"). */}
+      <span><span className={compact ? "hidden min-[400px]:inline" : ""}>Back to </span>Admin</span>
+    </Link>
+  );
+}
+
 export function MemberPortalNav({
-  items, preview, email,
-}: { items: PortalNavItem[]; preview: PortalPreview; email?: string | null }) {
+  items, preview, email, showBackToAdmin = false,
+}: { items: PortalNavItem[]; preview: PortalPreview; email?: string | null; showBackToAdmin?: boolean }) {
   const [location] = useLocation();
   const search = useSearch();
   const [open, setOpen] = useState(false);
   useEffect(() => setOpen(false), [location, search]);
+  // The full bar plus "Back to Admin" needs ~1400px, so admins switch to it at
+  // 1440px; members keep the lg breakpoint. (Full class names for Tailwind.)
+  const bar = showBackToAdmin ? "hidden min-[1440px]:flex" : "hidden lg:flex";
+  const compactOnly = showBackToAdmin ? "min-[1440px]:hidden" : "lg:hidden";
 
   return (
     <nav aria-label="Member portal" className="bg-[#2B2823] border-b border-white/10">
-      <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-16 flex items-center justify-between gap-6">
+      <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-16 flex items-center justify-between gap-3 sm:gap-6">
         <Link
           href={withPreview("/portal", preview)}
           className="py-4 text-[11px] tracking-[0.2em] uppercase font-sans font-medium text-[var(--gold)] whitespace-nowrap"
@@ -126,7 +151,7 @@ export function MemberPortalNav({
         </Link>
 
         {/* Desktop */}
-        <div className="hidden lg:flex items-center gap-1" data-testid="portal-nav-desktop">
+        <div className={`${bar} items-center gap-1`} data-testid="portal-nav-desktop">
           {items.map((item) => (
             <NavLink
               key={item.key}
@@ -136,12 +161,15 @@ export function MemberPortalNav({
               active={isPortalNavItemActive(item, location, search)}
             />
           ))}
+          {showBackToAdmin && <span className="ml-3"><BackToAdminLink /></span>}
         </div>
 
-        {/* Mobile toggle */}
+        {/* Mobile: Back to Admin stays visible next to the menu toggle */}
+        <div className={`${compactOnly} flex items-center gap-3`}>
+        {showBackToAdmin && <BackToAdminLink compact />}
         <button
           type="button"
-          className="lg:hidden inline-flex items-center gap-2 py-3 text-[11px] tracking-[0.14em] uppercase font-sans text-white/70 hover:text-white"
+          className="inline-flex items-center gap-2 py-3 text-[11px] tracking-[0.14em] uppercase font-sans text-white/70 hover:text-white"
           aria-expanded={open}
           aria-controls="portal-nav-mobile"
           onClick={() => setOpen((v) => !v)}
@@ -149,11 +177,12 @@ export function MemberPortalNav({
           {open ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           Menu
         </button>
+        </div>
       </div>
 
       {/* Mobile menu */}
       {open && (
-        <div id="portal-nav-mobile" className="lg:hidden border-t border-white/10 bg-[#2B2823] pb-2" data-testid="portal-nav-mobile">
+        <div id="portal-nav-mobile" className={`${compactOnly} border-t border-white/10 bg-[#2B2823] pb-2`} data-testid="portal-nav-mobile">
           {items.map((item) => (
             <NavLink
               key={item.key}
@@ -171,13 +200,13 @@ export function MemberPortalNav({
 }
 
 export default function MemberPortalLayout({ children }: { children: React.ReactNode }) {
-  const { user, isAuthenticated, preview, hasPortalAccess, items } = usePortalNav();
+  const { user, isAuthenticated, preview, hasPortalAccess, items, showBackToAdmin } = usePortalNav();
   return (
     <PublicLayout hideNav={isAuthenticated || preview.isPreviewMode}>
       {(preview.isPreviewMode || hasPortalAccess) && (
         <div className="sticky top-0 z-[150]">
           {preview.isPreviewMode && <PreviewBanner />}
-          {hasPortalAccess && <MemberPortalNav items={items} preview={preview} email={user?.email} />}
+          {hasPortalAccess && <MemberPortalNav items={items} preview={preview} email={user?.email} showBackToAdmin={showBackToAdmin} />}
         </div>
       )}
       {children}
