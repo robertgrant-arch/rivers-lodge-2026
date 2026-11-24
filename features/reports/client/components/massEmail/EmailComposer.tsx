@@ -73,7 +73,11 @@ export default function EmailComposer({ id: initialId, access, onClose }: { id?:
     try { await persist(); toast.success("Draft saved"); } catch (e) { toast.error((e as Error).message); }
   };
   const onTest = async () => {
-    try { const r = await sendTest.mutateAsync({ subject, bodyHtml }); toast.success(`Test email sent to ${r.sentTo}`); }
+    try {
+      const r = await sendTest.mutateAsync({ subject, bodyHtml });
+      // Only reached when Resend confirmed the send with an email ID.
+      toast.success(`Test email accepted by Resend for ${r.sentTo} — Resend ID ${r.resendId}`, { duration: 10_000 });
+    }
     catch (e) { toast.error((e as Error).message); }
   };
 

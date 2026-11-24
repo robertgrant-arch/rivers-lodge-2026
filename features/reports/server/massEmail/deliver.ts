@@ -15,7 +15,7 @@ import { getDb } from "@core/server/db";
 import { newsletters, emailRecipients } from "../../schema";
 import { emailAudienceSchema, resolveAudience, unsubscribedSet } from "./audience";
 import { renderEmail } from "./content";
-import { fromHeader, publicSiteUrl, resendConfigured } from "./config";
+import { fromHeader, publicSiteUrl, resendConfigured, resendKeyHint } from "./config";
 import { BATCH_SIZE, MIN_INTERVAL_MS, sendBatch, type OutMessage } from "./sender";
 import { unsubscribeUrl } from "./unsubscribe";
 
@@ -101,7 +101,9 @@ export async function processQueued(id: number, wait: (ms: number) => Promise<vo
           .where(eq(emailRecipients.id, r.id));
       }
       const failed = results.filter((r) => !r.ok).length;
-      if (failed) console.warn(`[mass-email] newsletter ${id}: ${failed} of ${results.length} failed in batch — ${(results.find((r) => !r.ok) as any)?.error}`);
+      const firstOk = results.find((r) => r.ok) as { id: string } | undefined;
+      console.log(`[mass-email] newsletter ${id}: batch of ${results.length} — ${results.length - failed} accepted by Resend${firstOk ? ` (first resend_id=${firstOk.id})` : ""}, ${failed} failed, key=${resendKeyHint(apiKey)}`);
+      if (failed) console.warn(`[mass-email] newsletter ${id}: first failure — ${(results.find((r) => !r.ok) as any)?.error}`);
       await wait(MIN_INTERVAL_MS);
     }
     await finalize(id);
