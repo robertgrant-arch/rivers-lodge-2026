@@ -22,13 +22,13 @@ import {
 import { Switch } from '@shared/ui/switch';
 import { Checkbox } from '@shared/ui/checkbox';
 import {
-  TreePine, Plus, Pencil, Loader2, Trash2, AlertCircle, Users, Eye, EyeOff, Upload, X,
+  TreePine, Plus, Pencil, Loader2, Trash2, AlertCircle, Users, Eye, EyeOff, Upload,
   ChevronDown, ChevronUp, Thermometer, Truck, Waves, Zap, Wifi,
 } from "lucide-react";
 import { toast } from "sonner";
-import { prepareCoverPhoto, coverPhotoUploadErrorMessage, COVER_PHOTO_HELP } from "../lib/prepareCoverPhoto";
+import { prepareCoverPhoto, coverPhotoUploadErrorMessage } from "../lib/prepareCoverPhoto";
 import { PropertyCleanupReview } from "../components/PropertyCleanupReview";
-import { PropertyMapsEditor, MaxCapacityField, PropertyActivitiesField, legacyActivityLabel, type MapItem } from "../components/PropertyFormFields";
+import { PropertyMapsEditor, CoverPhotoField, MaxCapacityField, PropertyActivitiesField, legacyActivityLabel, type MapItem } from "../components/PropertyFormFields";
 import { activityLabel, toDisplayActivities, type PropertyActivityKey } from "@shared/propertyActivities";
 import { isDirectionsUrl, propertyCapacity, DIRECTIONS_URL_HELP } from "@shared/propertyRules";
 
@@ -125,10 +125,7 @@ function CreatePropertyForm({
     set("slug", v.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""));
   };
 
-  const handleCoverPhotoFileSelect = async (files: FileList | null) => {
-    if (!files || files.length === 0) return;
-    const file = files[0];
-
+  const handleCoverPhotoFileSelect = async (file: File) => {
     setIsUploadingCoverPhoto(true);
     // Validate + resize in the browser first (phone photos are usually 3–12 MB;
     // the API only accepts the resized result — see @shared/uploadLimits).
@@ -336,48 +333,15 @@ function CreatePropertyForm({
         </div>
 
 
-        <div className="space-y-1.5">
-          <Label className="text-stone-300 text-sm">Cover Photo (JPG or PNG)</Label>
-          <p className="text-xs text-stone-500">{COVER_PHOTO_HELP}</p>
-          <div className="flex items-center gap-2">
-            <input
-              type="file"
-              accept=".png,.jpg,.jpeg,image/png,image/jpeg"
-              onChange={(e) => handleCoverPhotoFileSelect(e.target.files)}
-              className="hidden"
-              id="cover-photo-upload"
-              disabled={isUploadingCoverPhoto}
-            />
-            <label htmlFor="cover-photo-upload" className="flex-1 cursor-pointer">
-              <Button variant="outline" disabled={isUploadingCoverPhoto} className="w-full bg-stone-800 border-stone-700 text-stone-300 hover:bg-stone-700 disabled:opacity-50">
-                {isUploadingCoverPhoto ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Uploading...
-                  </>
-                ) : (
-                  <>
-                    <Upload className="w-4 h-4 mr-2" />
-                    {form.coverImageFileName || "Choose file"}
-                  </>
-                )}
-              </Button>
-            </label>
-            {form.coverImageFile && !isUploadingCoverPhoto && (
-              <button
-                onClick={() => { set("coverImageFile", null); set("coverImageUrl", ""); set("coverImageFileName", ""); }}
-                className="p-2 hover:bg-stone-700 rounded"
-              >
-                <X className="w-4 h-4 text-stone-400" />
-              </button>
-            )}
-          </div>
-          {form.coverImageUrl && (
-            <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-stone-800 border border-stone-700">
-              <img src={form.coverImageUrl} alt="Cover preview" className="w-full h-full object-cover" />
-            </div>
-          )}
-        </div>
+        <CoverPhotoField
+          idPrefix="create"
+          imageUrl={form.coverImageUrl}
+          fileName={form.coverImageFileName}
+          busy={isUploadingCoverPhoto}
+          canClear={!!form.coverImageFile}
+          onSelect={handleCoverPhotoFileSelect}
+          onClear={() => { set("coverImageFile", null); set("coverImageUrl", ""); set("coverImageFileName", ""); }}
+        />
       </div>
 
       <div className="flex items-center justify-between">
@@ -468,10 +432,7 @@ function EditPropertyForm({
     },
   });
 
-  const handleCoverPhotoFileSelect = async (files: FileList | null) => {
-    if (!files || files.length === 0) return;
-    const file = files[0];
-
+  const handleCoverPhotoFileSelect = async (file: File) => {
     setIsUploadingCoverPhoto(true);
     // Validate + resize in the browser first (phone photos are usually 3–12 MB;
     // the API only accepts the resized result — see @shared/uploadLimits).
@@ -676,48 +637,15 @@ function EditPropertyForm({
         </div>
 
 
-        <div className="space-y-1.5">
-          <Label className="text-stone-300 text-sm">Cover Photo (JPG or PNG)</Label>
-          <p className="text-xs text-stone-500">{COVER_PHOTO_HELP}</p>
-          <div className="flex items-center gap-2">
-            <input
-              type="file"
-              accept=".png,.jpg,.jpeg,image/png,image/jpeg"
-              onChange={(e) => handleCoverPhotoFileSelect(e.target.files)}
-              className="hidden"
-              id="cover-photo-upload-edit"
-              disabled={isUploadingCoverPhoto}
-            />
-            <label htmlFor="cover-photo-upload-edit" className="flex-1 cursor-pointer">
-              <Button variant="outline" disabled={isUploadingCoverPhoto} className="w-full bg-stone-800 border-stone-700 text-stone-300 hover:bg-stone-700 disabled:opacity-50">
-                {isUploadingCoverPhoto ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Uploading...
-                  </>
-                ) : (
-                  <>
-                    <Upload className="w-4 h-4 mr-2" />
-                    {form.coverImageFileName || "Choose file"}
-                  </>
-                )}
-              </Button>
-            </label>
-            {form.coverImageFile && !isUploadingCoverPhoto && (
-              <button
-                onClick={() => { set("coverImageFile", null); set("coverImageUrl", ""); set("coverImageFileName", ""); }}
-                className="p-2 hover:bg-stone-700 rounded"
-              >
-                <X className="w-4 h-4 text-stone-400" />
-              </button>
-            )}
-          </div>
-          {form.coverImageUrl && (
-            <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-stone-800 border border-stone-700">
-              <img src={form.coverImageUrl} alt="Cover preview" className="w-full h-full object-cover" />
-            </div>
-          )}
-        </div>
+        <CoverPhotoField
+          idPrefix="edit"
+          imageUrl={form.coverImageUrl}
+          fileName={form.coverImageFileName}
+          busy={isUploadingCoverPhoto}
+          canClear={!!form.coverImageFile}
+          onSelect={handleCoverPhotoFileSelect}
+          onClear={() => { set("coverImageFile", null); set("coverImageUrl", ""); set("coverImageFileName", ""); }}
+        />
       </div>
 
       <div className="border border-stone-700 rounded-lg p-4 space-y-3">
