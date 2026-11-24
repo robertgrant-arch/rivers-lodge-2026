@@ -6,6 +6,8 @@ import { fieldReports, newsletters, users, members } from '@core/db/schema';
 import { eq, desc, and } from "drizzle-orm";
 import { invokeLLM } from "@features/_core/server/llm";
 import { notifyOwner } from '@core/server/notification';
+import { massEmailRouter } from './massEmail/router';
+import { htmlToPlainText } from './massEmail/content';
 
 // ─── Field Reports Router ─────────────────────────────────────────────────────
 
@@ -133,34 +135,11 @@ const fieldReportsRouter = router({
 
 // ─── Newsletter Router ────────────────────────────────────────────────────────
 
+// Mass email lives in ./massEmail/router.ts (staff permissions, recipients,
+// test/send/schedule, approval, history). Only the AI draft generator stays
+// here, admin-only.
 const newsletterRouter = router({
-  // List newsletters (admin only)
-  list: adminProcedure
-    .input(
-      z.object({
-        status: z.enum(["draft", "pending_approval", "approved", "sent", "cancelled", "all"]).default("all"),
-      }).optional()
-    )
-    .query(async ({ input }) => {
-      const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
-      const rows = input?.status && input.status !== "all"
-        ? await db.select().from(newsletters).where(eq(newsletters.status, input.status)).orderBy(desc(newsletters.createdAt))
-        : await db.select().from(newsletters).orderBy(desc(newsletters.createdAt));
-      return rows;
-    }),
-
-  // Get single newsletter
-  get: adminProcedure
-    .input(z.object({ id: z.number() }))
-    .query(async ({ input }) => {
-      const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
-      const [nl] = await db.select().from(newsletters).where(eq(newsletters.id, input.id));
-      if (!nl) throw new TRPCError({ code: "NOT_FOUND", message: "Newsletter not found" });
-      return nl;
-    }),
-
+  ...massEmailRouter._def.record,
   // Generate AI draft newsletter
   generateDraft: adminProcedure
     .input(
@@ -230,7 +209,11 @@ Format as clean HTML with <h2>, <p>, and <em> tags only. No inline styles. Start
         draftContent,
         finalContent: draftContent,
         aiPromptContext: promptContext || null,
-        status: "pending_approval",
+        // Lands as a draft: staff pick recipients and send from the composer.
+        status: "draft",
+        bodyText: htmlToPlainText(draftContent),
+        audience: { type: "all_members" },
+        audienceLabel: "All active members",
         createdBy: ctx.user.id,
       }).returning({ id: newsletters.id });
 
@@ -238,99 +221,12 @@ Format as clean HTML with <h2>, <p>, and <em> tags only. No inline styles. Start
 
       await notifyOwner({
         title: "Newsletter Draft Ready for Review",
-        content: `A new AI-drafted newsletter is ready for your approval: "${subject}". Review and approve it in the Ops Portal → Newsletter.`,
+        content: `A new AI-drafted newsletter is ready to review: "${subject}". Review and approve it in the Ops Portal → Newsletter.`,
       }).catch(() => {});
 
       return { id, subject, draftContent };
     }),
 
-  // Update newsletter content / subject
-  update: adminProcedure
-    .input(
-      z.object({
-        id: z.number(),
-        subject: z.string().min(1).max(255).optional(),
-        finalContent: z.string().optional(),
-        status: z.enum(["draft", "pending_approval", "approved", "cancelled"]).optional(),
-        scheduledFor: z.string().optional().nullable(),
-      })
-    )
-    .mutation(async ({ input }) => {
-      const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
-      const { id, scheduledFor, ...fields } = input;
-      const updateData: Record<string, unknown> = { ...fields };
-      if (scheduledFor !== undefined) {
-        updateData.scheduledFor = scheduledFor ? new Date(scheduledFor) : null;
-      }
-      await db.update(newsletters).set(updateData).where(eq(newsletters.id, id));
-      return { success: true };
-    }),
-
-  // Approve newsletter
-  approve: adminProcedure
-    .input(z.object({ id: z.number() }))
-    .mutation(async ({ ctx, input }) => {
-      const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
-      await db.update(newsletters).set({
-        status: "approved",
-        approvedBy: ctx.user.id,
-        approvedAt: new Date(),
-      }).where(eq(newsletters.id, input.id));
-      return { success: true };
-    }),
-
-  // Send newsletter to all active members
-  send: adminProcedure
-    .input(z.object({ id: z.number() }))
-    .mutation(async ({ input }) => {
-      const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
-      const [nl] = await db.select().from(newsletters).where(eq(newsletters.id, input.id));
-      if (!nl) throw new TRPCError({ code: "NOT_FOUND", message: "Newsletter not found" });
-      if (nl.status !== "approved") {
-        throw new TRPCError({ code: "BAD_REQUEST", message: "Newsletter must be approved before sending" });
-      }
-
-      // Get all active members with email addresses
-      const activeMemberUsers = await db
-        .select({ id: users.id, email: users.email })
-        .from(users)
-        .innerJoin(members, eq(members.userId, users.id))
-        .where(eq(members.active, true));
-
-      const emailRecipients = activeMemberUsers.filter((u): u is { id: string; email: string } => !!u.email);
-      const sentCount = emailRecipients.length;
-
-      await db.update(newsletters).set({
-        status: "sent",
-        sentAt: new Date(),
-        sentCount,
-      }).where(eq(newsletters.id, input.id));
-
-      await notifyOwner({
-        title: "Newsletter Sent",
-        content: `"${nl.subject}" was sent to ${sentCount} member${sentCount !== 1 ? "s" : ""}.`,
-      }).catch(() => {});
-
-      return { success: true, sentCount, recipients: emailRecipients.map((u) => u.email) };
-    }),
-
-  // Delete newsletter
-  delete: adminProcedure
-    .input(z.object({ id: z.number() }))
-    .mutation(async ({ input }) => {
-      const db = await getDb();
-      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable" });
-      const [nl] = await db.select().from(newsletters).where(eq(newsletters.id, input.id));
-      if (!nl) throw new TRPCError({ code: "NOT_FOUND", message: "Newsletter not found" });
-      if (nl.status === "sent") {
-        throw new TRPCError({ code: "BAD_REQUEST", message: "Cannot delete a sent newsletter" });
-      }
-      await db.delete(newsletters).where(eq(newsletters.id, input.id));
-      return { success: true };
-    }),
 });
 
 // ─── Combined Reports Router ──────────────────────────────────────────────────

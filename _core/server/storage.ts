@@ -25,7 +25,8 @@ export function isForgeStorageConfigured(): boolean {
 }
 
 /** Key prefixes served publicly at /manus-storage/{key} by the database backend. */
-export const PUBLIC_STORAGE_PREFIXES = ["properties/", "generated/"] as const;
+// "email/": images in mass emails must load in recipients' mail clients without a login.
+export const PUBLIC_STORAGE_PREFIXES = ["properties/", "generated/", "email/"] as const;
 export const isPublicStorageKey = (key: string) => PUBLIC_STORAGE_PREFIXES.some((p) => key.startsWith(p));
 
 /** How long a signed private-file link stays valid. */
