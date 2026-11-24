@@ -4,6 +4,11 @@
 
 import { ENV } from "./env";
 
+/** True when file storage (Forge) credentials are set. Uploads fail without them. */
+export function isStorageConfigured(): boolean {
+  return !!ENV.forgeApiUrl && !!ENV.forgeApiKey;
+}
+
 function getForgeConfig() {
   const forgeUrl = ENV.forgeApiUrl;
   const forgeKey = ENV.forgeApiKey;

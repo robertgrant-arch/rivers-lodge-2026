@@ -15,7 +15,7 @@ import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { router, publicProcedure, protectedProcedure } from '@core/server/trpc';
 import { getDb } from '@core/server/db';
-import { storagePut } from '@core/server/storage';
+import { storagePut, isStorageConfigured } from '@core/server/storage';
 import { COVER_PHOTO } from '@shared/uploadLimits';
 import { PROPERTY_ACTIVITIES, PROPERTY_ACTIVITY_KEYS, LEGACY_ACTIVITY_VALUES, toDisplayActivities } from '@shared/propertyActivities';
 import { consecutiveDaysError, propertyCapacity, isDirectionsUrl, DIRECTIONS_URL_HELP, PROPERTY_MAP_UPLOAD, sniffMapType, formatMB } from '@shared/propertyRules';
@@ -254,6 +254,28 @@ const mapItemInput = z.object({
   label: z.string().trim().max(120).optional().nullable(),
 });
 const mapsInput = z.array(mapItemInput).max(PROPERTY_MAP_UPLOAD.maxMaps).optional();
+
+/**
+ * Save an uploaded property file (cover photo or map) to storage, turning
+ * failures into messages staff can act on. Without storage credentials every
+ * upload fails, so say that plainly instead of a raw "Storage config missing"
+ * error, and log the details for the Render logs.
+ */
+async function putPropertyFile(kind: "cover photo" | "map", key: string, buffer: Buffer, contentType: string) {
+  if (!isStorageConfigured()) {
+    console.error(`[property-upload] ${kind} upload refused: file storage is not configured (BUILT_IN_FORGE_API_URL / BUILT_IN_FORGE_API_KEY missing)`);
+    throw new TRPCError({
+      code: "PRECONDITION_FAILED",
+      message: "File storage isn't set up on this site yet, so uploads can't be saved. Please contact the site administrator.",
+    });
+  }
+  try {
+    return await storagePut(key, buffer, contentType);
+  } catch (err) {
+    console.error(`[property-upload] ${kind} upload failed for ${key} (${buffer.length} bytes):`, err);
+    throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: `The ${kind} couldn't be saved to storage. Please try again in a moment.` });
+  }
+}
 
 /**
  * Cover photo URL from uploadCoverPhoto, which returns a site path
@@ -1784,12 +1806,7 @@ export const propertyBookingRouter = router({
           }
           const safeName = String(input.fileName).replace(/[^A-Za-z0-9._-]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 120) || "map";
 
-          // Upload to S3
-          const { url } = await storagePut(
-            `properties/maps/${Date.now()}-${safeName}`,
-            buffer,
-            sniffed,
-          );
+          const { url } = await putPropertyFile("map", `properties/maps/${Date.now()}-${safeName}`, buffer, sniffed);
 
           return { mapUrl: url, contentType: sniffed };
         }),
@@ -1823,12 +1840,7 @@ export const propertyBookingRouter = router({
           // Keep storage keys to safe characters.
           const safeName = String(input.fileName).replace(/[^A-Za-z0-9._-]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 120) || "cover";
 
-          // Upload to S3
-          const { url } = await storagePut(
-            `properties/covers/${Date.now()}-${safeName}`,
-            buffer,
-            sniffed,
-          );
+          const { url } = await putPropertyFile("cover photo", `properties/covers/${Date.now()}-${safeName}`, buffer, sniffed);
 
           return { coverImageUrl: url };
         }),
