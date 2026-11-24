@@ -263,7 +263,7 @@ const mapsInput = z.array(mapItemInput).max(PROPERTY_MAP_UPLOAD.maxMaps).optiona
  */
 async function putPropertyFile(kind: "cover photo" | "map", key: string, buffer: Buffer, contentType: string) {
   if (!isStorageConfigured()) {
-    console.error(`[property-upload] ${kind} upload refused: file storage is not configured (BUILT_IN_FORGE_API_URL / BUILT_IN_FORGE_API_KEY missing)`);
+    console.error(`[property-upload] ${kind} upload refused: no file storage (no Forge credentials and no DATABASE_URL)`);
     throw new TRPCError({
       code: "PRECONDITION_FAILED",
       message: "File storage isn't set up on this site yet, so uploads can't be saved. Please contact the site administrator.",
