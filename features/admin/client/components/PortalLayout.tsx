@@ -118,13 +118,24 @@ const navGroups = [
 ];
 // Admin-only nav group — rendered separately below navGroups
 
+// Pages staff employees (not just admins) may open. The server enforces the
+// real permission on every API call; this only decides what the layout shows.
+const STAFF_PAGES = ["/ops/newsletter"];
+const staffNavGroups = [
+  { label: "Communications", items: [{ icon: Newspaper, label: "Newsletter", path: "/ops/newsletter" }] },
+];
+
 
 export default function PortalLayout({ children }: { children: React.ReactNode }) {
   const { loading, user, logout } = useAuth();
   const [location] = useLocation();
   const [previewPopoverOpen, setPreviewPopoverOpen] = useState(false);
   const [previewSkillGroupId, setPreviewSkillGroupId] = useState<string>("");
-  const skillGroupsQuery = trpc.membership.listSkillGroupsForPreview.useQuery();
+  const isAdmin = user?.role === ADMIN_ROLE;
+  const skillGroupsQuery = trpc.membership.listSkillGroupsForPreview.useQuery(undefined, { enabled: isAdmin });
+  // Staff employees may use mass email (server decides; members never can).
+  const emailAccess = trpc.reports.newsletters.access.useQuery(undefined, { enabled: !!user && !isAdmin, retry: false });
+  const onStaffPage = STAFF_PAGES.some((p) => location === p || location.startsWith(`${p}/`));
   const notificationsQuery = trpc.portal.dashboard.notifications.useQuery(undefined, {
     enabled: !!user && user.role === ADMIN_ROLE,
     refetchInterval: 30000,
@@ -158,17 +169,23 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
     );
   }
 
-  if (user.role !== ADMIN_ROLE) {
+  if (!isAdmin && emailAccess.isLoading) return <DashboardLayoutSkeleton />;
+  const staffOnly = !isAdmin && !!emailAccess.data?.canUse;
+
+  if (!isAdmin && !(staffOnly && onStaffPage)) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
         <div className="flex flex-col items-center gap-6 p-8 max-w-md w-full text-center">
           <Shield className="w-12 h-12 text-destructive" />
           <h1 className="text-2xl font-semibold tracking-tight">Access Denied</h1>
           <p className="text-sm text-muted-foreground">
-            The operations portal is restricted to administrator accounts.
+            {staffOnly
+              ? "Staff accounts can use the Newsletter page. The rest of the operations portal is restricted to administrators."
+              : "The operations portal is restricted to administrator accounts."}
           </p>
           <div className="flex gap-3">
             <Button variant="outline" onClick={() => logout()}>Sign Out</Button>
+            {staffOnly && <Button asChild variant="outline"><Link href="/ops/newsletter">Newsletter</Link></Button>}
             <Button asChild><Link href="/portal">Member Portal</Link></Button>
           </div>
         </div>
@@ -196,7 +213,7 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
           </SidebarHeader>
 
           <SidebarContent className="px-3 py-4 gap-0">
-            {navGroups.map((group, i) => (
+            {(staffOnly ? staffNavGroups : navGroups).map((group, i) => (
               <div key={group.label}>
                 {i > 0 && <SidebarSeparator className="mb-4 mt-1" />}
                 <SidebarGroup className="mb-4 p-0">

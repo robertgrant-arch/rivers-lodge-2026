@@ -14,6 +14,7 @@ import { runStartupMigration, checkHuntingPropertiesSchema } from "./startup-mig
 import { applySqlMigrations } from "./apply-sql-migrations";
 import { COVER_PHOTO_JSON_LIMIT_BYTES } from "@shared/uploadLimits";
 import { PROPERTY_MAP_JSON_LIMIT_BYTES } from "@shared/propertyRules";
+import { registerMassEmailRoutes, startEmailScheduler, EMAIL_IMAGE_JSON_LIMIT_BYTES } from "features/reports/public";
 
 let deployedCommit = "unknown";
 try {
@@ -37,6 +38,11 @@ async function startServer() {
   // ── Security headers ────────────────────────────────────────────────────────
   app.use(helmet({ contentSecurityPolicy: false }));
 
+  // ── Mass email public routes ────────────────────────────────────────────────
+  // Unsubscribe links + the Resend webhook. Registered before the JSON parser
+  // so the webhook can verify its signature against the raw body.
+  registerMassEmailRoutes(app);
+
   // ── Body parsers ────────────────────────────────────────────────────────────
   // Larger JSON limits ONLY for tRPC upload procedures that carry a base64 file
   // (see features/_shared/propertyRules.ts). A batched call qualifies only if
@@ -45,6 +51,7 @@ async function startServer() {
   const largeBodyLimits: Record<string, number> = {
     "propertyBooking.admin.properties.uploadCoverPhoto": COVER_PHOTO_JSON_LIMIT_BYTES,
     "propertyBooking.admin.properties.uploadMap": PROPERTY_MAP_JSON_LIMIT_BYTES,
+    "reports.newsletters.uploadImage": EMAIL_IMAGE_JSON_LIMIT_BYTES,
   };
   app.use((req, res, next) => {
     const m = /^\/api\/trpc\/([^/]+)$/.exec(req.path);
@@ -202,6 +209,10 @@ async function startServer() {
   server.listen(port, () => {
     console.log(`Server running on http://localhost:${port}/`);
   });
+
+  // Mass email: start scheduled emails when due and resume interrupted sends.
+  // Only after migrations, so the email tables exist.
+  startEmailScheduler();
 }
 
 // Any boot failure (DB unreachable during migrations, etc.) must exit non-zero

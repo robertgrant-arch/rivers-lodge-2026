@@ -1,590 +1,223 @@
-import { useState } from "react";
-import { trpc } from '@shared/lib/trpc';
-import { Button } from '@shared/ui/button';
-import { Card, CardContent } from '@shared/ui/card';
-import { Badge } from '@shared/ui/badge';
-import { Input } from '@shared/ui/input';
-import { Label } from '@shared/ui/label';
-import { Textarea } from '@shared/ui/textarea';
-import { Switch } from '@shared/ui/switch';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@shared/ui/dialog';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@shared/ui/alert-dialog';
+/**
+ * /ops/newsletter — Newsletter & mass email.
+ *
+ * Admins and staff employees write emails to groups of members and customers,
+ * send a test to themselves, preview, and send now or schedule. Employees'
+ * emails need admin approval when that setting is on. The Sent Emails list
+ * keeps every email (draft, pending, scheduled, sent) to view or duplicate.
+ * All permissions are enforced on the server (reports.newsletters.*).
+ */
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import {
-  Newspaper, Sparkles, CheckCircle2, Send, Trash2, Edit2, Eye,
-  Clock, RotateCcw, Users, X, Columns2,
-} from "lucide-react";
+import { Mail, Plus, Sparkles, Loader2, ShieldCheck, Users, Inbox } from "lucide-react";
+import { trpc } from "@shared/lib/trpc";
+import { useAuth } from "@features/auth/public";
+import { Button } from "@shared/ui/button";
+import { Label } from "@shared/ui/label";
+import { Switch } from "@shared/ui/switch";
+import { Textarea } from "@shared/ui/textarea";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@shared/ui/dialog";
+import EmailComposer, { type EmailAccess } from "../components/massEmail/EmailComposer";
+import EmailDetailDialog, { StatusBadge } from "../components/massEmail/EmailDetailDialog";
+import { fmtDateTime } from "../components/massEmail/types";
 
-type NewsletterStatus = "draft" | "pending_approval" | "approved" | "sent" | "cancelled";
+type Filter = "all" | "draft" | "pending_approval" | "scheduled" | "sent";
+const FILTERS: Array<{ key: Filter; label: string }> = [
+  { key: "all", label: "All" },
+  { key: "draft", label: "Drafts" },
+  { key: "pending_approval", label: "Pending approval" },
+  { key: "scheduled", label: "Scheduled" },
+  { key: "sent", label: "Sent" },
+];
+const DRAFTISH = new Set(["draft", "cancelled", "approved"]);
+const matches = (status: string, f: Filter) =>
+  f === "all" || (f === "draft" ? DRAFTISH.has(status) : f === "sent" ? status === "sent" || status === "sending" : status === f);
 
-const STATUS_CONFIG: Record<NewsletterStatus, { label: string; color: string }> = {
-  draft: { label: "Draft", color: "bg-slate-100 text-slate-700" },
-  pending_approval: { label: "Pending Approval", color: "bg-amber-100 text-amber-800" },
-  approved: { label: "Approved", color: "bg-blue-100 text-blue-800" },
-  sent: { label: "Sent", color: "bg-emerald-100 text-emerald-800" },
-  cancelled: { label: "Cancelled", color: "bg-red-100 text-red-700" },
-};
+function GenerateDraftDialog({ open, onOpenChange, onCreated }: { open: boolean; onOpenChange: (o: boolean) => void; onCreated: (id: number) => void }) {
+  const [context, setContext] = useState("");
+  const [includeReports, setIncludeReports] = useState(true);
+  const gen = trpc.reports.newsletters.generateDraft.useMutation({
+    onSuccess: (r) => { toast.success("AI draft created"); onOpenChange(false); setContext(""); onCreated(r.id); },
+    onError: (e) => toast.error(e.message),
+  });
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader><DialogTitle className="flex items-center gap-2"><Sparkles className="w-5 h-5 text-[#C2662A]" />Generate AI newsletter draft</DialogTitle></DialogHeader>
+        <div className="space-y-4 py-2">
+          <p className="text-sm text-muted-foreground">Writes a seasonal member newsletter in the voice of The Rivers Lodge &amp; Hunt Club as a draft. Review every detail before sending.</p>
+          <div className="space-y-1.5">
+            <Label htmlFor="ai-context">Additional context (optional)</Label>
+            <Textarea id="ai-context" value={context} onChange={(e) => setContext(e.target.value)} rows={4} placeholder="Topics, announcements or notes to include" />
+          </div>
+          <div className="flex items-center gap-3">
+            <Switch id="include-reports" checked={includeReports} onCheckedChange={setIncludeReports} />
+            <Label htmlFor="include-reports" className="cursor-pointer">Use recent published field reports</Label>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+          <Button disabled={gen.isPending} className="gap-2" onClick={() => gen.mutate({ context: context || undefined, includeRecentReports: includeReports })}>
+            {gen.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}Generate
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
 
-type EditingNewsletter = {
-  id: number;
-  subject: string;
-  body: string;
-  originalStatus: NewsletterStatus;
-};
+function ApprovalSetting({ value }: { value: boolean }) {
+  const utils = trpc.useUtils();
+  const update = trpc.reports.newsletters.settings.update.useMutation({
+    onSuccess: (r) => { toast.success(r.requireEmployeeApproval ? "Employee emails now need admin approval" : "Employees can now send without approval"); utils.reports.newsletters.access.invalidate(); },
+    onError: (e) => toast.error(e.message),
+  });
+  return (
+    <div className="flex items-start gap-3 p-3 border border-[#57544E] bg-[#363330]">
+      <Switch id="require-approval" checked={value} disabled={update.isPending} onCheckedChange={(v) => update.mutate({ requireEmployeeApproval: v })} className="mt-0.5" />
+      <Label htmlFor="require-approval" className="cursor-pointer leading-snug">
+        <span className="block text-sm text-[#E0D3BD]">Require admin approval for employee emails</span>
+        <span className="block text-xs text-[#BABAAE] font-normal mt-0.5">When on, emails written by employees wait in “Pending approval” until an admin approves them.</span>
+      </Label>
+    </div>
+  );
+}
 
 export default function PortalNewsletter() {
-  const [statusFilter, setStatusFilter] = useState<NewsletterStatus | "all">("all");
+  const { user } = useAuth();
+  const access = trpc.reports.newsletters.access.useQuery();
+  const [view, setView] = useState<{ mode: "list" } | { mode: "compose"; id?: number }>({ mode: "list" });
+  const [detailId, setDetailId] = useState<number | null>(null);
+  const [filter, setFilter] = useState<Filter>("all");
   const [generateOpen, setGenerateOpen] = useState(false);
-  const [previewNewsletter, setPreviewNewsletter] = useState<{
-    subject: string; finalContent: string; status: NewsletterStatus; sentCount?: number | null;
-  } | null>(null);
-  const [sendConfirmId, setSendConfirmId] = useState<number | null>(null);
-  const [deleteId, setDeleteId] = useState<number | null>(null);
-  const [generating, setGenerating] = useState(false);
-  const [aiContext, setAiContext] = useState("");
-  const [includeReports, setIncludeReports] = useState(true);
-
-  // Full-screen editor state
-  const [editorOpen, setEditorOpen] = useState(false);
-  const [editingNewsletter, setEditingNewsletter] = useState<EditingNewsletter | null>(null);
-  const [showPreviewPane, setShowPreviewPane] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [savingAndApproving, setSavingAndApproving] = useState(false);
-  const [sending, setSending] = useState(false);
-
-  const utils = trpc.useUtils();
-
-  const newslettersQuery = trpc.reports.newsletters.list.useQuery({ status: statusFilter });
-
-  const generateDraftMutation = trpc.reports.newsletters.generateDraft.useMutation({
-    onSuccess: (data) => {
-      utils.reports.newsletters.list.invalidate();
-      setGenerateOpen(false);
-      setAiContext("");
-      toast.success(`Draft generated! "${data.subject}" is ready for your review.`);
-    },
-    onError: (e) => toast.error("Generation failed: " + e.message),
+  const canUse = access.data?.canUse === true;
+  const list = trpc.reports.newsletters.list.useQuery(undefined, {
+    enabled: canUse,
+    refetchInterval: (q) => (q.state.data?.some((e) => e.status === "sending") ? 3000 : false),
   });
+  const rows = useMemo(() => (list.data ?? []).filter((e) => matches(e.status, filter)), [list.data, filter]);
+  const pendingCount = (list.data ?? []).filter((e) => e.status === "pending_approval").length;
 
-  const updateMutation = trpc.reports.newsletters.update.useMutation({
-    onSuccess: () => {
-      utils.reports.newsletters.list.invalidate();
-    },
-    onError: (e) => toast.error("Error saving: " + e.message),
-  });
+  if (access.isLoading) return <div className="p-8 flex items-center gap-2 text-muted-foreground"><Loader2 className="w-4 h-4 animate-spin" />Loading…</div>;
+  if (!access.data || access.data.canUse !== true) return <div className="p-8 text-muted-foreground">Mass email is only available to Rivers Lodge staff.</div>;
+  const a = access.data as EmailAccess;
 
-  const approveMutation = trpc.reports.newsletters.approve.useMutation({
-    onSuccess: () => {
-      utils.reports.newsletters.list.invalidate();
-      toast.success("Newsletter approved — ready to send to members.");
-    },
-    onError: (e) => toast.error("Error: " + e.message),
-  });
+  if (view.mode === "compose") {
+    return <EmailComposer key={view.id ?? "new"} id={view.id} access={a} onClose={() => setView({ mode: "list" })} />;
+  }
 
-  const sendMutation = trpc.reports.newsletters.send.useMutation({
-    onSuccess: (data) => {
-      utils.reports.newsletters.list.invalidate();
-      setSendConfirmId(null);
-      toast.success(`Newsletter sent! Delivered to ${data.sentCount} member${data.sentCount !== 1 ? "s" : ""}.`);
-    },
-    onError: (e) => toast.error("Send failed: " + e.message),
-  });
-
-  const deleteMutation = trpc.reports.newsletters.delete.useMutation({
-    onSuccess: () => {
-      utils.reports.newsletters.list.invalidate();
-      setDeleteId(null);
-      toast.success("Newsletter deleted");
-    },
-    onError: (e) => toast.error("Error: " + e.message),
-  });
-
-  const handleGenerate = async () => {
-    setGenerating(true);
-    try {
-      await generateDraftMutation.mutateAsync({
-        context: aiContext.trim() || undefined,
-        includeRecentReports: includeReports,
-      });
-    } finally {
-      setGenerating(false);
-    }
-  };
-
-  const openEditor = (nl: {
-    id: number; subject: string; finalContent: string | null; draftContent: string | null; status: string;
-  }) => {
-    setEditingNewsletter({
-      id: nl.id,
-      subject: nl.subject,
-      body: nl.finalContent ?? nl.draftContent ?? "",
-      originalStatus: nl.status as NewsletterStatus,
-    });
-    setEditorOpen(true);
-  };
-
-  const closeEditor = () => {
-    setEditorOpen(false);
-    setEditingNewsletter(null);
-  };
-
-  const handleSave = async () => {
-    if (!editingNewsletter) return;
-    setSaving(true);
-    try {
-      await updateMutation.mutateAsync({
-        id: editingNewsletter.id,
-        subject: editingNewsletter.subject,
-        finalContent: editingNewsletter.body,
-      });
-      toast.success("Newsletter saved.");
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleSaveAndApprove = async () => {
-    if (!editingNewsletter) return;
-    setSavingAndApproving(true);
-    try {
-      await updateMutation.mutateAsync({
-        id: editingNewsletter.id,
-        subject: editingNewsletter.subject,
-        finalContent: editingNewsletter.body,
-      });
-      await approveMutation.mutateAsync({ id: editingNewsletter.id });
-      toast.success("Newsletter saved and approved — ready to send!");
-      closeEditor();
-    } finally {
-      setSavingAndApproving(false);
-    }
-  };
-
-  const handleSend = async () => {
-    if (sendConfirmId === null) return;
-    setSending(true);
-    try {
-      await sendMutation.mutateAsync({ id: sendConfirmId });
-    } finally {
-      setSending(false);
-    }
-  };
-
-  const newsletters = newslettersQuery.data ?? [];
+  const dateFor = (e: (typeof rows)[number]) =>
+    e.status === "sent" ? e.sentAt : e.status === "sending" ? e.sendStartedAt : e.status === "scheduled" ? e.scheduledFor : e.updatedAt;
+  const sender = (e: (typeof rows)[number]) => e.senderName ?? e.creatorEmail ?? "—";
 
   return (
-    <div className="p-6 space-y-6 max-w-5xl mx-auto">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+      <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-            <Newspaper className="w-6 h-6 text-amber-600" />
-            Member Newsletter
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            AI-drafted weekly newsletters — review, edit, approve, and send to all active members
-          </p>
+          <h1 className="text-2xl font-semibold text-foreground flex items-center gap-2"><Mail className="w-6 h-6 text-[#C2662A]" />Newsletter &amp; Email</h1>
+          <p className="text-sm text-muted-foreground mt-1">Email groups of members and customers. Unsubscribed people are always left out.</p>
         </div>
-        <Button onClick={() => setGenerateOpen(true)} className="gap-2">
-          <Sparkles className="w-4 h-4" />
-          Generate AI Draft
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          {a.isAdmin && <Button variant="outline" className="gap-2" onClick={() => setGenerateOpen(true)}><Sparkles className="w-4 h-4" />AI draft</Button>}
+          <Button className="gap-2 bg-[#9B4D19] hover:bg-[#7a3c14] text-[#E0D3BD]" onClick={() => setView({ mode: "compose" })}><Plus className="w-4 h-4" />New email</Button>
+        </div>
       </div>
 
-      {/* Status filter */}
-      <div className="flex gap-1.5 flex-wrap">
-        {(["all", "pending_approval", "approved", "draft", "sent", "cancelled"] as const).map((s) => (
-          <Button
-            key={s}
-            variant={statusFilter === s ? "default" : "outline"}
-            size="sm"
-            onClick={() => setStatusFilter(s)}
-            className="h-7 text-xs"
-          >
-            {s === "all" ? "All" : STATUS_CONFIG[s].label}
-          </Button>
-        ))}
-      </div>
-
-      {/* Newsletter list */}
-      {newslettersQuery.isLoading ? (
-        <div className="space-y-3">
-          {[1, 2, 3].map((i) => <div key={i} className="h-24 rounded-lg bg-muted animate-pulse" />)}
-        </div>
-      ) : newsletters.length === 0 ? (
-        <Card>
-          <CardContent className="py-16 text-center">
-            <Newspaper className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
-            <p className="text-muted-foreground mb-2">No newsletters yet.</p>
-            <p className="text-sm text-muted-foreground mb-4">
-              Click "Generate AI Draft" to create your first member newsletter.
-            </p>
-            <Button onClick={() => setGenerateOpen(true)} className="gap-2">
-              <Sparkles className="w-4 h-4" />
-              Generate AI Draft
-            </Button>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="space-y-3">
-          {newsletters.map((nl) => {
-            const status = nl.status as NewsletterStatus;
-            const cfg = STATUS_CONFIG[status];
-            const canEdit = status !== "sent" && status !== "cancelled";
-            return (
-              <Card key={nl.id} className="hover:shadow-sm transition-shadow">
-                <CardContent className="p-4">
-                  <div className="flex items-start gap-4">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap mb-1">
-                        <h3 className="font-semibold text-foreground truncate">{nl.subject}</h3>
-                        <Badge className={`text-xs ${cfg.color}`}>{cfg.label}</Badge>
-                        {nl.sentCount != null && nl.sentCount > 0 && (
-                          <Badge variant="outline" className="text-xs gap-1">
-                            <Users className="w-3 h-3" />
-                            {nl.sentCount} recipients
-                          </Badge>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                        <span className="flex items-center gap-1">
-                          <Clock className="w-3 h-3" />
-                          Created {new Date(nl.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-                        </span>
-                        {nl.sentAt && (
-                          <span className="flex items-center gap-1">
-                            <Send className="w-3 h-3" />
-                            Sent {new Date(nl.sentAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-                          </span>
-                        )}
-                        {nl.approvedAt && (
-                          <span className="flex items-center gap-1">
-                            <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                            Approved {new Date(nl.approvedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-1.5 flex-shrink-0">
-                      {/* Preview */}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 w-8 p-0"
-                        title="Preview"
-                        onClick={() => setPreviewNewsletter({
-                          subject: nl.subject,
-                          finalContent: nl.finalContent ?? nl.draftContent ?? "",
-                          status,
-                          sentCount: nl.sentCount,
-                        })}
-                      >
-                        <Eye className="w-4 h-4" />
-                      </Button>
-
-                      {/* Edit — opens full-screen editor */}
-                      {canEdit && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 gap-1 px-2"
-                          title="Edit content"
-                          onClick={() => openEditor(nl)}
-                        >
-                          <Edit2 className="w-4 h-4" />
-                          <span className="text-xs">Edit</span>
-                        </Button>
-                      )}
-
-                      {/* Approve (pending_approval or draft) */}
-                      {(status === "pending_approval" || status === "draft") && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 gap-1 text-emerald-700 hover:text-emerald-700 hover:bg-emerald-50"
-                          onClick={() => approveMutation.mutate({ id: nl.id })}
-                        >
-                          <CheckCircle2 className="w-4 h-4" />
-                          Approve
-                        </Button>
-                      )}
-
-                      {/* Send (approved) */}
-                      {status === "approved" && (
-                        <Button
-                          size="sm"
-                          className="h-8 gap-1 bg-amber-600 hover:bg-amber-700 text-white"
-                          onClick={() => setSendConfirmId(nl.id)}
-                        >
-                          <Send className="w-4 h-4" />
-                          Send
-                        </Button>
-                      )}
-
-                      {/* Delete (not sent) */}
-                      {status !== "sent" && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-                          onClick={() => setDeleteId(nl.id)}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
+      {a.isAdmin && <ApprovalSetting value={a.requireEmployeeApproval} />}
+      {!a.isAdmin && a.needsApproval && (
+        <p className="text-sm text-[#BABAAE] flex items-center gap-2"><ShieldCheck className="w-4 h-4 text-[#C2662A]" />Your emails are reviewed by an admin before they're sent.</p>
+      )}
+      {!a.deliveryConfigured && (
+        <p className="text-sm p-3 border border-amber-500/40 bg-amber-500/10 text-amber-200">Email sending isn't set up on the server yet (RESEND_API_KEY). Drafts can be written and saved.</p>
+      )}
+      {a.isAdmin && pendingCount > 0 && filter !== "pending_approval" && (
+        <button type="button" onClick={() => setFilter("pending_approval")} className="w-full text-left p-3 border border-amber-500/40 bg-amber-500/10 text-amber-200 text-sm flex items-center gap-2">
+          <Inbox className="w-4 h-4" />{pendingCount} {pendingCount === 1 ? "email is" : "emails are"} waiting for your approval — review
+        </button>
       )}
 
-      {/* ── Full-Screen Editor ─────────────────────────────────────────── */}
-      {editorOpen && editingNewsletter && (
-        <div className="fixed inset-0 z-50 bg-background flex flex-col">
-          {/* Editor toolbar */}
-          <div className="flex items-center justify-between px-4 py-3 border-b bg-card shrink-0">
-            <div className="flex items-center gap-3">
-              <Edit2 className="w-5 h-5 text-amber-600" />
-              <span className="font-semibold text-foreground">Edit Newsletter</span>
-              <Badge className={`text-xs ${STATUS_CONFIG[editingNewsletter.originalStatus].color}`}>
-                {STATUS_CONFIG[editingNewsletter.originalStatus].label}
-              </Badge>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="gap-1.5 text-xs"
-                onClick={() => setShowPreviewPane((v) => !v)}
-                title={showPreviewPane ? "Hide preview" : "Show preview"}
-              >
-                <Columns2 className="w-4 h-4" />
-                {showPreviewPane ? "Hide Preview" : "Show Preview"}
-              </Button>
-              <Button variant="outline" size="sm" onClick={closeEditor}>
-                <X className="w-4 h-4 mr-1" />
-                Cancel
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleSave}
-                disabled={saving || savingAndApproving}
-              >
-                {saving ? "Saving…" : "Save Draft"}
-              </Button>
-              {editingNewsletter.originalStatus !== "approved" && (
-                <Button
-                  size="sm"
-                  className="gap-1.5 bg-emerald-700 hover:bg-emerald-800 text-white"
-                  onClick={handleSaveAndApprove}
-                  disabled={saving || savingAndApproving}
-                >
-                  {savingAndApproving ? (
-                    <>
-                      <RotateCcw className="w-4 h-4 animate-spin" />
-                      Saving…
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle2 className="w-4 h-4" />
-                      Save &amp; Approve
-                    </>
-                  )}
-                </Button>
-              )}
-            </div>
-          </div>
-
-          {/* Subject line */}
-          <div className="px-4 py-3 border-b bg-card shrink-0">
-            <div className="flex items-center gap-3 max-w-3xl">
-              <Label className="text-xs text-muted-foreground whitespace-nowrap w-16 shrink-0">Subject</Label>
-              <Input
-                value={editingNewsletter.subject}
-                onChange={(e) =>
-                  setEditingNewsletter((n) => n ? { ...n, subject: e.target.value } : n)
-                }
-                className="text-sm font-medium"
-                placeholder="Newsletter subject line…"
-              />
-            </div>
-          </div>
-
-          {/* Split pane: editor | preview */}
-          <div className={`flex-1 flex overflow-hidden ${showPreviewPane ? "divide-x" : ""}`}>
-            {/* Left: raw editor */}
-            <div className={`flex flex-col ${showPreviewPane ? "w-1/2" : "w-full"} overflow-hidden`}>
-              <div className="px-3 py-2 border-b bg-muted/40 shrink-0">
-                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">HTML Source</span>
-              </div>
-              <Textarea
-                value={editingNewsletter.body}
-                onChange={(e) =>
-                  setEditingNewsletter((n) => n ? { ...n, body: e.target.value } : n)
-                }
-                className="flex-1 resize-none rounded-none border-0 font-mono text-xs leading-relaxed focus-visible:ring-0 h-full"
-                placeholder="Newsletter HTML content…"
-                spellCheck={false}
-              />
-            </div>
-
-            {/* Right: live rendered preview */}
-            {showPreviewPane && (
-              <div className="w-1/2 flex flex-col overflow-hidden">
-                <div className="px-3 py-2 border-b bg-muted/40 shrink-0">
-                  <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Live Preview</span>
-                </div>
-                <div className="flex-1 overflow-y-auto p-6">
-                  <div
-                    className="prose prose-sm max-w-none bg-white text-gray-900 rounded-lg p-6 shadow-sm border"
-                    dangerouslySetInnerHTML={{ __html: editingNewsletter.body }}
-                  />
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* ── Generate AI Draft Dialog ───────────────────────────────────── */}
-      <Dialog open={generateOpen} onOpenChange={setGenerateOpen}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-amber-500" />
-              Generate AI Newsletter Draft
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            <p className="text-sm text-muted-foreground">
-              The AI will write a warm, seasonal member newsletter in the voice of The Rivers Lodge &amp; Hunt Club.
-              It will automatically reference recent published field reports for context.
-            </p>
-            <div className="space-y-1.5">
-              <Label>Additional Context (optional)</Label>
-              <Textarea
-                placeholder="e.g. Mention the new duck blind on the south pond. Remind members that rifle season opens Oct 1. Include a note about the lodge renovation..."
-                value={aiContext}
-                onChange={(e) => setAiContext(e.target.value)}
-                rows={4}
-              />
-              <p className="text-xs text-muted-foreground">
-                Add any specific topics, announcements, or notes you'd like the AI to include.
-              </p>
-            </div>
-            <div className="flex items-center gap-3">
-              <Switch
-                id="include-reports"
-                checked={includeReports}
-                onCheckedChange={setIncludeReports}
-              />
-              <Label htmlFor="include-reports" className="cursor-pointer">
-                Include recent published field reports as context
-              </Label>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setGenerateOpen(false)}>Cancel</Button>
-            <Button onClick={handleGenerate} disabled={generating} className="gap-2">
-              {generating ? (
-                <>
-                  <RotateCcw className="w-4 h-4 animate-spin" />
-                  Generating…
-                </>
-              ) : (
-                <>
-                  <Sparkles className="w-4 h-4" />
-                  Generate Draft
-                </>
-              )}
+      <section className="space-y-3" aria-labelledby="sent-emails-heading">
+        <h2 id="sent-emails-heading" className="text-lg font-semibold text-foreground">Sent Emails</h2>
+        <div className="flex gap-1.5 flex-wrap" role="tablist" aria-label="Filter by status">
+          {FILTERS.map((f) => (
+            <Button key={f.key} role="tab" aria-selected={filter === f.key} size="sm" variant={filter === f.key ? "default" : "outline"} className="h-7 text-xs" onClick={() => setFilter(f.key)}>
+              {f.label}{f.key === "pending_approval" && pendingCount > 0 ? ` (${pendingCount})` : ""}
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          ))}
+        </div>
 
-      {/* ── Preview Dialog ─────────────────────────────────────────────── */}
-      <Dialog
-        open={previewNewsletter !== null}
-        onOpenChange={(o) => !o && setPreviewNewsletter(null)}
-      >
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Eye className="w-5 h-5" />
-              {previewNewsletter?.subject}
-            </DialogTitle>
-          </DialogHeader>
-          {previewNewsletter && (
-            <div className="py-2">
-              <div className="flex items-center gap-2 mb-4">
-                <Badge className={`text-xs ${STATUS_CONFIG[previewNewsletter.status].color}`}>
-                  {STATUS_CONFIG[previewNewsletter.status].label}
-                </Badge>
-                {previewNewsletter.sentCount != null && previewNewsletter.sentCount > 0 && (
-                  <Badge variant="outline" className="text-xs gap-1">
-                    <Users className="w-3 h-3" />
-                    {previewNewsletter.sentCount} recipients
-                  </Badge>
-                )}
-              </div>
-              <div
-                className="prose prose-sm max-w-none border rounded-lg p-6 bg-card text-card-foreground"
-                dangerouslySetInnerHTML={{ __html: previewNewsletter.finalContent }}
-              />
+        {list.isLoading ? (
+          <div className="space-y-2">{[1, 2, 3].map((i) => <div key={i} className="h-14 bg-muted animate-pulse" />)}</div>
+        ) : list.isError ? (
+          <p className="text-sm text-red-300">Couldn't load emails: {list.error.message}</p>
+        ) : rows.length === 0 ? (
+          <div className="py-14 text-center border border-[#57544E]">
+            <Mail className="w-9 h-9 text-muted-foreground mx-auto mb-3" />
+            <p className="text-muted-foreground">{filter === "all" ? "No emails yet." : "Nothing here."}</p>
+          </div>
+        ) : (
+          <>
+            {/* Desktop table */}
+            <div className="hidden md:block border border-[#57544E] overflow-x-auto">
+              <table className="w-full text-sm" data-testid="sent-emails-table">
+                <thead className="bg-[#363330] text-[11px] uppercase tracking-[0.1em] text-[#BABAAE]">
+                  <tr>
+                    <th className="text-left font-medium px-3 py-2">Subject</th>
+                    <th className="text-left font-medium px-3 py-2">Sender</th>
+                    <th className="text-left font-medium px-3 py-2">Date</th>
+                    <th className="text-left font-medium px-3 py-2">Recipient group</th>
+                    <th className="text-right font-medium px-3 py-2">Sent</th>
+                    <th className="text-right font-medium px-3 py-2">Failed</th>
+                    <th className="text-left font-medium px-3 py-2">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#57544E]/60">
+                  {rows.map((e) => (
+                    <tr key={e.id} className="hover:bg-white/5 cursor-pointer" onClick={() => setDetailId(e.id)}>
+                      <td className="px-3 py-2.5 max-w-[18rem]"><button type="button" className="text-left text-[#E0D3BD] hover:underline truncate block max-w-full" onClick={(ev) => { ev.stopPropagation(); setDetailId(e.id); }}>{e.subject}</button></td>
+                      <td className="px-3 py-2.5 text-[#BABAAE] truncate max-w-[10rem]">{sender(e)}</td>
+                      <td className="px-3 py-2.5 text-[#BABAAE] whitespace-nowrap">{fmtDateTime(dateFor(e))}</td>
+                      <td className="px-3 py-2.5 text-[#BABAAE] truncate max-w-[14rem]">{e.audienceLabel ?? "—"}</td>
+                      <td className="px-3 py-2.5 text-right tabular-nums">{e.status === "sent" || e.status === "sending" ? e.sentCount ?? 0 : "—"}</td>
+                      <td className={`px-3 py-2.5 text-right tabular-nums ${e.failedCount > 0 ? "text-red-300" : ""}`}>{e.status === "sent" ? e.failedCount : "—"}</td>
+                      <td className="px-3 py-2.5"><StatusBadge status={e.status} /></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-          )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setPreviewNewsletter(null)}>Close</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            {/* Mobile cards */}
+            <ul className="md:hidden space-y-2" data-testid="sent-emails-cards">
+              {rows.map((e) => (
+                <li key={e.id}>
+                  <button type="button" onClick={() => setDetailId(e.id)} className="w-full text-left p-3 border border-[#57544E] hover:bg-white/5 space-y-1.5">
+                    <div className="flex items-start justify-between gap-2">
+                      <span className="font-medium text-[#E0D3BD] break-words min-w-0">{e.subject}</span>
+                      <StatusBadge status={e.status} />
+                    </div>
+                    <p className="text-xs text-[#BABAAE]">{sender(e)} · {fmtDateTime(dateFor(e))}</p>
+                    <p className="text-xs text-[#BABAAE] flex items-center gap-1.5"><Users className="w-3.5 h-3.5" />{e.audienceLabel ?? "Recipients not chosen"}</p>
+                    {(e.status === "sent" || e.status === "sending") && (
+                      <p className="text-xs"><span className="text-emerald-300">{e.sentCount ?? 0} sent</span>{e.failedCount > 0 && <span className="text-red-300"> · {e.failedCount} failed</span>}</p>
+                    )}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+      </section>
 
-      {/* ── Send Confirmation ──────────────────────────────────────────── */}
-      <AlertDialog open={sendConfirmId !== null} onOpenChange={(o) => !o && setSendConfirmId(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Send Newsletter to All Members?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will send the newsletter to all active members. This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-amber-600 hover:bg-amber-700 text-white"
-              onClick={handleSend}
-              disabled={sending}
-            >
-              {sending ? "Sending…" : "Send Newsletter"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* ── Delete Confirmation ────────────────────────────────────────── */}
-      <AlertDialog open={deleteId !== null} onOpenChange={(o) => !o && setDeleteId(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Newsletter?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This draft will be permanently deleted. This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              onClick={() => deleteId !== null && deleteMutation.mutate({ id: deleteId })}
-            >
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {detailId !== null && (
+        <EmailDetailDialog
+          id={detailId}
+          access={a}
+          currentUserId={user?.id}
+          onClose={() => setDetailId(null)}
+          onEdit={(id) => { setDetailId(null); setView({ mode: "compose", id }); }}
+        />
+      )}
+      <GenerateDraftDialog open={generateOpen} onOpenChange={setGenerateOpen} onCreated={(id) => setView({ mode: "compose", id })} />
     </div>
   );
 }
