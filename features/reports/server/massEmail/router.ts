@@ -23,7 +23,7 @@ import { newsletters, emailRecipients, emailSettings, type Newsletter } from "..
 import { staffInfo, type StaffInfo } from "./access";
 import { audienceLabel, emailAudienceSchema, resolveAudience, searchPeople, type EmailAudience } from "./audience";
 import { htmlToPlainText, renderEmail, sanitizeBodyHtml } from "./content";
-import { emailFromAddress, fromHeader, publicSiteUrl, resendConfigured } from "./config";
+import { emailFromAddress, fromHeader, publicSiteUrl, resendConfigured, resendKeyHint } from "./config";
 import { buildMessage, startSend } from "./deliver";
 import { sendOne } from "./sender";
 
@@ -224,8 +224,14 @@ export const massEmailRouter = router({
         replyTo: to,
       }, to);
       const res = await sendOne(msg, apiKey);
-      if (!res.ok) throw new TRPCError({ code: "BAD_GATEWAY", message: `The test email couldn't be sent: ${res.error}` });
-      return { sentTo: to };
+      const key = resendKeyHint(apiKey);
+      if (!res.ok) {
+        console.error(`[mass-email] test email FAILED to=${to} key=${key}: ${res.error}`);
+        throw new TRPCError({ code: "BAD_GATEWAY", message: `The test email couldn't be sent: ${res.error}` });
+      }
+      // One line per send so it can be matched in Resend → Emails (ID) and API Keys (key ending).
+      console.log(`[mass-email] test email sent resend_id=${res.id} to=${to} key=${key}`);
+      return { sentTo: to, resendId: res.id };
     }),
 
   /** Send now / schedule. Employees go to Pending approval when the setting is on. */

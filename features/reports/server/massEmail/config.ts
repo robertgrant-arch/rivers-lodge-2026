@@ -30,10 +30,8 @@ export function resendConfigured(env: NodeJS.ProcessEnv = process.env): boolean 
   return !!env.RESEND_API_KEY;
 }
 
-/** Resend API origin (overridable only for local testing). */
-export function resendApiBase(env: NodeJS.ProcessEnv = process.env): string {
-  return (env.RESEND_API_BASE || "https://api.resend.com").replace(/\/+$/, "");
-}
+/** Resend API origin and key hint: shared with the transactional mailer. */
+export { resendApiBase, resendKeyHint } from "@core/server/resend";
 
 /** Secret for signing unsubscribe links: EMAIL_UNSUBSCRIBE_SECRET, else derived from DATABASE_URL. */
 export function unsubscribeSecret(env: NodeJS.ProcessEnv = process.env): string | null {

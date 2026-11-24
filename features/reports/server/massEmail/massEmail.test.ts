@@ -152,3 +152,52 @@ describe("staffInfo (server permission rule)", () => {
     expect(await staffInfo(dbWith(null), null)).toBeNull();
   });
 });
+
+// ── Success only with a Resend email ID ─────────────────────────────────────
+import { sendOne, NO_ID_ERROR } from "./sender";
+import { resendApiBase, resendKeyHint, resendEmailId } from "@core/server/resend";
+
+describe("Resend confirmation", () => {
+  const m: OutMessage = { to: "a@x.com", subject: "S", html: "<p>x</p>", text: "x", from: "A at Rivers Lodge <info@riverslodgehunt.com>" };
+  const noWait = async () => {};
+  afterEach(() => vi.unstubAllGlobals());
+  const reply = (status: number, body: string) => new Response(body, { status, headers: { "content-type": "application/json" } });
+
+  it("returns Resend's email ID on success", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => reply(200, JSON.stringify({ id: "49a3999c-0ce1-4ea6-ab68-afcd6dc2e794" }))));
+    expect(await sendOne(m, "re_test_key_1234", noWait)).toEqual({ to: "a@x.com", ok: true, id: "49a3999c-0ce1-4ea6-ab68-afcd6dc2e794" });
+  });
+  it("treats a 2xx with no ID, or a non-JSON 2xx, as NOT sent", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => reply(200, "{}")));
+    expect(await sendOne(m, "k", noWait)).toEqual({ to: "a@x.com", ok: false, error: NO_ID_ERROR });
+    vi.stubGlobal("fetch", vi.fn(async () => reply(200, "<html>ok</html>")));
+    expect((await sendOne(m, "k", noWait)).ok).toBe(false);
+  });
+  it("marks batch items without an ID as failed", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => reply(200, JSON.stringify({ data: [{ id: "m1" }] }))));
+    const out = await sendBatch([m, { ...m, to: "b@x.com" }], "k", noWait);
+    expect(out).toEqual([{ to: "a@x.com", ok: true, id: "m1" }, { to: "b@x.com", ok: false, error: NO_ID_ERROR }]);
+  });
+  it("surfaces Resend's error response", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => reply(403, JSON.stringify({ message: "The riverslodgehunt.com domain is not verified" }))));
+    const r = await sendOne(m, "k", noWait);
+    expect(r.ok).toBe(false);
+    expect((r as any).error).toContain("Resend 403");
+    expect((r as any).error).toContain("not verified");
+  });
+  it("resendEmailId only accepts a non-empty string id", () => {
+    expect(resendEmailId({ id: "abc" })).toBe("abc");
+    for (const v of [{}, { id: "" }, { id: 5 }, null, undefined, "x"]) expect(resendEmailId(v)).toBeNull();
+  });
+  it("key hint shows only the last 4 characters", () => {
+    expect(resendKeyHint("re_ABCDEFGH_wxyz")).toBe("…wxyz");
+    expect(resendKeyHint("")).toBe("");
+    expect(resendKeyHint("abc")).toBe("…(short key)");
+  });
+  it("ignores RESEND_API_BASE in production unless it is localhost", () => {
+    expect(resendApiBase({} as any)).toBe("https://api.resend.com");
+    expect(resendApiBase({ NODE_ENV: "production", RESEND_API_BASE: "https://evil.example.com" } as any)).toBe("https://api.resend.com");
+    expect(resendApiBase({ NODE_ENV: "production", RESEND_API_BASE: "http://localhost:5198" } as any)).toBe("http://localhost:5198");
+    expect(resendApiBase({ NODE_ENV: "development", RESEND_API_BASE: "https://staging.example.com/" } as any)).toBe("https://staging.example.com");
+  });
+});

@@ -6,6 +6,7 @@
  * bad addresses fail.
  */
 import { resendApiBase } from "./config";
+import { resendEmailId } from "@core/server/resend";
 
 export type OutMessage = {
   to: string;
@@ -17,7 +18,10 @@ export type OutMessage = {
   headers?: Record<string, string>;
 };
 
-export type SendResult = { to: string; ok: true; id: string | null } | { to: string; ok: false; error: string };
+/** ok only when Resend returned an email ID for this message. */
+export type SendResult = { to: string; ok: true; id: string } | { to: string; ok: false; error: string };
+
+export const NO_ID_ERROR = "Resend accepted the request but returned no email ID, so delivery can't be confirmed";
 
 export const BATCH_SIZE = 100;
 /** Resend's default limit is 2 requests/second; stay under it. */
@@ -77,7 +81,9 @@ async function postWithRetry(path: string, body: unknown, apiKey: string, wait: 
 /** Send one email (used for "Send test to me"). */
 export async function sendOne(m: OutMessage, apiKey: string, wait = sleep): Promise<SendResult> {
   const r = await postWithRetry("/emails", payload(m), apiKey, wait);
-  return r.ok ? { to: m.to, ok: true, id: r.json?.id ?? null } : { to: m.to, ok: false, error: r.error };
+  if (!r.ok) return { to: m.to, ok: false, error: r.error };
+  const id = resendEmailId(r.json);
+  return id ? { to: m.to, ok: true, id } : { to: m.to, ok: false, error: NO_ID_ERROR };
 }
 
 /** Send up to BATCH_SIZE emails in one request; falls back to one-by-one if the batch is rejected. */
@@ -86,8 +92,11 @@ export async function sendBatch(messages: OutMessage[], apiKey: string, wait = s
   if (messages.length > BATCH_SIZE) throw new Error(`Batch too large (${messages.length} > ${BATCH_SIZE})`);
   const r = await postWithRetry("/emails/batch", messages.map(payload), apiKey, wait);
   if (r.ok) {
-    const ids: Array<{ id?: string }> = Array.isArray(r.json?.data) ? r.json.data : [];
-    return messages.map((m, i) => ({ to: m.to, ok: true as const, id: ids[i]?.id ?? null }));
+    const ids: unknown[] = Array.isArray(r.json?.data) ? r.json.data : [];
+    return messages.map((m, i): SendResult => {
+      const id = resendEmailId(ids[i]);
+      return id ? { to: m.to, ok: true, id } : { to: m.to, ok: false, error: NO_ID_ERROR };
+    });
   }
   if (r.retryable) return messages.map((m) => ({ to: m.to, ok: false as const, error: r.error }));
   // Whole batch rejected (validation): isolate the bad ones.

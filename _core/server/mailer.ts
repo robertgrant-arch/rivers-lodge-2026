@@ -13,6 +13,8 @@
  *   APP_BASE_URL     — public site origin, so invite links point at the live domain
  */
 
+import { resendApiBase, resendEmailId, resendKeyHint } from "./resend";
+
 const BRAND = "Rivers Lodge & Hunt Club";
 
 function mailFrom() {
@@ -32,9 +34,11 @@ async function sendViaResend(opts: {
   subject: string;
   text: string;
   html: string;
+  logLabel: string;
 }): Promise<boolean> {
+  const key = resendKeyHint(process.env.RESEND_API_KEY);
   try {
-    const res = await fetch("https://api.resend.com/emails", {
+    const res = await fetch(`${resendApiBase()}/emails`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
@@ -48,14 +52,22 @@ async function sendViaResend(opts: {
         text: opts.text,
       }),
     });
+    const body = await res.text().catch(() => "");
     if (!res.ok) {
-      const body = await res.text().catch(() => "");
-      console.error(`[Mailer] Resend send failed (${res.status}): ${body}`);
+      console.error(`[Mailer] Resend send FAILED (${res.status}) ${opts.logLabel} to=${opts.to} key=${key}: ${body.slice(0, 300)}`);
       return false;
     }
+    let id: string | null = null;
+    try { id = resendEmailId(JSON.parse(body)); } catch { /* not JSON */ }
+    if (!id) {
+      // Only count it as sent when Resend confirms with an email ID.
+      console.error(`[Mailer] Resend returned ${res.status} without an email ID — treating as NOT sent (${opts.logLabel} to=${opts.to} key=${key})`);
+      return false;
+    }
+    console.log(`[Mailer] sent ${opts.logLabel} resend_id=${id} to=${opts.to} key=${key}`);
     return true;
   } catch (err) {
-    console.error("[Mailer] Resend request error:", err);
+    console.error(`[Mailer] Resend request error (${opts.logLabel} to=${opts.to} key=${key}):`, err);
     return false;
   }
 }
