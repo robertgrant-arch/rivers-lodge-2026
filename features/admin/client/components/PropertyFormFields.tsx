@@ -42,6 +42,7 @@ export function CoverPhotoField({
   fileName,
   busy,
   canClear,
+  error,
   onSelect,
   onClear,
 }: {
@@ -51,6 +52,8 @@ export function CoverPhotoField({
   busy: boolean;
   /** Show the remove (×) button — only for a photo picked in this session. */
   canClear: boolean;
+  /** Last upload error, shown under the control until the next pick. */
+  error?: string | null;
   onSelect: (file: File) => void;
   onClear: () => void;
 }) {
@@ -97,6 +100,12 @@ export function CoverPhotoField({
           </button>
         )}
       </div>
+      {error && (
+        <p role="alert" data-testid={`${idPrefix}-cover-photo-error`} className="flex items-start gap-1.5 text-xs text-red-300">
+          <AlertTriangle className="w-3.5 h-3.5 mt-0.5 shrink-0" aria-hidden="true" />
+          {error}
+        </p>
+      )}
       {imageUrl && (
         <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-stone-800 border border-stone-700">
           <img src={imageUrl} alt="Cover preview" className="w-full h-full object-cover" data-testid={`${idPrefix}-cover-photo-preview`} />

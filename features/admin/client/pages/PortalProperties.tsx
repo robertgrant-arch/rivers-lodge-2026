@@ -116,6 +116,7 @@ function CreatePropertyForm({
   });
   const [mapsBusy, setMapsBusy] = useState(false);
   const [isUploadingCoverPhoto, setIsUploadingCoverPhoto] = useState(false);
+  const [coverPhotoError, setCoverPhotoError] = useState<string | null>(null);
 
   const set = (key: string, value: any) => setForm((f) => ({ ...f, [key]: value }));
   const uploadCoverPhoto = trpc.propertyBooking.admin.properties.uploadCoverPhoto.useMutation();
@@ -126,6 +127,7 @@ function CreatePropertyForm({
   };
 
   const handleCoverPhotoFileSelect = async (file: File) => {
+    setCoverPhotoError(null);
     setIsUploadingCoverPhoto(true);
     // Validate + resize in the browser first (phone photos are usually 3–12 MB;
     // the API only accepts the resized result — see @shared/uploadLimits).
@@ -133,7 +135,9 @@ function CreatePropertyForm({
     try {
       prepared = await prepareCoverPhoto(file);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Couldn't read that photo.");
+      const message = err instanceof Error ? err.message : "Couldn't read that photo.";
+      setCoverPhotoError(message);
+      toast.error(message);
       setIsUploadingCoverPhoto(false);
       return;
     }
@@ -148,7 +152,9 @@ function CreatePropertyForm({
       set("coverImageFileName", file.name);
       toast.success(`Cover photo "${file.name}" uploaded`);
     } catch (err) {
-      toast.error(coverPhotoUploadErrorMessage(err));
+      const message = coverPhotoUploadErrorMessage(err);
+      setCoverPhotoError(message);
+      toast.error(message);
     } finally {
       setIsUploadingCoverPhoto(false);
     }
@@ -167,6 +173,8 @@ function CreatePropertyForm({
       toast.error(DIRECTIONS_URL_HELP); return;
     }
     if (mapsBusy) { toast.error("Please wait for the map upload to finish."); return; }
+    // The cover photo uploads when picked; saving before it finishes would drop it.
+    if (isUploadingCoverPhoto) { toast.error("Please wait for the cover photo upload to finish."); return; }
 
     // Filter booking modes based on overnightEnabled
     const finalBookingModes = form.overnightEnabled
@@ -339,8 +347,9 @@ function CreatePropertyForm({
           fileName={form.coverImageFileName}
           busy={isUploadingCoverPhoto}
           canClear={!!form.coverImageFile}
+          error={coverPhotoError}
           onSelect={handleCoverPhotoFileSelect}
-          onClear={() => { set("coverImageFile", null); set("coverImageUrl", ""); set("coverImageFileName", ""); }}
+          onClear={() => { set("coverImageFile", null); set("coverImageUrl", ""); set("coverImageFileName", ""); setCoverPhotoError(null); }}
         />
       </div>
 
@@ -415,6 +424,7 @@ function EditPropertyForm({
   });
   const [mapsBusy, setMapsBusy] = useState(false);
   const [isUploadingCoverPhoto, setIsUploadingCoverPhoto] = useState(false);
+  const [coverPhotoError, setCoverPhotoError] = useState<string | null>(null);
   const [propertySkillGroupAccess, setPropertySkillGroupAccess] = useState<Record<number, boolean>>({});
   const [activitiesDirty, setActivitiesDirty] = useState(false);
 
@@ -433,6 +443,7 @@ function EditPropertyForm({
   });
 
   const handleCoverPhotoFileSelect = async (file: File) => {
+    setCoverPhotoError(null);
     setIsUploadingCoverPhoto(true);
     // Validate + resize in the browser first (phone photos are usually 3–12 MB;
     // the API only accepts the resized result — see @shared/uploadLimits).
@@ -440,7 +451,9 @@ function EditPropertyForm({
     try {
       prepared = await prepareCoverPhoto(file);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Couldn't read that photo.");
+      const message = err instanceof Error ? err.message : "Couldn't read that photo.";
+      setCoverPhotoError(message);
+      toast.error(message);
       setIsUploadingCoverPhoto(false);
       return;
     }
@@ -455,7 +468,9 @@ function EditPropertyForm({
       set("coverImageFileName", file.name);
       toast.success(`Cover photo "${file.name}" uploaded`);
     } catch (err) {
-      toast.error(coverPhotoUploadErrorMessage(err));
+      const message = coverPhotoUploadErrorMessage(err);
+      setCoverPhotoError(message);
+      toast.error(message);
     } finally {
       setIsUploadingCoverPhoto(false);
     }
@@ -485,6 +500,8 @@ function EditPropertyForm({
       toast.error(DIRECTIONS_URL_HELP); return;
     }
     if (mapsBusy) { toast.error("Please wait for the map upload to finish."); return; }
+    // The cover photo uploads when picked; saving before it finishes would drop it.
+    if (isUploadingCoverPhoto) { toast.error("Please wait for the cover photo upload to finish."); return; }
 
     // Filter booking modes based on overnightEnabled
     const finalBookingModes = form.overnightEnabled
@@ -643,8 +660,9 @@ function EditPropertyForm({
           fileName={form.coverImageFileName}
           busy={isUploadingCoverPhoto}
           canClear={!!form.coverImageFile}
+          error={coverPhotoError}
           onSelect={handleCoverPhotoFileSelect}
-          onClear={() => { set("coverImageFile", null); set("coverImageUrl", ""); set("coverImageFileName", ""); }}
+          onClear={() => { set("coverImageFile", null); set("coverImageUrl", ""); set("coverImageFileName", ""); setCoverPhotoError(null); }}
         />
       </div>
 
