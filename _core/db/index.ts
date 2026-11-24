@@ -3,6 +3,7 @@ export * from './schema';
 export * from './portal-schema';
 export * from './booking-schema';
 export * from './property-booking-schema';
+export * from './storage-schema';
 
 // ─── Collision resolution ─────────────────────────────────────────────────────
 // Both ./schema (via features/property-slot-config, a catalog design that was
