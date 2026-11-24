@@ -8,11 +8,12 @@ import { Button } from "@shared/ui/button";
 import { Input } from "@shared/ui/input";
 import { Label } from "@shared/ui/label";
 import { Checkbox } from "@shared/ui/checkbox";
-import { FileText, Loader2, Upload, Trash2, RefreshCw, ExternalLink, AlertTriangle } from "lucide-react";
+import { FileText, Loader2, Upload, Trash2, RefreshCw, ExternalLink, AlertTriangle, X } from "lucide-react";
 import { toast } from "sonner";
 import { PROPERTY_ACTIVITIES, toDisplayActivities, type PropertyActivityKey } from "@shared/propertyActivities";
 import { DIRECTIONS_URL_HELP, PROPERTY_MAP_UPLOAD, isDirectionsUrl } from "@shared/propertyRules";
 import { prepareMapUpload, mapUploadErrorMessage, MAP_UPLOAD_HELP } from "../lib/prepareMapUpload";
+import { COVER_PHOTO_HELP } from "../lib/prepareCoverPhoto";
 
 export type MapItem = { id?: number; url: string; label: string };
 
@@ -25,6 +26,85 @@ const LEGACY_LABELS: Record<string, string> = {
 export const legacyActivityLabel = (v: string) => LEGACY_LABELS[v] ?? v;
 
 const isPdf = (url: string) => /\.pdf($|\?)/i.test(url);
+
+// ─── Cover Photo ─────────────────────────────────────────────────────────────
+
+/**
+ * Cover photo picker. Same pattern as "Upload map(s)": a real type="button"
+ * that opens a hidden file input through a ref. (The old control wrapped a
+ * <button> in a <label htmlFor>; browsers don't forward a click on a button
+ * inside a label to its input, so the file picker never opened.)
+ * Validation, resizing and upload stay in the parent's onSelect handler.
+ */
+export function CoverPhotoField({
+  idPrefix,
+  imageUrl,
+  fileName,
+  busy,
+  canClear,
+  onSelect,
+  onClear,
+}: {
+  idPrefix: string;
+  imageUrl: string;
+  fileName: string;
+  busy: boolean;
+  /** Show the remove (×) button — only for a photo picked in this session. */
+  canClear: boolean;
+  onSelect: (file: File) => void;
+  onClear: () => void;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const helpId = `${idPrefix}-cover-photo-help`;
+  return (
+    <div className="space-y-1.5">
+      <Label id={`${idPrefix}-cover-photo-label`} className="text-stone-300 text-sm">Cover Photo (JPG or PNG)</Label>
+      <p id={helpId} className="text-xs text-stone-500">{COVER_PHOTO_HELP}</p>
+      <div className="flex items-center gap-2">
+        <input
+          ref={inputRef}
+          id={`${idPrefix}-cover-photo`}
+          type="file"
+          accept=".png,.jpg,.jpeg,image/png,image/jpeg"
+          className="hidden"
+          tabIndex={-1}
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            // Clear so picking the same file again still fires onChange.
+            if (inputRef.current) inputRef.current.value = "";
+            if (file) onSelect(file);
+          }}
+        />
+        <Button
+          type="button"
+          variant="outline"
+          disabled={busy}
+          onClick={() => inputRef.current?.click()}
+          aria-labelledby={`${idPrefix}-cover-photo-label ${idPrefix}-cover-photo-button-text`}
+          aria-describedby={helpId}
+          data-testid={`${idPrefix}-cover-photo-button`}
+          className="flex-1 w-full bg-stone-800 border-stone-700 text-stone-300 hover:bg-stone-700 disabled:opacity-50"
+        >
+          {busy ? (
+            <><Loader2 className="w-4 h-4 mr-2 animate-spin" /><span id={`${idPrefix}-cover-photo-button-text`}>Uploading...</span></>
+          ) : (
+            <><Upload className="w-4 h-4 mr-2" /><span id={`${idPrefix}-cover-photo-button-text`}>{fileName || "Choose file"}</span></>
+          )}
+        </Button>
+        {canClear && !busy && (
+          <button type="button" onClick={onClear} aria-label="Remove cover photo" className="p-2 hover:bg-stone-700 rounded">
+            <X className="w-4 h-4 text-stone-400" />
+          </button>
+        )}
+      </div>
+      {imageUrl && (
+        <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-stone-800 border border-stone-700">
+          <img src={imageUrl} alt="Cover preview" className="w-full h-full object-cover" data-testid={`${idPrefix}-cover-photo-preview`} />
+        </div>
+      )}
+    </div>
+  );
+}
 
 // ─── Maps & Directions ───────────────────────────────────────────────────────
 

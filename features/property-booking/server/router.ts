@@ -255,6 +255,16 @@ const mapItemInput = z.object({
 });
 const mapsInput = z.array(mapItemInput).max(PROPERTY_MAP_UPLOAD.maxMaps).optional();
 
+/**
+ * Cover photo URL from uploadCoverPhoto, which returns a site path
+ * ("/manus-storage/…"), or an existing absolute URL. z.string().url() rejected
+ * the site path, so "Save Changes" failed with "Invalid URL" after every upload.
+ */
+const coverImageUrlInput = z
+  .string()
+  .max(500)
+  .refine((u) => u.startsWith("/manus-storage/") || /^https?:\/\//.test(u), { message: "Upload the cover photo first" });
+
 type MapRow = { id: number; url: string; label: string | null; sortOrder: number };
 
 /** Active maps for the given properties, in display order. */
@@ -1460,7 +1470,7 @@ export const propertyBookingRouter = router({
           gpsLat: z.number().optional(),
           gpsLng: z.number().optional(),
           locationNotes: z.string().max(300).optional(),
-          coverImageUrl: z.string().url().optional(),
+          coverImageUrl: coverImageUrlInput.optional(),
           mapImageUrl: z.string().url().optional(),
           mapUrl: z.string().url().optional(),
           gateCode: z.string().max(255).optional(),
@@ -1616,7 +1626,7 @@ export const propertyBookingRouter = router({
           active: z.boolean().optional(),
           featuredOnPublicSite: z.boolean().optional(),
           sortOrder: z.number().int().optional(),
-          coverImageUrl: z.string().url().optional(),
+          coverImageUrl: coverImageUrlInput.optional(),
           mapImageUrl: z.string().url().optional(),
           mapUrl: z.string().url().optional(),
           gateCode: z.string().max(255).optional(),
