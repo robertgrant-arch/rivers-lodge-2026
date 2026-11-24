@@ -82,3 +82,20 @@ describe("tabs and active state", () => {
     expect(isPortalNavItemActive(byKey("roster"), "/portal/calendar/mine", "")).toBe(false);
   });
 });
+
+import { ADMIN_HOME_HREF, canShowBackToAdmin } from "./portalNav";
+
+describe("Back to Admin", () => {
+  it("shows only for an admin session role, linking to the Operations Portal", () => {
+    expect(ADMIN_HOME_HREF).toBe("/ops");
+    expect(canShowBackToAdmin({ role: "admin" })).toBe(true);
+  });
+  it("never shows for members, other staff roles, or signed-out users", () => {
+    // Member logins carry the "employee" role; the "Admin / Staff" label is display-only.
+    for (const role of ["employee", "user", "member", "staff", "owner", "", null, undefined]) {
+      expect(canShowBackToAdmin({ role })).toBe(false);
+    }
+    expect(canShowBackToAdmin(null)).toBe(false);
+    expect(canShowBackToAdmin(undefined)).toBe(false);
+  });
+});

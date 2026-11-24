@@ -81,6 +81,19 @@ export const PORTAL_NAV_ITEMS: readonly PortalNavItem[] = [
   },
 ];
 
+/** Where "Back to Admin" goes: the existing Operations Portal route. */
+export const ADMIN_HOME_HREF = "/ops";
+
+/**
+ * Show "Back to Admin" in the portal menu? Only for a signed-in user whose
+ * session role (from the server, auth.me) is admin — the same check the
+ * Operations Portal and the admin APIs use. Never based on the membership
+ * label shown on the page, and never for members.
+ */
+export function canShowBackToAdmin(user: { role?: string | null } | null | undefined): boolean {
+  return user?.role === "admin";
+}
+
 /** Is this option switched on in the menus? (Ignores per-user `requires`.) */
 export function isPortalOptionVisible(key: PortalNavKey): boolean {
   return PORTAL_NAV_ITEMS.some((i) => i.key === key && i.visible);
