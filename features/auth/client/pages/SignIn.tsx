@@ -9,8 +9,12 @@ export default function SignIn() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
 
+  const utils = trpc.useUtils();
   const loginMutation = trpc.auth.login.useMutation({
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
+      // Load the signed-in account before moving on, so the next page doesn't
+      // see the stale "signed out" answer and bounce back to sign-in.
+      await utils.auth.me.fetch(undefined, { staleTime: 0 }).catch(() => {});
       if (data.mustChangePassword) {
         navigate("/account/change-password");
       } else if (data.role === "admin") {

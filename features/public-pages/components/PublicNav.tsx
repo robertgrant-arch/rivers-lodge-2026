@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import type { KeyboardEvent as ReactKeyboardEvent } from "react";
 import { Link, useLocation } from "wouter";
-import { Menu, X, ChevronDown, ChevronRight, LogOut, User } from "lucide-react";
+import { Menu, X, ChevronDown, ChevronRight, KeyRound, LogOut, User } from "lucide-react";
 import { useAuth, getLoginUrl } from '@features/auth/public';
 
 
@@ -522,6 +522,14 @@ export default function PublicNav() {
                       <User size={13} />
                       {getPortalLabel(user?.role)}
                     </Link>
+                    <Link
+                      href="/account/change-password"
+                      onClick={() => setUserMenuOpen(false)}
+                      className="flex items-center gap-2.5 px-4 py-3 text-[11px] tracking-[0.12em] uppercase font-sans text-[#E0D3BD] hover:bg-[#423F3B] transition-colors"
+                    >
+                      <KeyRound size={13} />
+                      Change Password
+                    </Link>
                     <div className="border-t border-[#57544E]" />
                     <button
                       onClick={() => { setUserMenuOpen(false); logout(); }}
@@ -578,6 +586,14 @@ export default function PublicNav() {
                 >
                   <User size={13} />
                   {getPortalLabel(user?.role)}
+                </Link>
+                <Link
+                  href="/account/change-password"
+                  onClick={() => setMobileOpen(false)}
+                  className="inline-flex items-center justify-center gap-2 w-full py-3 text-[11px] tracking-[0.16em] uppercase font-sans font-medium text-[#E0D3BD] hover:opacity-70 transition-opacity"
+                >
+                  <KeyRound size={13} />
+                  Change Password
                 </Link>
                 <button
                   onClick={() => { setMobileOpen(false); logout(); }}

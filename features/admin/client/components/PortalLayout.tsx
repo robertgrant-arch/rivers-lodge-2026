@@ -47,6 +47,7 @@ import {
   TreePine,
   FileText,
   Newspaper,
+  KeyRound,
 } from "lucide-react";
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
@@ -294,6 +295,12 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
                   <Link href="/" className="flex items-center gap-2 cursor-pointer">
                     <Home className="w-4 h-4" />
                     Public Site
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/account/change-password" className="flex items-center gap-2 cursor-pointer" data-testid="account-change-password">
+                    <KeyRound className="w-4 h-4" />
+                    Account / Change Password
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />

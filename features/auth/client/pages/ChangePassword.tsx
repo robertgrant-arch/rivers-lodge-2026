@@ -4,12 +4,11 @@ import { trpc } from "@shared/lib/trpc";
 import { AuthCard, AuthError, AuthField, AuthButton } from "../components/AuthCard";
 import { useAuth } from "../useAuth";
 
-const RULES = [
-  { test: (p: string) => p.length >= 12, label: "At least 12 characters" },
-  { test: (p: string) => /[A-Z]/.test(p), label: "One uppercase letter" },
-  { test: (p: string) => /[0-9]/.test(p), label: "One number" },
-  { test: (p: string) => /[^A-Za-z0-9]/.test(p), label: "One special character" },
-];
+import { toast } from "sonner";
+import { PASSWORD_RULES as RULES } from "@shared/passwordRules";
+
+/** Where to go after changing the password (or cancelling). */
+const homeFor = (role?: string | null) => (role === "admin" ? "/ops" : "/portal");
 
 export default function ChangePassword() {
   const [, navigate] = useLocation();
@@ -20,8 +19,14 @@ export default function ChangePassword() {
   const [confirm, setConfirm] = useState("");
   const [error, setError] = useState<string | null>(null);
 
+  const utils = trpc.useUtils();
   const mutation = trpc.auth.changePassword.useMutation({
-    onSuccess: () => navigate("/portal"),
+    // Only reached when the server confirms the new password was saved.
+    onSuccess: async () => {
+      toast.success("Your password has been changed.");
+      await utils.auth.me.invalidate();
+      navigate(homeFor(user?.role));
+    },
     onError: (err) => setError(err.message),
   });
 
@@ -64,7 +69,7 @@ export default function ChangePassword() {
             fontSize: "12px",
           }}
         >
-          Your account requires a password change before you can access the site.
+          You're signed in with a temporary password. Choose your own password to continue. Enter the temporary password as your current password.
         </div>
       )}
 
@@ -125,7 +130,7 @@ export default function ChangePassword() {
         {!forced && (
           <button
             type="button"
-            onClick={() => navigate("/portal")}
+            onClick={() => navigate(homeFor(user.role))}
             className="w-full mt-3 py-2 font-sans transition-colors"
             style={{ fontSize: "12px", color: "oklch(0.50 0.005 64)" }}
           >

@@ -38,7 +38,9 @@ import {
 } from "@features/cms/public";
 import { randomBytes, createHash } from "crypto";
 import { invites } from "@features/auth/schema";
-import { sendInviteEmail, sendPasswordResetNotification, sendWaiverEmail } from "@core/server/mailer";
+import { sendInviteEmail, sendPasswordResetNotification, sendWaiverEmail, sendAccountCreatedEmail } from "@core/server/mailer";
+import { hash as argon2hash } from "argon2";
+import { passwordProblems, PASSWORD_MAX_LENGTH } from "@shared/passwordRules";
 import { storagePut, storageGetSignedUrl } from "@core/server/storage";
 import { ENV } from "@core/server/env";
 import { getPortalDb } from "@core/server/db";
@@ -2145,6 +2147,73 @@ const usersAdminRouter = router({
       });
 
       return { inviteUrl, emailSent };
+    }),
+
+  /**
+   * Create an account directly with a temporary password (no invite link).
+   * The password is hashed (argon2id) and never stored, logged or emailed;
+   * the account must change it at first sign-in. The user is emailed a
+   * sign-in link only. Success means the account was saved; emailSent says
+   * whether Resend confirmed the email.
+   */
+  createWithPassword: ownerProcedure
+    .input(z.object({
+      email: z.string().trim().email("Enter a valid email address"),
+      role: z.enum(["admin", "employee"]),
+      temporaryPassword: z.string().max(PASSWORD_MAX_LENGTH),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const problems = passwordProblems(input.temporaryPassword);
+      if (problems.length) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: `Temporary password needs: ${problems.join(", ").toLowerCase()}.` });
+      }
+      const db = getDb();
+      const email = input.email.toLowerCase();
+      const [existing] = await db.select().from(users).where(eq(users.email, email)).limit(1);
+      if (existing && existing.status !== "invited") {
+        throw new TRPCError({ code: "CONFLICT", message: `An account for ${email} already exists. Use Force Password Reset on the Users tab instead.` });
+      }
+
+      const passwordHash = await argon2hash(input.temporaryPassword, { type: 2 }); // argon2id, same as sign-in
+      let userId: string;
+      if (existing) {
+        // Pending invitation: turn it into an active account and retire the invite links.
+        userId = existing.id;
+        const [row] = await db.update(users)
+          .set({ role: input.role, status: "active", passwordHash, mustChangePassword: true })
+          .where(and(eq(users.id, userId), eq(users.status, "invited")))
+          .returning({ id: users.id });
+        if (!row) throw new TRPCError({ code: "CONFLICT", message: "That invitation was accepted in the meantime. Refresh and try again." });
+        await db.update(invites).set({ expiresAt: new Date() }).where(eq(invites.userId, userId));
+      } else {
+        userId = crypto.randomUUID();
+        await db.insert(users).values({
+          id: userId, email, role: input.role, status: "active",
+          passwordHash, mustChangePassword: true, createdAt: new Date(),
+        });
+      }
+      // Confirm the account really is saved before reporting success.
+      const [saved] = await db.select({ id: users.id, status: users.status, mustChangePassword: users.mustChangePassword, hasPassword: sql<boolean>`${users.passwordHash} is not null` })
+        .from(users).where(eq(users.id, userId)).limit(1);
+      if (!saved || saved.status !== "active" || !saved.mustChangePassword || !saved.hasPassword) {
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "The account couldn't be saved. Please try again." });
+      }
+
+      // Never email a localhost link from production if APP_BASE_URL is unset.
+      const base = process.env.NODE_ENV === "production" && /localhost|127\.0\.0\.1/.test(ENV.appBaseUrl) ? "https://riverslodgehunt.com" : ENV.appBaseUrl.replace(/\/+$/, "");
+      const signInUrl = `${base}/sign-in`;
+      const emailSent = await sendAccountCreatedEmail(email, signInUrl, ctx.user.email ?? "An admin");
+
+      await logAudit({
+        actingUserId: ctx.user.id,
+        actingUserName: ctx.user.email ?? "Admin",
+        actionType: "create",
+        entityType: "UserCreatedWithPassword",
+        entityId: userId,
+        newValue: `${email} (${input.role}); must change password${emailSent ? "" : "; sign-in email not delivered"}`,
+      });
+
+      return { userId, email, role: input.role, emailSent, signInUrl };
     }),
 
   resendInvite: ownerProcedure

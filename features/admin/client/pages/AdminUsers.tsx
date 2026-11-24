@@ -28,6 +28,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@shared/ui/tabs";
 import { useAuth } from "@features/auth/public";
 import type { UserRole } from "@features/auth/schema";
+import CreateUserWithPasswordDialog from "../components/CreateUserWithPasswordDialog";
 import {
   Shield,
   MoreHorizontal,
@@ -222,6 +223,7 @@ function ConfirmDialog({
 function InvitationsTab() {
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<UserRole>("employee");
+  const [createOpen, setCreateOpen] = useState(false);
   const [inviteUrl, setInviteUrl] = useState<string | null>(null);
 
   // Resend confirm state
@@ -275,7 +277,7 @@ function InvitationsTab() {
       {/* Invite form */}
       <div className="bg-[#363330] border border-[#57544E] p-6 space-y-5">
         <p className="font-sans text-xs tracking-[0.12em] uppercase text-[#BABAAE]">
-          Invite New Member
+          Add a Member or Admin
         </p>
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="flex-1 space-y-1.5">
@@ -303,7 +305,7 @@ function InvitationsTab() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="bg-[#363330] border-[#57544E] rounded-none text-[#E0D3BD]">
-                <SelectItem value="member" className="focus:bg-[#423F3B] focus:text-[#E0D3BD]">
+                <SelectItem value="employee" className="focus:bg-[#423F3B] focus:text-[#E0D3BD]">
                   Member
                 </SelectItem>
                 <SelectItem value="admin" className="focus:bg-[#423F3B] focus:text-[#E0D3BD]">
@@ -322,6 +324,17 @@ function InvitationsTab() {
               {inviteMutation.isPending ? "Sending…" : "Send Invite"}
             </Button>
           </div>
+          <div className="flex items-end">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setCreateOpen(true)}
+              className="border-[#57544E] text-[#E0D3BD] hover:border-[#9B4D19] hover:bg-[#9B4D19]/10 font-sans text-xs tracking-[0.1em] uppercase rounded-none h-10 px-5 w-full sm:w-auto"
+            >
+              <KeyRound className="w-3.5 h-3.5 mr-2" />
+              Create user with password
+            </Button>
+          </div>
         </div>
 
         {inviteMutation.isError && (
@@ -331,6 +344,7 @@ function InvitationsTab() {
         {inviteUrl && (
           <InviteLinkBox url={inviteUrl} onDone={() => setInviteUrl(null)} />
         )}
+        <CreateUserWithPasswordDialog open={createOpen} onOpenChange={setCreateOpen} />
       </div>
 
       {/* Resend link box (shown inline after resend) */}
@@ -738,7 +752,7 @@ function UsersTab() {
 
 export default function AdminUsers() {
   return (
-    <div className="space-y-8">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
       {/* Page header */}
       <div>
         <p className="font-sans text-xs tracking-[0.12em] uppercase text-[#BABAAE] mb-1">

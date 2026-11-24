@@ -1,8 +1,9 @@
-import { Suspense, lazy } from "react";
+import { Suspense, lazy, useEffect } from "react";
 import { useScrollToTop } from "@shared/hooks/useScrollToTop";
 import { Toaster } from '@shared/ui/sonner';
 import { TooltipProvider } from '@shared/ui/tooltip';
-import { Route, Switch } from "wouter";
+import { Route, Switch, useLocation } from "wouter";
+import { useAuth } from "@features/auth/public";
 import ErrorBoundary from "../../_shared/components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import PortalLayout from "../../admin/client/components/PortalLayout";
@@ -118,10 +119,26 @@ function RouteLoader() {
   );
 }
 
+/**
+ * Accounts with a temporary or reset password go to the change-password page
+ * before they can use the member portal or the Operations Portal. The server
+ * enforces the same rule on every signed-in API call.
+ */
+function ForcePasswordChange() {
+  const [location, navigate] = useLocation();
+  const { user } = useAuth();
+  const blocked = location.startsWith("/portal") || location.startsWith("/ops");
+  useEffect(() => {
+    if (user?.mustChangePassword && blocked) navigate("/account/change-password", { replace: true });
+  }, [user?.mustChangePassword, blocked, navigate]);
+  return null;
+}
+
 function Router() {
   useScrollToTop();
   return (
     <Suspense fallback={<RouteLoader />}>
+      <ForcePasswordChange />
       <Switch>
         {/* Auth pages */}
         <Route path="/sign-in" component={SignIn} />
