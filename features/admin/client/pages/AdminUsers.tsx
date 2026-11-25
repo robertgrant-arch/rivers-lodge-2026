@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { trpc } from "@shared/lib/trpc";
+import { toast } from "sonner";
 import { Input } from "@shared/ui/input";
 import { Button } from "@shared/ui/button";
 import { Skeleton } from "@shared/ui/skeleton";
@@ -169,6 +170,7 @@ function ConfirmDialog({
   confirmLabel = "Confirm",
   destructive = false,
   loading = false,
+  error = null,
   onConfirm,
 }: {
   open: boolean;
@@ -178,6 +180,7 @@ function ConfirmDialog({
   confirmLabel?: string;
   destructive?: boolean;
   loading?: boolean;
+  error?: string | null;
   onConfirm: () => void;
 }) {
   return (
@@ -189,6 +192,9 @@ function ConfirmDialog({
           </DialogTitle>
         </DialogHeader>
         <p className="text-sm text-[#BABAAE]">{description}</p>
+        {error && (
+          <p role="alert" className="text-sm text-red-200 border border-red-500/40 bg-red-500/10 px-3 py-2">{error}</p>
+        )}
         <DialogFooter className="gap-2">
           <Button
             variant="ghost"
@@ -443,6 +449,65 @@ function InvitationsTab() {
 }
 
 // ---------------------------------------------------------------------------
+// Temporary password (shown once after Force Password Reset)
+// ---------------------------------------------------------------------------
+
+function TemporaryPasswordDialog({
+  result,
+  onClose,
+}: {
+  result: { email: string; temporaryPassword: string; emailSent: boolean; emailError: string | null };
+  onClose: () => void;
+}) {
+  const [copied, setCopied] = useState(false);
+  const [copyFailed, setCopyFailed] = useState(false);
+  return (
+    <Dialog open onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="bg-[#363330] border border-[#57544E] rounded-none text-[#E0D3BD] max-w-md w-[calc(100vw-2rem)]" data-testid="temp-password-dialog">
+        <DialogHeader>
+          <DialogTitle className="font-sans font-medium text-[#E0D3BD]">Password reset</DialogTitle>
+        </DialogHeader>
+        {result.emailSent ? (
+          <p className="text-sm text-[#BABAAE]">
+            A new temporary password was emailed to <strong className="text-[#E0D3BD]">{result.email}</strong> (Resend confirmed it). They'll choose their own password when they sign in.
+          </p>
+        ) : (
+          <p role="alert" className="text-sm text-amber-200 border border-amber-500/40 bg-amber-500/10 px-3 py-2">
+            The password was reset, but the email to {result.email} couldn't be sent: {result.emailError}. Give them the temporary password below another way.
+          </p>
+        )}
+        <div className="space-y-1.5">
+          <Label className="font-sans text-xs tracking-[0.1em] uppercase text-[#BABAAE]">Temporary password</Label>
+          <div className="flex items-center gap-2">
+            <code className="flex-1 font-mono text-sm text-[#E0D3BD] bg-[#2B2823] border border-[#57544E] px-3 py-2.5 select-all break-all" data-testid="temp-password">
+              {result.temporaryPassword}
+            </code>
+            <button
+              type="button"
+              aria-label="Copy temporary password"
+              title="Copy temporary password"
+              onClick={() => navigator.clipboard.writeText(result.temporaryPassword).then(
+                () => { setCopied(true); setCopyFailed(false); setTimeout(() => setCopied(false), 2000); },
+                () => setCopyFailed(true),
+              )}
+              className="shrink-0 h-10 px-3 inline-flex items-center gap-1.5 border border-[#57544E] text-[#BABAAE] hover:border-[#9B4D19] hover:text-[#E0D3BD] font-sans text-xs tracking-[0.08em] uppercase"
+            >
+              {copied ? <Check className="w-4 h-4 text-[#9DAA7A]" /> : <Copy className="w-4 h-4" />}
+              {copied ? "Copied" : "Copy"}
+            </button>
+          </div>
+          {copyFailed && <p className="text-xs text-amber-200">Couldn't copy automatically. Select the password and copy it.</p>}
+          <p className="text-xs text-[#8a857b]">Shown only this once, in case the email doesn't arrive. It isn't stored anywhere we can read.</p>
+        </div>
+        <DialogFooter>
+          <Button size="sm" onClick={onClose} className="bg-[#9B4D19] hover:bg-[#7a3c14] text-[#E0D3BD] font-sans text-xs tracking-[0.1em] uppercase rounded-none">Done</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // USERS TAB
 // ---------------------------------------------------------------------------
 
@@ -467,23 +532,47 @@ function UsersTab() {
     (u: UserRecord) => u.status !== "invited"
   );
 
+  const [resetResult, setResetResult] = useState<{ email: string; temporaryPassword: string; emailSent: boolean; emailError: string | null } | null>(null);
+
   const forceResetMutation = trpc.portal.users.forcePasswordReset.useMutation({
-    onSuccess: () => setPendingAction(null),
+    onSuccess: (r) => {
+      setPendingAction(null);
+      setResetResult(r);
+      // Success toast only when Resend confirmed the email; otherwise the real error.
+      if (r.emailSent) toast.success(`New temporary password emailed to ${r.email}`);
+      else toast.error(`Password reset, but the email to ${r.email} couldn't be sent: ${r.emailError}`);
+    },
   });
 
+  // Show the new role/status in the row immediately, then reload from the server.
+  const patchUserInList = (userId: string, patch: { role?: UserRole; status?: "active" | "disabled" }) => {
+    utils.portal.users.list.setQueriesData({}, {}, (rows) =>
+      rows ? rows.map((u) => (u.id === userId ? { ...u, ...patch } : u)) : rows,
+    );
+    return utils.portal.users.list.invalidate(undefined, { refetchType: "all" });
+  };
+
   const updateRoleMutation = trpc.portal.users.updateRole.useMutation({
-    onSuccess: () => {
+    onSuccess: (_d, vars) => {
       setPendingAction(null);
-      utils.portal.users.list.invalidate();
+      void patchUserInList(vars.userId, { role: vars.role });
+      toast.success(vars.role === "admin" ? "Promoted to Admin" : "Admin role removed");
     },
   });
 
   const updateStatusMutation = trpc.portal.users.updateStatus.useMutation({
-    onSuccess: () => {
+    onSuccess: (_d, vars) => {
       setPendingAction(null);
-      utils.portal.users.list.invalidate();
+      void patchUserInList(vars.userId, { status: vars.status });
+      toast.success(vars.status === "disabled" ? "Account disabled" : "Account enabled");
     },
   });
+
+  const actionError =
+    (pendingAction?.type === "forceReset" && forceResetMutation.error?.message) ||
+    ((pendingAction?.type === "promoteAdmin" || pendingAction?.type === "demoteAdmin") && updateRoleMutation.error?.message) ||
+    ((pendingAction?.type === "enable" || pendingAction?.type === "disable") && updateStatusMutation.error?.message) ||
+    null;
 
   function isMutating() {
     return (
@@ -495,6 +584,7 @@ function UsersTab() {
 
   function executeAction() {
     if (!pendingAction) return;
+    forceResetMutation.reset(); updateRoleMutation.reset(); updateStatusMutation.reset();
     switch (pendingAction.type) {
       case "forceReset":
         forceResetMutation.mutate({ userId: pendingAction.user.id });
@@ -524,8 +614,8 @@ function UsersTab() {
       case "forceReset":
         return {
           title: "Force Password Reset",
-          description: `${action.user.email} will be required to reset their password on next sign-in.`,
-          confirmLabel: "Force Reset",
+          description: `A new temporary password will be created for ${action.user.email} and emailed to them. They'll choose their own password when they sign in.`,
+          confirmLabel: "Reset Password",
           destructive: false,
         };
       case "promoteAdmin":
@@ -663,6 +753,8 @@ function UsersTab() {
                           onClick={() =>
                             setPendingAction({ type: "forceReset", user })
                           }
+                          disabled={isCurrentUser}
+                          title={isCurrentUser ? "Use Account / Change Password for your own account" : undefined}
                         >
                           <KeyRound className="w-3.5 h-3.5 text-[#BABAAE]" />
                           Force Password Reset
@@ -739,9 +831,11 @@ function UsersTab() {
           confirmLabel={confirmProps.confirmLabel}
           destructive={confirmProps.destructive}
           loading={isMutating()}
+          error={actionError}
           onConfirm={executeAction}
         />
       )}
+      {resetResult && <TemporaryPasswordDialog result={resetResult} onClose={() => setResetResult(null)} />}
     </div>
   );
 }

@@ -1,12 +1,14 @@
 /**
  * Users & Access → "Create user with password".
  * Creates an active account with a temporary password (the user must change
- * it at first sign-in) and emails them a sign-in link — never the password.
- * Success is shown only after the server confirms the account was saved.
+ * it at first sign-in) and emails them the sign-in link and the temporary
+ * password. Success is shown only after the server confirms the account was
+ * saved; email delivery is reported separately, with Resend's real error.
  */
 import { useState } from "react";
 import { Check, Copy, Eye, EyeOff, KeyRound, Loader2, RefreshCw, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { trpc } from "@shared/lib/trpc";
+import { toast } from "sonner";
 import { Button } from "@shared/ui/button";
 import { Input } from "@shared/ui/input";
 import { Label } from "@shared/ui/label";
@@ -35,7 +37,7 @@ function CopyButton({ value, label }: { value: string; label: string }) {
   );
 }
 
-type Created = { email: string; role: "admin" | "employee"; emailSent: boolean; signInUrl: string; password: string };
+type Created = { email: string; role: "admin" | "employee"; emailSent: boolean; emailError: string | null; signInUrl: string; password: string };
 
 export default function CreateUserWithPasswordDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
   const utils = trpc.useUtils();
@@ -57,7 +59,9 @@ export default function CreateUserWithPasswordDialog({ open, onOpenChange }: { o
     if (!canSubmit) return;
     try {
       const r = await create.mutateAsync({ email: email.trim(), role, temporaryPassword: password });
-      setCreated({ email: r.email, role: r.role, emailSent: r.emailSent, signInUrl: r.signInUrl, password });
+      setCreated({ email: r.email, role: r.role, emailSent: r.emailSent, emailError: r.emailError, signInUrl: r.signInUrl, password });
+      if (r.emailSent) toast.success(`Account created and sign-in details emailed to ${r.email}`);
+      else toast.error(`Account created, but the email to ${r.email} couldn't be sent: ${r.emailError}`);
       utils.portal.users.list.invalidate();
     } catch { /* message shown from create.error */ }
   };
@@ -70,7 +74,7 @@ export default function CreateUserWithPasswordDialog({ open, onOpenChange }: { o
             <KeyRound className="w-4 h-4 text-[#C2662A]" />Create user with password
           </DialogTitle>
           <DialogDescription className="text-[#BABAAE]">
-            The account is active right away. They sign in with the temporary password you give them and must choose their own password the first time. The email we send has the sign-in link only, never the password.
+            The account is active right away. We email them the sign-in link and this temporary password, and they must choose their own password the first time they sign in.
           </DialogDescription>
         </DialogHeader>
 
@@ -81,20 +85,20 @@ export default function CreateUserWithPasswordDialog({ open, onOpenChange }: { o
               <p>Account created for <strong>{created.email}</strong> ({created.role === "admin" ? "Admin" : "Member"}). They must change the temporary password when they first sign in.</p>
             </div>
             {created.emailSent ? (
-              <p className="text-sm text-[#BABAAE]">A sign-in link was emailed to {created.email} (Resend confirmed it).</p>
+              <p className="text-sm text-[#BABAAE]">The sign-in link and temporary password were emailed to {created.email} (Resend confirmed it).</p>
             ) : (
               <div className="flex gap-3 p-3 border border-amber-500/40 bg-amber-500/10 text-sm text-amber-200">
                 <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
-                <p>The sign-in email couldn't be sent. Send them this link yourself: <span className="break-all font-mono text-xs">{created.signInUrl}</span></p>
+                <p>The email couldn't be sent: {created.emailError}. Give them the sign-in link and the temporary password below another way: <span className="break-all font-mono text-xs">{created.signInUrl}</span></p>
               </div>
             )}
             <div className="space-y-1.5">
-              <Label className={labelCls}>Temporary password: share it privately (phone, in person, or a separate message)</Label>
+              <Label className={labelCls}>Temporary password</Label>
               <div className="flex gap-2">
                 <code className="flex-1 font-mono text-sm text-[#E0D3BD] bg-[#2B2823] border border-[#57544E] px-3 py-2.5 select-all break-all">{created.password}</code>
                 <CopyButton value={created.password} label="Copy temporary password" />
               </div>
-              <p className="text-xs text-[#8a857b]">This is the only time it's shown. It isn't stored anywhere we can read.</p>
+              <p className="text-xs text-[#8a857b]">Shown only this once, in case the email doesn't arrive. It isn't stored anywhere we can read.</p>
             </div>
             <div className="flex justify-end gap-2">
               <Button variant="outline" className="rounded-none" onClick={reset}>Create another</Button>
