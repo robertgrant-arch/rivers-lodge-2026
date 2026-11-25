@@ -36,6 +36,7 @@ export function useAuth(options?: UseAuthOptions) {
   if (
     redirectOnUnauthenticated &&
     !meQuery.isLoading &&
+    !meQuery.isFetching && // wait for a refresh (e.g. right after sign-in) before deciding
     !state.user &&
     typeof window !== "undefined"
   ) {

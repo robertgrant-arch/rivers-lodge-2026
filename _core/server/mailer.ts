@@ -177,6 +177,40 @@ export async function sendInviteEmail(
   });
 }
 
+/**
+ * "Your account is ready" — sent when an admin creates an account with a
+ * temporary password. Never contains the password: the admin shares it
+ * separately, and the user must change it at first sign-in.
+ */
+export async function sendAccountCreatedEmail(to: string, signInUrl: string, createdByEmail: string): Promise<boolean> {
+  const subject = `Your ${BRAND} account is ready`;
+  const text = [
+    `${createdByEmail} has created a ${BRAND} account for you.`,
+    ``,
+    `Sign in here with this email address (${to}):`,
+    signInUrl,
+    ``,
+    `Use the temporary password ${createdByEmail} gives you. You'll be asked to choose your own password the first time you sign in.`,
+    ``,
+    `For your security, the password is never sent by email.`,
+  ].join("\n");
+  const html = shell(`
+    <p style="margin:0 0 16px;"><strong>${createdByEmail}</strong> has created a <strong>${BRAND}</strong> account for you.</p>
+    <p style="margin:0 0 8px;">Sign in with this email address:</p>
+    <p style="margin:0 0 24px;"><strong>${to}</strong></p>
+    <p style="margin:0 0 24px;">
+      <a href="${signInUrl}"
+         style="display:inline-block;background:#9B4D19;color:#E0D3BD;text-decoration:none;
+                padding:12px 24px;font-size:13px;letter-spacing:0.1em;text-transform:uppercase;">
+        Sign In
+      </a>
+    </p>
+    <p style="margin:0 0 12px;">Use the temporary password ${createdByEmail} gives you. You'll be asked to choose your own password the first time you sign in.</p>
+    <p style="margin:0;color:#BABAAE;font-size:12px;">For your security, the password is never sent by email.</p>
+  `);
+  return send({ to, subject, text, html, logLabel: "account-created sign-in link", logLine: signInUrl });
+}
+
 export async function sendWaiverEmail(opts: {
   to: string;
   signerName: string;
