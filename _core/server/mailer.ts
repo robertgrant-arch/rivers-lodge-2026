@@ -29,13 +29,14 @@ function smtpConfigured() {
   return !!process.env.SMTP_HOST;
 }
 
-async function sendViaResend(opts: {
-  to: string;
-  subject: string;
-  text: string;
-  html: string;
-  logLabel: string;
-}): Promise<boolean> {
+/** Outcome of one send. `error` is the provider's real reason, safe to show to an admin. */
+export type MailResult = { ok: true; id: string | null } | { ok: false; error: string };
+
+type MailOpts = { to: string; subject: string; text: string; html: string; logLabel: string };
+
+// Log lines contain the recipient, the Resend ID and the key ending — never the
+// message body, so nothing secret in an email (e.g. a temporary password) is logged.
+async function sendViaResend(opts: MailOpts): Promise<MailResult> {
   const key = resendKeyHint(process.env.RESEND_API_KEY);
   try {
     const res = await fetch(`${resendApiBase()}/emails`, {
@@ -54,30 +55,27 @@ async function sendViaResend(opts: {
     });
     const body = await res.text().catch(() => "");
     if (!res.ok) {
-      console.error(`[Mailer] Resend send FAILED (${res.status}) ${opts.logLabel} to=${opts.to} key=${key}: ${body.slice(0, 300)}`);
-      return false;
+      let reason = body.slice(0, 300);
+      try { reason = String(JSON.parse(body)?.message ?? reason); } catch { /* not JSON */ }
+      console.error(`[Mailer] Resend send FAILED (${res.status}) ${opts.logLabel} to=${opts.to} key=${key}: ${reason}`);
+      return { ok: false, error: `Resend ${res.status}: ${reason || res.statusText}` };
     }
     let id: string | null = null;
     try { id = resendEmailId(JSON.parse(body)); } catch { /* not JSON */ }
     if (!id) {
       // Only count it as sent when Resend confirms with an email ID.
       console.error(`[Mailer] Resend returned ${res.status} without an email ID — treating as NOT sent (${opts.logLabel} to=${opts.to} key=${key})`);
-      return false;
+      return { ok: false, error: "Resend accepted the request but returned no email ID, so delivery can't be confirmed" };
     }
     console.log(`[Mailer] sent ${opts.logLabel} resend_id=${id} to=${opts.to} key=${key}`);
-    return true;
+    return { ok: true, id };
   } catch (err) {
-    console.error(`[Mailer] Resend request error (${opts.logLabel} to=${opts.to} key=${key}):`, err);
-    return false;
+    console.error(`[Mailer] Resend request error (${opts.logLabel} to=${opts.to} key=${key}):`, (err as Error)?.message ?? err);
+    return { ok: false, error: `Couldn't reach Resend: ${(err as Error)?.message ?? "network error"}` };
   }
 }
 
-async function sendViaSMTP(opts: {
-  to: string;
-  subject: string;
-  text: string;
-  html: string;
-}): Promise<boolean> {
+async function sendViaSMTP(opts: MailOpts): Promise<MailResult> {
   try {
     const nodemailer = require("nodemailer") as any;
     const transport = nodemailer.createTransport({
@@ -89,28 +87,28 @@ async function sendViaSMTP(opts: {
           ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
           : undefined,
     });
-    await transport.sendMail({ from: mailFrom(), ...opts });
-    return true;
+    const { to, subject, text, html } = opts;
+    await transport.sendMail({ from: mailFrom(), to, subject, text, html });
+    return { ok: true, id: null };
   } catch (err) {
-    console.error("[Mailer] SMTP send failed:", err);
-    return false;
+    console.error(`[Mailer] SMTP send failed (${opts.logLabel} to=${opts.to}):`, (err as Error)?.message ?? err);
+    return { ok: false, error: `SMTP: ${(err as Error)?.message ?? "send failed"}` };
   }
 }
 
-/** Dispatch an email through the first configured provider. */
-async function send(opts: {
-  to: string;
-  subject: string;
-  text: string;
-  html: string;
-  logLabel: string;
-  logLine: string;
-}): Promise<boolean> {
+/**
+ * Dispatch an email through the first configured provider.
+ * `logLine` is printed only in the no-provider dev fallback; never put a
+ * password in it.
+ */
+async function send(opts: MailOpts & { logLine: string }): Promise<MailResult> {
   if (resendConfigured()) return sendViaResend(opts);
   if (smtpConfigured()) return sendViaSMTP(opts);
   console.log(`[Mailer] No email provider configured — ${opts.logLabel} for ${opts.to}:\n  ${opts.logLine}`);
-  return false;
+  return { ok: false, error: "Email sending isn't set up on the server (RESEND_API_KEY is missing)" };
 }
+
+const esc = (v: string) => v.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
 /** Shared branded HTML shell. */
 function shell(bodyHtml: string): string {
@@ -167,48 +165,64 @@ export async function sendInviteEmail(
     </p>
   `);
 
-  return send({
+  return (await send({
     to,
     subject,
     text,
     html,
     logLabel: "invite URL",
     logLine: inviteUrl,
-  });
+  })).ok;
 }
 
-/**
- * "Your account is ready" — sent when an admin creates an account with a
- * temporary password. Never contains the password: the admin shares it
- * separately, and the user must change it at first sign-in.
- */
-export async function sendAccountCreatedEmail(to: string, signInUrl: string, createdByEmail: string): Promise<boolean> {
-  const subject = `Your ${BRAND} account is ready`;
+/** Body shared by the two temporary-password emails (account created / password reset). */
+function temporaryPasswordEmail(opts: { intro: string; signInUrl: string; to: string; temporaryPassword: string; outro: string }) {
   const text = [
-    `${createdByEmail} has created a ${BRAND} account for you.`,
+    opts.intro,
     ``,
-    `Sign in here with this email address (${to}):`,
-    signInUrl,
+    `Sign in here: ${opts.signInUrl}`,
+    `Email: ${opts.to}`,
+    `Temporary password: ${opts.temporaryPassword}`,
     ``,
-    `Use the temporary password ${createdByEmail} gives you. You'll be asked to choose your own password the first time you sign in.`,
-    ``,
-    `For your security, the password is never sent by email.`,
+    opts.outro,
   ].join("\n");
   const html = shell(`
-    <p style="margin:0 0 16px;"><strong>${createdByEmail}</strong> has created a <strong>${BRAND}</strong> account for you.</p>
-    <p style="margin:0 0 8px;">Sign in with this email address:</p>
-    <p style="margin:0 0 24px;"><strong>${to}</strong></p>
+    <p style="margin:0 0 20px;">${esc(opts.intro)}</p>
+    <p style="margin:0 0 20px;">Sign in here: <a href="${esc(opts.signInUrl)}" style="color:#E0D3BD;">${esc(opts.signInUrl)}</a></p>
+    <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 24px;border-collapse:collapse;">
+      <tr><td style="padding:4px 16px 4px 0;color:#BABAAE;font-size:13px;">Email:</td><td style="padding:4px 0;"><strong>${esc(opts.to)}</strong></td></tr>
+      <tr><td style="padding:4px 16px 4px 0;color:#BABAAE;font-size:13px;">Temporary password:</td><td style="padding:4px 0;font-family:'SFMono-Regular',Menlo,Consolas,monospace;font-size:15px;letter-spacing:0.04em;"><strong>${esc(opts.temporaryPassword)}</strong></td></tr>
+    </table>
     <p style="margin:0 0 24px;">
-      <a href="${signInUrl}"
+      <a href="${esc(opts.signInUrl)}"
          style="display:inline-block;background:#9B4D19;color:#E0D3BD;text-decoration:none;
                 padding:12px 24px;font-size:13px;letter-spacing:0.1em;text-transform:uppercase;">
         Sign In
       </a>
     </p>
-    <p style="margin:0 0 12px;">Use the temporary password ${createdByEmail} gives you. You'll be asked to choose your own password the first time you sign in.</p>
-    <p style="margin:0;color:#BABAAE;font-size:12px;">For your security, the password is never sent by email.</p>
+    <p style="margin:0;">${esc(opts.outro)}</p>
   `);
-  return send({ to, subject, text, html, logLabel: "account-created sign-in link", logLine: signInUrl });
+  return { text, html };
+}
+
+/** "Your account is ready" — sent when an admin creates an account with a temporary password. */
+export async function sendAccountCreatedEmail(to: string, signInUrl: string, createdByEmail: string, temporaryPassword: string): Promise<MailResult> {
+  const { text, html } = temporaryPasswordEmail({
+    intro: `${createdByEmail} has created a ${BRAND} account for you.`,
+    signInUrl, to, temporaryPassword,
+    outro: "You'll be asked to choose your own password the first time you sign in.",
+  });
+  return send({ to, subject: `Your ${BRAND} account is ready`, text, html, logLabel: "account-created email", logLine: signInUrl });
+}
+
+/** Sent by Force Password Reset with the new temporary password. */
+export async function sendTemporaryPasswordResetEmail(to: string, signInUrl: string, resetByEmail: string, temporaryPassword: string): Promise<MailResult> {
+  const { text, html } = temporaryPasswordEmail({
+    intro: `${resetByEmail} has reset your ${BRAND} password.`,
+    signInUrl, to, temporaryPassword,
+    outro: "You'll be asked to choose a new password when you sign in.",
+  });
+  return send({ to, subject: `Your ${BRAND} temporary password`, text, html, logLabel: "password-reset email", logLine: signInUrl });
 }
 
 export async function sendWaiverEmail(opts: {
@@ -251,38 +265,5 @@ export async function sendWaiverEmail(opts: {
     </p>
     <p style="margin:0;color:#BABAAE;font-size:12px;">${expiryLine} If you did not expect this, ignore this email.</p>
   `);
-  return send({ to, subject, text, html, logLabel: "waiver signing URL", logLine: signingUrl });
-}
-
-export async function sendPasswordResetNotification(
-  to: string,
-  actingAdminEmail: string,
-): Promise<boolean> {
-  const baseUrl = process.env.APP_BASE_URL ?? "http://localhost:5173";
-  const signInUrl = `${baseUrl}/sign-in`;
-  const subject = `Your ${BRAND} password has been reset`;
-  const text = [
-    `${actingAdminEmail} has required a password reset on your ${BRAND} account.`,
-    ``,
-    `Sign in at ${signInUrl} — you will be prompted to set a new password.`,
-  ].join("\n");
-  const html = shell(`
-    <p style="margin:0 0 24px;"><strong>${actingAdminEmail}</strong> has required a password reset on your account.</p>
-    <p style="margin:0;">
-      <a href="${signInUrl}"
-         style="display:inline-block;background:#9B4D19;color:#E0D3BD;text-decoration:none;
-                padding:12px 24px;font-size:13px;letter-spacing:0.1em;text-transform:uppercase;">
-        Sign In
-      </a>
-    </p>
-  `);
-
-  return send({
-    to,
-    subject,
-    text,
-    html,
-    logLabel: "password reset notice",
-    logLine: signInUrl,
-  });
+  return (await send({ to, subject, text, html, logLabel: "waiver signing URL", logLine: signingUrl })).ok;
 }

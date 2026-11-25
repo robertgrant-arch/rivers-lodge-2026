@@ -37,10 +37,10 @@ import {
   cmsMemberContent,
 } from "@features/cms/public";
 import { randomBytes, createHash } from "crypto";
-import { invites } from "@features/auth/schema";
-import { sendInviteEmail, sendPasswordResetNotification, sendWaiverEmail, sendAccountCreatedEmail } from "@core/server/mailer";
+import { invites, sessions } from "@features/auth/schema";
+import { sendInviteEmail, sendWaiverEmail, sendAccountCreatedEmail, sendTemporaryPasswordResetEmail } from "@core/server/mailer";
 import { hash as argon2hash } from "argon2";
-import { passwordProblems, PASSWORD_MAX_LENGTH } from "@shared/passwordRules";
+import { passwordProblems, PASSWORD_MAX_LENGTH, generateTemporaryPassword } from "@shared/passwordRules";
 import { storagePut, storageGetSignedUrl } from "@core/server/storage";
 import { ENV } from "@core/server/env";
 import { getPortalDb } from "@core/server/db";
@@ -2074,6 +2074,14 @@ const memberBookingsRouter = router({
 });
 
 // ─── Users Admin Router ───────────────────────────────────────────────────────
+/** Public sign-in link for account emails. Never a localhost link from production. */
+function signInUrl(): string {
+  const base = process.env.NODE_ENV === "production" && /localhost|127\.0\.0\.1/.test(ENV.appBaseUrl)
+    ? "https://riverslodgehunt.com"
+    : ENV.appBaseUrl.replace(/\/+$/, "");
+  return `${base}/sign-in`;
+}
+
 const usersAdminRouter = router({
   list: ownerProcedure
     .input(z.object({ search: z.string().optional() }))
@@ -2081,8 +2089,12 @@ const usersAdminRouter = router({
       const db = getDb();
       const conditions = [];
       if (input.search) conditions.push(like(users.email, `%${input.search}%`));
+      // Never send password hashes to the browser.
       return db
-        .select()
+        .select({
+          id: users.id, email: users.email, role: users.role, status: users.status,
+          mustChangePassword: users.mustChangePassword, createdAt: users.createdAt, lastLoginAt: users.lastLoginAt,
+        })
         .from(users)
         .where(conditions.length ? and(...conditions) : undefined)
         .orderBy(desc(users.createdAt));
@@ -2199,10 +2211,9 @@ const usersAdminRouter = router({
         throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "The account couldn't be saved. Please try again." });
       }
 
-      // Never email a localhost link from production if APP_BASE_URL is unset.
-      const base = process.env.NODE_ENV === "production" && /localhost|127\.0\.0\.1/.test(ENV.appBaseUrl) ? "https://riverslodgehunt.com" : ENV.appBaseUrl.replace(/\/+$/, "");
-      const signInUrl = `${base}/sign-in`;
-      const emailSent = await sendAccountCreatedEmail(email, signInUrl, ctx.user.email ?? "An admin");
+      // The temporary password goes in this email only: never logged, audited or stored in plain text.
+      const link = signInUrl();
+      const mail = await sendAccountCreatedEmail(email, link, ctx.user.email ?? "An admin", input.temporaryPassword);
 
       await logAudit({
         actingUserId: ctx.user.id,
@@ -2210,10 +2221,10 @@ const usersAdminRouter = router({
         actionType: "create",
         entityType: "UserCreatedWithPassword",
         entityId: userId,
-        newValue: `${email} (${input.role}); must change password${emailSent ? "" : "; sign-in email not delivered"}`,
+        newValue: `${email} (${input.role}); must change password; ${mail.ok ? "account email sent" : "account email NOT delivered"}`,
       });
 
-      return { userId, email, role: input.role, emailSent, signInUrl };
+      return { userId, email, role: input.role, emailSent: mail.ok, emailError: mail.ok ? null : mail.error, signInUrl: link };
     }),
 
   resendInvite: ownerProcedure
@@ -2325,27 +2336,51 @@ const usersAdminRouter = router({
       return { success: true };
     }),
 
+  /**
+   * Force Password Reset: create a new temporary password, set it (argon2id
+   * hash), require a change at next sign-in, sign the user out everywhere, and
+   * email it to them. The password is returned once so the admin can share it
+   * if the email doesn't arrive; it is never logged or stored in plain text.
+   */
   forcePasswordReset: ownerProcedure
     .input(z.object({ userId: z.string() }))
     .mutation(async ({ input, ctx }) => {
       const db = getDb();
       const [target] = await db.select().from(users).where(eq(users.id, input.userId)).limit(1);
-      if (!target) throw new TRPCError({ code: "NOT_FOUND" });
+      if (!target) throw new TRPCError({ code: "NOT_FOUND", message: "User not found" });
       if (target.status === "invited") {
         throw new TRPCError({ code: "BAD_REQUEST", message: "User has not yet accepted their invitation" });
       }
-      await db.update(users).set({ mustChangePassword: true }).where(eq(users.id, input.userId));
-      await sendPasswordResetNotification(target.email ?? "", ctx.user.email ?? "An admin");
+      if (!target.email) throw new TRPCError({ code: "BAD_REQUEST", message: "This account has no email address" });
+      if (target.id === ctx.user.id) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "To change your own password, use Account / Change Password in the account menu." });
+      }
+
+      const temporaryPassword = generateTemporaryPassword();
+      const passwordHash = await argon2hash(temporaryPassword, { type: 2 });
+      const [row] = await db.update(users)
+        .set({ passwordHash, mustChangePassword: true })
+        .where(eq(users.id, input.userId))
+        .returning({ id: users.id, mustChangePassword: users.mustChangePassword });
+      if (!row?.mustChangePassword) {
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "The new password couldn't be saved. Please try again." });
+      }
+      // The old password no longer works; end their existing sessions too.
+      await db.delete(sessions).where(eq(sessions.userId, input.userId));
+
+      const mail = await sendTemporaryPasswordResetEmail(target.email, signInUrl(), ctx.user.email ?? "An admin", temporaryPassword);
+
       await logAudit({
         actingUserId: ctx.user.id,
         actingUserName: ctx.user.email ?? "Admin",
         actionType: "override",
         entityType: "User",
         entityId: input.userId,
-        fieldChanged: "mustChangePassword",
-        newValue: "true",
+        fieldChanged: "password",
+        newValue: `new temporary password set; must change password; ${mail.ok ? "reset email sent" : "reset email NOT delivered"}`,
       });
-      return { success: true };
+
+      return { email: target.email, temporaryPassword, emailSent: mail.ok, emailError: mail.ok ? null : mail.error };
     }),
 });
 
