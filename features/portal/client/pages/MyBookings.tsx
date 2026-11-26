@@ -23,6 +23,7 @@ import {
 import { toast } from "sonner";
 import { activityLabel } from "@shared/propertyActivities";
 import { usePortalLink } from "@features/portal/client/portalNav";
+import { BookingWaiversPanel } from "@features/waivers/client/public";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -42,6 +43,16 @@ function formatDate(d: string | Date | null | undefined) {
 }
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: ReactNode }> = {
+  pending_waiver: {
+    label: "Pending waiver",
+    color: "bg-amber-900/30 text-amber-300 border-amber-700",
+    icon: <FileText className="w-3.5 h-3.5" />,
+  },
+  expired_waiver: {
+    label: "Expired – waiver not signed",
+    color: "bg-red-900/30 text-red-300 border-red-800",
+    icon: <XCircle className="w-3.5 h-3.5" />,
+  },
   pending_approval: {
     label: "Pending Approval",
     color: "bg-amber-900/30 text-amber-300 border-amber-700",
@@ -162,7 +173,9 @@ function BookingCard({ booking, onCancel }: { booking: any; onCancel: () => void
   const today = new Date().toISOString().split("T")[0];
   const startStr = booking.startDate instanceof Date ? booking.startDate.toISOString().split("T")[0] : String(booking.startDate ?? "");
   const isUpcoming = startStr >= today;
-  const canCancel = isUpcoming && ["pending_approval", "confirmed"].includes(booking.status);
+  const canCancel = isUpcoming && ["pending_approval", "confirmed", "pending_waiver"].includes(booking.status);
+  const waiverEditable = isUpcoming && ["pending_waiver", "confirmed", "pending_approval"].includes(booking.status);
+  const showWaivers = !["cancelled", "declined"].includes(booking.status);
 
   return (
     <Card className="bg-stone-900 border-stone-700 hover:border-stone-600 transition-colors">
@@ -206,6 +219,10 @@ function BookingCard({ booking, onCancel }: { booking: any; onCancel: () => void
               </span>
             </div>
 
+            {booking.status === "pending_waiver" && (
+              <p className="text-xs text-amber-300">Your slot is held. Sign the booking waiver we emailed and texted you to confirm it.</p>
+            )}
+            {showWaivers && <BookingWaiversPanel bookingId={booking.id} canEdit={waiverEditable} />}
           </div>
 
           {/* Status + actions */}

@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { generateAndStoreWaiverPdf } from "@features/waivers/public";
+import { generateAndStoreWaiverPdf, getWaiverService } from "@features/waivers/public";
 import { publicProcedure, protectedProcedure, router } from "../../_core/server/trpc";
 import { eq, desc, and, gte, lte, sql, or, like, lt, inArray } from "drizzle-orm";
 import {
@@ -1262,12 +1262,14 @@ const waiversPortalRouter = router({
       fileKey: z.string().max(500).optional(),
       fileName: z.string().max(255).optional(),
       expiresInDays: z.number().int().min(1).max(3650).optional(),
+      waiverKind: z.enum(["master", "booking"]).default("booking"),
     }))
     .mutation(async ({ input, ctx }) => {
       const db = getDb();
       const [tpl] = await db.insert(waiverTemplates).values({
         templateName: input.templateName,
         templateType: input.templateType,
+        waiverKind: input.waiverKind,
         description: input.description ?? null,
         bodyText: input.bodyText,
         fileKey: input.fileKey ?? null,
@@ -1293,13 +1295,16 @@ const waiversPortalRouter = router({
       fileKey: z.string().max(500).nullable().optional(),
       fileName: z.string().max(255).nullable().optional(),
       expiresInDays: z.number().int().min(1).max(3650).nullable().optional(),
+      waiverKind: z.enum(["master", "booking"]).optional(),
     }))
     .mutation(async ({ input, ctx }) => {
       const db = getDb();
       const [tpl] = await db.select().from(waiverTemplates).where(eq(waiverTemplates.id, input.id));
       if (!tpl) throw new TRPCError({ code: "NOT_FOUND" });
       // Content changes create a new immutable version; metadata edits do not.
+      // A new version of the Master waiver means every member must sign again.
       const contentChanged =
+        (input.waiverKind !== undefined && input.waiverKind !== tpl.waiverKind) ||
         (input.bodyText !== undefined && input.bodyText !== tpl.bodyText) ||
         (input.fileKey !== undefined && (input.fileKey ?? null) !== tpl.fileKey) ||
         (input.templateName !== undefined && input.templateName !== tpl.templateName) ||
@@ -1313,6 +1318,7 @@ const waiversPortalRouter = router({
         fileKey: input.fileKey !== undefined ? input.fileKey : tpl.fileKey,
         fileName: input.fileName !== undefined ? input.fileName : tpl.fileName,
         expiresInDays: input.expiresInDays !== undefined ? input.expiresInDays : tpl.expiresInDays,
+        waiverKind: input.waiverKind ?? tpl.waiverKind,
         version: nextVersion,
       };
       await db.update(waiverTemplates).set(merged).where(eq(waiverTemplates.id, input.id));
@@ -1954,6 +1960,8 @@ const membershipPortalRouter = router({
         entityId: String(newMember.id),
         notes: `Created member ${memberNumber}`,
       });
+      // Auto-send the DocuSign Master waiver (ops toggle; no-op while the flag is off).
+      void getWaiverService().onMemberCreated(newMember.id).catch(() => {});
       return { success: true, memberId: newMember.id, memberNumber };
     }),
 

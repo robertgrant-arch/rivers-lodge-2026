@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
+import DocuSignWaiversTab from "../components/DocuSignWaiversTab";
 
 const WAIVER_TYPES = [
   { value: "general", label: "General Property" },
@@ -83,9 +84,11 @@ export default function PortalWaivers() {
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="bg-[#363330] border border-[#57544E] rounded-none h-10 p-0 gap-0">
           <TabsTrigger value="waivers" className="rounded-none h-full px-5 font-sans text-xs tracking-[0.1em] uppercase text-[#BABAAE] data-[state=active]:bg-[#2B2823] data-[state=active]:text-[#E0D3BD] data-[state=active]:shadow-none border-r border-[#57544E]">Waivers</TabsTrigger>
+          <TabsTrigger value="docusign" className="rounded-none h-full px-5 font-sans text-xs tracking-[0.1em] uppercase text-[#BABAAE] data-[state=active]:bg-[#2B2823] data-[state=active]:text-[#E0D3BD] data-[state=active]:shadow-none border-r border-[#57544E]">Master &amp; Booking</TabsTrigger>
           <TabsTrigger value="templates" className="rounded-none h-full px-5 font-sans text-xs tracking-[0.1em] uppercase text-[#BABAAE] data-[state=active]:bg-[#2B2823] data-[state=active]:text-[#E0D3BD] data-[state=active]:shadow-none">Templates</TabsTrigger>
         </TabsList>
         <TabsContent value="waivers" className="mt-6"><WaiversTab /></TabsContent>
+        <TabsContent value="docusign" className="mt-6"><DocuSignWaiversTab /></TabsContent>
         <TabsContent value="templates" className="mt-6"><TemplatesTab /></TabsContent>
       </Tabs>
     </div>
@@ -436,6 +439,12 @@ function TemplatesTab() {
   const [editId, setEditId] = useState<number | null>(null);
   const templatesQuery = trpc.portal.waivers.templates.useQuery({ includeArchived: true });
   const templates = templatesQuery.data ?? [];
+  // Newest active, non-archived template of each type is what DocuSign sends.
+  const currentIds = new Set<number>(
+    (["master", "booking"] as const).map((k) =>
+      templates.filter((t) => ((t as any).waiverKind ?? "booking") === k && t.active && !t.archived).sort((a, b) => b.id - a.id)[0]?.id,
+    ).filter((x): x is number => typeof x === "number"),
+  );
 
   const setActive = trpc.portal.waivers.setTemplateActive.useMutation({
     onSuccess: () => { utils.portal.waivers.templates.invalidate(); },
@@ -469,7 +478,11 @@ function TemplatesTab() {
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <p className="text-sm font-medium text-[#E0D3BD] truncate">{t.templateName}</p>
-                  <p className="text-xs text-[#BABAAE] mt-0.5">{typeLabel(t.templateType)} · v{t.version}{t.fileName ? " · has document" : ""}</p>
+                  <p className="text-xs text-[#BABAAE] mt-0.5">
+                    <span className="text-[#E0D3BD]">{(t as any).waiverKind === "master" ? "Master" : "Booking"}</span>
+                    {currentIds.has(t.id) && <span className="ml-1.5 px-1.5 py-px border border-[#6B7250] text-[#BABAAE] text-[10px] uppercase tracking-[0.1em]">Current</span>}
+                    {" "}· {typeLabel(t.templateType)} · v{t.version}{t.fileName ? " · has document" : ""}
+                  </p>
                 </div>
                 <StatusPill status={t.archived ? "archived" : t.active ? "active" : "draft"} />
               </div>
@@ -499,11 +512,11 @@ function TemplateEditor({ id, onClose, onSaved }: { id: number | null; onClose: 
   const t = existing.data?.template;
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const [form, setForm] = useState({ templateName: "", templateType: "general", description: "", bodyText: "", expiresInDays: "", fileKey: "" as string | null, fileName: "" as string | null });
+  const [form, setForm] = useState({ templateName: "", templateType: "general", waiverKind: "booking", description: "", bodyText: "", expiresInDays: "", fileKey: "" as string | null, fileName: "" as string | null });
   const [hydrated, setHydrated] = useState(false);
   if (id !== null && t && !hydrated) {
     setForm({
-      templateName: t.templateName, templateType: t.templateType ?? "general", description: t.description ?? "",
+      templateName: t.templateName, templateType: t.templateType ?? "general", waiverKind: (t as any).waiverKind ?? "booking", description: t.description ?? "",
       bodyText: t.bodyText, expiresInDays: t.expiresInDays ? String(t.expiresInDays) : "", fileKey: t.fileKey, fileName: t.fileName,
     });
     setHydrated(true);
@@ -533,6 +546,7 @@ function TemplateEditor({ id, onClose, onSaved }: { id: number | null; onClose: 
     const payload = {
       templateName: form.templateName.trim(),
       templateType: form.templateType as any,
+      waiverKind: form.waiverKind as "master" | "booking",
       description: form.description.trim() || undefined,
       bodyText: form.bodyText,
       fileKey: form.fileKey || undefined,
@@ -553,6 +567,17 @@ function TemplateEditor({ id, onClose, onSaved }: { id: number | null; onClose: 
           <div className="space-y-1.5">
             <Label className={labelCls}>Template Name</Label>
             <Input value={form.templateName} onChange={(e) => setForm((f) => ({ ...f, templateName: e.target.value }))} className={inputCls} />
+          </div>
+          <div className="space-y-1.5">
+            <Label className={labelCls}>Type</Label>
+            <Select value={form.waiverKind} onValueChange={(v) => setForm((f) => ({ ...f, waiverKind: v }))}>
+              <SelectTrigger className={selectCls}><SelectValue /></SelectTrigger>
+              <SelectContent className={selectContentCls}>
+                <SelectItem value="master" className="focus:bg-[#423F3B] focus:text-[#E0D3BD]">Master — once per member, kept on file</SelectItem>
+                <SelectItem value="booking" className="focus:bg-[#423F3B] focus:text-[#E0D3BD]">Booking — member + every adult guest, each booking</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-[11px] text-[#BABAAE]">The newest active template of each type is the one DocuSign sends. Saving new text publishes a new version{form.waiverKind === "master" ? " — every member must then re-sign their Master waiver" : ""}.</p>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">

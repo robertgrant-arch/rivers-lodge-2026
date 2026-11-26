@@ -11,6 +11,7 @@ import { Plus, Search, User, X, SlidersHorizontal, FileText } from "lucide-react
 import { formatDateOnly, toDateInputValue, todayLocal } from "@shared/lib/dateOnly";
 import { Link, useLocation } from "wouter";
 import { toast } from "sonner";
+import { WaiverStatusBadge } from "@features/waivers/client/public";
 
 /** For timestamps (e.g. createdAt). Date-only columns (joinDate, renewalDate)
  *  must use formatDateOnly, which shows the stored calendar date in every timezone. */
@@ -585,6 +586,13 @@ export default function PortalMembership() {
 
   const applications = applicationsQuery.data?.pages.flatMap((p) => p.items) ?? [];
 
+  // DocuSign Master waiver status per listed member.
+  const memberIdsForWaivers = allMembers.map((r: any) => r.member?.id).filter((x: unknown): x is number => typeof x === "number").slice(0, 500);
+  const { data: masterStates } = trpc.waivers.docusign.memberMasterStatuses.useQuery(
+    { memberIds: memberIdsForWaivers },
+    { enabled: memberIdsForWaivers.length > 0 },
+  );
+
   const thCls = "text-left px-4 py-3 font-sans text-xs tracking-[0.1em] uppercase text-[#BABAAE] font-normal border-b border-[#57544E]";
   const tdCls = "px-4 py-3 font-sans text-sm text-[#BABAAE]";
 
@@ -665,6 +673,7 @@ export default function PortalMembership() {
                     <th className={thCls}>Joined</th>
                     <th className={thCls}>Renewal</th>
                     <th className={thCls}>Status</th>
+                    <th className={thCls}>Master waiver</th>
                     <th className={`${thCls} text-right`}>Actions</th>
                   </tr>
                 </thead>
@@ -672,14 +681,14 @@ export default function PortalMembership() {
                   {membersQuery.isLoading ? (
                     [1, 2, 3, 4, 5].map((i) => (
                       <tr key={i} className="border-b border-[#57544E]">
-                        <td colSpan={7} className="px-4 py-3">
+                        <td colSpan={8} className="px-4 py-3">
                           <Skeleton className="h-4 w-full bg-[#423F3B]" />
                         </td>
                       </tr>
                     ))
                   ) : membersFiltered.length === 0 ? (
                     <tr>
-                      <td colSpan={7} className="px-4 py-12 text-center">
+                      <td colSpan={8} className="px-4 py-12 text-center">
                         <p className="font-sans text-sm text-[#BABAAE]">No members found</p>
                         {allMembers.length === 0 && (
                           <Button
@@ -720,6 +729,14 @@ export default function PortalMembership() {
                           <td className={tdCls}>{formatDateOnly(m.renewalDate)}</td>
                           <td className={tdCls}>
                             <StatusDot active={m.active} />
+                          </td>
+                          <td className={tdCls}>
+                            {masterStates?.[m.id] ? (
+                              <span className="inline-flex flex-col">
+                                <WaiverStatusBadge status={masterStates[m.id].valid ? "valid" : masterStates[m.id].state} />
+                                {masterStates[m.id].signedAt && <span className="text-[11px] text-[#BABAAE]">{new Date(masterStates[m.id].signedAt!).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</span>}
+                              </span>
+                            ) : "—"}
                           </td>
                           <td className={tdCls}>
                             <span className="flex items-center justify-end gap-2">

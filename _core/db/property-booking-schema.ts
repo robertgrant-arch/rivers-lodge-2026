@@ -50,6 +50,9 @@ export const propertyBookingActivityEnum = pgEnum("property_booking_activity", [
 export const propertyBookingStatusEnum = pgEnum("property_booking_status", [
   "pending_payment", "confirmed", "pending_approval", "checked_in",
   "completed", "cancelled", "no_show", "declined",
+  // DocuSign waivers (migration 0041): slot held until the member signs the
+  // booking waiver; expired_waiver = hold released because they didn't.
+  "pending_waiver", "expired_waiver",
 ]);
 
 export const bookingTimeSlotEnum = pgEnum("booking_time_slot", [
@@ -323,6 +326,7 @@ export const propertyBookings = pgTable("property_bookings", {
   staffNotes: text("staffNotes"),
   confirmationSentAt: bigint("confirmationSentAt", { mode: "number" }),
   reminderSentAt: bigint("reminderSentAt", { mode: "number" }),
+  waiverSummarySentAt: bigint("waiverSummarySentAt", { mode: "number" }), // 24h unsigned-guests email (0041)
   createdAt: bigint("createdAt", { mode: "number" }).notNull(),
   updatedAt: bigint("updatedAt", { mode: "number" }).notNull(),
 }, (t) => [
@@ -523,6 +527,7 @@ export const bookingPartyAdults = pgTable("booking_party_adults", {
   waiverEnvelopeId: varchar("waiverEnvelopeId", { length: 255 }), // DocuSign envelope ID
   waiverSentAt: bigint("waiverSentAt", { mode: "number" }), // Unix timestamp
   waiverCompletedAt: bigint("waiverCompletedAt", { mode: "number" }), // Unix timestamp
+  removedAt: bigint("removedAt", { mode: "number" }), // guest removed from the booking (0041)
   createdAt: bigint("createdAt", { mode: "number" }).notNull(),
   updatedAt: bigint("updatedAt", { mode: "number" }).notNull(),
 }, (t) => [
@@ -541,6 +546,8 @@ export const bookingPartyMinors = pgTable("booking_party_minors", {
   bookingId: integer("bookingId").notNull(),
   adultId: integer("adultId").notNull(), // FK to booking_party_adults
   fullName: varchar("fullName", { length: 255 }).notNull(),
+  dateOfBirth: date("dateOfBirth", { mode: "string" }), // 0041
+  removedAt: bigint("removedAt", { mode: "number" }), // 0041
   createdAt: bigint("createdAt", { mode: "number" }).notNull(),
 }, (t) => [
   index("bpm_booking_idx").on(t.bookingId),

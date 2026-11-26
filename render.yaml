@@ -36,3 +36,22 @@ services:
         sync: false
       - key: VITE_ANALYTICS_WEBSITE_ID
         sync: false
+      # DocuSign waivers (set in the dashboard; WAIVERS_DOCUSIGN_ENABLED=true turns it on)
+      - key: WAIVERS_DOCUSIGN_ENABLED
+        sync: false
+      - key: DOCUSIGN_INTEGRATION_KEY
+        sync: false
+      - key: DOCUSIGN_USER_ID
+        sync: false
+      - key: DOCUSIGN_ACCOUNT_ID
+        sync: false
+      - key: DOCUSIGN_BASE_PATH
+        sync: false
+      - key: DOCUSIGN_OAUTH_BASE
+        sync: false
+      - key: DOCUSIGN_PRIVATE_KEY
+        sync: false
+      - key: DOCUSIGN_CONNECT_HMAC_SECRET
+        sync: false
+      - key: WAIVERS_OPS_EMAIL
+        sync: false
