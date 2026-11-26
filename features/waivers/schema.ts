@@ -33,3 +33,6 @@ export {
   portalWaivers,
   type PortalWaiver,
 } from "@features/portal/schema";
+
+// DocuSign waivers (migration 0041) — Master waiver per member, Booking waiver per booking.
+export * from "./docusignSchema";

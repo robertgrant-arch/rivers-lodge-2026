@@ -13,6 +13,7 @@ import { notifyOwner } from "../../_core/server/notification";
 import { verifyCaptcha } from "@core/server/captcha";
 import * as dal from "./dal";
 import { insertMemberWithUniqueNumber } from "./memberNumbers";
+import { getWaiverService } from "@features/waivers/public";
 import { todayInTimeZone, LODGE_TIME_ZONE } from "@shared/lib/dateOnly";
 import { members, users, membershipApplications, memberSkillGroups, skillGroups } from '@core/db/schema';
 
@@ -222,6 +223,8 @@ export const membershipRouter = router({
         entityId: String(newMember.id),
         notes: `Created member ${memberNumber}`,
       });
+      // Auto-send the DocuSign Master waiver (ops toggle; no-op while the flag is off).
+      void getWaiverService().onMemberCreated(newMember.id).catch(() => {});
       return { success: true, memberId: newMember.id, memberNumber };
     }),
 

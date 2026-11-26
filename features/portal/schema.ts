@@ -315,6 +315,9 @@ export const waiverTemplates = pgTable("waiver_templates", {
   fileKey: varchar("fileKey", { length: 500 }),
   fileName: varchar("fileName", { length: 255 }),
   expiresInDays: integer("expiresInDays"),
+  // DocuSign waivers (migration 0041): "master" (once per member, on file) or
+  // "booking" (signed by the member + every adult guest for each booking).
+  waiverKind: varchar("waiverKind", { length: 16 }).notNull().default("booking"),
   version: integer("version").notNull().default(1),
   active: boolean("active").notNull().default(true),
   archived: boolean("archived").notNull().default(false),

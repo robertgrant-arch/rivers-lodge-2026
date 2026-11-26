@@ -136,7 +136,7 @@ allowed through each feature's `public.ts` barrel file — enforced by ESLint `p
 | `corporate` | `/corporate` | No |
 | `food-and-wine` | `/food-and-wine` | No |
 | `inquiries` | `/inquiry-confirmed` | No |
-| `waivers` | `/sign-waiver/:token` | No |
+| `waivers` | `/sign-waiver/:token` (+ `/ops/waivers/booking/:id`, staff) | No |
 | `auth` | `/sign-in` `/sign-up` | No |
 | `portal` | `/portal` `/portal/my-bookings` `/portal/properties` | Member |
 | `admin` | `/ops/*` (15+ sub-routes) | Staff role |
@@ -326,6 +326,25 @@ Key vars:
 - `CLERK_SECRET_KEY`, `VITE_CLERK_PUBLISHABLE_KEY` — auth
 - `VITE_ANALYTICS_ENDPOINT`, `VITE_ANALYTICS_WEBSITE_ID` — Umami
 - `VITE_APP_TITLE` — "The Rivers Lodge & Hunt Club"
+- `WAIVERS_DOCUSIGN_ENABLED` — `true` turns on DocuSign waivers (default off: nothing sent, no booking blocked)
+- `DOCUSIGN_INTEGRATION_KEY`, `DOCUSIGN_USER_ID`, `DOCUSIGN_ACCOUNT_ID`, `DOCUSIGN_BASE_PATH`,
+  `DOCUSIGN_OAUTH_BASE`, `DOCUSIGN_PRIVATE_KEY`, `DOCUSIGN_CONNECT_HMAC_SECRET` — DocuSign JWT Grant + Connect
+- `WAIVERS_OPS_EMAIL` — waiver alerts / unsigned-guest summaries (falls back to `ADMIN_EMAIL`)
+
+## Waivers (DocuSign)
+
+Code: `features/waivers/server/docusign/` (service.ts = all rules; repo.ts = SQL; api.ts = REST client;
+routes.ts = Connect webhook `POST /api/webhooks/docusign`; runtime.ts = scheduler, every minute).
+- **Master waiver**: once per member, for the current Master template version (Ops → Waivers →
+  Templates, Type = Master; the newest active one is current). Required before any booking
+  (UI gate + `assertMasterWaiverForBooking` in `propertyBooking.bookings.create`).
+- **Booking waiver**: one envelope per booking (split only when >10 SMS signers), member + every
+  adult guest sign in parallel, each on their own server-generated PDF listing their minors.
+  Booking is `pending_waiver` (slot held) → `confirmed` when the member's recipient completes;
+  `expired_waiver` after the hold window (ops setting, default 24h). Lifecycle callbacks live in
+  `features/property-booking/server/router.ts` (`registerBookingLifecycle`).
+- Guest list + acceptance rules are shared client/server in `features/_shared/waiverParty.ts`.
+- Tests mock DocuSign (`testkit.ts`); never call the real API from tests.
 
 ---
 

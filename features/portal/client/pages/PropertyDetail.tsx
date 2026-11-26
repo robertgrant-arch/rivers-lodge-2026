@@ -30,7 +30,8 @@ import {
 import { PROPERTY_ACTIVITIES, activityLabel, isHuntingActivity, isFishingActivity } from "@shared/propertyActivities";
 import { BOOKING_RULES, MAX_CONSECUTIVE_DAYS, bookingDayCount, propertyCapacity } from "@shared/propertyRules";
 import { toast } from "sonner";
-import WaiverSigningForm from "@features/portal/client/components/WaiverSigningForm";
+import { MasterWaiverGate, BookingWaiverDialog } from "@features/waivers/client/public";
+import { BOOKING_WAIVER_ACCEPTANCE_TEXT, BOOKING_WAIVER_LINK_TEXT, validateParty, type PartyInput } from "@shared/waiverParty";
 import { usePortalLink } from "@features/portal/client/portalNav";
 // idempotencyKey uses native crypto.randomUUID (produces a valid UUID v4)
 
@@ -342,18 +343,12 @@ function AvailabilityCalendar({
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-interface PartyAdult {
-  id: string;
-  fullName: string;
-  email: string;
-  phone: string;
-  minors: PartyMinor[];
-}
+/** One row of "Who's coming?" (the member is separate). */
+type GuestRow =
+  | { id: string; type: "adult"; fullName: string; email: string; phone: string }
+  | { id: string; type: "minor"; fullName: string; dateOfBirth: string; guardian: string /* "member" | guest row id */ };
 
-interface PartyMinor {
-  id: string;
-  fullName: string;
-}
+const newId = () => `g-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 
 // ─── Booking Form Dialog ──────────────────────────────────────────────────────
 
@@ -376,97 +371,59 @@ function BookingDialog({
   const [, navigate] = useLocation();
   const utils = trpc.useUtils();
   const { user } = useAuth({});
+  const masterQ = trpc.waivers.docusign.myMasterStatus.useQuery(undefined, { enabled: open });
+  const contact: any = (masterQ.data as any)?.contact ?? null;
 
-  const [partySize, setPartySize] = useState(1);
   const activityOptions = bookingActivityOptions(property);
   const [activity, setActivity] = useState(activityOptions[0]?.value ?? "fishing");
-  const [adults, setAdults] = useState<PartyAdult[]>([]);
+  const [memberName, setMemberName] = useState<string | null>(null);
+  const [memberPhone, setMemberPhone] = useState<string | null>(null);
+  const [guests, setGuests] = useState<GuestRow[]>([]);
   const [huntingLicense, setHuntingLicense] = useState(false);
   const [fishingLicense, setFishingLicense] = useState(false);
   const [notes, setNotes] = useState("");
-  const [showWaiverForm, setShowWaiverForm] = useState(false);
-  const [waiverSignatures, setWaiverSignatures] = useState<any[]>([]);
+  const [accepted, setAccepted] = useState(false);
+  const [showWaiverText, setShowWaiverText] = useState(false);
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
 
   const totalDays = daysBetween(startDate, endDate);
   const isHunting = isHuntingActivity(activity);
   const isFishing = isFishingActivity(activity);
+  const maxCapacity = partySizeLimit(property);
+  const partySize = 1 + guests.length;
+  const memberEmail = contact?.email || user?.email || "";
+  const mName = memberName ?? contact?.fullName ?? "";
+  const mPhone = memberPhone ?? contact?.phone ?? "";
+  const adultRows = guests.filter((g): g is Extract<GuestRow, { type: "adult" }> => g.type === "adult");
 
-  const initializeAdults = (newPartySize: number) => {
-    const currentSize = adults.length;
-    let newAdults = [...adults];
-
-    if (newPartySize > currentSize) {
-      for (let i = currentSize; i < newPartySize - 1; i++) {
-        newAdults.push({
-          id: `adult-${Date.now()}-${i}`,
-          fullName: "",
-          email: "",
-          phone: "",
-          minors: [],
-        });
-      }
-    } else if (newPartySize < currentSize) {
-      newAdults = newAdults.slice(0, newPartySize - 1);
-    }
-
-    setAdults(newAdults);
+  const updateGuest = (id: string, patch: Partial<GuestRow>) =>
+    setGuests((gs) => gs.map((g) => (g.id === id ? ({ ...g, ...patch } as GuestRow) : g)));
+  const removeGuestRow = (id: string) =>
+    setGuests((gs) => gs.filter((g) => g.id !== id).map((g) => (g.type === "minor" && g.guardian === id ? { ...g, guardian: "" } : g)));
+  const addGuest = (type: "adult" | "minor") => {
+    if (partySize >= maxCapacity) { toast.error(`This property allows a maximum of ${maxCapacity} ${maxCapacity === 1 ? "person" : "people"}.`); return; }
+    setGuests((gs) => [...gs, type === "adult"
+      ? { id: newId(), type: "adult", fullName: "", email: "", phone: "" }
+      : { id: newId(), type: "minor", fullName: "", dateOfBirth: "", guardian: "member" }]);
   };
 
-  const updateAdult = (index: number, field: string, value: string) => {
-    const updated = [...adults];
-    updated[index] = { ...updated[index], [field]: value };
-    setAdults(updated);
-  };
-
-  const addMinor = (adultIndex: number) => {
-    const updated = [...adults];
-    updated[adultIndex].minors.push({
-      id: `minor-${Date.now()}-${Math.random()}`,
-      fullName: "",
-    });
-    setAdults(updated);
-  };
-
-  const updateMinor = (adultIndex: number, minorIndex: number, fullName: string) => {
-    const updated = [...adults];
-    updated[adultIndex].minors[minorIndex].fullName = fullName;
-    setAdults(updated);
-  };
-
-  const removeMinor = (adultIndex: number, minorIndex: number) => {
-    const updated = [...adults];
-    updated[adultIndex].minors.splice(minorIndex, 1);
-    setAdults(updated);
-  };
-
-  const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-
-  const validateForm = (): boolean => {
-    const errors: Record<string, string> = {};
-
-    for (let i = 0; i < adults.length; i++) {
-      const adult = adults[i];
-      if (!adult.fullName.trim()) {
-        errors[`adult-${i}-name`] = "Full name required";
-      }
-      if (!adult.email.trim()) {
-        errors[`adult-${i}-email`] = "Email required";
-      } else if (!isValidEmail(adult.email)) {
-        errors[`adult-${i}-email`] = "Invalid email";
-      }
-      if (!adult.phone.trim()) {
-        errors[`adult-${i}-phone`] = "Phone required";
-      }
-    }
-
-    setValidationErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
+  /** Server/shared shape: guardian as "member" or index into guests. */
+  const buildParty = (): PartyInput => ({
+    member: { fullName: mName.trim(), email: memberEmail, phone: mPhone },
+    guests: guests.map((g) => g.type === "adult"
+      ? { type: "adult" as const, fullName: g.fullName, email: g.email, phone: g.phone }
+      : { type: "minor" as const, fullName: g.fullName, dateOfBirth: g.dateOfBirth, guardian: g.guardian === "member" ? "member" as const : guests.findIndex((x) => x.id === g.guardian) }),
+  });
 
   const createBooking = trpc.propertyBooking.bookings.create.useMutation({
-    onSuccess: (data) => {
-      if (data.status === "confirmed") {
+    onSuccess: (data: any) => {
+      if (data.status === "pending_waiver") {
+        if (data.waiverSend && !data.waiverSend.ok && !data.waiverSend.queued) {
+          toast.error(`Booking ${data.bookingRef} is held, but DocuSign couldn't send the waiver: ${data.waiverSend.error}. Open My Bookings to resend or send by email only.`, { duration: 15000 });
+        } else {
+          toast.success(`Booking ${data.bookingRef} is held. Check your email/texts and sign the waiver to confirm it.`, { duration: 10000 });
+        }
+      } else if (data.status === "confirmed") {
         toast.success(`Booking Confirmed! Ref: ${data.bookingRef}`);
       } else {
         toast.success(`Booking Submitted! Ref: ${data.bookingRef} — pending approval.`);
@@ -478,101 +435,47 @@ function BookingDialog({
     },
     onError: (err) => {
       toast.error(`Booking failed: ${err.message}`);
+      if (err.data?.code === "PRECONDITION_FAILED") masterQ.refetch();
     },
   });
 
-  const handleInitialSubmit = () => {
-    if (!validateForm()) {
-      toast.error("Please fill in all required fields for party members.");
-      return;
+  const handleSubmit = () => {
+    const party = buildParty();
+    const v = validateParty(party, { capacity: maxCapacity, checkInDate: startDate });
+    // Map "guests.N.field" to row ids for display.
+    const errors: Record<string, string> = {};
+    for (const [k, msg] of Object.entries(v.errors)) {
+      const m = /^guests\.(\d+)\.(\w+)$/.exec(k);
+      errors[m ? `${guests[Number(m[1])]?.id}.${m[2]}` : k] = msg;
     }
-    if (isHunting && !huntingLicense) {
-      toast.error("Please confirm you have a valid hunting license.");
-      return;
-    }
-    if (isFishing && !fishingLicense) {
-      toast.error("Please confirm you have a valid fishing license.");
-      return;
-    }
+    setValidationErrors(errors);
+    if (!v.ok) { toast.error(Object.values(v.errors)[0] ?? "Please check your guest list."); return; }
+    if (isHunting && !huntingLicense) { toast.error("Please confirm you have a valid hunting license."); return; }
+    if (isFishing && !fishingLicense) { toast.error("Please confirm you have a valid fishing license."); return; }
+    if (!accepted) { toast.error("Please read and accept the Rivers Lodge Release & Liability Waiver."); return; }
 
-    // Show waiver form before booking
-    setShowWaiverForm(true);
-  };
-
-  const handleWaiverComplete = (signatures: any[]) => {
-    setWaiverSignatures(signatures);
-
-    // Map slot names: "AllDay" → "ALL_DAY", others uppercase
-    const timeSlotMap: Record<string, "AM" | "PM" | "ALL_DAY" | "OVERNIGHT"> = {
-      AM: "AM",
-      PM: "PM",
-      AllDay: "ALL_DAY",
-      Overnight: "OVERNIGHT",
-    };
-
-    // Build party structure: designated member + additional adults
-    const partyAdults = [
-      {
-        fullName: user?.email || "Booker",
-        email: user?.email || "",
-        phone: "",
-        minors: [], // Designated member's minors not captured yet
-        isDesignatedMember: true,
-      },
-      ...adults.map((a) => ({
-        fullName: a.fullName,
-        email: a.email,
-        phone: a.phone,
-        minors: a.minors.map((m) => ({ fullName: m.fullName })),
-        isDesignatedMember: false,
-      })),
-    ];
-
+    const timeSlotMap: Record<string, "AM" | "PM" | "ALL_DAY" | "OVERNIGHT"> = { AM: "AM", PM: "PM", AllDay: "ALL_DAY", Overnight: "OVERNIGHT" };
     createBooking.mutate({
       propertyId: property.id,
       startDate,
       endDate,
-      partySize,
+      partySize: v.partySize,
       activity: activity as any,
       timeSlot: timeSlotMap[slot] || "ALL_DAY",
-      guestNames: adults.map((a) => a.fullName).filter(Boolean),
-      hasMinors: adults.some((a) => a.minors.length > 0),
+      guestNames: guests.map((g) => g.fullName.trim()).filter(Boolean),
+      hasMinors: guests.some((g) => g.type === "minor"),
       huntingLicenseConfirmed: huntingLicense,
       fishingLicenseConfirmed: fishingLicense,
       memberNotes: notes || undefined,
       idempotencyKey: crypto.randomUUID(),
-      partyAdults, // Pass structured party data to backend
-    });
+      party,
+      waiverAcceptance: { accepted: true, text: BOOKING_WAIVER_ACCEPTANCE_TEXT },
+    } as any);
   };
 
-  if (showWaiverForm) {
-    // Build party members list from structured data
-    const partyMembers = [
-      { name: user?.email || "Booker", isMinor: false },
-      ...adults.flatMap((a) => [
-        { name: a.fullName, isMinor: false },
-        ...a.minors.map((m) => ({ name: m.fullName, isMinor: true })),
-      ]),
-    ];
-
-    return (
-      <Dialog open={open} onOpenChange={onClose}>
-        <DialogContent className="bg-stone-900 border-stone-700 text-stone-100 max-w-lg max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-stone-100">Waiver — {property?.name}</DialogTitle>
-          </DialogHeader>
-          <WaiverSigningForm
-            propertyName={property?.name || "Property"}
-            waiverTitle="Liability Release & Assumption of Risk"
-            waiverBody="By signing this waiver, you acknowledge that you have read and understand the risks associated with your visit and activity at this property. You assume all risks and release the property owners, managers, and staff from any liability for injury, death, or property damage."
-            partyMembers={partyMembers}
-            onComplete={handleWaiverComplete}
-            isLoading={createBooking.isPending}
-          />
-        </DialogContent>
-      </Dialog>
-    );
-  }
+  const err = (k: string) => validationErrors[k] ? <p className="text-xs text-red-400 mt-1">{validationErrors[k]}</p> : null;
+  const inputCls = (k: string) => `bg-stone-700 border-stone-600 text-stone-100 placeholder:text-stone-500 ${validationErrors[k] ? "border-red-500" : ""}`;
+  const [before, after] = BOOKING_WAIVER_ACCEPTANCE_TEXT.split(BOOKING_WAIVER_LINK_TEXT);
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -581,6 +484,7 @@ function BookingDialog({
           <DialogTitle className="text-stone-100">Book {property?.name}</DialogTitle>
         </DialogHeader>
 
+        <MasterWaiverGate>
         <div className="space-y-5 py-2">
           {/* Date summary */}
           <div className="bg-stone-800 rounded-lg p-3 space-y-1">
@@ -615,183 +519,123 @@ function BookingDialog({
             </Select>
           </div>
 
-          {/* Party size */}
-          <div className="space-y-1.5">
-            {(() => {
-              const maxCapacity = partySizeLimit(property);
-              return (
-                <>
-                  <Label className="text-stone-300 text-sm">
-                    Party Size (max {maxCapacity})
-                  </Label>
-                  <Select
-                    value={String(partySize)}
-                    onValueChange={(v) => {
-                      const n = parseInt(v);
-                      setPartySize(n);
-                      initializeAdults(n);
-                    }}
-                  >
-                    <SelectTrigger className="bg-stone-800 border-stone-700 text-stone-100">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="bg-stone-800 border-stone-700">
-                      {Array.from({ length: maxCapacity }, (_, i) => i + 1).map((n) => (
-                        <SelectItem key={n} value={String(n)} className="text-stone-100">
-                          {n} {n === 1 ? "person" : "people"}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </>
-              );
-            })()}
-          </div>
+          {/* Who's coming? */}
+          <div className="space-y-3">
+            <div className="flex items-baseline justify-between">
+              <Label className="text-stone-300 text-sm font-semibold">Who's coming?</Label>
+              <span className="text-xs text-stone-500">{partySize} of max {maxCapacity}</span>
+            </div>
 
-          {/* Designated Member (Booker) */}
-          <div className="bg-stone-800 rounded-lg p-4 space-y-3 border border-stone-700">
-            <Label className="text-stone-300 text-sm font-semibold">Designated Member (You)</Label>
-            <div className="space-y-2">
+            {/* The member */}
+            <div className="bg-stone-800 rounded-lg p-4 space-y-2 border border-stone-700">
+              <div className="text-xs text-stone-400 font-medium">You · Adult</div>
               <div>
-                <Label className="text-xs text-stone-400">Full Name</Label>
-                <Input
-                  value={user?.email || ""}
-                  disabled
-                  className="bg-stone-700 border-stone-600 text-stone-100 cursor-not-allowed opacity-60"
-                />
+                <Label className="text-xs text-stone-400">Full name *</Label>
+                <Input value={mName} onChange={(e) => setMemberName(e.target.value)} placeholder="Full name" className={inputCls("member.fullName")} />
+                {err("member.fullName")}
               </div>
               <div>
                 <Label className="text-xs text-stone-400">Email</Label>
-                <Input
-                  value={user?.email || ""}
-                  disabled
-                  className="bg-stone-700 border-stone-600 text-stone-100 cursor-not-allowed opacity-60"
-                />
+                <Input value={memberEmail} disabled className="bg-stone-700 border-stone-600 text-stone-100 cursor-not-allowed opacity-60" />
+                {err("member.email")}
+              </div>
+              <div>
+                <Label className="text-xs text-stone-400">Mobile (US) *</Label>
+                <Input type="tel" value={mPhone} onChange={(e) => setMemberPhone(e.target.value)} placeholder="(816) 555-0100" className={inputCls("member.phone")} />
+                {err("member.phone")}
               </div>
             </div>
-          </div>
 
-          {/* Additional Adults */}
-          {partySize > 1 && (
-            <div className="space-y-3">
-              <Label className="text-stone-300 text-sm font-semibold">Additional Party Members</Label>
-              {adults.map((adult, adultIdx) => (
-                <div key={adult.id} className="bg-stone-800 rounded-lg p-4 border border-stone-700 space-y-3">
-                  <div className="text-xs text-stone-400 font-medium">Member {adultIdx + 2}</div>
-
-                  {/* Adult fields */}
-                  <div className="grid grid-cols-1 gap-2">
-                    <div>
-                      <Label className="text-xs text-stone-400">Full Name *</Label>
-                      <Input
-                        placeholder="Full name"
-                        value={adult.fullName}
-                        onChange={(e) => updateAdult(adultIdx, "fullName", e.target.value)}
-                        className={`bg-stone-700 border-stone-600 text-stone-100 placeholder:text-stone-500 ${
-                          validationErrors[`adult-${adultIdx}-name`] ? "border-red-500" : ""
-                        }`}
-                      />
-                      {validationErrors[`adult-${adultIdx}-name`] && (
-                        <p className="text-xs text-red-400 mt-1">{validationErrors[`adult-${adultIdx}-name`]}</p>
-                      )}
-                    </div>
-
+            {guests.map((g, idx) => (
+              <div key={g.id} className="bg-stone-800 rounded-lg p-4 border border-stone-700 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-xs text-stone-400 font-medium">
+                    Guest {idx + 1} ·
+                    <select
+                      value={g.type}
+                      onChange={(e) => {
+                        const type = e.target.value as "adult" | "minor";
+                        setGuests((gs) => gs.map((x): GuestRow => x.id !== g.id ? x : type === "adult"
+                          ? { id: x.id, type: "adult", fullName: x.fullName, email: "", phone: "" }
+                          : { id: x.id, type: "minor", fullName: x.fullName, dateOfBirth: "", guardian: "member" })
+                          .map((x): GuestRow => (type === "minor" && x.type === "minor" && x.guardian === g.id ? { ...x, guardian: "" } : x)));
+                      }}
+                      className="bg-stone-700 border border-stone-600 rounded px-1.5 py-0.5 text-stone-100"
+                    >
+                      <option value="adult">Adult</option>
+                      <option value="minor">Minor</option>
+                    </select>
+                  </div>
+                  <Button size="sm" variant="ghost" onClick={() => removeGuestRow(g.id)} className="text-red-400 hover:text-red-300 p-1 h-auto">
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+                <div>
+                  <Label className="text-xs text-stone-400">Full name *</Label>
+                  <Input value={g.fullName} onChange={(e) => updateGuest(g.id, { fullName: e.target.value })} placeholder="Full name" className={inputCls(`${g.id}.fullName`)} />
+                  {err(`${g.id}.fullName`)}
+                </div>
+                {g.type === "adult" ? (
+                  <>
                     <div>
                       <Label className="text-xs text-stone-400">Email *</Label>
-                      <Input
-                        type="email"
-                        placeholder="email@example.com"
-                        value={adult.email}
-                        onChange={(e) => updateAdult(adultIdx, "email", e.target.value)}
-                        className={`bg-stone-700 border-stone-600 text-stone-100 placeholder:text-stone-500 ${
-                          validationErrors[`adult-${adultIdx}-email`] ? "border-red-500" : ""
-                        }`}
-                      />
-                      {validationErrors[`adult-${adultIdx}-email`] && (
-                        <p className="text-xs text-red-400 mt-1">{validationErrors[`adult-${adultIdx}-email`]}</p>
-                      )}
+                      <Input type="email" value={g.email} onChange={(e) => updateGuest(g.id, { email: e.target.value } as any)} placeholder="email@example.com" className={inputCls(`${g.id}.email`)} />
+                      {err(`${g.id}.email`)}
                     </div>
-
                     <div>
-                      <Label className="text-xs text-stone-400">Phone *</Label>
-                      <Input
-                        type="tel"
-                        placeholder="+1 (555) 000-0000"
-                        value={adult.phone}
-                        onChange={(e) => updateAdult(adultIdx, "phone", e.target.value)}
-                        className={`bg-stone-700 border-stone-600 text-stone-100 placeholder:text-stone-500 ${
-                          validationErrors[`adult-${adultIdx}-phone`] ? "border-red-500" : ""
-                        }`}
-                      />
-                      {validationErrors[`adult-${adultIdx}-phone`] && (
-                        <p className="text-xs text-red-400 mt-1">{validationErrors[`adult-${adultIdx}-phone`]}</p>
-                      )}
+                      <Label className="text-xs text-stone-400">Mobile (US) *</Label>
+                      <Input type="tel" value={g.phone} onChange={(e) => updateGuest(g.id, { phone: e.target.value } as any)} placeholder="(816) 555-0100" className={inputCls(`${g.id}.phone`)} />
+                      {err(`${g.id}.phone`)}
                     </div>
-                  </div>
-
-                  {/* Minors for this adult */}
-                  <div className="pt-2 border-t border-stone-700 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <Label className="text-xs text-stone-400">Minors under this member</Label>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => addMinor(adultIdx)}
-                        className="text-amber-500 hover:text-amber-400 text-xs p-0 h-auto"
+                  </>
+                ) : (
+                  <>
+                    <div>
+                      <Label className="text-xs text-stone-400">Date of birth *</Label>
+                      <Input type="date" value={g.dateOfBirth} onChange={(e) => updateGuest(g.id, { dateOfBirth: e.target.value } as any)} className={inputCls(`${g.id}.dateOfBirth`)} />
+                      {err(`${g.id}.dateOfBirth`)}
+                    </div>
+                    <div>
+                      <Label className="text-xs text-stone-400">Parent/guardian in this party *</Label>
+                      <select
+                        value={g.guardian}
+                        onChange={(e) => updateGuest(g.id, { guardian: e.target.value } as any)}
+                        className={`w-full h-9 rounded-md px-2 border ${validationErrors[`${g.id}.guardian`] ? "border-red-500" : "border-stone-600"} bg-stone-700 text-stone-100`}
                       >
-                        <Plus className="w-3 h-3 mr-1" /> Add minor
-                      </Button>
+                        <option value="">Choose…</option>
+                        <option value="member">{mName || "Me"} (you)</option>
+                        {adultRows.map((a) => <option key={a.id} value={a.id}>{a.fullName || `Guest ${guests.indexOf(a) + 1}`}</option>)}
+                      </select>
+                      {err(`${g.id}.guardian`)}
                     </div>
+                  </>
+                )}
+              </div>
+            ))}
 
-                    {adult.minors.map((minor, minorIdx) => (
-                      <div key={minor.id} className="flex gap-2">
-                        <Input
-                          placeholder="Minor's full name"
-                          value={minor.fullName}
-                          onChange={(e) => updateMinor(adultIdx, minorIdx, e.target.value)}
-                          className="bg-stone-700 border-stone-600 text-stone-100 placeholder:text-stone-500 text-sm"
-                        />
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => removeMinor(adultIdx, minorIdx)}
-                          className="text-red-400 hover:text-red-300 p-1"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
+            {err("party")}
+            <div className="flex gap-4">
+              <Button size="sm" variant="ghost" onClick={() => addGuest("adult")} className="text-amber-500 hover:text-amber-400 text-xs p-0 h-auto">
+                <Plus className="w-3 h-3 mr-1" /> Add adult
+              </Button>
+              <Button size="sm" variant="ghost" onClick={() => addGuest("minor")} className="text-amber-500 hover:text-amber-400 text-xs p-0 h-auto">
+                <Plus className="w-3 h-3 mr-1" /> Add minor
+              </Button>
             </div>
-          )}
+            <p className="text-xs text-stone-500">Every adult signs the waiver by email/text before arriving. Minors are covered on their parent or guardian's waiver.</p>
+          </div>
 
           {/* License confirmations */}
           {isHunting && (
             <label className="flex items-start gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={huntingLicense}
-                onChange={(e) => setHuntingLicense(e.target.checked)}
-                className="rounded border-stone-600 bg-stone-800 mt-0.5"
-              />
-              <span className="text-sm text-stone-300">
-                I confirm that all members of my party hold valid hunting licenses for the applicable species.
-              </span>
+              <input type="checkbox" checked={huntingLicense} onChange={(e) => setHuntingLicense(e.target.checked)} className="rounded border-stone-600 bg-stone-800 mt-0.5" />
+              <span className="text-sm text-stone-300">I confirm that all members of my party hold valid hunting licenses for the applicable species.</span>
             </label>
           )}
           {isFishing && (
             <label className="flex items-start gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={fishingLicense}
-                onChange={(e) => setFishingLicense(e.target.checked)}
-                className="rounded border-stone-600 bg-stone-800 mt-0.5"
-              />
-              <span className="text-sm text-stone-300">
-                I confirm that all members of my party hold valid fishing licenses.
-              </span>
+              <input type="checkbox" checked={fishingLicense} onChange={(e) => setFishingLicense(e.target.checked)} className="rounded border-stone-600 bg-stone-800 mt-0.5" />
+              <span className="text-sm text-stone-300">I confirm that all members of my party hold valid fishing licenses.</span>
             </label>
           )}
 
@@ -807,6 +651,16 @@ function BookingDialog({
             />
           </div>
 
+          {/* Required waiver acceptance */}
+          <label className="flex items-start gap-2 cursor-pointer p-3 rounded-lg border border-stone-700 bg-stone-800/60">
+            <input type="checkbox" checked={accepted} onChange={(e) => setAccepted(e.target.checked)} className="rounded border-stone-600 bg-stone-800 mt-1" />
+            <span className="text-sm text-stone-300 leading-relaxed">
+              {before}
+              <button type="button" onClick={(e) => { e.preventDefault(); setShowWaiverText(true); }} className="text-amber-400 underline underline-offset-2 hover:text-amber-300">{BOOKING_WAIVER_LINK_TEXT}</button>
+              {after}
+            </span>
+          </label>
+
           {/* Rules reminder */}
           <div className="flex items-start gap-2 p-3 bg-amber-900/20 border border-amber-800/40 rounded-lg">
             <Info className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
@@ -817,26 +671,15 @@ function BookingDialog({
         </div>
 
         <DialogFooter className="gap-2">
-          <Button
-            variant="ghost"
-            onClick={onClose}
-            disabled={createBooking.isPending}
-            className="text-stone-400"
-          >
+          <Button variant="ghost" onClick={onClose} disabled={createBooking.isPending} className="text-stone-400">
             Cancel
           </Button>
-          <Button
-            onClick={handleInitialSubmit}
-            disabled={createBooking.isPending}
-            className="bg-amber-700 hover:bg-amber-600 text-white"
-          >
-            {createBooking.isPending ? (
-              <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Booking…</>
-            ) : (
-              "Continue to Waiver"
-            )}
+          <Button onClick={handleSubmit} disabled={createBooking.isPending || !accepted} className="bg-amber-700 hover:bg-amber-600 text-white">
+            {createBooking.isPending ? (<><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Booking…</>) : "Book"}
           </Button>
         </DialogFooter>
+        </MasterWaiverGate>
+        <BookingWaiverDialog open={showWaiverText} onClose={() => setShowWaiverText(false)} />
       </DialogContent>
     </Dialog>
   );

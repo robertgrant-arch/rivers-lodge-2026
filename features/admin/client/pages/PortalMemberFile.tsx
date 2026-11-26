@@ -13,6 +13,7 @@ import { trpc } from "@shared/lib/trpc";
 import { ArrowLeft, Camera, Pencil, Plus, ShieldAlert, Trash2, User, X } from "lucide-react";
 import { toast } from "sonner";
 import { formatDateOnly, toDateInputValue } from "@shared/lib/dateOnly";
+import { MasterWaiverCard } from "@features/waivers/client/public";
 import {
   ACTIVITIES,
   CHILD_AGE_GROUPS,
@@ -696,6 +697,7 @@ export default function PortalMemberFile() {
             <Field label="Referral source">{show(p?.referralSource)}</Field>
             <Field label="Orientation completed">{p?.orientationCompleted === true ? `Yes${p.orientationDate ? ` — ${formatDate(p.orientationDate)}` : ""}` : yesNo(p?.orientationCompleted)}</Field>
           </dl>
+          <MasterWaiverCard memberId={memberId} />
           <div>
             <p className={labelCls}>Waivers</p>
             {!data.waivers.available ? (

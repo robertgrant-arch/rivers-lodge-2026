@@ -63,6 +63,8 @@ const InquiryConfirmed = lazy(() => import("@features/inquiries/client/pages/Inq
 // Waivers
 const SignWaiver = lazy(() => import("@features/waivers/client/pages/SignWaiver"));
 const PortalWaivers = lazy(() => import("@features/waivers/client/pages/PortalWaivers"));
+const OpsBookingWaivers = lazy(() => import("@features/waivers/client/pages/OpsBookingWaivers"));
+const OpsBookingCheckInList = lazy(() => import("@features/waivers/client/pages/OpsBookingWaivers").then((m) => ({ default: m.OpsBookingCheckInList })));
 
 // Gated portal pages
 const MemberPortal = lazy(() => import("@features/portal/client/pages/MemberPortal"));
@@ -197,6 +199,8 @@ function Router() {
         <Route path="/ops/hunt-fish/:id">{(p) => <PortalLayout><PortalHuntFish /></PortalLayout>}</Route>
         <Route path="/ops/hunt-fish">{() => <PortalLayout><PortalHuntFish /></PortalLayout>}</Route>
         <Route path="/ops/member-bookings">{() => <PortalLayout><PortalMemberBookings /></PortalLayout>}</Route>
+        <Route path="/ops/waivers/booking/:id/check-in">{() => <OpsBookingCheckInList />}</Route>
+        <Route path="/ops/waivers/booking/:id">{() => <PortalLayout><OpsBookingWaivers /></PortalLayout>}</Route>
         <Route path="/ops/waivers">{() => <PortalLayout><PortalWaivers /></PortalLayout>}</Route>
         <Route path="/ops/customers">{() => <PortalLayout><PortalCustomers /></PortalLayout>}</Route>
         <Route path="/ops/employees">{() => <PortalLayout><PortalEmployees /></PortalLayout>}</Route>

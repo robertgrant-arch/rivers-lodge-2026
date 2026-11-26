@@ -32,7 +32,8 @@ function smtpConfigured() {
 /** Outcome of one send. `error` is the provider's real reason, safe to show to an admin. */
 export type MailResult = { ok: true; id: string | null } | { ok: false; error: string };
 
-type MailOpts = { to: string; subject: string; text: string; html: string; logLabel: string };
+// logTo: what to print instead of the address (e.g. waiver notices must not log signer details).
+type MailOpts = { to: string; subject: string; text: string; html: string; logLabel: string; logTo?: string };
 
 // Log lines contain the recipient, the Resend ID and the key ending — never the
 // message body, so nothing secret in an email (e.g. a temporary password) is logged.
@@ -57,20 +58,20 @@ async function sendViaResend(opts: MailOpts): Promise<MailResult> {
     if (!res.ok) {
       let reason = body.slice(0, 300);
       try { reason = String(JSON.parse(body)?.message ?? reason); } catch { /* not JSON */ }
-      console.error(`[Mailer] Resend send FAILED (${res.status}) ${opts.logLabel} to=${opts.to} key=${key}: ${reason}`);
+      console.error(`[Mailer] Resend send FAILED (${res.status}) ${opts.logLabel} to=${opts.logTo ?? opts.to} key=${key}: ${reason}`);
       return { ok: false, error: `Resend ${res.status}: ${reason || res.statusText}` };
     }
     let id: string | null = null;
     try { id = resendEmailId(JSON.parse(body)); } catch { /* not JSON */ }
     if (!id) {
       // Only count it as sent when Resend confirms with an email ID.
-      console.error(`[Mailer] Resend returned ${res.status} without an email ID — treating as NOT sent (${opts.logLabel} to=${opts.to} key=${key})`);
+      console.error(`[Mailer] Resend returned ${res.status} without an email ID — treating as NOT sent (${opts.logLabel} to=${opts.logTo ?? opts.to} key=${key})`);
       return { ok: false, error: "Resend accepted the request but returned no email ID, so delivery can't be confirmed" };
     }
-    console.log(`[Mailer] sent ${opts.logLabel} resend_id=${id} to=${opts.to} key=${key}`);
+    console.log(`[Mailer] sent ${opts.logLabel} resend_id=${id} to=${opts.logTo ?? opts.to} key=${key}`);
     return { ok: true, id };
   } catch (err) {
-    console.error(`[Mailer] Resend request error (${opts.logLabel} to=${opts.to} key=${key}):`, (err as Error)?.message ?? err);
+    console.error(`[Mailer] Resend request error (${opts.logLabel} to=${opts.logTo ?? opts.to} key=${key}):`, (err as Error)?.message ?? err);
     return { ok: false, error: `Couldn't reach Resend: ${(err as Error)?.message ?? "network error"}` };
   }
 }
@@ -91,7 +92,7 @@ async function sendViaSMTP(opts: MailOpts): Promise<MailResult> {
     await transport.sendMail({ from: mailFrom(), to, subject, text, html });
     return { ok: true, id: null };
   } catch (err) {
-    console.error(`[Mailer] SMTP send failed (${opts.logLabel} to=${opts.to}):`, (err as Error)?.message ?? err);
+    console.error(`[Mailer] SMTP send failed (${opts.logLabel} to=${opts.logTo ?? opts.to}):`, (err as Error)?.message ?? err);
     return { ok: false, error: `SMTP: ${(err as Error)?.message ?? "send failed"}` };
   }
 }
@@ -104,7 +105,7 @@ async function sendViaSMTP(opts: MailOpts): Promise<MailResult> {
 async function send(opts: MailOpts & { logLine: string }): Promise<MailResult> {
   if (resendConfigured()) return sendViaResend(opts);
   if (smtpConfigured()) return sendViaSMTP(opts);
-  console.log(`[Mailer] No email provider configured — ${opts.logLabel} for ${opts.to}:\n  ${opts.logLine}`);
+  console.log(`[Mailer] No email provider configured — ${opts.logLabel} for ${opts.logTo ?? opts.to}:\n  ${opts.logLine}`);
   return { ok: false, error: "Email sending isn't set up on the server (RESEND_API_KEY is missing)" };
 }
 
@@ -266,4 +267,11 @@ export async function sendWaiverEmail(opts: {
     <p style="margin:0;color:#BABAAE;font-size:12px;">${expiryLine} If you did not expect this, ignore this email.</p>
   `);
   return (await send({ to, subject, text, html, logLabel: "waiver signing URL", logLine: signingUrl })).ok;
+}
+
+/** Plain notice (waiver expiry, unsigned-guest summaries, ops alerts). Paragraphs are escaped. */
+export async function sendNoticeEmail(to: string, subject: string, paragraphs: string[]): Promise<MailResult> {
+  const text = paragraphs.join("\n\n");
+  const html = shell(paragraphs.map((p) => `<p style="margin:0 0 14px;">${esc(p)}</p>`).join(""));
+  return send({ to, subject: `${subject} — ${BRAND}`, text, html, logLabel: "notice email", logLine: subject, logTo: "[redacted]" });
 }

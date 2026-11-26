@@ -15,6 +15,7 @@ import { applySqlMigrations } from "./apply-sql-migrations";
 import { COVER_PHOTO_JSON_LIMIT_BYTES } from "@shared/uploadLimits";
 import { PROPERTY_MAP_JSON_LIMIT_BYTES } from "@shared/propertyRules";
 import { registerMassEmailRoutes, startEmailScheduler, EMAIL_IMAGE_JSON_LIMIT_BYTES } from "features/reports/public";
+import { registerDocuSignRoutes, startWaiverScheduler } from "features/waivers/public";
 
 let deployedCommit = "unknown";
 try {
@@ -42,6 +43,8 @@ async function startServer() {
   // Unsubscribe links + the Resend webhook. Registered before the JSON parser
   // so the webhook can verify its signature against the raw body.
   registerMassEmailRoutes(app);
+  // DocuSign Connect webhook (HMAC-verified against the raw body).
+  registerDocuSignRoutes(app);
 
   // ── Body parsers ────────────────────────────────────────────────────────────
   // Larger JSON limits ONLY for tRPC upload procedures that carry a base64 file
@@ -213,6 +216,10 @@ async function startServer() {
   // Mass email: start scheduled emails when due and resume interrupted sends.
   // Only after migrations, so the email tables exist.
   startEmailScheduler();
+
+  // DocuSign waivers: retry queued sends, poll (when Connect isn't set up),
+  // expire unsigned holds, 72h/24h reminders. No-op while the flag is off.
+  startWaiverScheduler();
 }
 
 // Any boot failure (DB unreachable during migrations, etc.) must exit non-zero

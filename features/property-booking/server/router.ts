@@ -35,13 +35,20 @@ import {
   propertyImages,
   propertyAmenities,
   propertyActivities,
+  bookingPartyAdults,
+  bookingPartyMinors,
 } from '@core/db/property-booking-schema';
-import { members } from '@core/db/schema';
+import { members, bookingWaiverAcceptances } from '@core/db/schema';
 import { propertyViewer, propertyForViewer } from './propertyAccess';
 import { eq, and, gte, lte, sql, desc, asc, or, isNull, ne } from "drizzle-orm";
 import { nanoid } from "nanoid";
-import { getWaiverProvider } from '@features/property-booking/server/waiver-provider';
-import { sendWaiverSigningEmail } from '@features/property-booking/server/waiver-emails';
+import {
+  getWaiverService,
+  registerBookingLifecycle,
+  isWaiversDocuSignEnabled,
+  WaiverGateError,
+} from '@features/waivers/public';
+import { BOOKING_WAIVER_ACCEPTANCE_TEXT, normalizeUsPhone, validateParty } from '@shared/waiverParty';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -82,7 +89,7 @@ async function auditLog(
 }
 
 /** Update the property_date_inventory counter atomically (slot-aware) */
-async function updateInventory(
+export async function updateInventory(
   db: any,
   propertyId: number,
   date: string,
@@ -372,7 +379,30 @@ const createBookingInput = z.object({
     description: z.string().max(200).optional(),
     quantity: z.number().int().min(1).default(1),
   })).optional(),
-  // Slice 2: Structured party data (adults + minors)
+  // "Who's coming?" — member + guests (adults with email/mobile, minors with
+  // DOB + guardian). Required while DocuSign waivers are on. See @shared/waiverParty.
+  party: z.object({
+    member: z.object({
+      fullName: z.string().max(255),
+      email: z.string().max(320),
+      phone: z.string().max(30),
+    }),
+    guests: z.array(z.discriminatedUnion("type", [
+      z.object({ type: z.literal("adult"), fullName: z.string().max(255), email: z.string().max(320), phone: z.string().max(30) }),
+      z.object({
+        type: z.literal("minor"),
+        fullName: z.string().max(255),
+        dateOfBirth: z.string().max(10),
+        guardian: z.union([z.literal("member"), z.number().int().min(0)]),
+      }),
+    ])).max(50),
+  }).optional(),
+  // Required checkbox: the exact acceptance text the member agreed to.
+  waiverAcceptance: z.object({
+    accepted: z.literal(true),
+    text: z.string().max(2000),
+  }).optional(),
+  // Slice 2 (legacy shape): Structured party data (adults + minors)
   partyAdults: z.array(z.object({
     fullName: z.string().max(255),
     email: z.string().max(255),
@@ -382,6 +412,57 @@ const createBookingInput = z.object({
     })).optional().default([]),
     isDesignatedMember: z.boolean().optional().default(false),
   })).optional(),
+});
+
+// ─── DocuSign waiver lifecycle ────────────────────────────────────────────────
+// Booking status changes driven by the waiver service (features/waivers).
+
+/** Release (delta −1) or take (+1) inventory for every day of a booking. */
+async function adjustBookingInventory(tx: any, booking: { propertyId: number; startDate: any; endDate: any; timeSlot: any }, delta: number) {
+  let d = new Date(booking.startDate);
+  const e = new Date(booking.endDate);
+  while (d <= e) {
+    await updateInventory(tx, booking.propertyId, d.toISOString().split("T")[0], booking.timeSlot as any, delta);
+    d.setDate(d.getDate() + 1);
+  }
+}
+
+registerBookingLifecycle({
+  async confirmAfterMemberSigned(bookingId, signedAt) {
+    const db = await getDb();
+    if (!db) throw new Error("DB unavailable");
+    return db.transaction(async (tx) => {
+      const [b] = await tx.select().from(propertyBookings).where(eq(propertyBookings.id, bookingId)).for("update").limit(1);
+      if (!b) return "noop" as const;
+      if (b.status !== "pending_waiver") {
+        if (!b.waiverSignedAt) await tx.update(propertyBookings).set({ waiverSignedAt: signedAt, updatedAt: now() } as any).where(eq(propertyBookings.id, bookingId));
+        return "noop" as const;
+      }
+      const next = b.requiresApproval ? "pending_approval" : "confirmed";
+      await tx.update(propertyBookings).set({ status: next, waiverSignedAt: signedAt, updatedAt: now() } as any).where(eq(propertyBookings.id, bookingId));
+      // pending_approval doesn't hold inventory (approve takes it), so release the hold.
+      if (next === "pending_approval") await adjustBookingInventory(tx, b, -1);
+      await auditLog(tx, bookingId, "waiver_signed_by_member", b.userId as any, "pending_waiver", next);
+      return next;
+    });
+  },
+  async expireForUnsignedWaiver(bookingId) {
+    const db = await getDb();
+    if (!db) throw new Error("DB unavailable");
+    return db.transaction(async (tx) => {
+      const [b] = await tx.select().from(propertyBookings).where(eq(propertyBookings.id, bookingId)).for("update").limit(1);
+      if (!b || b.status !== "pending_waiver") return false;
+      await tx.update(propertyBookings).set({
+        status: "expired_waiver",
+        cancelledAt: now(),
+        cancellationReason: "Expired – waiver not signed",
+        updatedAt: now(),
+      } as any).where(eq(propertyBookings.id, bookingId));
+      await adjustBookingInventory(tx, b, -1);
+      await auditLog(tx, bookingId, "expired_waiver_not_signed", "system" as any, "pending_waiver", "expired_waiver");
+      return true;
+    });
+  },
 });
 
 // ─── Router ───────────────────────────────────────────────────────────────────
@@ -822,6 +903,35 @@ export const propertyBookingRouter = router({
         const tooLong = consecutiveDaysError(input.startDate, input.endDate);
         if (tooLong) throw new TRPCError({ code: "BAD_REQUEST", message: tooLong });
 
+        // ── Waivers: guest list, acceptance checkbox, Master waiver gate ────────
+        const waiversOn = isWaiversDocuSignEnabled();
+        if (waiversOn && !input.party) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "Tell us who's coming: add everyone in your party." });
+        }
+        if (input.party) {
+          const v = validateParty(input.party as any, { checkInDate: input.startDate });
+          if (!v.ok) throw new TRPCError({ code: "BAD_REQUEST", message: Object.values(v.errors)[0] ?? "Please check your guest list." });
+          input.partySize = v.partySize;
+        }
+        if ((waiversOn || input.party) && (!input.waiverAcceptance?.accepted || input.waiverAcceptance.text !== BOOKING_WAIVER_ACCEPTANCE_TEXT)) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "Please read and accept the Rivers Lodge Release & Liability Waiver." });
+        }
+        const waiverService = getWaiverService();
+        if (waiversOn) {
+          try {
+            await waiverService.assertMasterWaiverForBooking(member.id);
+          } catch (err) {
+            if (err instanceof WaiverGateError) throw new TRPCError({ code: "PRECONDITION_FAILED", message: err.message });
+            throw err;
+          }
+        }
+        const bookingTemplate = input.party ? await waiverService.currentTemplate("booking") : null;
+        if (waiversOn && !bookingTemplate) {
+          throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Online booking is paused: the booking waiver hasn't been published yet. Please contact the lodge." });
+        }
+        const clientIp = String((ctx.req?.ip ?? ctx.req?.headers?.["x-forwarded-for"] ?? "")).split(",")[0].trim().slice(0, 64) || null;
+        const userAgent = String(ctx.req?.headers?.["user-agent"] ?? "").slice(0, 512) || null;
+
         const result = await db.transaction(async (tx) => {
           // ── Idempotency (inside tx so the re-check is serialised) ──────────
           const existing = await tx
@@ -971,7 +1081,7 @@ export const propertyBookingRouter = router({
             .from(propertyBookings)
             .where(and(
               eq(propertyBookings.memberId, member.id),
-              sql`${propertyBookings.status} NOT IN ('cancelled', 'declined', 'no_show')`,
+              sql`${propertyBookings.status} NOT IN ('cancelled', 'declined', 'no_show', 'expired_waiver')`,
               lte(propertyBookings.startDate, input.endDate as any),
               gte(propertyBookings.endDate, input.startDate as any),
             ))
@@ -990,7 +1100,10 @@ export const propertyBookingRouter = router({
           const totalDays = Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
 
           const requiresApproval = rules?.requiresApproval ?? false;
-          const status = requiresApproval ? "pending_approval" : "confirmed";
+          // With DocuSign waivers on, every booking is held as "pending_waiver"
+          // until the member signs; it then becomes confirmed (or goes to
+          // approval). Never confirmed without the member's signed waiver.
+          const status = waiversOn ? "pending_waiver" : requiresApproval ? "pending_approval" : "confirmed";
 
           const bookingRef = await generateBookingRef(tx as any);
 
@@ -1043,7 +1156,7 @@ export const propertyBookingRouter = router({
             );
           }
 
-          if (status === "confirmed") {
+          if (status === "confirmed" || status === "pending_waiver") {
             let d = new Date(input.startDate);
             const e = new Date(input.endDate);
             let dayCount = 0;
@@ -1057,154 +1170,82 @@ export const propertyBookingRouter = router({
             }
           }
 
+          // ── Party roster + waiver acceptance ──────────────────────────────
+          if (input.party) {
+            const t = now();
+            const party = input.party;
+            const [memberRow] = await tx.insert(bookingPartyAdults).values({
+              bookingId,
+              fullName: party.member.fullName.trim(),
+              email: party.member.email.trim(),
+              phone: normalizeUsPhone(party.member.phone),
+              isDesignatedMember: true,
+              waiverStatus: "pending",
+              createdAt: t,
+              updatedAt: t,
+            } as any).returning({ id: bookingPartyAdults.id });
+            const adultIdByIndex = new Map<number, number>();
+            for (let i = 0; i < party.guests.length; i++) {
+              const g = party.guests[i];
+              if (g.type !== "adult") continue;
+              const [row] = await tx.insert(bookingPartyAdults).values({
+                bookingId,
+                fullName: g.fullName.trim(),
+                email: g.email.trim(),
+                phone: normalizeUsPhone(g.phone),
+                isDesignatedMember: false,
+                waiverStatus: "pending",
+                createdAt: t,
+                updatedAt: t,
+              } as any).returning({ id: bookingPartyAdults.id });
+              adultIdByIndex.set(i, row.id);
+            }
+            for (const g of party.guests) {
+              if (g.type !== "minor") continue;
+              const adultId = g.guardian === "member" ? memberRow.id : adultIdByIndex.get(g.guardian);
+              if (!adultId) throw new TRPCError({ code: "BAD_REQUEST", message: "Every minor needs a parent/guardian in the party." });
+              await tx.insert(bookingPartyMinors).values({
+                bookingId, adultId, fullName: g.fullName.trim(), dateOfBirth: g.dateOfBirth, createdAt: t,
+              } as any);
+            }
+            await tx.update(propertyBookings).set({
+              guestNames: party.guests.map((g: { fullName: string }) => g.fullName.trim()),
+              hasMinors: party.guests.some((g: { type: string }) => g.type === "minor"),
+            } as any).where(eq(propertyBookings.id, bookingId));
+            await tx.insert(bookingWaiverAcceptances).values({
+              userId: ctx.user.id,
+              bookingId,
+              waiverTemplateId: bookingTemplate?.id ?? null,
+              waiverVersion: bookingTemplate?.version ?? null,
+              acceptanceText: input.waiverAcceptance!.text,
+              acceptedAt: t,
+              ipAddress: clientIp,
+              userAgent,
+            });
+          }
+
           await auditLog(tx, bookingId, "booking_created", ctx.user.id, null, { status, bookingRef });
 
           return { bookingId, bookingRef, status, alreadyExisted: false };
         });
 
-        // After transaction completes, call dormant waiver hooks (no-op if not configured)
-        if (!result.alreadyExisted && input.partyAdults && input.partyAdults.length > 0) {
+        // ── Send the booking waiver (member + every adult guest) ─────────────
+        // Failures never undo the booking: it stays "pending_waiver" (slot held)
+        // and the send is queued/retried, or the member sees DocuSign's error
+        // with a "Send by email only" option.
+        let waiverSend: { ok: boolean; error?: string; queued?: boolean; canEmailOnly?: boolean } | null = null;
+        if (waiversOn && !result.alreadyExisted) {
           try {
-            const waiverProvider = getWaiverProvider();
-            for (const adult of input.partyAdults) {
-              if (!adult.isDesignatedMember) {
-                // Send waiver to each additional adult (designated member email handled separately)
-                await waiverProvider.sendWaiver({
-                  adult: {
-                    id: 0, // Placeholder; real ID will be from DB in Slice 3
-                    bookingId: result.bookingId,
-                    fullName: adult.fullName,
-                    email: adult.email,
-                    phone: adult.phone,
-                    isDesignatedMember: false,
-                    waiverStatus: "pending",
-                    waiverProvider: null,
-                    waiverEnvelopeId: null,
-                    waiverSentAt: null,
-                    waiverCompletedAt: null,
-                    createdAt: Date.now(),
-                    updatedAt: Date.now(),
-                  },
-                  minors: (adult.minors ?? []).map((m: { fullName: string }) => ({
-                    id: 0,
-                    bookingId: result.bookingId,
-                    adultId: 0,
-                    fullName: m.fullName,
-                    createdAt: Date.now(),
-                  })),
-                  booking: {
-                    id: result.bookingId,
-                    bookingRef: result.bookingRef,
-                    idempotencyKey: input.idempotencyKey,
-                    memberId: member.id,
-                    userId: ctx.user.id,
-                    propertyId: input.propertyId,
-                    seasonId: null,
-                    startDate: input.startDate,
-                    endDate: input.endDate,
-                    totalDays: 0,
-                    partySize: input.partySize,
-                    guestNames: input.guestNames ?? null,
-                    hasMinors: input.hasMinors ?? false,
-                    activity: input.activity,
-                    timeSlot: input.timeSlot ?? "ALL_DAY",
-                    huntingLicenseConfirmed: input.huntingLicenseConfirmed ?? false,
-                    fishingLicenseConfirmed: input.fishingLicenseConfirmed ?? false,
-                    waiverSignedAt: null,
-                    status: result.status as any,
-                    requiresApproval: false,
-                    approvedByUserId: null,
-                    approvedAt: null,
-                    declinedAt: null,
-                    declineReason: null,
-                    cancelledAt: null,
-                    cancellationReason: null,
-                    cancelledByUserId: null,
-                    isLateCancellation: false,
-                    totalAmount: "0",
-                    depositAmount: "0",
-                    depositPaid: "0",
-                    balanceDue: "0",
-                    currency: "USD",
-                    memberNotes: input.memberNotes ?? null,
-                    staffNotes: null,
-                    confirmationSentAt: null,
-                    reminderSentAt: null,
-                    createdAt: Date.now(),
-                    updatedAt: Date.now(),
-                  },
-                });
-                // Send signing email (dormant)
-                await sendWaiverSigningEmail(
-                  {
-                    id: 0,
-                    bookingId: result.bookingId,
-                    fullName: adult.fullName,
-                    email: adult.email,
-                    phone: adult.phone,
-                    isDesignatedMember: false,
-                    waiverStatus: "pending",
-                    waiverProvider: null,
-                    waiverEnvelopeId: null,
-                    waiverSentAt: null,
-                    waiverCompletedAt: null,
-                    createdAt: Date.now(),
-                    updatedAt: Date.now(),
-                  },
-                  {
-                    id: result.bookingId,
-                    bookingRef: result.bookingRef,
-                    idempotencyKey: input.idempotencyKey,
-                    memberId: member.id,
-                    userId: ctx.user.id,
-                    propertyId: input.propertyId,
-                    seasonId: null,
-                    startDate: input.startDate,
-                    endDate: input.endDate,
-                    totalDays: 0,
-                    partySize: input.partySize,
-                    guestNames: input.guestNames ?? null,
-                    hasMinors: input.hasMinors ?? false,
-                    activity: input.activity,
-                    timeSlot: input.timeSlot ?? "ALL_DAY",
-                    huntingLicenseConfirmed: input.huntingLicenseConfirmed ?? false,
-                    fishingLicenseConfirmed: input.fishingLicenseConfirmed ?? false,
-                    waiverSignedAt: null,
-                    status: result.status as any,
-                    requiresApproval: false,
-                    approvedByUserId: null,
-                    approvedAt: null,
-                    declinedAt: null,
-                    declineReason: null,
-                    cancelledAt: null,
-                    cancellationReason: null,
-                    cancelledByUserId: null,
-                    isLateCancellation: false,
-                    totalAmount: "0",
-                    depositAmount: "0",
-                    depositPaid: "0",
-                    balanceDue: "0",
-                    currency: "USD",
-                    memberNotes: input.memberNotes ?? null,
-                    staffNotes: null,
-                    confirmationSentAt: null,
-                    reminderSentAt: null,
-                    createdAt: Date.now(),
-                    updatedAt: Date.now(),
-                  },
-                  `https://riverslodgehunt.com/portal/properties/${input.propertyId}`,
-                  "Rivers Lodge"
-                );
-              }
-            }
+            waiverSend = await waiverService.startBookingWaivers(result.bookingId);
           } catch (err) {
-            console.error("[property-booking] Failed to call waiver hooks:", err);
-            // Don't fail the booking if waiver hooks fail (they're dormant anyway)
+            console.error(`[property-booking] booking ${result.bookingId}: waiver send failed: ${(err as Error)?.message ?? err}`);
+            waiverSend = { ok: false, error: (err as Error)?.message ?? "Couldn't send the waiver", queued: true };
           }
         }
-
-        return result;
+        return { ...result, waiverSend };
       }),
+
+
 
     /** List the current member's bookings */
     myBookings: protectedProcedure
@@ -1299,7 +1340,7 @@ export const propertyBookingRouter = router({
 
         if (!booking) throw new TRPCError({ code: "NOT_FOUND", message: "Booking not found." });
 
-        if (["cancelled", "completed", "no_show", "declined"].includes(booking.status)) {
+        if (["cancelled", "completed", "no_show", "declined", "expired_waiver"].includes(booking.status)) {
           throw new TRPCError({ code: "BAD_REQUEST", message: "This booking cannot be cancelled." });
         }
 
@@ -1320,7 +1361,7 @@ export const propertyBookingRouter = router({
         // Release inventory — decrement slot counts for all dates in the booking
         // Only for statuses where inventory was incremented (confirmed, checked_in)
         // All other cancellations (pending_approval, declined) never reserved inventory
-        const statusesWithReservedInventory = ["confirmed", "checked_in"];
+        const statusesWithReservedInventory = ["confirmed", "checked_in", "pending_waiver"];
         if (statusesWithReservedInventory.includes(prevStatus)) {
           let d = new Date(booking.startDate);
           const e = new Date(booking.endDate);
@@ -1336,6 +1377,10 @@ export const propertyBookingRouter = router({
         }
 
         await auditLog(db, input.id, "booking_cancelled", ctx.user.id, prevStatus, "cancelled", input.reason);
+
+        // Void any open DocuSign waiver envelopes for this booking.
+        try { await getWaiverService().onBookingCancelled(input.id); }
+        catch (err) { console.warn(`[property-booking] booking ${input.id}: couldn't void waiver envelopes: ${(err as Error)?.message ?? err}`); }
 
         return { success: true };
       }),
