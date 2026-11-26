@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import PublicLayout from "@shared/components/PublicLayout";
+import { PublicLayout } from "@features/public-pages/public";
 import SEOHead from "@shared/components/SEOHead";
 
 const ACCENT = "#9B4D19";

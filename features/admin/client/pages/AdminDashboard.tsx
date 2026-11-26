@@ -3,7 +3,7 @@ import { useAuth } from '@features/auth/public';
 import { useLocation } from "wouter";
 import { trpc } from '@shared/lib/trpc';
 import { toast } from "sonner";
-import PublicLayout from "@/components/PublicLayout";
+import { PublicLayout } from "@features/public-pages/public";
 
 type AdminTab = "overview" | "bookings" | "inquiries" | "members" | "applications" | "waivers" | "updates" | "messages" | "cms";
 type CmsSubTab = "testimonials" | "faqs" | "announcements" | "member-content";

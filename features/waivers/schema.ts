@@ -23,16 +23,15 @@ export const waivers = pgTable("waivers", {
 export type Waiver = typeof waivers.$inferSelect;
 export type InsertWaiver = typeof waivers.$inferInsert;
 
-// Portal waiver templates and extended portal waivers.
-// Re-exported from portal's *schema* (not its public.ts barrel): public.ts also
-// re-exports React pages, and pulling those into the server/DB graph broke
-// every server test that touches the schema (same pattern as admin/schema.ts).
+// Portal waiver templates and extended portal waivers, via portal's
+// server-safe barrel (features/portal/public.ts also re-exports React pages,
+// which must not enter the server/DB graph).
 export {
   waiverTemplates,
   type WaiverTemplate,
   portalWaivers,
   type PortalWaiver,
-} from "@features/portal/schema";
+} from "@features/portal/server/public";
 
 // DocuSign waivers (migration 0041) — Master waiver per member, Booking waiver per booking.
 export * from "./docusignSchema";

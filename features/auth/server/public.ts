@@ -8,5 +8,6 @@ export { requireMemberSession } from "./session";
 // ── tRPC router ───────────────────────────────────────────────────────────────
 export { authRouter } from "./router";
 
-// ── DB table ref (admin feature consumption only) ─────────────────────────────
+// ── DB table refs (admin feature consumption only) ────────────────────────────
 export { users } from '@core/db/schema';
+export { invites, sessions } from '../schema';

@@ -1,6 +1,6 @@
 import { Link } from "wouter";
 import { useRef, useEffect } from "react";
-import PublicLayout from "@shared/components/PublicLayout";
+import { PublicLayout } from "@features/public-pages/public";
 import SEOHead from "@shared/components/SEOHead";
 import Picture from "@shared/components/Picture";
 import { PURSUITS, pursuitTile } from "./pursuitData";

@@ -1,4 +1,4 @@
-import PublicLayout from "@shared/components/PublicLayout";
+import { PublicLayout } from "@features/public-pages/public";
 
 export default function Privacy() {
   return (

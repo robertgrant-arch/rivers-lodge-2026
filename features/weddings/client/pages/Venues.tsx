@@ -1,6 +1,6 @@
 import { Link } from "wouter";
 import { CoverVideo, type CoverVideoSource } from "../components/CoverVideo";
-import PublicLayout from "@shared/components/PublicLayout";
+import { PublicLayout } from "@features/public-pages/public";
 import Picture from "@shared/components/Picture";
 import { trpc } from '@shared/lib/trpc';
 import SEOHead from "@shared/components/SEOHead";

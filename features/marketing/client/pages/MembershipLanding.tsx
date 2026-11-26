@@ -1,9 +1,9 @@
 import { Link } from "wouter";
-import PublicLayout from "@shared/components/PublicLayout";
+import { PublicLayout } from "@features/public-pages/public";
 import { trpc } from '@shared/lib/trpc';
 import SEOHead, { structuredData } from '@shared/components/SEOHead';
-import AvailabilityCalendar from "@/components/AvailabilityCalendar";
-import FAQAccordion from "@/components/FAQAccordion";
+import { AvailabilityCalendar } from "@features/booking-engine/client/public";
+import { FAQAccordion } from "@features/cms/client/public";
 
 
 /* ── Images ──────────────────────────────────────────────────────────────── */

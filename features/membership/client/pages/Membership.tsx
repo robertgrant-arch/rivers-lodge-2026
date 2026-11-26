@@ -2,7 +2,7 @@ import { useRef, useEffect, useState } from "react";
 import { Link } from "wouter";
 import { Turnstile } from "@marsidev/react-turnstile";
 import type { TurnstileInstance } from "@marsidev/react-turnstile";
-import PublicLayout from "@/components/PublicLayout";
+import { PublicLayout } from "@features/public-pages/public";
 import Picture from "@shared/components/Picture";
 import SpaceCardsSection, { type SpaceCardItem } from "@shared/components/SpaceCards";
 import { PURSUITS, pursuitTile } from "@features/outdoor-activities/public";

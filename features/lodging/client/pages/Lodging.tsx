@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import PublicLayout from "../../../_shared/components/PublicLayout";
+import { PublicLayout } from "@features/public-pages/public";
 import { trpc } from '@shared/lib/trpc';
 import SEOHead from '@shared/components/SEOHead';
 import { useHashScroll } from '@shared/hooks/useHashScroll';
