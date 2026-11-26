@@ -19,6 +19,7 @@ import {
 import { Skeleton } from '@shared/ui/skeleton';
 import { Textarea } from '@shared/ui/textarea';
 import { trpc } from '@shared/lib/trpc';
+import { useInvalidateCalendars } from '@shared/hooks/useInvalidateCalendars';
 import { Building2, ChevronRight, DollarSign, Mail, MessageSquare, Phone, Plus, Search, Users, ArrowRight } from "lucide-react";
 import { useState } from "react";
 import { Link, useParams } from "wouter";
@@ -51,6 +52,7 @@ function formatCurrency(v: string | null | undefined) {
 
 function CorporateDetail({ id }: { id: number }) {
   const utils = trpc.useUtils();
+  const invalidateCalendars = useInvalidateCalendars();
   const detailQuery = trpc.portal.corporate.get.useQuery({ id });
   const [noteText, setNoteText] = useState("");
   const [showStatusDialog, setShowStatusDialog] = useState(false);
@@ -62,7 +64,7 @@ function CorporateDetail({ id }: { id: number }) {
     onError: (e) => toast.error(e.message),
   });
   const updateStatus = trpc.portal.corporate.updateStatus.useMutation({
-    onSuccess: () => { setShowStatusDialog(false); utils.portal.corporate.get.invalidate({ id }); utils.portal.corporate.list.invalidate(); toast.success("Status updated"); },
+    onSuccess: () => { setShowStatusDialog(false); utils.portal.corporate.get.invalidate({ id }); utils.portal.corporate.list.invalidate(); invalidateCalendars(); toast.success("Status updated"); },
     onError: (e) => toast.error(e.message),
   });
 
@@ -168,13 +170,14 @@ export default function PortalCorporate() {
   const [showCreate, setShowCreate] = useState(false);
   const [form, setForm] = useState({ companyName: "", contactName: "", contactEmail: "", contactPhone: "", eventType: "team_retreat" as const, arrivalDate: "", departureDate: "", attendeeCount: "", notes: "" });
   const utils = trpc.useUtils();
+  const invalidateCalendars = useInvalidateCalendars();
 
   const listQuery = trpc.portal.corporate.list.useInfiniteQuery(
     { status: statusFilter === "all" ? undefined : statusFilter, search: search || undefined, limit: 25 },
     { getNextPageParam: (lastPage) => lastPage.nextCursor }
   );
   const createMutation = trpc.portal.corporate.create.useMutation({
-    onSuccess: () => { setShowCreate(false); utils.portal.corporate.list.invalidate(); toast.success("Corporate booking created"); },
+    onSuccess: () => { setShowCreate(false); utils.portal.corporate.list.invalidate(); invalidateCalendars(); toast.success("Corporate booking created"); },
     onError: (e) => toast.error(e.message),
   });
 

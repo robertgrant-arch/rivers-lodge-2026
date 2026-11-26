@@ -90,6 +90,7 @@ const PortalDashboard = lazy(() => import("@features/admin/client/pages/PortalDa
 const PortalCalendar = lazy(() => import("@features/admin/client/pages/PortalCalendar"));
 const PortalWeddings = lazy(() => import("@features/admin/client/pages/PortalWeddings"));
 const PortalCorporate = lazy(() => import("@features/admin/client/pages/PortalCorporate"));
+const OpsHuntingGroups = lazy(() => import("@features/hunting-groups/client/pages/OpsHuntingGroups"));
 const PortalHuntFish = lazy(() => import("@features/admin/client/pages/PortalHuntFish"));
 const PortalMemberBookings = lazy(() => import("@features/admin/client/pages/PortalMemberBookings"));
 const PortalCustomers = lazy(() => import("@features/admin/client/pages/PortalCustomers"));
@@ -196,6 +197,8 @@ function Router() {
         <Route path="/ops/weddings">{() => <PortalLayout><PortalWeddings /></PortalLayout>}</Route>
         <Route path="/ops/corporate/:id">{(p) => <PortalLayout><PortalCorporate /></PortalLayout>}</Route>
         <Route path="/ops/corporate">{() => <PortalLayout><PortalCorporate /></PortalLayout>}</Route>
+        <Route path="/ops/hunting-groups/:id">{() => <PortalLayout><OpsHuntingGroups /></PortalLayout>}</Route>
+        <Route path="/ops/hunting-groups">{() => <PortalLayout><OpsHuntingGroups /></PortalLayout>}</Route>
         <Route path="/ops/hunt-fish/:id">{(p) => <PortalLayout><PortalHuntFish /></PortalLayout>}</Route>
         <Route path="/ops/hunt-fish">{() => <PortalLayout><PortalHuntFish /></PortalLayout>}</Route>
         <Route path="/ops/member-bookings">{() => <PortalLayout><PortalMemberBookings /></PortalLayout>}</Route>

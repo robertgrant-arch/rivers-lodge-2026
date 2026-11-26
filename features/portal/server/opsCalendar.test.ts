@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { canViewOpsCalendar, toOpsEntries } from "./opsCalendar";
+import { canViewOpsCalendar, loadOpsCalendar } from "./opsCalendar";
+import type { CalendarSource } from "@shared/calendarFeed";
 
 /** Fake drizzle: each select() resolves to the next queued result. */
 function fakeDb(results: unknown[][]) {
@@ -54,37 +55,27 @@ describe("canViewOpsCalendar", () => {
   });
 });
 
-describe("toOpsEntries", () => {
-  const out = toOpsEntries({
-    events: [
-      { id: 1, title: "STATE OF KS LIQUOR INSPECTION", startDate: "2026-11-18", endDate: "2026-11-18", allDay: false, startTime: "10:00", endTime: "11:00", hiddenFromMembers: true },
-      { id: 2, title: "Members Dinner", startDate: "2026-11-20", endDate: "2026-11-20", allDay: true, hiddenFromMembers: false },
-    ],
-    blocked: [{ id: 3, title: null, startDate: "2026-11-24", endDate: "2026-11-25", allDay: true, reasonNotes: "Maintenance" }],
-    weddings: [{ id: 4, coupleName: "Smith / Jones", weddingDate: "2026-11-21", status: "confirmed" }],
-    corporate: [{ id: 5, companyName: "Acme", arrivalDate: "2026-11-02", departureDate: null, status: "contract_out" }],
-    huntFish: [{ id: 6, bookingType: "guided_hunt", clientName: "R. Hunter", partySize: 3, bookingDate: "2026-11-09", status: "confirmed" }],
+describe("loadOpsCalendar (calendar feed registry)", () => {
+  const src = (kind: string, items: any[]): CalendarSource => ({
+    kind, label: kind, color: "#000", listInRange: async () => items,
+  });
+  const base = { allDay: true, hiddenFromMembers: true, href: null };
+
+  it("reads every source it is given, sorted by date, with source metadata", async () => {
+    const out = await loadOpsCalendar("2026-11-01", "2026-11-30", { id: "a", role: "admin" }, [
+      src("wedding", [{ ...base, id: "wedding-4", kind: "wedding", recordId: 4, title: "Wedding: Smith / Jones", startDate: "2026-11-21", status: "confirmed" }]),
+      src("hunting_group", [{ ...base, id: "hunting_group-9", kind: "hunting_group", recordId: 9, title: "Hunting Group: Ducks", startDate: "2026-11-02", endDate: "2026-11-04", status: "inquiry" }]),
+    ]);
+    expect(out.items.map((i) => i.id)).toEqual(["hunting_group-9", "wedding-4"]);
+    expect(out.items[0].tentative).toBe(true);
+    expect(out.items[1].tentative).toBe(false);
+    expect(out.sources.map((s) => s.kind)).toEqual(["wedding", "hunting_group"]);
   });
 
-  it("labels each source and separates ops from member events", () => {
-    const byId = (k: string) => out.find((e) => e.key === k)!;
-    expect(byId("ops-1").kind).toBe("ops_event");
-    expect(byId("member-2").kind).toBe("member_event");
-    expect(byId("blocked-3").title).toBe("Blocked");
-    expect(byId("wedding-4").title).toBe("Wedding: Smith / Jones");
-    expect(byId("huntfish-6").title).toBe("Guided hunt: R. Hunter (3)");
-  });
-
-  it("a corporate booking with no departure is a one-day entry", () => {
-    const c = out.find((e) => e.key === "corporate-5")!;
-    expect([c.startDate, c.endDate]).toEqual(["2026-11-02", "2026-11-02"]);
-  });
-
-  it("is sorted by date", () => {
-    expect(out.map((e) => e.startDate)).toEqual([...out.map((e) => e.startDate)].sort());
-  });
-
-  it("carries no contact details", () => {
-    for (const e of out) expect(Object.keys(e).sort()).toEqual(["allDay", "endDate", "endTime", "id", "key", "kind", "notes", "startDate", "startTime", "status", "title"]);
+  it("staff see full titles (no member redaction)", async () => {
+    const out = await loadOpsCalendar("2026-11-01", "2026-11-30", { id: "e", role: "employee" }, [
+      src("corporate", [{ ...base, id: "corporate-5", kind: "corporate", recordId: 5, title: "Corporate: Acme", startDate: "2026-11-02", status: "confirmed" }]),
+    ]);
+    expect(out.items[0].title).toBe("Corporate: Acme");
   });
 });
