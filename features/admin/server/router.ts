@@ -46,12 +46,12 @@ import { ENV } from "@core/server/env";
 import { getPortalDb } from "@core/server/db";
 import { propertyDateInventory } from "@core/db/property-booking-schema";
 import { memberFileRouter } from "./memberFile";
+import { huntingGroupBookings } from "@features/hunting-groups/server/public";
+import { calendarSourceMeta, collectCalendarItems, getCalendarSources } from "@shared/calendarFeed";
 
 const getDb = getPortalDb;
 
 // ─── Portal Role Guards ───────────────────────────────────────────────────────
-const STAFF_ROLES = ["admin", "employee"] as const;
-type StaffRole = typeof STAFF_ROLES[number];
 
 // Ops portal procedures: ADMIN ONLY.
 // This used to admit any "employee"-role user — and every member login carries
@@ -110,6 +110,8 @@ const dashboardRouter = router({
       [inquiryCount],
       [weddingRevenue],
       [corporateRevenue],
+      [huntingGroupCount],
+      [huntingGroupRevenue],
     ] = await Promise.all([
       db.select({ count: sql<number>`count(*)` })
         .from(weddingBookings).where(eq(weddingBookings.status, "confirmed")),
@@ -125,14 +127,19 @@ const dashboardRouter = router({
         .from(weddingBookings).where(eq(weddingBookings.status, "confirmed")),
       db.select({ total: sql<string>`COALESCE(SUM(${corporateBookings.contractValue}), 0)` })
         .from(corporateBookings).where(eq(corporateBookings.status, "confirmed")),
+      db.select({ count: sql<number>`count(*)` })
+        .from(huntingGroupBookings).where(eq(huntingGroupBookings.status, "confirmed")),
+      db.select({ total: sql<string>`COALESCE(SUM(${huntingGroupBookings.contractValue}), 0)` })
+        .from(huntingGroupBookings).where(eq(huntingGroupBookings.status, "confirmed")),
     ]);
     return {
       confirmedWeddings: weddingCount.count,
       confirmedCorporate: corporateCount.count,
+      confirmedHuntingGroups: huntingGroupCount.count,
       confirmedHuntFish: huntCount.count,
       activeMembers: memberCount.count,
       newInquiries: inquiryCount.count,
-      totalConfirmedRevenue: (parseFloat(weddingRevenue.total) + parseFloat(corporateRevenue.total)).toFixed(2),
+      totalConfirmedRevenue: (parseFloat(weddingRevenue.total) + parseFloat(corporateRevenue.total) + parseFloat(huntingGroupRevenue.total)).toFixed(2),
     };
   }),
 
@@ -290,38 +297,17 @@ const calendarRouter = router({
     .query(async ({ input, ctx }) => {
       const db = getDb();
       const startTime = Date.now();
-      const isStaff = STAFF_ROLES.includes(ctx.user.role as StaffRole);
 
-      // All ranges are independent — fetch concurrently.
-      const [weddings, corporate, huntFish, blocked, events, rawInventories] = await Promise.all([
-        db.select().from(weddingBookings)
-          .where(and(
-            sql`${weddingBookings.weddingDate} >= ${input.startDate}`,
-            sql`${weddingBookings.weddingDate} <= ${input.endDate}`
-          )),
-        db.select().from(corporateBookings)
-          .where(and(
-            sql`${corporateBookings.arrivalDate} >= ${input.startDate}`,
-            sql`${corporateBookings.departureDate} <= ${input.endDate}`
-          )),
-        db.select().from(huntFishBookings)
-          .where(and(
-            sql`${huntFishBookings.bookingDate} >= ${input.startDate}`,
-            sql`${huntFishBookings.bookingDate} <= ${input.endDate}`
-          )),
-        db.select().from(portalBlockedDates)
-          .where(and(
-            sql`${portalBlockedDates.startDate} <= ${input.endDate}`,
-            sql`${portalBlockedDates.endDate} >= ${input.startDate}`
-          )),
-        db.select().from(portalEvents)
-          .where(and(
-            sql`${portalEvents.startDate} <= ${input.endDate}`,
-            sql`${portalEvents.endDate} >= ${input.startDate}`,
-            // Hide events from non-staff users (members) based on hiddenFromMembers flag
-            !isStaff ? eq(portalEvents.hiddenFromMembers, false) : undefined
-          )),
-        // Fetch slot inventory for all properties in date range
+      // Every booking/entry comes from the calendar feed registry (each event
+      // feature registers a CalendarSource — see _core/server/calendarSources.ts).
+      // Shared rules: overlap with the range, cancelled/lost left out, undated
+      // items skipped, non-confirmed flagged tentative.
+      const sources = getCalendarSources().filter((s) => !input.types?.length || input.types.includes(s.kind));
+      const [items, rawInventories] = await Promise.all([
+        collectCalendarItems(sources, input.startDate, input.endDate, {
+          userId: ctx.user.id, role: ctx.user.role ?? null, audience: "staff",
+        }),
+        // Slot inventory for all properties in the date range
         db.select({
           propertyId: propertyDateInventory.propertyId,
           date: propertyDateInventory.date,
@@ -352,7 +338,6 @@ const calendarRouter = router({
       });
 
       const inventories = Array.from(inventoriesByDate.entries()).map(([date, invs]) => {
-        // Check if any property has bookings for this date
         const hasAnyBookings = invs.some(
           (inv) =>
             inv.amBookedCount > 0 ||
@@ -360,11 +345,7 @@ const calendarRouter = router({
             inv.allDayBookedCount > 0 ||
             inv.overnightBookedCount > 0
         );
-
-        // Check if all properties are 'full' for this date
         const allPropertiesFull = invs.length > 0 && invs.every((inv) => inv.status === "full");
-
-        // Aggregate status: prioritize constraint (full > partial > open)
         let aggregatedStatus: "open" | "partial" | "full";
         if (allPropertiesFull) {
           aggregatedStatus = "full";
@@ -373,73 +354,16 @@ const calendarRouter = router({
         } else {
           aggregatedStatus = "partial";
         }
-
-        return {
-          date,
-          aggregatedStatus,
-          properties: invs,
-        };
+        return { date, aggregatedStatus, properties: invs };
       });
-
-      const result = {
-        weddings: weddings.map(w => ({
-          ...w,
-          _type: "wedding" as const,
-          title: w.coupleName || null,
-          kind: "wedding" as const,
-          startAt: null,
-          endAt: null,
-          allDay: true,
-        })),
-        corporate: corporate.map(c => ({
-          ...c,
-          _type: "corporate" as const,
-          title: c.companyName || null,
-          kind: "corporate" as const,
-          startAt: null,
-          endAt: null,
-          allDay: true,
-        })),
-        huntFish: huntFish.map(h => ({
-          ...h,
-          _type: "hunt_fish" as const,
-          title: h.species || null,
-          kind: "hunt_fish" as const,
-          startAt: null,
-          endAt: null,
-          allDay: true,
-        })),
-        blocked: blocked.map(b => ({
-          ...b,
-          _type: "blocked" as const,
-          title: b.title || null,
-          kind: b.kind || "blocked" as const,
-          startAt: b.startAt,
-          endAt: b.endAt,
-          allDay: b.allDay ?? true,
-        })),
-        events: events.map(e => ({
-          ...e,
-          _type: "event" as const,
-          title: e.title,
-          kind: "member_event" as const,
-          startAt: e.startTime ? `${e.startDate}T${e.startTime}:00Z` : null,
-          endAt: e.endTime ? `${e.endDate}T${e.endTime}:00Z` : null,
-        })),
-        inventories,
-      };
 
       const duration = Date.now() - startTime;
       console.log(`[calendar.events] Query completed in ${duration}ms (date range: ${input.startDate} to ${input.endDate})`, {
-        weddings: weddings.length,
-        corporate: corporate.length,
-        huntFish: huntFish.length,
-        blocked: blocked.length,
-        events: events.length,
+        items: items.length,
+        sources: sources.map((s) => s.kind),
         inventoryDates: inventories.length,
-        blockedTitles: blocked.map(b => b.title).slice(0, 5),
       });
-      return result;
+      return { items, sources: calendarSourceMeta(sources), inventories };
     }),
 
   // Save a regular event (non-block)
@@ -1992,7 +1916,7 @@ const auditLogRouter = router({
 const analyticsRouter = router({
   pipeline: portalProcedure.query(async () => {
     const db = getDb();
-    const [weddingPipeline, corporatePipeline] = await Promise.all([
+    const [weddingPipeline, corporatePipeline, huntingGroupPipeline] = await Promise.all([
       db.select({
         status: weddingBookings.status,
         count: sql<number>`count(*)`,
@@ -2003,8 +1927,13 @@ const analyticsRouter = router({
         count: sql<number>`count(*)`,
         totalValue: sql<string>`COALESCE(SUM(${corporateBookings.contractValue}), 0)`,
       }).from(corporateBookings).groupBy(corporateBookings.status),
+      db.select({
+        status: huntingGroupBookings.status,
+        count: sql<number>`count(*)`,
+        totalValue: sql<string>`COALESCE(SUM(${huntingGroupBookings.contractValue}), 0)`,
+      }).from(huntingGroupBookings).groupBy(huntingGroupBookings.status),
     ]);
-    return { weddingPipeline, corporatePipeline };
+    return { weddingPipeline, corporatePipeline, huntingGroupPipeline };
   }),
 
   memberActivity: portalProcedure.query(async () => {

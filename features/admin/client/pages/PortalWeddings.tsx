@@ -21,6 +21,7 @@ import { Separator } from '@shared/ui/separator';
 import { Skeleton } from '@shared/ui/skeleton';
 import { Textarea } from '@shared/ui/textarea';
 import { trpc } from '@shared/lib/trpc';
+import { useInvalidateCalendars } from '@shared/hooks/useInvalidateCalendars';
 import {
   ArrowRight,
   Calendar,
@@ -71,6 +72,7 @@ function formatCurrency(v: string | null | undefined) {
 // ─── Detail View ──────────────────────────────────────────────────────────────
 function WeddingDetail({ id }: { id: number }) {
   const utils = trpc.useUtils();
+  const invalidateCalendars = useInvalidateCalendars();
   const detailQuery = trpc.portal.weddings.get.useQuery({ id });
   const [noteText, setNoteText] = useState("");
   const [statusValue, setStatusValue] = useState("");
@@ -86,6 +88,7 @@ function WeddingDetail({ id }: { id: number }) {
       setShowStatusDialog(false);
       utils.portal.weddings.get.invalidate({ id });
       utils.portal.weddings.list.invalidate();
+      invalidateCalendars();
       toast.success("Status updated");
     },
     onError: (e) => toast.error(e.message),
@@ -297,6 +300,7 @@ export default function PortalWeddings() {
   const [showCreate, setShowCreate] = useState(false);
   const [createForm, setCreateForm] = useState({ coupleName: "", contactEmail: "", contactPhone: "", weddingDate: "", source: "website" as const, notes: "" });
   const utils = trpc.useUtils();
+  const invalidateCalendars = useInvalidateCalendars();
 
   // Fetch all wedding leads from the sales pipeline
   const leadsQuery = trpc.booking.leads.list.useQuery({
@@ -313,6 +317,7 @@ export default function PortalWeddings() {
       setCreateForm({ coupleName: "", contactEmail: "", contactPhone: "", weddingDate: "", source: "website", notes: "" });
       utils.booking.leads.list.invalidate();
       utils.portal.weddings.list.invalidate();
+      invalidateCalendars();
       toast.success("Wedding booking created");
     },
     onError: (e) => toast.error(e.message),

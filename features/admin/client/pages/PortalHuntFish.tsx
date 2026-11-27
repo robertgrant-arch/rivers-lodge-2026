@@ -21,6 +21,7 @@ import { Skeleton } from '@shared/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@shared/ui/tabs';
 import { Textarea } from '@shared/ui/textarea';
 import { trpc } from '@shared/lib/trpc';
+import { useInvalidateCalendars } from '@shared/hooks/useInvalidateCalendars';
 import { Fish, Plus, Search, Target, Trophy } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -65,6 +66,7 @@ export default function PortalHuntFish() {
   });
   const [harvestForm, setHarvestForm] = useState({ species: "", count: "1", details: "", guideNotes: "", harvestDate: "" });
   const utils = trpc.useUtils();
+  const invalidateCalendars = useInvalidateCalendars();
 
   const today = new Date();
   const weekStart = new Date(today); weekStart.setDate(today.getDate() - today.getDay());
@@ -83,12 +85,12 @@ export default function PortalHuntFish() {
   const seasonsQuery = trpc.portal.huntFish.seasons.useQuery();
 
   const createMutation = trpc.portal.huntFish.create.useMutation({
-    onSuccess: () => { setShowCreate(false); utils.portal.huntFish.list.invalidate(); toast.success("Booking created"); },
+    onSuccess: () => { setShowCreate(false); utils.portal.huntFish.list.invalidate(); invalidateCalendars(); toast.success("Booking created"); },
     onError: (e) => toast.error(e.message),
   });
 
   const updateStatusMutation = trpc.portal.huntFish.updateStatus.useMutation({
-    onSuccess: () => { utils.portal.huntFish.list.invalidate(); toast.success("Status updated"); },
+    onSuccess: () => { utils.portal.huntFish.list.invalidate(); invalidateCalendars(); toast.success("Status updated"); },
     onError: (e) => toast.error(e.message),
   });
 

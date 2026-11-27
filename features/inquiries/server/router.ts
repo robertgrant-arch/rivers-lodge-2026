@@ -7,6 +7,7 @@ import { getDb } from "../../_core/server/db";
 import { verifyCaptcha } from "@core/server/captcha";
 import { leads, reservationRequests } from '@core/db/booking-schema';
 import { inquiries } from '@core/db/schema';
+import { createHuntingGroupInquiryBooking } from "@features/hunting-groups/server/public";
 import * as dal from "./dal";
 
 // ─── Admin guard ──────────────────────────────────────────────────────────────
@@ -20,7 +21,7 @@ export const inquiriesRouter = router({
   submit: publicProcedure
     .input(
       z.object({
-        type: z.enum(["wedding", "corporate", "tour", "general", "membership", "lodging", "event", "hunting", "fishing"]),
+        type: z.enum(["wedding", "corporate", "tour", "general", "membership", "lodging", "event", "hunting", "fishing", "hunting_group"]),
         name: z.string().min(1),
         email: z.string().email(),
         phone: z.string().optional(),
@@ -46,6 +47,7 @@ export const inquiriesRouter = router({
           event:      "corporate",
           hunting:    "hunt",
           fishing:    "fish",
+          hunting_group: "hunt",
         };
         const businessLine = businessLineMap[input.type] ?? "other";
 
@@ -56,7 +58,7 @@ export const inquiriesRouter = router({
         // Both inserts must succeed or neither persists.  Without a transaction,
         // a failure on the reservationRequests insert would leave an orphan leads
         // row with no matching request, corrupting the sales pipeline.
-        const { leadId, reservationRequestId } = await database.transaction(async (tx) => {
+        const { leadId, reservationRequestId, huntingGroupBookingId } = await database.transaction(async (tx) => {
           // 1. Create a Lead in the sales pipeline.
           const [leadResult] = await tx.insert(leads).values({
             source: "website_form",
@@ -96,7 +98,13 @@ export const inquiriesRouter = router({
             reservationRequestId = rrResult.id;
           }
 
-          return { leadId, reservationRequestId };
+          // 3. Hunting group inquiries open an Inquiry-status booking in
+          //    /ops/hunting-groups (on the Ops Calendar once it has a date).
+          const huntingGroupBookingId = input.type === "hunting_group"
+            ? await createHuntingGroupInquiryBooking(tx, input)
+            : undefined;
+
+          return { leadId, reservationRequestId, huntingGroupBookingId };
         });
 
         // ── Notification (best-effort) ────────────────────────────────────────
@@ -113,7 +121,7 @@ export const inquiriesRouter = router({
           console.error("[inquiries.submit] notifyOwner failed (non-fatal):", err);
         }
 
-        return { success: true, leadId, reservationRequestId };
+        return { success: true, leadId, reservationRequestId, ...(huntingGroupBookingId ? { huntingGroupBookingId } : {}) };
       } catch (err) {
         // Deliberate tRPC errors (e.g. captcha FORBIDDEN, "Database unavailable")
         // already carry the right status — don't turn a 403 into a 500.

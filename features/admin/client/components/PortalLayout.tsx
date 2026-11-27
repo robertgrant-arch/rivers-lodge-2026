@@ -32,6 +32,7 @@ import {
   Building2,
   Calendar,
   ChevronDown,
+  Crosshair,
   ClipboardList,
   Eye,
   Heart,
@@ -94,6 +95,7 @@ const navGroups = [
     items: [
       { icon: Heart, label: "Weddings", path: "/ops/weddings" },
       { icon: Building2, label: "Corporate Retreats", path: "/ops/corporate" },
+      { icon: Crosshair, label: "Hunting Groups", path: "/ops/hunting-groups" },
     ],
   },
   {

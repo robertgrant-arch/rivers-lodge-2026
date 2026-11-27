@@ -1,4 +1,4 @@
-import { Link } from 'wouter';
+import { Link, useLocation, useSearch } from 'wouter';
 import { Button } from '@shared/ui/button';
 import {
   Dialog,
@@ -21,6 +21,7 @@ import { trpc } from '@shared/lib/trpc';
 import { useState, useMemo, useEffect } from 'react';
 import { toast } from 'sonner';
 import { Settings } from 'lucide-react';
+import { itemsByDate } from '@shared/calendarFeed';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -54,12 +55,13 @@ const DAY_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 // Event type config
 // ---------------------------------------------------------------------------
 
-type EventKind = 'wedding' | 'corporate' | 'hunt_fish' | 'blocked' | 'member_event' | 'ops_event';
+type EventKind = 'wedding' | 'corporate' | 'hunting_group' | 'hunt_fish' | 'blocked' | 'member_event' | 'ops_event';
 
 const EVENT_CONFIG: Record<EventKind, { label: string; dot: string; text: string }> = {
   // Same colours as the staff Ops Calendar (/portal/ops-calendar).
   wedding:    { label: 'Wedding',    dot: '#7D8AA3', text: 'text-[#7D8AA3]' },
   corporate:  { label: 'Corporate',  dot: '#8E9670', text: 'text-[#8E9670]' },
+  hunting_group: { label: 'Hunting Group', dot: '#6FA3A0', text: 'text-[#6FA3A0]' },
   hunt_fish:  { label: 'Hunt/Fish',  dot: '#D9B98C', text: 'text-[#D9B98C]' },
   blocked:    { label: 'Hold/Block', dot: '#8A847A', text: 'text-[#BABAAE]' },
   member_event: { label: 'Member Event', dot: '#BABAAE', text: 'text-[#BABAAE]' },
@@ -72,10 +74,39 @@ const EVENT_CONFIG: Record<EventKind, { label: string; dot: string; text: string
 //            the blocks members are shown (same rule as the member page).
 export type CalendarView = 'ops' | 'master';
 
-const VIEW_KINDS: Record<CalendarView, EventKind[]> = {
-  ops: ['ops_event', 'member_event', 'wedding', 'corporate', 'hunt_fish', 'blocked'],
+const VIEW_KINDS: Record<CalendarView, string[]> = {
+  // The ops view also picks up any other registered calendar source (the
+  // server sends the list), so a new event type needs no change here.
+  ops: ['ops_event', 'member_event', 'wedding', 'corporate', 'hunting_group', 'hunt_fish', 'blocked'],
   master: ['member_event', 'blocked'],
 };
+
+type KindConfig = { label: string; dot: string; text: string };
+type SourceMeta = { kind: string; label: string; color: string };
+
+/** Colour/label for a kind: the fixed palette above, else what the source registered. */
+function kindConfig(kind: string, sources?: SourceMeta[]): KindConfig {
+  const fixed = EVENT_CONFIG[kind as EventKind];
+  if (fixed) return fixed;
+  const src = sources?.find((x) => x.kind === kind);
+  return { label: src?.label ?? kind, dot: src?.color ?? '#BABAAE', text: 'text-[#BABAAE]' };
+}
+
+/** Booking-type kinds open their record in Ops; events/blocks open the edit dialog here. */
+const isEditableHere = (kind: string) => kind === 'member_event' || kind === 'ops_event' || kind === 'blocked';
+
+/** Dot for an entry: solid when confirmed, dashed ring when tentative. */
+function KindDot({ color, tentative, size = 6 }: { color: string; tentative?: boolean; size?: number }) {
+  return (
+    <span
+      data-tentative={tentative ? 'true' : undefined}
+      className="inline-block rounded-full flex-shrink-0"
+      style={tentative
+        ? { width: size, height: size, border: `1px dashed ${color}`, backgroundColor: 'transparent' }
+        : { width: size, height: size, backgroundColor: color }}
+    />
+  );
+}
 
 const VIEW_COPY: Record<CalendarView, { title: string; audience: string; other: { label: string; path: string } }> = {
   ops: {
@@ -90,13 +121,14 @@ const VIEW_COPY: Record<CalendarView, { title: string; audience: string; other: 
   },
 };
 
-type FilterKey = EventKind | 'all';
+type FilterKey = string;
 
-const FILTER_LABELS: Record<EventKind, string> = {
+const FILTER_LABELS: Record<string, string> = {
   ops_event: 'Ops Events',
   member_event: 'Member Events',
   wedding: 'Weddings',
   corporate: 'Corporate',
+  hunting_group: 'Hunting Groups',
   hunt_fish: 'Hunt/Fish',
   blocked: 'Blocks/Holds',
 };
@@ -108,11 +140,19 @@ const FILTER_LABELS: Record<EventKind, string> = {
 interface CalEvent {
   /** Blocks: had a real title (hidden titled blocks are not shown to members). */
   hasTitle?: boolean;
+  /** Unique key across all kinds (e.g. "wedding-12-rehearsal"). */
+  key: string;
+  /** Record id (events/blocks: used by the edit/remove mutations). */
   id: string | number;
   title: string;
   startDate: string; // YYYY-MM-DD
   endDate: string;
-  kind: EventKind;
+  kind: string;
+  /** Not confirmed yet (inquiry, proposal…): drawn dashed/lighter. */
+  tentative?: boolean;
+  status?: string | null;
+  /** Where the record lives in Ops. */
+  href?: string | null;
   notes?: string;
   type?: string;
   startTime?: string;
@@ -708,7 +748,7 @@ function EventDetailModal({ event, onClose, onUnblocked, onEdit }: DetailModalPr
   });
 
   if (!event) return null;
-  const cfg = EVENT_CONFIG[event.kind];
+  const cfg = kindConfig(event.kind);
   const isEvent = event.kind === 'member_event' || event.kind === 'ops_event';
 
   return (
@@ -810,12 +850,22 @@ function EventDetailModal({ event, onClose, onUnblocked, onEdit }: DetailModalPr
 // Main component
 // ---------------------------------------------------------------------------
 
+/** "?month=YYYY-MM" (links from calendar entries elsewhere) → [year, monthIndex]. */
+function monthFromSearch(search: string, fallback: Date): [number, number] {
+  const m = /^(\d{4})-(\d{2})$/.exec(new URLSearchParams(search).get('month') ?? '');
+  if (!m) return [fallback.getFullYear(), fallback.getMonth()];
+  const mi = Number(m[2]) - 1;
+  return mi >= 0 && mi <= 11 ? [Number(m[1]), mi] : [fallback.getFullYear(), fallback.getMonth()];
+}
+
 export default function PortalCalendar({ view = 'ops' }: { view?: CalendarView }) {
   const copy = VIEW_COPY[view];
-  const viewKinds = VIEW_KINDS[view];
+  const [, navigate] = useLocation();
+  const search = useSearch();
   const today = new Date();
-  const [year, setYear] = useState(today.getFullYear());
-  const [month, setMonth] = useState(today.getMonth()); // 0-indexed
+  const [initialYear, initialMonth] = monthFromSearch(search, today);
+  const [year, setYear] = useState(initialYear);
+  const [month, setMonth] = useState(initialMonth); // 0-indexed
   const [filter, setFilter] = useState<FilterKey>('all');
   const [createOpen, setCreateOpen] = useState(false);
   const [createDefaultDate, setCreateDefaultDate] = useState<string | undefined>();
@@ -831,43 +881,43 @@ export default function PortalCalendar({ view = 'ops' }: { view?: CalendarView }
     { staleTime: 30_000 }, // Keep data fresh for 30 seconds, prevent aggressive refetch on window focus
   );
 
-  // Normalise API data into flat CalEvent[]
+  const sources: SourceMeta[] = data?.sources ?? [];
+  const viewKinds = useMemo(() => {
+    const base = VIEW_KINDS[view];
+    if (view !== 'ops') return base;
+    // Any other registered source shows up too (new event types).
+    return [...base, ...sources.map((x) => x.kind).filter((k) => !base.includes(k))];
+  }, [view, sources]);
+
+  // Registry items → CalEvent[]. The server already applied the shared rules:
+  // overlap with the month, cancelled/lost left out, undated items skipped,
+  // unconfirmed flagged tentative.
   const allEvents: CalEvent[] = useMemo(() => {
     if (!data) return [];
-    const result: CalEvent[] = [];
-
-    // Bookings carry their own date fields (weddingDate, arrival/departure,
-    // bookingDate) — there is no startDate on them. Reading startDate left it
-    // undefined and crashed the page whenever a booking fell in the month.
-    // Cancelled bookings are left off, as on the staff Ops Calendar.
-    const add = (ev: CalEvent, status?: string) => { if (ev.startDate && status !== 'cancelled') result.push(ev); };
-    (data.weddings ?? []).forEach((e: any) =>
-      add({ id: e.id, title: e.title ?? 'Wedding', startDate: e.weddingDate, endDate: e.weddingDate, kind: 'wedding', notes: e.notes }, e.status),
-    );
-    (data.corporate ?? []).forEach((e: any) =>
-      add({ id: e.id, title: e.title ?? 'Corporate', startDate: e.arrivalDate, endDate: e.departureDate ?? e.arrivalDate, kind: 'corporate', notes: e.notes }, e.status),
-    );
-    (data.huntFish ?? []).forEach((e: any) =>
-      add({ id: e.id, title: e.title ?? 'Hunt/Fish', startDate: e.bookingDate, endDate: e.bookingDate, kind: 'hunt_fish', notes: e.notes }, e.status),
-    );
-    (data.blocked ?? []).forEach((e: any) =>
-      result.push({ id: e.id, title: e.title ?? e.reasonNotes ?? (e.reason && e.reason !== 'other' ? e.reason : 'Hold'), startDate: e.startDate, endDate: e.endDate ?? e.startDate, kind: 'blocked', notes: e.reasonNotes, hasTitle: !!e.title, hiddenFromMembers: e.hiddenFromMembers ?? false }),
-    );
-    (data.events ?? []).forEach((e: any) =>
-      result.push({
-        id: e.id,
-        title: e.title ?? 'Admin Event',
-        startDate: e.startDate,
-        endDate: e.endDate ?? e.startDate,
-        kind: e.hiddenFromMembers ? 'ops_event' : 'member_event',
-        notes: e.notes,
-        type: e.type,
-        startTime: e.startTime,
-        endTime: e.endTime,
-        allDay: e.allDay ?? true,
-        hiddenFromMembers: e.hiddenFromMembers ?? false,
-      }),
-    );
+    const result: CalEvent[] = (data.items ?? []).map((it) => {
+      const extra = it.extra ?? {};
+      const blockTitle = it.kind === 'blocked' && !extra.hasTitle
+        ? (it.notes || (extra.reason && extra.reason !== 'other' ? String(extra.reason) : 'Hold'))
+        : it.title;
+      return {
+        key: it.id,
+        id: it.recordId,
+        title: blockTitle,
+        startDate: it.startDate,
+        endDate: it.endDate,
+        kind: it.kind,
+        notes: it.notes ?? undefined,
+        type: typeof extra.type === 'string' ? extra.type : undefined,
+        startTime: it.startTime ?? undefined,
+        endTime: it.endTime ?? undefined,
+        allDay: it.allDay,
+        hiddenFromMembers: it.hiddenFromMembers,
+        hasTitle: it.kind === 'blocked' ? !!extra.hasTitle : undefined,
+        tentative: it.tentative,
+        status: it.status,
+        href: it.href,
+      };
+    });
 
     // Keep only what this calendar's audience sees.
     return result.filter((ev) => {
@@ -876,6 +926,12 @@ export default function PortalCalendar({ view = 'ops' }: { view?: CalendarView }
       return true;
     });
   }, [data, view, viewKinds]);
+
+  /** Bookings open their record in Ops; events and blocks open the dialog here. */
+  function openEvent(ev: CalEvent) {
+    if (!isEditableHere(ev.kind) && ev.href) navigate(ev.href);
+    else setSelectedEvent(ev);
+  }
 
   const filterChips: { key: FilterKey; label: string }[] = [
     { key: 'all', label: 'All' },
@@ -887,22 +943,8 @@ export default function PortalCalendar({ view = 'ops' }: { view?: CalendarView }
     [allEvents, filter],
   );
 
-  // Build a map: dateStr → CalEvent[]
-  const eventsByDate = useMemo(() => {
-    const map = new Map<string, CalEvent[]>();
-    visibleEvents.forEach((ev) => {
-      const start = new Date(ev.startDate + 'T00:00:00');
-      const end = new Date(ev.endDate + 'T00:00:00');
-      const cur = new Date(start);
-      while (cur <= end) {
-        const key = toDateStr(cur);
-        if (!map.has(key)) map.set(key, []);
-        map.get(key)!.push(ev);
-        cur.setDate(cur.getDate() + 1);
-      }
-    });
-    return map;
-  }, [visibleEvents]);
+  // dateStr → CalEvent[]: multi-day items land on every day they span.
+  const eventsByDate = useMemo(() => itemsByDate(visibleEvents, startDate, endDate), [visibleEvents, startDate, endDate]);
 
   function prevMonth() {
     if (month === 0) { setMonth(11); setYear((y) => y - 1); }
@@ -972,7 +1014,7 @@ export default function PortalCalendar({ view = 'ops' }: { view?: CalendarView }
               {chip.key !== 'all' && (
                 <span
                   className="inline-block w-1.5 h-1.5 rounded-full mr-1.5 align-middle"
-                  style={{ backgroundColor: EVENT_CONFIG[chip.key as EventKind].dot }}
+                  style={{ backgroundColor: kindConfig(chip.key, sources).dot }}
                 />
               )}
               {chip.label}
@@ -1067,18 +1109,18 @@ export default function PortalCalendar({ view = 'ops' }: { view?: CalendarView }
                     {/* Event dots */}
                     <div className="space-y-0.5">
                       {shown.map((ev, i) => {
-                        const cfg = EVENT_CONFIG[ev.kind];
+                        const cfg = kindConfig(ev.kind, sources);
                         return (
                           <button
-                            key={`${ev.id}-${i}`}
-                            onClick={(e) => { e.stopPropagation(); setSelectedEvent(ev); }}
-                            className="flex items-center gap-1 w-full text-left hover:opacity-80 transition-opacity"
+                            key={`${ev.key}-${i}`}
+                            data-testid={`cal-entry-${ev.key}`}
+                            data-tentative={ev.tentative ? 'true' : undefined}
+                            title={ev.tentative ? `${ev.title} (tentative)` : ev.title}
+                            onClick={(e) => { e.stopPropagation(); openEvent(ev); }}
+                            className={`flex items-center gap-1 w-full text-left hover:opacity-80 transition-opacity ${ev.tentative ? 'opacity-70' : ''}`}
                           >
-                            <span
-                              className="inline-block w-1.5 h-1.5 rounded-full flex-shrink-0"
-                              style={{ backgroundColor: cfg.dot }}
-                            />
-                            <span className="font-sans text-[10px] text-[#BABAAE] truncate leading-tight">
+                            <KindDot color={cfg.dot} tentative={ev.tentative} />
+                            <span className={`font-sans text-[10px] truncate leading-tight ${ev.tentative ? 'text-[#8A847A] italic' : 'text-[#BABAAE]'}`}>
                               {ev.title}
                             </span>
                           </button>
@@ -1099,13 +1141,19 @@ export default function PortalCalendar({ view = 'ops' }: { view?: CalendarView }
       </div>
 
       {/* Legend (this calendar's kinds only) */}
-      <div className="flex flex-wrap gap-5">
-        {viewKinds.map((kind) => [kind, EVENT_CONFIG[kind]] as const).map(([kind, cfg]) => (
+      <div className="flex flex-wrap gap-5" data-testid="calendar-legend">
+        {viewKinds.map((kind) => [kind, kindConfig(kind, sources)] as const).map(([kind, cfg]) => (
           <div key={kind} className="flex items-center gap-1.5">
             <span className="inline-block w-2 h-2 rounded-full" style={{ backgroundColor: cfg.dot }} />
             <span className="font-sans text-[10px] tracking-[0.1em] uppercase text-[#BABAAE]">{cfg.label}</span>
           </div>
         ))}
+        {view === 'ops' && (
+          <div className="flex items-center gap-1.5">
+            <KindDot color="#BABAAE" tentative size={8} />
+            <span className="font-sans text-[10px] tracking-[0.1em] uppercase text-[#8A847A] italic">Tentative (not confirmed)</span>
+          </div>
+        )}
       </div>
 
       {/* Upcoming events list */}
@@ -1122,19 +1170,19 @@ export default function PortalCalendar({ view = 'ops' }: { view?: CalendarView }
         ) : (
           <div className="bg-[#363330] border border-[#57544E] divide-y divide-[#57544E]">
             {upcomingList.map((ev) => {
-              const cfg = EVENT_CONFIG[ev.kind];
+              const cfg = kindConfig(ev.kind, sources);
               return (
                 <button
-                  key={`list-${ev.id}`}
-                  onClick={() => setSelectedEvent(ev)}
-                  className="w-full flex items-center gap-4 px-4 py-3 hover:bg-[#423F3B]/50 transition-colors text-left"
+                  key={`list-${ev.key}`}
+                  onClick={() => openEvent(ev)}
+                  className={`w-full flex items-center gap-4 px-4 py-3 hover:bg-[#423F3B]/50 transition-colors text-left ${ev.tentative ? 'opacity-75' : ''}`}
                 >
-                  <span
-                    className="inline-block w-2 h-2 rounded-full flex-shrink-0"
-                    style={{ backgroundColor: cfg.dot }}
-                  />
+                  <KindDot color={cfg.dot} tentative={ev.tentative} size={8} />
                   <div className="flex-1 min-w-0">
-                    <p className="font-sans text-sm text-[#E0D3BD] truncate">{ev.title}</p>
+                    <p className={`font-sans text-sm truncate ${ev.tentative ? 'text-[#BABAAE] italic' : 'text-[#E0D3BD]'}`}>
+                      {ev.title}
+                      {ev.tentative && <span className="not-italic font-sans text-[10px] tracking-[0.1em] uppercase text-[#8A847A] ml-2">Tentative</span>}
+                    </p>
                     {ev.notes && (
                       <p className="font-sans text-xs text-[#BABAAE] truncate mt-0.5">{ev.notes}</p>
                     )}

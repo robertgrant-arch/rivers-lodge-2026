@@ -17,7 +17,8 @@
 import { and, eq, gte, inArray, lte } from "drizzle-orm";
 import { members, memberSkillGroups } from "@core/db/schema";
 import { skillGroupCalendarAccess } from "@features/membership/public";
-import { corporateBookings, huntFishBookings, portalBlockedDates, portalEvents, weddingBookings } from "../schema";
+import { collectCalendarItems, getCalendarSources, type CalendarSource } from "@shared/calendarFeed";
+import { portalBlockedDates, portalEvents } from "../schema";
 
 type Db = { select: (...args: any[]) => any };
 type User = { id: string; role?: string | null } | null | undefined;
@@ -148,24 +149,23 @@ export async function loadMasterCalendar(db: Db, startDate: string, endDate: str
 }
 
 /**
- * Dates the estate is unavailable, for My Calendar: weddings, corporate
- * events, hunt/fish bookings and blocked dates. Dates only.
+ * Dates the estate is unavailable, for My Calendar: every registered calendar
+ * source that marks member availability (weddings, corporate retreats, hunting
+ * groups, hunt/fish bookings, blocked dates…). Read with the MEMBER audience,
+ * so hidden items arrive already reduced to "Unavailable" — dates only, never
+ * titles or booking details. Cancelled/lost bookings don't block a date.
  */
-export async function loadUnavailableDates(db: Db, startDate: string, endDate: string): Promise<string[]> {
-  const [weddings, corporate, huntFish, blocked] = await Promise.all([
-    db.select({ d: weddingBookings.weddingDate }).from(weddingBookings)
-      .where(and(gte(weddingBookings.weddingDate, startDate), lte(weddingBookings.weddingDate, endDate))),
-    db.select({ s: corporateBookings.arrivalDate, e: corporateBookings.departureDate }).from(corporateBookings)
-      .where(and(lte(corporateBookings.arrivalDate, endDate), gte(corporateBookings.departureDate, startDate))),
-    db.select({ d: huntFishBookings.bookingDate }).from(huntFishBookings)
-      .where(and(gte(huntFishBookings.bookingDate, startDate), lte(huntFishBookings.bookingDate, endDate))),
-    db.select({ s: portalBlockedDates.startDate, e: portalBlockedDates.endDate }).from(portalBlockedDates)
-      .where(and(lte(portalBlockedDates.startDate, endDate), gte(portalBlockedDates.endDate, startDate))),
-  ]);
+export async function loadUnavailableDates(
+  startDate: string,
+  endDate: string,
+  sources: readonly CalendarSource[] = getCalendarSources(),
+): Promise<string[]> {
+  const items = await collectCalendarItems(
+    sources.filter((s) => s.marksMemberUnavailable),
+    startDate, endDate,
+    { userId: null, role: null, audience: "member" },
+  );
   const dates = new Set<string>();
-  for (const w of weddings as { d: unknown }[]) expandDates(w.d, w.d, startDate, endDate).forEach((x) => dates.add(x));
-  for (const h of huntFish as { d: unknown }[]) expandDates(h.d, h.d, startDate, endDate).forEach((x) => dates.add(x));
-  for (const c of corporate as { s: unknown; e: unknown }[]) expandDates(c.s, c.e, startDate, endDate).forEach((x) => dates.add(x));
-  for (const b of blocked as { s: unknown; e: unknown }[]) expandDates(b.s, b.e, startDate, endDate).forEach((x) => dates.add(x));
+  for (const it of items) expandDates(it.startDate, it.endDate, startDate, endDate).forEach((d) => dates.add(d));
   return Array.from(dates).sort();
 }
