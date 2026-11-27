@@ -28,7 +28,7 @@ import {
 } from "@shared/ui/dropdown-menu";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@shared/ui/tabs";
 import { useAuth } from "@features/auth/public";
-import type { UserRole } from "@features/auth/schema";
+import type { UserRole } from "@features/auth/public";
 import CreateUserWithPasswordDialog from "../components/CreateUserWithPasswordDialog";
 import {
   Shield,

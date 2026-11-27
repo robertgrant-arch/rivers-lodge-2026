@@ -2,8 +2,8 @@ import { useRef, useEffect, useState } from "react";
 import { useSearch } from "wouter";
 import { Turnstile } from "@marsidev/react-turnstile";
 import type { TurnstileInstance } from "@marsidev/react-turnstile";
-import PublicLayout from "@shared/components/PublicLayout";
-import InquiryForm from "@/components/InquiryForm";
+import { PublicLayout } from "@features/public-pages/public";
+import { InquiryForm } from "@features/inquiries/client/public";
 import SEOHead from '@shared/components/SEOHead';
 import { trpc } from '@shared/lib/trpc';
 

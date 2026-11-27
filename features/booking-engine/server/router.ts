@@ -31,7 +31,7 @@ import {
 } from '@core/db/booking-schema';
 import { bookings, users, blockedDates } from '@core/db/schema';
 import { propertyBookings, huntingProperties, propertyBlockedDates } from '@core/db/property-booking-schema';
-import { calendarAccessSettings } from '@features/admin/schema';
+import { calendarAccessSettings } from '@features/portal/server/public';
 import { members, memberSkillGroups, skillGroups, skillGroupCalendarAccess } from '@features/membership/public';
 import { gte, lte } from "drizzle-orm";
 import {

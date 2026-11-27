@@ -1,6 +1,6 @@
 import { useRef, useEffect } from "react";
 import { Link } from "wouter";
-import PublicLayout from "../../../_shared/components/PublicLayout";
+import { PublicLayout } from "@features/public-pages/public";
 import SEOHead from '@shared/components/SEOHead';
 import Picture from "@shared/components/Picture";
 import SpaceCardsSection, { type SpaceCardItem } from "@shared/components/SpaceCards";

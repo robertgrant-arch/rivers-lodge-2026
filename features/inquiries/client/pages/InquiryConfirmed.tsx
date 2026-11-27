@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { Link, useSearch } from "wouter";
-import PublicLayout from "@/components/PublicLayout";
+import { PublicLayout } from "@features/public-pages/public";
 import SEOHead from '@shared/components/SEOHead';
 
 const GOLD = "#9B4D19";

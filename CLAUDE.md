@@ -191,6 +191,12 @@ All theme customization lives in `features/_core/client/index.css`.
 ❌  import something from 'features/trips/client/components/HuntFishCalendar'
 ❌  import something from 'features/booking-engine/server/router'
 ```
+Enforced by `pnpm lint` (eslint-plugin-boundaries + eslint-import-resolver-typescript, CI job
+`lint`; `server/eslint-boundaries.test.ts` proves it). Entry points: `public.ts` (client-safe),
+`client/public.ts`, `server/public.ts` (server-safe: Drizzle tables, routers — never React).
+`features/_shared` may not import any feature. Only the composition roots (`features/_core/client/App.tsx`,
+`_core/server/router.ts`, `_core/server/context.ts`, `_core/db/{schema,index,portal-schema}.ts`) may
+reach feature pages/layouts, `schema.ts` and server routers directly (see `eslint.config.js`).
 
 ### File naming
 - Components: `PascalCase.tsx`
@@ -238,7 +244,7 @@ All theme customization lives in `features/_core/client/index.css`.
 pnpm dev        # local dev (Vite + Express watch mode)
 pnpm build      # production build
 pnpm test       # Vitest unit tests
-pnpm lint       # ESLint — run before every PR
+pnpm lint       # ESLint (vertical-slice boundaries) — run before every PR
 pnpm check      # typecheck (tsc --noEmit)
 ```
 

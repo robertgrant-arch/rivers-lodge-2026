@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import PublicLayout from "@shared/components/PublicLayout";
+import { PublicLayout } from "@features/public-pages/public";
 import SEOHead from "@shared/components/SEOHead";
 
 export default function MembershipEvents() {

@@ -12,7 +12,7 @@ import { ArrowLeft, ChevronDown, Eye, KeyRound, LogOut, Menu, UserCircle2, X } f
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@shared/ui/dropdown-menu";
 import { useAuth } from "@features/auth/public";
 import { trpc } from "@shared/lib/trpc";
-import PublicLayout from "@/components/PublicLayout";
+import { PublicLayout } from "@features/public-pages/public";
 import {
   ADMIN_HOME_HREF,
   canShowBackToAdmin,

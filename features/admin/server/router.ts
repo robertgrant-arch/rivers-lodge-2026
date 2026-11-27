@@ -38,7 +38,7 @@ import {
 } from "@features/cms/public";
 import { randomBytes, createHash } from "crypto";
 import { updateWeddingInput, updateCorporateInput, toBookingValues, changedFields } from "./bookingEdits";
-import { invites, sessions } from "@features/auth/schema";
+import { invites, sessions } from "@features/auth/server/public";
 import { sendInviteEmail, sendWaiverEmail, sendAccountCreatedEmail, sendTemporaryPasswordResetEmail } from "@core/server/mailer";
 import { hash as argon2hash } from "argon2";
 import { passwordProblems, PASSWORD_MAX_LENGTH, generateTemporaryPassword } from "@shared/passwordRules";

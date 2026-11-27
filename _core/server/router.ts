@@ -14,7 +14,7 @@ import { cmsRouter } from 'features/cms/server/router';
 import { bookingRouter } from 'features/booking-engine/server/router';
 import { tripsRouter } from 'features/trips/server/router';
 import { propertyBookingRouter } from 'features/property-booking/server/router';
-import { propertyViewer, propertyForViewer } from 'features/property-booking/server/propertyAccess';
+import { propertyViewer, propertyForViewer } from 'features/property-booking/public';
 import { reportsRouter } from 'features/reports/server/router';
 import { adminRouter as portalRouter } from 'features/admin/server/router';
 import { updatesRouter } from 'features/updates/server/router';
