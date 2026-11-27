@@ -13,7 +13,7 @@ type Kind = EmailAudience["type"];
 const OPTIONS: Array<{ type: Kind; label: string; hint: string }> = [
   { type: "all_members", label: "All active members", hint: "Every active member with a login." },
   { type: "skill_groups", label: "Members by skill group", hint: "Active members in any of the groups you tick." },
-  { type: "customers", label: "Customers / wedding & corporate leads", hint: "Wedding and corporate bookings, sales leads and website inquiries." },
+  { type: "customers", label: "Customers / wedding, corporate, hunting & other group leads", hint: "Wedding, corporate, hunting-group and other-group bookings, sales leads and website inquiries." },
   { type: "individuals", label: "Hand-picked individuals", hint: "Search active members and customers by name or email." },
 ];
 

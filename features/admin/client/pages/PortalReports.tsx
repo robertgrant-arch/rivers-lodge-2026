@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@shared/ui/card';
 import { Skeleton } from '@shared/ui/skeleton';
 import { trpc } from '@shared/lib/trpc';
-import { BarChart3, Building2, DollarSign, Heart, Target, TrendingUp, Users } from "lucide-react";
+import { BarChart3, Building2, Crosshair, DollarSign, Heart, Target, TrendingUp, Users, UsersRound } from "lucide-react";
 
 function formatCurrency(v: string | number | null | undefined) {
   if (!v) return "$0";
@@ -15,7 +15,9 @@ export default function PortalReports() {
   const metrics = [
     { label: "Total Confirmed Revenue", value: formatCurrency(kpis?.totalConfirmedRevenue), icon: DollarSign, color: "text-emerald-600", bg: "bg-emerald-50" },
     { label: "Confirmed Weddings", value: kpis?.confirmedWeddings ?? 0, icon: Heart, color: "text-pink-600", bg: "bg-pink-50" },
-    { label: "Corporate Events", value: kpis?.confirmedCorporate ?? 0, icon: Building2, color: "text-blue-600", bg: "bg-blue-50" },
+    { label: "Corporate Groups", value: kpis?.confirmedCorporate ?? 0, icon: Building2, color: "text-blue-600", bg: "bg-blue-50" },
+    { label: "Hunting Groups", value: kpis?.confirmedHuntingGroups ?? 0, icon: Crosshair, color: "text-teal-600", bg: "bg-teal-50" },
+    { label: "Other Groups", value: kpis?.confirmedOtherGroups ?? 0, icon: UsersRound, color: "text-purple-600", bg: "bg-purple-50" },
     { label: "Hunt/Fish Bookings", value: kpis?.confirmedHuntFish ?? 0, icon: Target, color: "text-amber-600", bg: "bg-amber-50" },
     { label: "Active Members", value: kpis?.activeMembers ?? 0, icon: Users, color: "text-green-600", bg: "bg-green-50" },
     { label: "New Inquiries (30d)", value: kpis?.newInquiries ?? 0, icon: TrendingUp, color: "text-purple-600", bg: "bg-purple-50" },
@@ -64,11 +66,13 @@ export default function PortalReports() {
             <div className="space-y-3">
               {[
                 { label: "Weddings", value: kpis?.confirmedWeddings ?? 0, color: "bg-pink-500", textColor: "text-pink-700" },
-                { label: "Corporate Retreats", value: kpis?.confirmedCorporate ?? 0, color: "bg-blue-500", textColor: "text-blue-700" },
+                { label: "Corporate Groups", value: kpis?.confirmedCorporate ?? 0, color: "bg-blue-500", textColor: "text-blue-700" },
+                { label: "Hunting Groups", value: kpis?.confirmedHuntingGroups ?? 0, color: "bg-teal-500", textColor: "text-teal-700" },
+                { label: "Other Groups", value: kpis?.confirmedOtherGroups ?? 0, color: "bg-purple-500", textColor: "text-purple-700" },
                 { label: "Hunt & Fish", value: kpis?.confirmedHuntFish ?? 0, color: "bg-amber-500", textColor: "text-amber-700" },
                 { label: "Member Bookings", value: kpis?.activeMembers ?? 0, color: "bg-green-500", textColor: "text-green-700" },
               ].map(item => {
-                const total = (kpis?.confirmedWeddings ?? 0) + (kpis?.confirmedCorporate ?? 0) + (kpis?.confirmedHuntFish ?? 0) + (kpis?.activeMembers ?? 0);
+                const total = (kpis?.confirmedWeddings ?? 0) + (kpis?.confirmedCorporate ?? 0) + (kpis?.confirmedHuntingGroups ?? 0) + (kpis?.confirmedOtherGroups ?? 0) + (kpis?.confirmedHuntFish ?? 0) + (kpis?.activeMembers ?? 0);
                 const pct = total > 0 ? Math.round((item.value / total) * 100) : 0;
                 return (
                   <div key={item.label} className="space-y-1">
@@ -113,7 +117,7 @@ export default function PortalReports() {
               {[
                 { label: "New Inquiries (30d)", value: kpis?.newInquiries ?? 0 },
                 { label: "Active Members", value: kpis?.activeMembers ?? 0 },
-                { label: "Confirmed Bookings", value: (kpis?.confirmedWeddings ?? 0) + (kpis?.confirmedCorporate ?? 0) + (kpis?.confirmedHuntFish ?? 0) },
+                { label: "Confirmed Bookings", value: (kpis?.confirmedWeddings ?? 0) + (kpis?.confirmedCorporate ?? 0) + (kpis?.confirmedHuntingGroups ?? 0) + (kpis?.confirmedOtherGroups ?? 0) + (kpis?.confirmedHuntFish ?? 0) },
               ].map(item => (
                 <div key={item.label} className="flex items-center justify-between py-2 border-b border-border last:border-0">
                   <span className="text-sm text-muted-foreground">{item.label}</span>

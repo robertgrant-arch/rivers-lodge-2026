@@ -113,7 +113,7 @@ export const memberPortalRouter = router({
       if (!(await canUseMemberCalendar(db, ctx.user))) {
         throw new TRPCError({ code: "FORBIDDEN", message: "My Calendar is available to members only." });
       }
-      return loadUnavailableDates(db, input.startDate, input.endDate);
+      return loadUnavailableDates(input.startDate, input.endDate);
     }),
 
   /**
@@ -140,7 +140,7 @@ export const memberPortalRouter = router({
       if (!(await canViewOpsCalendar(db, ctx.user, input.previewSkillGroupId))) {
         throw new TRPCError({ code: "FORBIDDEN", message: "The Ops Calendar is for staff only." });
       }
-      return loadOpsCalendar(db, input.startDate, input.endDate);
+      return loadOpsCalendar(input.startDate, input.endDate, ctx.user);
     }),
 
   /**

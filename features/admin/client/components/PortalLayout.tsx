@@ -26,26 +26,13 @@ import {
 } from '@shared/ui/sidebar';
 import { trpc } from '@shared/lib/trpc';
 import {
-  BarChart3,
   Bell,
-  BookOpen,
-  Building2,
-  Calendar,
   ChevronDown,
-  ClipboardList,
   Eye,
-  Heart,
   Home,
   LogOut,
-  Search,
   Shield,
-  Target,
-  TrendingUp,
   Users,
-  UserCheck,
-  MessageSquare,
-  TreePine,
-  FileText,
   Newspaper,
   KeyRound,
 } from "lucide-react";
@@ -57,6 +44,7 @@ import {
   PopoverTrigger,
 } from '@shared/ui/popover';
 import { DashboardLayoutSkeleton } from "@/_shared/components/DashboardLayoutSkeleton";
+import { navGroups } from "../opsNav";
 
 const ADMIN_ROLE = "admin";
 
@@ -76,47 +64,6 @@ const navButtonCls =
   "data-[active=true]:bg-[#9B4D19]/15 data-[active=true]:text-[#E0D3BD] data-[active=true]:font-medium " +
   "data-[active=true]:shadow-[inset_2px_0_0_0_#9B4D19]";
 
-const navGroups = [
-  {
-    label: "Overview",
-    items: [
-      { icon: Home, label: "Dashboard", path: "/ops" },
-      { icon: Calendar, label: "Ops Calendar", path: "/ops/calendar" },
-      { icon: Calendar, label: "Member Master Calendar", path: "/ops/master-calendar" },
-      { icon: Search, label: "Availability", path: "/ops/availability" },
-      { icon: BookOpen, label: "All Bookings", path: "/ops/bookings" },
-      { icon: TrendingUp, label: "Sales Pipeline", path: "/ops/leads" },
-      { icon: BarChart3, label: "Reports", path: "/ops/reports" },
-    ],
-  },
-  {
-    label: "Events",
-    items: [
-      { icon: Heart, label: "Weddings", path: "/ops/weddings" },
-      { icon: Building2, label: "Corporate Retreats", path: "/ops/corporate" },
-    ],
-  },
-  {
-    label: "Outdoor Operations",
-    items: [
-      { icon: TreePine, label: "Properties", path: "/ops/properties" },
-      { icon: Target, label: "Hunt & Fish", path: "/ops/hunt-fish" },
-      { icon: BookOpen, label: "Member Bookings", path: "/ops/member-bookings" },
-      { icon: FileText, label: "Field Reports", path: "/ops/field-reports" },
-      { icon: Newspaper, label: "Newsletter", path: "/ops/newsletter" },
-    ],
-  },
-  {
-    label: "Administration",
-    items: [
-      { icon: ClipboardList, label: "Waivers", path: "/ops/waivers" },
-      { icon: Users, label: "Customers", path: "/ops/customers" },
-      { icon: UserCheck, label: "Employees", path: "/ops/employees" },
-      { icon: Shield, label: "Membership", path: "/ops/membership" },
-      { icon: MessageSquare, label: "Testimonials", path: "/ops/testimonials" },
-    ],
-  },
-];
 // Admin-only nav group — rendered separately below navGroups
 
 // Pages staff employees (not just admins) may open. The server enforces the

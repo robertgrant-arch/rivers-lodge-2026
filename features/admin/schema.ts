@@ -25,7 +25,7 @@ export {
 } from "@core/db/portal-schema";
 
 // Calendar / availability management — defined in portal feature schema
-export { portalEvents, portalBlockedDates, calendarAccessSettings } from "@features/portal/server/public";
+export { portalEvents, portalBlockedDates, calendarAccessSettings } from "@core/db/portal-schema";
 
 export type {
   WeddingBooking,
@@ -51,4 +51,4 @@ export type {
 } from "@core/db/portal-schema";
 
 // Calendar types
-export type { PortalEvent, InsertPortalEvent, PortalBlockedDate, InsertPortalBlockedDate } from "@features/portal/server/public";
+export type { PortalEvent, InsertPortalEvent, PortalBlockedDate, InsertPortalBlockedDate } from "@core/db/portal-schema";

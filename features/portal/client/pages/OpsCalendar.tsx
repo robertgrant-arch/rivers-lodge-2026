@@ -1,11 +1,13 @@
 /**
  * /portal/ops-calendar — staff-only Ops Calendar (read-only).
  *
- * Shows everything happening at the estate: Ops Calendar entries (staff only),
- * Member Master Calendar events, blocked dates, weddings, corporate events and
- * hunt/fish bookings. Access is enforced by memberPortal.opsCalendar on the
- * server (admins + employees in the Admin/Employee skill group). Entries are
- * added and edited by admins in /ops/calendar.
+ * Shows everything registered in the calendar feed: Ops Calendar entries
+ * (staff only), Member Master Calendar events, blocked dates, weddings,
+ * corporate groups, hunting groups, other groups and hunt/fish bookings — plus any event
+ * type registered later. Unconfirmed bookings are drawn dashed (tentative).
+ * Access is enforced by memberPortal.opsCalendar on the server (admins +
+ * employees in the Admin/Employee skill group). Entries are added and edited
+ * by admins in /ops/calendar; admins can open any booking's record from here.
  */
 import { useMemo, useState } from "react";
 import { useAuth } from "@features/auth/public";
@@ -15,31 +17,42 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@shared/ui/dia
 import { formatTimeRange } from "@features/portal/client/utils/timeFormat";
 import { parsePortalPreview, usePortalLink } from "@features/portal/client/portalNav";
 import { useSearch } from "wouter";
+import { itemsByDate, type CalendarItem } from "@shared/calendarFeed";
 
-type Kind = "ops_event" | "member_event" | "blocked" | "wedding" | "corporate" | "hunt_fish";
+type Entry = CalendarItem;
+type SourceMeta = { kind: string; label: string; color: string };
 
-type Entry = {
-  key: string;
-  kind: Kind;
-  id: number;
-  title: string;
-  startDate: string;
-  endDate: string;
-  startTime: string | null;
-  endTime: string | null;
-  allDay: boolean;
-  status: string | null;
-  notes: string | null;
+// Fixed labels/colours for the known kinds; any other registered source uses
+// the label and colour it registered with.
+const KIND: Record<string, { label: string; color: string }> = {
+  ops_event:     { label: "Ops (staff only)", color: "#C2662A" },
+  member_event:  { label: "Member event",     color: "#BABAAE" },
+  blocked:       { label: "Blocked",          color: "#8A847A" },
+  wedding:       { label: "Wedding",          color: "#7D8AA3" },
+  corporate:     { label: "Corporate group",  color: "#8E9670" },
+  hunting_group: { label: "Hunting group",    color: "#6FA3A0" },
+  other_group:   { label: "Other group",      color: "#A68BB8" },
+  hunt_fish:     { label: "Hunt / Fish",      color: "#D9B98C" },
 };
+const KNOWN_ORDER = ["ops_event", "member_event", "blocked", "wedding", "corporate", "hunting_group", "other_group", "hunt_fish"];
 
-const KIND: Record<Kind, { label: string; color: string }> = {
-  ops_event:    { label: "Ops (staff only)", color: "#C2662A" },
-  member_event: { label: "Member event",     color: "#BABAAE" },
-  blocked:      { label: "Blocked",          color: "#8A847A" },
-  wedding:      { label: "Wedding",          color: "#7D8AA3" },
-  corporate:    { label: "Corporate",        color: "#8E9670" },
-  hunt_fish:    { label: "Hunt / Fish",      color: "#D9B98C" },
-};
+function kindInfo(kind: string, sources?: SourceMeta[]) {
+  if (KIND[kind]) return KIND[kind];
+  const s = sources?.find((x) => x.kind === kind);
+  return { label: s?.label ?? kind, color: s?.color ?? "#BABAAE" };
+}
+
+function Dot({ color, tentative, size = 8 }: { color: string; tentative?: boolean; size?: number }) {
+  return (
+    <span
+      className="inline-block rounded-full flex-shrink-0"
+      data-tentative={tentative ? "true" : undefined}
+      style={tentative
+        ? { width: size, height: size, border: `1px dashed ${color}` }
+        : { width: size, height: size, backgroundColor: color }}
+    />
+  );
+}
 
 const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -47,27 +60,21 @@ const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const pad = (n: number) => String(n).padStart(2, "0");
 const ymd = (y: number, m: number, d: number) => `${y}-${pad(m + 1)}-${pad(d)}`;
 
-/** Every YYYY-MM-DD from start to end (inclusive), on calendar dates. */
-function datesBetween(start: string, end: string): string[] {
-  const out: string[] = [];
-  const d = new Date(`${start}T00:00:00Z`);
-  const last = new Date(`${end}T00:00:00Z`).getTime();
-  for (let i = 0; d.getTime() <= last && i < 400; i++) {
-    out.push(d.toISOString().slice(0, 10));
-    d.setUTCDate(d.getUTCDate() + 1);
-  }
-  return out;
-}
-
 function prettyStatus(s: string | null) {
   return s ? s.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()) : null;
 }
 
-function Chip({ e, onClick, compact }: { e: Entry; onClick: () => void; compact?: boolean }) {
+function Chip({ e, onClick, compact, sources }: { e: Entry; onClick: () => void; compact?: boolean; sources?: SourceMeta[] }) {
   return (
-    <button onClick={onClick} className="flex items-center gap-1.5 w-full text-left hover:opacity-80 transition-opacity min-w-0">
-      <span className="inline-block w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: KIND[e.kind].color }} />
-      <span className={`font-sans ${compact ? "text-[10px]" : "text-sm"} text-[#E0D3BD] truncate leading-tight`}>
+    <button
+      onClick={onClick}
+      data-testid={`ops-entry-${e.id}`}
+      data-tentative={e.tentative ? "true" : undefined}
+      title={e.tentative ? `${e.title} (tentative)` : e.title}
+      className={`flex items-center gap-1.5 w-full text-left hover:opacity-80 transition-opacity min-w-0 ${e.tentative ? "opacity-70" : ""}`}
+    >
+      <Dot color={kindInfo(e.kind, sources).color} tentative={e.tentative} />
+      <span className={`font-sans ${compact ? "text-[10px]" : "text-sm"} ${e.tentative ? "text-[#BABAAE] italic" : "text-[#E0D3BD]"} truncate leading-tight`}>
         {e.title}
         {!e.allDay && e.startTime && (
           <span className="text-[#8A847A]"> {formatTimeRange(e.startTime ?? undefined, e.endTime ?? undefined)}</span>
@@ -94,18 +101,18 @@ export default function OpsCalendar() {
     { enabled: isAuthenticated, retry: false },
   );
   const denied = q.error?.data?.code === "FORBIDDEN";
+  const sources: SourceMeta[] = q.data?.sources ?? [];
+  const legendKinds = useMemo(() => {
+    const extra = sources.map((x) => x.kind).filter((k) => !KNOWN_ORDER.includes(k));
+    return [...KNOWN_ORDER, ...extra];
+  }, [sources]);
+  const canOpenRecords = user?.role === "admin" && !preview.isPreviewMode;
 
-  const byDate = useMemo(() => {
-    const m = new Map<string, Entry[]>();
-    for (const e of (q.data ?? []) as Entry[]) {
-      for (const d of datesBetween(e.startDate, e.endDate)) {
-        if (d < range.startDate || d > range.endDate) continue;
-        if (!m.has(d)) m.set(d, []);
-        m.get(d)!.push(e);
-      }
-    }
-    return m;
-  }, [q.data, range.startDate, range.endDate]);
+  // Multi-day items land on every day they span (clipped to the month).
+  const byDate = useMemo(
+    () => itemsByDate((q.data?.items ?? []) as Entry[], range.startDate, range.endDate),
+    [q.data, range.startDate, range.endDate],
+  );
 
   const prev = () => (month === 0 ? (setMonth(11), setYear((y) => y - 1)) : setMonth((m) => m - 1));
   const next = () => (month === 11 ? (setMonth(0), setYear((y) => y + 1)) : setMonth((m) => m + 1));
@@ -158,12 +165,16 @@ export default function OpsCalendar() {
 
           {/* Legend */}
           <div className="flex flex-wrap gap-x-5 gap-y-2 mb-5" data-testid="ops-legend">
-            {(Object.keys(KIND) as Kind[]).map((k) => (
+            {legendKinds.map((k) => (
               <span key={k} className="inline-flex items-center gap-1.5 font-sans text-[10px] tracking-[0.12em] uppercase text-[#BABAAE]">
-                <span className="inline-block w-2 h-2 rounded-full" style={{ backgroundColor: KIND[k].color }} />
-                {KIND[k].label}
+                <Dot color={kindInfo(k, sources).color} />
+                {kindInfo(k, sources).label}
               </span>
             ))}
+            <span className="inline-flex items-center gap-1.5 font-sans text-[10px] tracking-[0.12em] uppercase text-[#8A847A] italic">
+              <Dot color="#BABAAE" tentative />
+              Tentative (not confirmed)
+            </span>
           </div>
 
           <div className="bg-[#363330] border border-[#57544E]">
@@ -196,7 +207,7 @@ export default function OpsCalendar() {
                         <div key={ds} className="min-h-[110px] border-b border-r border-[#57544E] p-2">
                           <span className={`font-sans text-xs font-medium w-6 h-6 mb-1 flex items-center justify-center ${ds === todayStr ? "rounded-full bg-[#9B4D19] text-[#E0D3BD]" : "text-[#BABAAE]"}`}>{day}</span>
                           <div className="space-y-0.5">
-                            {shown.map((e) => <Chip key={e.key} e={e} compact onClick={() => setSelected(e)} />)}
+                            {shown.map((e) => <Chip key={e.id} e={e} compact sources={sources} onClick={() => setSelected(e)} />)}
                             {list.length > shown.length && (
                               <span className="font-sans text-[10px] text-[#8A847A] pl-3.5">+{list.length - shown.length} more</span>
                             )}
@@ -221,7 +232,7 @@ export default function OpsCalendar() {
                               {d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })}
                             </p>
                             <div className="space-y-2">
-                              {byDate.get(ds)!.map((e) => <Chip key={e.key} e={e} onClick={() => setSelected(e)} />)}
+                              {byDate.get(ds)!.map((e) => <Chip key={e.id} e={e} sources={sources} onClick={() => setSelected(e)} />)}
                             </div>
                           </li>
                         );
@@ -244,8 +255,8 @@ export default function OpsCalendar() {
             <>
               <DialogHeader>
                 <span className="inline-flex items-center gap-2 font-sans text-[10px] tracking-[0.14em] uppercase text-[#BABAAE] mb-1">
-                  <span className="inline-block w-2 h-2 rounded-full" style={{ backgroundColor: KIND[selected.kind].color }} />
-                  {KIND[selected.kind].label}
+                  <Dot color={kindInfo(selected.kind, sources).color} tentative={selected.tentative} />
+                  {kindInfo(selected.kind, sources).label}{selected.tentative ? " · Tentative" : ""}
                 </span>
                 <DialogTitle className="font-sans text-base font-medium text-[#E0D3BD]">{selected.title}</DialogTitle>
               </DialogHeader>
@@ -271,6 +282,15 @@ export default function OpsCalendar() {
                     <span className="font-sans text-[10px] tracking-[0.12em] uppercase block mb-0.5">Notes</span>
                     {selected.notes}
                   </div>
+                )}
+                {canOpenRecords && selected.href && (
+                  <a
+                    href={selected.href}
+                    data-testid="ops-open-record"
+                    className="inline-block pt-1 font-sans text-[10px] tracking-[0.12em] uppercase text-[var(--gold)] hover:underline"
+                  >
+                    Open record in Ops →
+                  </a>
                 )}
               </div>
             </>
