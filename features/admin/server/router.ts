@@ -37,6 +37,7 @@ import {
   cmsMemberContent,
 } from "@features/cms/public";
 import { randomBytes, createHash } from "crypto";
+import { updateWeddingInput, updateCorporateInput, toBookingValues, changedFields } from "./bookingEdits";
 import { invites, sessions } from "@features/auth/schema";
 import { sendInviteEmail, sendWaiverEmail, sendAccountCreatedEmail, sendTemporaryPasswordResetEmail } from "@core/server/mailer";
 import { hash as argon2hash } from "argon2";
@@ -695,45 +696,29 @@ const weddingsPortalRouter = router({
       return { id: result.id };
     }),
 
+  /** Ops → Weddings edit dialog. Writes and audits only the fields that changed. */
   update: portalProcedure
-    .input(z.object({
-      id: z.number(),
-      coupleName: z.string().optional(),
-      contactEmail: z.string().email().optional(),
-      contactPhone: z.string().optional(),
-      weddingDate: z.string().optional(),
-      ceremonyVenue: z.string().optional(),
-      receptionVenue: z.string().optional(),
-      guestCountEstimate: z.number().optional(),
-      guestCountFinal: z.number().optional(),
-      ceremonyTime: z.string().optional(),
-      receptionEndTime: z.string().optional(),
-      rehearsalDate: z.string().optional(),
-      rehearsalDinner: z.boolean().optional(),
-      coordinatorName: z.string().optional(),
-      coordinatorContact: z.string().optional(),
-      contractValue: z.string().optional(),
-      depositAmount: z.string().optional(),
-      depositReceivedDate: z.string().optional(),
-      balanceDueDate: z.string().optional(),
-      balanceReceivedDate: z.string().optional(),
-      source: z.enum(["website", "referral", "direct", "social", "vendor"]).optional(),
-      referredBy: z.string().optional(),
-      notes: z.string().optional(),
-    }))
+    .input(updateWeddingInput)
     .mutation(async ({ input, ctx }) => {
       const db = getDb();
-      const { id, ...updates } = input;
-      const filtered = Object.fromEntries(Object.entries(updates).filter(([, v]) => v !== undefined));
-      await db.update(weddingBookings).set(filtered as any).where(eq(weddingBookings.id, id));
+      const [before] = await db.select().from(weddingBookings).where(eq(weddingBookings.id, input.id)).limit(1);
+      if (!before) throw new TRPCError({ code: "NOT_FOUND", message: "Wedding booking not found" });
+      const values = toBookingValues(input);
+      const changed = changedFields(before as Record<string, unknown>, values);
+      if (changed.length === 0) return { success: true, changed: [] as string[] };
+      const patch = Object.fromEntries(changed.map((k) => [k, values[k]]));
+      await db.update(weddingBookings).set(patch as any).where(eq(weddingBookings.id, input.id));
+      const statusChanged = changed.includes("status");
       await logAudit({
         actingUserId: ctx.user.id,
         actingUserName: ctx.user.email ?? "Staff",
-        actionType: "update",
+        actionType: statusChanged ? "status_change" : "update",
         entityType: "WeddingBooking",
-        entityId: String(id),
+        entityId: String(input.id),
+        fieldChanged: changed.join(",").slice(0, 100),
+        ...(statusChanged ? { oldValue: before.status ?? undefined, newValue: String(values.status) } : {}),
       });
-      return { success: true };
+      return { success: true, changed };
     }),
 
   updateStatus: portalProcedure
@@ -868,39 +853,35 @@ const corporatePortalRouter = router({
       return { id: result.id };
     }),
 
+  /** Ops → Corporate Groups edit dialog. Writes and audits only the fields that changed. */
   update: portalProcedure
-    .input(z.object({
-      id: z.number(),
-      companyName: z.string().optional(),
-      contactName: z.string().optional(),
-      contactEmail: z.string().email().optional(),
-      contactPhone: z.string().optional(),
-      eventType: z.enum(["team_retreat", "board_meeting", "incentive_trip", "company_hunt", "private_buyout", "other"]).optional(),
-      arrivalDate: z.string().optional(),
-      departureDate: z.string().optional(),
-      attendeeCount: z.number().optional(),
-      cateringRequired: z.boolean().optional(),
-      avRequired: z.boolean().optional(),
-      contractValue: z.string().optional(),
-      depositAmount: z.string().optional(),
-      depositReceivedDate: z.string().optional(),
-      balanceDueDate: z.string().optional(),
-      balanceReceivedDate: z.string().optional(),
-      notes: z.string().optional(),
-    }))
+    .input(updateCorporateInput)
     .mutation(async ({ input, ctx }) => {
       const db = getDb();
-      const { id, ...updates } = input;
-      const filtered = Object.fromEntries(Object.entries(updates).filter(([, v]) => v !== undefined));
-      await db.update(corporateBookings).set(filtered as any).where(eq(corporateBookings.id, id));
+      const [before] = await db.select().from(corporateBookings).where(eq(corporateBookings.id, input.id)).limit(1);
+      if (!before) throw new TRPCError({ code: "NOT_FOUND", message: "Corporate booking not found" });
+      const values = toBookingValues(input);
+      // Check date order against the saved value when only one date is sent.
+      const arrival = "arrivalDate" in values ? values.arrivalDate : before.arrivalDate;
+      const departure = "departureDate" in values ? values.departureDate : before.departureDate;
+      if (arrival && departure && String(departure) < String(arrival)) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Departure can't be before arrival" });
+      }
+      const changed = changedFields(before as Record<string, unknown>, values);
+      if (changed.length === 0) return { success: true, changed: [] as string[] };
+      const patch = Object.fromEntries(changed.map((k) => [k, values[k]]));
+      await db.update(corporateBookings).set(patch as any).where(eq(corporateBookings.id, input.id));
+      const statusChanged = changed.includes("status");
       await logAudit({
         actingUserId: ctx.user.id,
         actingUserName: ctx.user.email ?? "Staff",
-        actionType: "update",
+        actionType: statusChanged ? "status_change" : "update",
         entityType: "CorporateBooking",
-        entityId: String(id),
+        entityId: String(input.id),
+        fieldChanged: changed.join(",").slice(0, 100),
+        ...(statusChanged ? { oldValue: before.status ?? undefined, newValue: String(values.status) } : {}),
       });
-      return { success: true };
+      return { success: true, changed };
     }),
 
   updateStatus: portalProcedure

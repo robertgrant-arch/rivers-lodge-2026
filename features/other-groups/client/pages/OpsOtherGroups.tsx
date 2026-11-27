@@ -37,7 +37,8 @@ import { Skeleton } from '@shared/ui/skeleton';
 import { Textarea } from '@shared/ui/textarea';
 import { trpc } from '@shared/lib/trpc';
 import { useInvalidateCalendars } from '@shared/hooks/useInvalidateCalendars';
-import { Plus, Search, Trash2, UsersRound } from 'lucide-react';
+import { trpcErrorMessage } from '@shared/lib/trpcErrorMessage';
+import { Pencil, Plus, Search, Trash2, UsersRound } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useLocation, useParams } from 'wouter';
 import { toast } from 'sonner';
@@ -322,7 +323,7 @@ function EditBookingDialog({ id, onClose }: { id: number; onClose: () => void })
   };
   const update = trpc.otherGroups.update.useMutation({
     onSuccess: () => { refresh(); toast.success('Booking updated'); onClose(); },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(trpcErrorMessage(e, "Couldn't save the changes. Please try again.")),
   });
   const remove = trpc.otherGroups.delete.useMutation({
     onSuccess: () => { refresh(); toast.success('Booking deleted'); setConfirmDelete(false); onClose(); },
@@ -393,7 +394,10 @@ export default function OpsOtherGroups() {
   const [createForm, setCreateForm] = useState<FormState>(EMPTY_FORM);
   const utils = trpc.useUtils();
   const invalidateCalendars = useInvalidateCalendars();
-  const editingId = params.id ? Number(params.id) : null;
+  // Edit button opens the dialog in place; /ops/other-groups/:id (Ops Calendar links) still opens it too.
+  const [editId, setEditId] = useState<number | null>(null);
+  const editingId = editId ?? (params.id ? Number(params.id) : null);
+  const closeEdit = () => { if (editId !== null) setEditId(null); else navigate('/ops/other-groups'); };
 
   const listQuery = trpc.otherGroups.list.useInfiniteQuery(
     {
@@ -472,17 +476,18 @@ export default function OpsOtherGroups() {
                   <th className="text-left px-4 py-3 font-medium text-muted-foreground">Guests</th>
                   <th className="text-left px-4 py-3 font-medium text-muted-foreground">Status</th>
                   <th className="text-left px-4 py-3 font-medium text-muted-foreground">Value</th>
+                  <th className="text-right px-4 py-3 font-medium text-muted-foreground">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {listQuery.isLoading ? (
-                  [1, 2, 3].map((i) => <tr key={i} className="border-b border-border"><td colSpan={6} className="px-4 py-3"><Skeleton className="h-5 w-full" /></td></tr>)
+                  [1, 2, 3].map((i) => <tr key={i} className="border-b border-border"><td colSpan={7} className="px-4 py-3"><Skeleton className="h-5 w-full" /></td></tr>)
                 ) : bookings.length === 0 ? (
-                  <tr><td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">No other group bookings found</td></tr>
+                  <tr><td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">No other group bookings found</td></tr>
                 ) : bookings.map((b) => (
-                  <tr key={b.id} className="border-b border-border hover:bg-muted/30 transition-colors cursor-pointer" onClick={() => navigate(`/ops/other-groups/${b.id}`)}>
+                  <tr key={b.id} className="border-b border-border hover:bg-muted/30 transition-colors">
                     <td className="px-4 py-3">
-                      <span className="font-medium text-foreground hover:text-primary">{b.groupName}</span>
+                      <span className="font-medium text-foreground">{b.groupName}</span>
                       <p className="text-xs text-muted-foreground">{b.contactName}</p>
                     </td>
                     <td className="px-4 py-3 text-muted-foreground text-xs">{formatDate(b.arrivalDate)}{b.departureDate ? ` – ${formatDate(b.departureDate)}` : ''}</td>
@@ -490,6 +495,11 @@ export default function OpsOtherGroups() {
                     <td className="px-4 py-3 text-muted-foreground">{b.guestCount ?? '—'}</td>
                     <td className="px-4 py-3"><StatusBadge status={b.status} /></td>
                     <td className="px-4 py-3 font-medium">{formatCurrency(b.contractValue)}</td>
+                    <td className="px-4 py-3 text-right">
+                      <Button variant="outline" size="sm" className="h-7 px-2 text-xs" onClick={() => setEditId(b.id)} aria-label={`Edit ${b.groupName}`}>
+                        <Pencil className="w-3.5 h-3.5 mr-1" />Edit
+                      </Button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -521,7 +531,7 @@ export default function OpsOtherGroups() {
         </DialogContent>
       </Dialog>
 
-      {editingId && <EditBookingDialog key={editingId} id={editingId} onClose={() => navigate('/ops/other-groups')} />}
+      {editingId && <EditBookingDialog key={editingId} id={editingId} onClose={closeEdit} />}
     </div>
   );
 }
