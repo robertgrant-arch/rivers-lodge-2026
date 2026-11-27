@@ -21,6 +21,7 @@ import { updatesRouter } from 'features/updates/server/router';
 import { memberPortalRouter } from 'features/portal/server/router';
 import { propertySlotConfigRouter } from 'features/property-slot-config/server/router';
 import { huntingGroupsRouter } from 'features/hunting-groups/server/public';
+import { otherGroupsRouter } from 'features/other-groups/public';
 // Registers every event feature's CalendarSource (see calendarSources.ts).
 import './calendarSources';
 
@@ -121,6 +122,7 @@ export const appRouter = router({
   memberPortal: memberPortalRouter,
   propertySlotConfig: propertySlotConfigRouter,
   huntingGroups: huntingGroupsRouter,
+  otherGroups: otherGroupsRouter,
 });
 
 export type AppRouter = typeof appRouter;

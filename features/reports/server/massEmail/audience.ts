@@ -2,7 +2,7 @@
  * Mass email recipients. An audience is one of:
  *   all_members            — every active member with an enabled login
  *   skill_groups (slugs)   — active members in any of the chosen skill groups
- *   customers              — wedding/corporate/hunting-group bookings, sales leads and website inquiries
+ *   customers              — wedding/corporate/hunting-group/other-group bookings, sales leads and website inquiries
  *   individuals (emails)   — hand-picked people from the directory
  * Results are de-duplicated (case-insensitive) and never include anyone in
  * email_unsubscribes.
@@ -13,6 +13,7 @@ import { members, users, memberProfiles, memberSkillGroups, skillGroups, inquiri
 import { weddingBookings, corporateBookings } from "@core/db/portal-schema";
 import { leads } from "@core/db/booking-schema";
 import { huntingGroupBookings } from "@features/hunting-groups/server/public";
+import { otherGroupBookings } from "@features/other-groups/public";
 import { emailUnsubscribes } from "../../schema";
 import { normalizeEmail } from "./unsubscribe";
 
@@ -36,7 +37,7 @@ export function audienceLabel(a: EmailAudience): string {
   switch (a.type) {
     case "all_members": return "All active members";
     case "skill_groups": return `Members: ${a.slugs.map((s) => GROUP_LABEL[s] ?? s).join(", ")}`;
-    case "customers": return "Customers & wedding/corporate/hunting-group leads";
+    case "customers": return "Customers & wedding/corporate/hunting/other group leads";
     case "individuals": return `${a.emails.length} hand-picked ${a.emails.length === 1 ? "person" : "people"}`;
   }
 }
@@ -72,14 +73,15 @@ async function activeMembers(db: Db, skillGroupSlugs?: string[]) {
 }
 
 async function customers(db: Db) {
-  const [w, c, h, l, i] = await Promise.all([
+  const [w, c, h, o, l, i] = await Promise.all([
     db.select({ email: weddingBookings.contactEmail, name: weddingBookings.coupleName }).from(weddingBookings),
     db.select({ email: corporateBookings.contactEmail, name: corporateBookings.contactName }).from(corporateBookings),
     db.select({ email: huntingGroupBookings.contactEmail, name: huntingGroupBookings.contactName }).from(huntingGroupBookings),
+    db.select({ email: otherGroupBookings.contactEmail, name: otherGroupBookings.contactName }).from(otherGroupBookings),
     db.select({ email: leads.contactEmail, name: leads.contactName }).from(leads),
     db.select({ email: inquiries.email, name: inquiries.name }).from(inquiries),
   ]);
-  return [...w, ...c, ...h, ...l, ...i].map((r: any) => ({ ...r, kind: "customer" as const }));
+  return [...w, ...c, ...h, ...o, ...l, ...i].map((r: any) => ({ ...r, kind: "customer" as const }));
 }
 
 /** Everyone the audience covers, before removing unsubscribes. */
@@ -116,18 +118,19 @@ export async function resolveAudience(db: Db, a: EmailAudience): Promise<{ recip
 export async function searchPeople(db: Db, q: string, limit = 20): Promise<Array<Person & { unsubscribed: boolean }>> {
   const term = `%${q.trim()}%`;
   if (q.trim().length < 2) return [];
-  const [m, w, c, h, l, i] = await Promise.all([
+  const [m, w, c, h, o, l, i] = await Promise.all([
     db.selectDistinct({ email: users.email, name: memberName }).from(members).innerJoin(users, eq(members.userId, users.id)).leftJoin(memberProfiles, eq(memberProfiles.memberId, members.id))
       .where(and(eq(members.active, true), ne(users.status, "disabled"), or(ilike(users.email, term), ilike(memberProfiles.fullName, term), ilike(memberProfiles.preferredName, term)))).limit(limit),
     db.select({ email: weddingBookings.contactEmail, name: weddingBookings.coupleName }).from(weddingBookings).where(or(ilike(weddingBookings.contactEmail, term), ilike(weddingBookings.coupleName, term))).limit(limit),
     db.select({ email: corporateBookings.contactEmail, name: corporateBookings.contactName }).from(corporateBookings).where(or(ilike(corporateBookings.contactEmail, term), ilike(corporateBookings.contactName, term), ilike(corporateBookings.companyName, term))).limit(limit),
     db.select({ email: huntingGroupBookings.contactEmail, name: huntingGroupBookings.contactName }).from(huntingGroupBookings).where(or(ilike(huntingGroupBookings.contactEmail, term), ilike(huntingGroupBookings.contactName, term), ilike(huntingGroupBookings.groupName, term))).limit(limit),
+    db.select({ email: otherGroupBookings.contactEmail, name: otherGroupBookings.contactName }).from(otherGroupBookings).where(or(ilike(otherGroupBookings.contactEmail, term), ilike(otherGroupBookings.contactName, term), ilike(otherGroupBookings.groupName, term))).limit(limit),
     db.select({ email: leads.contactEmail, name: leads.contactName }).from(leads).where(or(ilike(leads.contactEmail, term), ilike(leads.contactName, term))).limit(limit),
     db.select({ email: inquiries.email, name: inquiries.name }).from(inquiries).where(or(ilike(inquiries.email, term), ilike(inquiries.name, term))).limit(limit),
   ]);
   const people = dedupePeople([
     ...m.map((r: any) => ({ ...r, kind: "member" as const })),
-    ...[...w, ...c, ...h, ...l, ...i].map((r: any) => ({ ...r, kind: "customer" as const })),
+    ...[...w, ...c, ...h, ...o, ...l, ...i].map((r: any) => ({ ...r, kind: "customer" as const })),
   ]).slice(0, limit);
   const unsub = await unsubscribedSet(db, people.map((p) => p.email));
   return people.map((p) => ({ ...p, unsubscribed: unsub.has(p.email) }));

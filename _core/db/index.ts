@@ -5,6 +5,7 @@ export * from './booking-schema';
 export * from './property-booking-schema';
 export * from './storage-schema';
 export * from '@features/hunting-groups/schema';
+export * from '@features/other-groups/schema';
 
 // ─── Collision resolution ─────────────────────────────────────────────────────
 // Both ./schema (via features/property-slot-config, a catalog design that was

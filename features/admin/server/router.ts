@@ -47,6 +47,7 @@ import { getPortalDb } from "@core/server/db";
 import { propertyDateInventory } from "@core/db/property-booking-schema";
 import { memberFileRouter } from "./memberFile";
 import { huntingGroupBookings } from "@features/hunting-groups/server/public";
+import { otherGroupBookings } from "@features/other-groups/public";
 import { calendarSourceMeta, collectCalendarItems, getCalendarSources } from "@shared/calendarFeed";
 
 const getDb = getPortalDb;
@@ -112,6 +113,8 @@ const dashboardRouter = router({
       [corporateRevenue],
       [huntingGroupCount],
       [huntingGroupRevenue],
+      [otherGroupCount],
+      [otherGroupRevenue],
     ] = await Promise.all([
       db.select({ count: sql<number>`count(*)` })
         .from(weddingBookings).where(eq(weddingBookings.status, "confirmed")),
@@ -131,15 +134,20 @@ const dashboardRouter = router({
         .from(huntingGroupBookings).where(eq(huntingGroupBookings.status, "confirmed")),
       db.select({ total: sql<string>`COALESCE(SUM(${huntingGroupBookings.contractValue}), 0)` })
         .from(huntingGroupBookings).where(eq(huntingGroupBookings.status, "confirmed")),
+      db.select({ count: sql<number>`count(*)` })
+        .from(otherGroupBookings).where(eq(otherGroupBookings.status, "confirmed")),
+      db.select({ total: sql<string>`COALESCE(SUM(${otherGroupBookings.contractValue}), 0)` })
+        .from(otherGroupBookings).where(eq(otherGroupBookings.status, "confirmed")),
     ]);
     return {
       confirmedWeddings: weddingCount.count,
       confirmedCorporate: corporateCount.count,
       confirmedHuntingGroups: huntingGroupCount.count,
+      confirmedOtherGroups: otherGroupCount.count,
       confirmedHuntFish: huntCount.count,
       activeMembers: memberCount.count,
       newInquiries: inquiryCount.count,
-      totalConfirmedRevenue: (parseFloat(weddingRevenue.total) + parseFloat(corporateRevenue.total) + parseFloat(huntingGroupRevenue.total)).toFixed(2),
+      totalConfirmedRevenue: (parseFloat(weddingRevenue.total) + parseFloat(corporateRevenue.total) + parseFloat(huntingGroupRevenue.total) + parseFloat(otherGroupRevenue.total)).toFixed(2),
     };
   }),
 
@@ -1916,7 +1924,7 @@ const auditLogRouter = router({
 const analyticsRouter = router({
   pipeline: portalProcedure.query(async () => {
     const db = getDb();
-    const [weddingPipeline, corporatePipeline, huntingGroupPipeline] = await Promise.all([
+    const [weddingPipeline, corporatePipeline, huntingGroupPipeline, otherGroupPipeline] = await Promise.all([
       db.select({
         status: weddingBookings.status,
         count: sql<number>`count(*)`,
@@ -1932,8 +1940,13 @@ const analyticsRouter = router({
         count: sql<number>`count(*)`,
         totalValue: sql<string>`COALESCE(SUM(${huntingGroupBookings.contractValue}), 0)`,
       }).from(huntingGroupBookings).groupBy(huntingGroupBookings.status),
+      db.select({
+        status: otherGroupBookings.status,
+        count: sql<number>`count(*)`,
+        totalValue: sql<string>`COALESCE(SUM(${otherGroupBookings.contractValue}), 0)`,
+      }).from(otherGroupBookings).groupBy(otherGroupBookings.status),
     ]);
-    return { weddingPipeline, corporatePipeline, huntingGroupPipeline };
+    return { weddingPipeline, corporatePipeline, huntingGroupPipeline, otherGroupPipeline };
   }),
 
   memberActivity: portalProcedure.query(async () => {

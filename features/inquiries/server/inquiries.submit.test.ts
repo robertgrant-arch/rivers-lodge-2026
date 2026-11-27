@@ -197,11 +197,31 @@ describe("inquiries.submit", () => {
     expect(inserts[1].values).toMatchObject({ status: "inquiry", groupName: "Pat Doe", contactEmail: "pat@example.com", partySize: 6, arrivalDate: null });
   });
 
+  it("an other_group inquiry opens an Inquiry-status other group booking in the same transaction", async () => {
+    const { db, inserts } = makeMockDb();
+    vi.mocked(getDb).mockResolvedValue(db as any);
+    const result = await appRouter.createCaller(publicCtx()).inquiries.submit({
+      type: "other_group",
+      name: "Lee Family",
+      email: "lee@example.com",
+      guestCount: 40,
+      message: "Reunion next summer",
+      captchaToken: "mock-token",
+    });
+    expect(result.success).toBe(true);
+    expect((result as any).otherGroupBookingId).toBeGreaterThan(0);
+    expect((result as any).huntingGroupBookingId).toBeUndefined();
+    expect(inserts).toHaveLength(2); // lead, then the other group booking
+    expect(inserts[0].values).toMatchObject({ businessLine: "other" });
+    expect(inserts[1].values).toMatchObject({ status: "inquiry", groupName: "Lee Family", guestCount: 40, arrivalDate: null });
+  });
+
   it("other inquiry types never create a hunting group booking", async () => {
     const { db } = makeMockDb();
     vi.mocked(getDb).mockResolvedValue(db as any);
     const result = await appRouter.createCaller(publicCtx()).inquiries.submit(BASE_INPUT);
     expect((result as any).huntingGroupBookingId).toBeUndefined();
+    expect((result as any).otherGroupBookingId).toBeUndefined();
   });
 
   // ─── Notification failure (the critical test) ─────────────────────────────

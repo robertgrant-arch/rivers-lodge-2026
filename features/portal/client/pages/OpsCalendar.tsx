@@ -3,7 +3,7 @@
  *
  * Shows everything registered in the calendar feed: Ops Calendar entries
  * (staff only), Member Master Calendar events, blocked dates, weddings,
- * corporate retreats, hunting groups and hunt/fish bookings — plus any event
+ * corporate groups, hunting groups, other groups and hunt/fish bookings — plus any event
  * type registered later. Unconfirmed bookings are drawn dashed (tentative).
  * Access is enforced by memberPortal.opsCalendar on the server (admins +
  * employees in the Admin/Employee skill group). Entries are added and edited
@@ -29,11 +29,12 @@ const KIND: Record<string, { label: string; color: string }> = {
   member_event:  { label: "Member event",     color: "#BABAAE" },
   blocked:       { label: "Blocked",          color: "#8A847A" },
   wedding:       { label: "Wedding",          color: "#7D8AA3" },
-  corporate:     { label: "Corporate",        color: "#8E9670" },
+  corporate:     { label: "Corporate group",  color: "#8E9670" },
   hunting_group: { label: "Hunting group",    color: "#6FA3A0" },
+  other_group:   { label: "Other group",      color: "#A68BB8" },
   hunt_fish:     { label: "Hunt / Fish",      color: "#D9B98C" },
 };
-const KNOWN_ORDER = ["ops_event", "member_event", "blocked", "wedding", "corporate", "hunting_group", "hunt_fish"];
+const KNOWN_ORDER = ["ops_event", "member_event", "blocked", "wedding", "corporate", "hunting_group", "other_group", "hunt_fish"];
 
 function kindInfo(kind: string, sources?: SourceMeta[]) {
   if (KIND[kind]) return KIND[kind];

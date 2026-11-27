@@ -27,8 +27,8 @@ function useFadeUp(t = 0.12) {
   return ref;
 }
 
-type InquiryType = "wedding" | "corporate" | "membership" | "lodging" | "tour" | "event" | "general" | "hunting" | "fishing" | "hunting_group";
-const validTypes: InquiryType[] = ["general", "wedding", "corporate", "tour", "membership", "lodging", "event", "hunting_group"];
+type InquiryType = "wedding" | "corporate" | "membership" | "lodging" | "tour" | "event" | "general" | "hunting" | "fishing" | "hunting_group" | "other_group";
+const validTypes: InquiryType[] = ["general", "wedding", "corporate", "tour", "membership", "lodging", "event", "hunting_group", "other_group"];
 
 function CorporateInquiryForm() {
   const turnstileRef = useRef<TurnstileInstance>(null);
