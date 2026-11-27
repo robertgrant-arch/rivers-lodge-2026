@@ -7,7 +7,7 @@ import { trpc } from '@shared/lib/trpc';
 // Read at module init — env var is baked in at build time by Vite.
 const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined;
 
-type InquiryType = "wedding" | "corporate" | "membership" | "lodging" | "tour" | "event" | "general" | "hunting" | "fishing" | "hunting_group";
+type InquiryType = "wedding" | "corporate" | "membership" | "lodging" | "tour" | "event" | "general" | "hunting" | "fishing" | "hunting_group" | "other_group";
 
 interface Props {
   defaultType?: InquiryType;
@@ -33,6 +33,7 @@ const TYPE_LABELS: Record<InquiryType, string> = {
   hunting: "Hunting",
   fishing: "Fishing",
   hunting_group: "Hunting Group",
+  other_group: "Other Group",
 };
 
 export default function InquiryForm({ defaultType = "general", track, allowedTypes, onTypeChange, onSuccess, className = "" }: Props) {

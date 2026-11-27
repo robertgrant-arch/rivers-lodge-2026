@@ -210,7 +210,7 @@ describe("hunting groups on the calendar", () => {
 
   it("is registered in the calendar feed at boot", () => {
     expect(getCalendarSources().map((s) => s.kind)).toEqual([
-      "ops_event", "member_event", "wedding", "corporate", "hunting_group", "hunt_fish", "blocked",
+      "ops_event", "member_event", "wedding", "corporate", "hunting_group", "other_group", "hunt_fish", "blocked",
     ]);
   });
 

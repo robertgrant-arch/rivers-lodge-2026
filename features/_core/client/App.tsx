@@ -2,7 +2,7 @@ import { Suspense, lazy, useEffect } from "react";
 import { useScrollToTop } from "@shared/hooks/useScrollToTop";
 import { Toaster } from '@shared/ui/sonner';
 import { TooltipProvider } from '@shared/ui/tooltip';
-import { Route, Switch, useLocation } from "wouter";
+import { Redirect, Route, Switch, useLocation } from "wouter";
 import { useAuth } from "@features/auth/public";
 import ErrorBoundary from "../../_shared/components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
@@ -91,6 +91,7 @@ const PortalCalendar = lazy(() => import("@features/admin/client/pages/PortalCal
 const PortalWeddings = lazy(() => import("@features/admin/client/pages/PortalWeddings"));
 const PortalCorporate = lazy(() => import("@features/admin/client/pages/PortalCorporate"));
 const OpsHuntingGroups = lazy(() => import("@features/hunting-groups/client/pages/OpsHuntingGroups"));
+const OpsOtherGroups = lazy(() => import("@features/other-groups/client/pages/OpsOtherGroups"));
 const PortalHuntFish = lazy(() => import("@features/admin/client/pages/PortalHuntFish"));
 const PortalMemberBookings = lazy(() => import("@features/admin/client/pages/PortalMemberBookings"));
 const PortalCustomers = lazy(() => import("@features/admin/client/pages/PortalCustomers"));
@@ -99,7 +100,6 @@ const PortalMembership = lazy(() => import("@features/admin/client/pages/PortalM
 const PortalMemberFile = lazy(() => import("@features/admin/client/pages/PortalMemberFile"));
 const PortalCalendarSettings = lazy(() => import("@features/admin/client/pages/PortalCalendarSettings"));
 const PortalReports = lazy(() => import("@features/admin/client/pages/PortalReports"));
-const PortalBookings = lazy(() => import("@features/admin/client/pages/PortalBookings"));
 const PortalLeads = lazy(() => import("@features/admin/client/pages/PortalLeads"));
 const PortalNotifications = lazy(() => import("@features/admin/client/pages/PortalNotifications"));
 const PortalTestimonials = lazy(() => import("@features/admin/client/pages/PortalTestimonials"));
@@ -199,6 +199,8 @@ function Router() {
         <Route path="/ops/corporate">{() => <PortalLayout><PortalCorporate /></PortalLayout>}</Route>
         <Route path="/ops/hunting-groups/:id">{() => <PortalLayout><OpsHuntingGroups /></PortalLayout>}</Route>
         <Route path="/ops/hunting-groups">{() => <PortalLayout><OpsHuntingGroups /></PortalLayout>}</Route>
+        <Route path="/ops/other-groups/:id">{() => <PortalLayout><OpsOtherGroups /></PortalLayout>}</Route>
+        <Route path="/ops/other-groups">{() => <PortalLayout><OpsOtherGroups /></PortalLayout>}</Route>
         <Route path="/ops/hunt-fish/:id">{(p) => <PortalLayout><PortalHuntFish /></PortalLayout>}</Route>
         <Route path="/ops/hunt-fish">{() => <PortalLayout><PortalHuntFish /></PortalLayout>}</Route>
         <Route path="/ops/member-bookings">{() => <PortalLayout><PortalMemberBookings /></PortalLayout>}</Route>
@@ -212,8 +214,9 @@ function Router() {
         <Route path="/ops/membership">{() => <PortalLayout><PortalMembership /></PortalLayout>}</Route>
         <Route path="/ops/calendar-settings">{() => <PortalLayout><PortalCalendarSettings /></PortalLayout>}</Route>
         <Route path="/ops/reports">{() => <PortalLayout><PortalReports /></PortalLayout>}</Route>
-        <Route path="/ops/bookings/:id">{() => <PortalLayout><PortalBookings /></PortalLayout>}</Route>
-        <Route path="/ops/bookings">{() => <PortalLayout><PortalBookings /></PortalLayout>}</Route>
+        {/* The "All Bookings" admin page was removed; old links land on the Ops dashboard. */}
+        <Route path="/ops/bookings/*"><Redirect to="/ops" replace /></Route>
+        <Route path="/ops/bookings"><Redirect to="/ops" replace /></Route>
         <Route path="/ops/leads">{() => <PortalLayout><PortalLeads /></PortalLayout>}</Route>
         <Route path="/ops/availability">{() => <PortalLayout><PortalAvailability /></PortalLayout>}</Route>
         <Route path="/ops/testimonials">{() => <PortalLayout><PortalTestimonials /></PortalLayout>}</Route>

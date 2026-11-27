@@ -50,7 +50,11 @@ beforeAll(() => {
   // register a brand-new kind to prove future types need no other change.
   for (const s of saved) {
     registerCalendarSource({ ...s, listInRange: async () => [
-      item(s.kind, 1, s.kind === "hunting_group" ? { startDate: "2026-10-30", endDate: "2026-11-02", status: "inquiry" } : {}),
+      item(s.kind, 1,
+        s.kind === "hunting_group" ? { startDate: "2026-10-30", endDate: "2026-11-02", status: "inquiry" }
+        : s.kind === "other_group" ? { startDate: "2026-11-28", endDate: "2026-12-01", status: "contract_out" }
+        : {}),
+      item(s.kind, 4, { status: "lost" }),
       item(s.kind, 2, { status: "cancelled" }),
       item(s.kind, 3, { startDate: null }),
     ] });
@@ -59,7 +63,7 @@ beforeAll(() => {
 });
 afterAll(() => { for (const s of saved) registerCalendarSource(s); });
 
-const EXPECTED_KINDS = ["ops_event", "member_event", "wedding", "corporate", "hunting_group", "hunt_fish", "blocked", "spa_day"];
+const EXPECTED_KINDS = ["ops_event", "member_event", "wedding", "corporate", "hunting_group", "other_group", "hunt_fish", "blocked", "spa_day"];
 
 describe("portal.calendar.events", () => {
   it("returns one item per registered source (cancelled/undated dropped) and the source legend", async () => {
@@ -69,6 +73,15 @@ describe("portal.calendar.events", () => {
     expect(out.sources.find((s: any) => s.kind === "spa_day")).toEqual({ kind: "spa_day", label: "Spa Day", color: "#ABCDEF" });
     const hg = out.items.find((i: any) => i.kind === "hunting_group");
     expect(hg).toMatchObject({ startDate: "2026-10-30", endDate: "2026-11-02", tentative: true, href: "/ops/hunting_group/1" });
+  });
+
+  it("other groups: crosses the month end into December, tentative while unconfirmed, cancelled/lost dropped", async () => {
+    const caller = appRouter.createCaller(ctx("admin")) as any;
+    const nov = await caller.portal.calendar.events({ ...RANGE, types: ["other_group"] });
+    expect(nov.items.map((i: any) => [i.id, i.startDate, i.endDate, i.tentative])).toEqual([["other_group-1", "2026-11-28", "2026-12-01", true]]);
+    const dec = await caller.portal.calendar.events({ startDate: "2026-12-01", endDate: "2026-12-31", types: ["other_group"] });
+    expect(dec.items.map((i: any) => i.id)).toEqual(["other_group-1"]);
+    expect(nov.sources).toEqual([{ kind: "other_group", label: "Other Group", color: "#A68BB8" }]);
   });
 
   it("types filter limits the sources read", async () => {
@@ -96,6 +109,7 @@ describe("memberPortal.opsCalendar", () => {
 describe("memberPortal.unavailableDates (members' My Calendar)", () => {
   it("returns bare dates from availability sources — never titles", async () => {
     const out = await (appRouter.createCaller(ctx("admin")) as any).memberPortal.unavailableDates(RANGE);
-    expect(out).toEqual(["2026-11-01", "2026-11-02", "2026-11-10"]);
+    // Hunting group Oct 30–Nov 2, other group Nov 28–Dec 1 (clipped), the rest on the 10th.
+    expect(out).toEqual(["2026-11-01", "2026-11-02", "2026-11-10", "2026-11-28", "2026-11-29", "2026-11-30"]);
   });
 });

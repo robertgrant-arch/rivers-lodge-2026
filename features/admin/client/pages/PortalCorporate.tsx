@@ -188,7 +188,7 @@ export default function PortalCorporate() {
     <div className="p-6 space-y-6 max-w-7xl mx-auto">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2"><Building2 className="w-6 h-6 text-blue-600" />Corporate Retreats</h1>
+          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2"><Building2 className="w-6 h-6 text-blue-600" />Corporate Groups</h1>
           <p className="text-sm text-muted-foreground">Manage corporate events and group bookings</p>
         </div>
         <Button onClick={() => setShowCreate(true)} size="sm"><Plus className="w-4 h-4 mr-2" />New Booking</Button>

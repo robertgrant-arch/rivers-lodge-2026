@@ -20,6 +20,7 @@ import {
   blockedCalendarSource,
 } from "@features/portal/server/public";
 import { huntingGroupCalendarSource } from "@features/hunting-groups/server/public";
+import { otherGroupCalendarSource } from "@features/other-groups/public";
 
 let registered = false;
 
@@ -31,6 +32,7 @@ export function registerCalendarSources(): void {
   registerCalendarSource(weddingCalendarSource);
   registerCalendarSource(corporateCalendarSource);
   registerCalendarSource(huntingGroupCalendarSource);
+  registerCalendarSource(otherGroupCalendarSource);
   registerCalendarSource(huntFishCalendarSource);
   registerCalendarSource(blockedCalendarSource);
 }

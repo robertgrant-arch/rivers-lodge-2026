@@ -55,13 +55,14 @@ const DAY_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 // Event type config
 // ---------------------------------------------------------------------------
 
-type EventKind = 'wedding' | 'corporate' | 'hunting_group' | 'hunt_fish' | 'blocked' | 'member_event' | 'ops_event';
+type EventKind = 'wedding' | 'corporate' | 'hunting_group' | 'other_group' | 'hunt_fish' | 'blocked' | 'member_event' | 'ops_event';
 
 const EVENT_CONFIG: Record<EventKind, { label: string; dot: string; text: string }> = {
   // Same colours as the staff Ops Calendar (/portal/ops-calendar).
   wedding:    { label: 'Wedding',    dot: '#7D8AA3', text: 'text-[#7D8AA3]' },
-  corporate:  { label: 'Corporate',  dot: '#8E9670', text: 'text-[#8E9670]' },
+  corporate:  { label: 'Corporate Group',  dot: '#8E9670', text: 'text-[#8E9670]' },
   hunting_group: { label: 'Hunting Group', dot: '#6FA3A0', text: 'text-[#6FA3A0]' },
+  other_group: { label: 'Other Group', dot: '#A68BB8', text: 'text-[#A68BB8]' },
   hunt_fish:  { label: 'Hunt/Fish',  dot: '#D9B98C', text: 'text-[#D9B98C]' },
   blocked:    { label: 'Hold/Block', dot: '#8A847A', text: 'text-[#BABAAE]' },
   member_event: { label: 'Member Event', dot: '#BABAAE', text: 'text-[#BABAAE]' },
@@ -77,7 +78,7 @@ export type CalendarView = 'ops' | 'master';
 const VIEW_KINDS: Record<CalendarView, string[]> = {
   // The ops view also picks up any other registered calendar source (the
   // server sends the list), so a new event type needs no change here.
-  ops: ['ops_event', 'member_event', 'wedding', 'corporate', 'hunting_group', 'hunt_fish', 'blocked'],
+  ops: ['ops_event', 'member_event', 'wedding', 'corporate', 'hunting_group', 'other_group', 'hunt_fish', 'blocked'],
   master: ['member_event', 'blocked'],
 };
 
@@ -127,8 +128,9 @@ const FILTER_LABELS: Record<string, string> = {
   ops_event: 'Ops Events',
   member_event: 'Member Events',
   wedding: 'Weddings',
-  corporate: 'Corporate',
+  corporate: 'Corporate Groups',
   hunting_group: 'Hunting Groups',
+  other_group: 'Other Groups',
   hunt_fish: 'Hunt/Fish',
   blocked: 'Blocks/Holds',
 };

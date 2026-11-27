@@ -137,7 +137,7 @@ export function createWeddingCalendarSource(getDb: GetDb = getPortalDb): Calenda
 
 export function createCorporateCalendarSource(getDb: GetDb = getPortalDb): CalendarSource {
   return {
-    kind: "corporate", label: "Corporate", color: PORTAL_CALENDAR_COLORS.corporate, marksMemberUnavailable: true,
+    kind: "corporate", label: "Corporate Group", color: PORTAL_CALENDAR_COLORS.corporate, marksMemberUnavailable: true,
     async listInRange(startDate, endDate) {
       const rows = await getDb().select({
         id: corporateBookings.id, companyName: corporateBookings.companyName, arrivalDate: corporateBookings.arrivalDate,
